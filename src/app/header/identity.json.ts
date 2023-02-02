@@ -1,62 +1,38 @@
-import { Usuario, Usuario_Rol, Rol, Rol_Permiso, Permiso } from "./identity";
+import { Usuario, Usuario_Rol, Rol, Permiso } from "./identity";
 
 export const jsonPermisos: Permiso[] = [
-    { id: 1, nombre: 'Consultar Reporte Notas', descripcion: 'Alumno: Notas específicas del alumno. Instructores: Notas de alumnos. Generar reportes  teórico y práctico.' },
-    { id: 2, nombre: 'Gestionar Usuarios', descripcion: 'CRUD Usuarios y Asignar Roles.' },
-    { id: 3, nombre: 'Gestionar Roles', descripcion: 'CRUD Roles y Asignar Permisos.' },
-    { id: 4, nombre: 'Registrar Turnos', descripcion: 'Registrar y actualizar programación de turnos.' },
-    { id: 5, nombre: 'Gestionar Estándares', descripcion: 'CRUD Estándares y Asignarlos a maniobras.' },
-    { id: 6, nombre: 'Registrar Material', descripcion: 'Subir y eliminar material de estudio.' },
-    { id: 7, nombre: 'Registrar Calificación Práctica', descripcion: 'Registrar Calificaciones en Reporte.' },
-    { id: 8, nombre: 'Firmar Reporte Evaluación', descripcion: 'Firmar Reportes Evaluados.' },
-    { id: 9, nombre: 'Consultar Material', descripcion: 'Ver materiales del curso filtrados por semana.' },
-    { id: 10, nombre: 'Registrar Práctica Teórica', descripcion: 'Registrar respuestas en Reporte.' },
-    { id: 11, nombre: 'Registrar Conformidad', descripcion: 'Registrar conformidad en Reportes Evaluados.' },
-    { id: 12, nombre: 'Registrar Formato Riesgos', descripcion: 'Registrar formulario de riesgos.' },
-    { id: 13, nombre: 'Registrar Apreciación Psicológica', descripcion: 'Registrar documento de la evaluación.' },
-    { id: 14, nombre: 'Gestionar Pregunta', descripcion: 'CRUD Preguntas.' },
-    { id: 15, nombre: 'Registrar Práctica Teórica', descripcion: 'Registrar datos generales de práctica y asignar preguntas.' },
-    { id: 16, nombre: 'Aprobar Revisión', descripcion: 'Confirmar o rechazar revisión de la evaluación por el instructor.' },
-    { id: 17, nombre: 'Registrar Reporte Teórico', descripcion: 'Registrar documento de práctica teórica en el sistema.' },
-    { id: 18, nombre: 'Registrar Reporte Práctico', descripcion: 'Registrar documento de evaluación práctica en el sistema.' },
-    { id: 19, nombre: 'Gestionar Módulo', descripcion: 'CRUD Módulos.' },
-    { id: 20, nombre: 'Modificar Calificación', descripcion: 'Modifica reporte rechazado por el jefe de instrucción.' },
-    { id: 21, nombre: 'Registrar Memorandum', descripcion: 'Registrar memorandum por clasificación de vuelo regular o mala.' }
-]
-
-export const jsonPermisosRol: Rol_Permiso[] = [
-    { idRol: 1, idPermiso: 1, permiso: jsonPermisos[0] },
-    { idRol: 2, idPermiso: 2, permiso: jsonPermisos[1] },
-    { idRol: 2, idPermiso: 3, permiso: jsonPermisos[2] },
-    { idRol: 3, idPermiso: 4, permiso: jsonPermisos[3] },
-    { idRol: 3, idPermiso: 5, permiso: jsonPermisos[4] },
-    { idRol: 4, idPermiso: 6, permiso: jsonPermisos[5] },
-    { idRol: 4, idPermiso: 7, permiso: jsonPermisos[6] },
-    { idRol: 4, idPermiso: 8, permiso: jsonPermisos[7] },
-    { idRol: 5, idPermiso: 9, permiso: jsonPermisos[8] },
-    { idRol: 5, idPermiso: 10, permiso: jsonPermisos[9] },
-    { idRol: 5, idPermiso: 11, permiso: jsonPermisos[10] },
-    { idRol: 5, idPermiso: 12, permiso: jsonPermisos[11] },
-    { idRol: 6, idPermiso: 13, permiso: jsonPermisos[12] },
-    { idRol: 7, idPermiso: 14, permiso: jsonPermisos[13] },
-    { idRol: 7, idPermiso: 15, permiso: jsonPermisos[14] },
-    { idRol: 7, idPermiso: 16, permiso: jsonPermisos[15] },
-    { idRol: 7, idPermiso: 17, permiso: jsonPermisos[16] },
-    { idRol: 8, idPermiso: 18, permiso: jsonPermisos[17] },
-    { idRol: 8, idPermiso: 19, permiso: jsonPermisos[18] },
-    { idRol: 8, idPermiso: 20, permiso: jsonPermisos[19] },
-    { idRol: 8, idPermiso: 21, permiso: jsonPermisos[20] }
+    { id: 1, nombre: 'Consultar Reporte Notas', enSidebar: true, descripcion: 'Alumno: Notas específicas del alumno. Instructores: Notas de alumnos. Generar reportes  teórico y práctico.' },
+    { id: 2, nombre: 'Gestionar Usuarios', enSidebar: true, descripcion: 'CRUD Usuarios y Asignar Roles.' },
+    { id: 3, nombre: 'Gestionar Roles', enSidebar: true, descripcion: 'CRUD Roles y Asignar Permisos.' },
+    { id: 4, nombre: 'Registrar Turnos', enSidebar: true, descripcion: 'Registrar y actualizar programación de turnos.' },
+    { id: 5, nombre: 'Gestionar Estándares', enSidebar: true, descripcion: 'CRUD Estándares y Asignarlos a maniobras.' },
+    { id: 6, nombre: 'Registrar Material', enSidebar: false, descripcion: 'Subir y eliminar material de estudio.' },
+    { id: 7, nombre: 'Registrar Calificación Práctica', enSidebar: false, descripcion: 'Registrar Calificaciones en Reporte.' },
+    { id: 8, nombre: 'Firmar Reporte Evaluación', enSidebar: false, descripcion: 'Firmar Reportes Evaluados.' },
+    { id: 9, nombre: 'Consultar Material', enSidebar: false, descripcion: 'Ver materiales del curso filtrados por semana.' },
+    { id: 10, nombre: 'Registrar Práctica Teórica', enSidebar: false, descripcion: 'Registrar respuestas en Reporte.' },
+    { id: 11, nombre: 'Registrar Conformidad', enSidebar: false, descripcion: 'Registrar conformidad en Reportes Evaluados.' },
+    { id: 12, nombre: 'Registrar Formato Riesgos', enSidebar: true, descripcion: 'Registrar formulario de riesgos.' },
+    { id: 13, nombre: 'Registrar Apreciación Psicológica', enSidebar: true, descripcion: 'Registrar documento de la evaluación.' },
+    { id: 14, nombre: 'Gestionar Preguntas', enSidebar: true, descripcion: 'CRUD Preguntas.' },
+    { id: 15, nombre: 'Registrar Práctica Teórica', enSidebar: true, descripcion: 'Registrar datos generales de práctica y asignar preguntas.' },
+    { id: 16, nombre: 'Aprobar Revisión', enSidebar: false, descripcion: 'Confirmar o rechazar revisión de la evaluación por el instructor.' },
+    { id: 17, nombre: 'Registrar Reporte Teórico', enSidebar: false, descripcion: 'Registrar documento de práctica teórica en el sistema.' },
+    { id: 18, nombre: 'Registrar Reporte Práctico', enSidebar: false, descripcion: 'Registrar documento de evaluación práctica en el sistema.' },
+    { id: 19, nombre: 'Gestionar Módulos', enSidebar: true, descripcion: 'CRUD Módulos.' },
+    { id: 20, nombre: 'Modificar Calificación', enSidebar: false, descripcion: 'Modifica reporte rechazado por el jefe de instrucción.' },
+    { id: 21, nombre: 'Registrar Memorandum', enSidebar: false, descripcion: 'Registrar memorandum por clasificación de vuelo regular o mala.' }
 ]
 
 export const jsonRoles: Rol[] = [
-    { id: 1, nombre: 'Usuario', rol_permiso: [ jsonPermisosRol[0] ] },
-    { id: 2, nombre: 'Administrador Web', rol_permiso: [ jsonPermisosRol[1], jsonPermisosRol[2] ] },
-    { id: 3, nombre: 'Jefe de Operaciones', rol_permiso: [ jsonPermisosRol[3], jsonPermisosRol[4] ] },
-    { id: 4, nombre: 'Instructor', rol_permiso: [ jsonPermisosRol[5], jsonPermisosRol[6], jsonPermisosRol[7] ] },
-    { id: 5, nombre: 'Alumno', rol_permiso: [ jsonPermisosRol[8], jsonPermisosRol[9], jsonPermisosRol[10], jsonPermisosRol[11] ] },
-    { id: 6, nombre: 'Sanidad', rol_permiso: [ jsonPermisosRol[12] ] },
-    { id: 7, nombre: 'Jefe de Instrucción', rol_permiso: [ jsonPermisosRol[13], jsonPermisosRol[14], jsonPermisosRol[15], jsonPermisosRol[16] ] },
-    { id: 8, nombre: 'Comandante Escuadrón', rol_permiso: [ jsonPermisosRol[17], jsonPermisosRol[18], jsonPermisosRol[19], jsonPermisosRol[20] ] }
+    { id: 1, nombre: 'Usuario', permiso: [ jsonPermisos[0] ] },
+    { id: 2, nombre: 'Administrador Web', permiso: [ jsonPermisos[1], jsonPermisos[2] ] },
+    { id: 3, nombre: 'Jefe de Operaciones', permiso: [ jsonPermisos[3], jsonPermisos[4] ] },
+    { id: 4, nombre: 'Instructor', permiso: [ jsonPermisos[5], jsonPermisos[6], jsonPermisos[7] ] },
+    { id: 5, nombre: 'Alumno', permiso: [ jsonPermisos[8], jsonPermisos[9], jsonPermisos[10], jsonPermisos[11] ] },
+    { id: 6, nombre: 'Sanidad', permiso: [ jsonPermisos[12] ] },
+    { id: 7, nombre: 'Jefe de Instrucción', permiso: [ jsonPermisos[13], jsonPermisos[14], jsonPermisos[15], jsonPermisos[16] ] },
+    { id: 8, nombre: 'Comandante Escuadrón', permiso: [ jsonPermisos[17], jsonPermisos[18], jsonPermisos[19], jsonPermisos[20] ] }
 ]
 
 export const jsonRolesUsuario: Usuario_Rol[] = [

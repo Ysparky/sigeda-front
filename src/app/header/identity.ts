@@ -17,23 +17,25 @@ export class Usuario {
 export class Rol {
     id: number;
     nombre: string;
-    rol_permiso: Rol_Permiso[];
+    permiso: Permiso[];
 
     constructor() {
         this.id = 0;
         this.nombre = '';
-        this.rol_permiso = [];
+        this.permiso = [];
     }    
 }
 
 export class Permiso {
     id: number;
     nombre: string;
+    enSidebar: boolean;
     descripcion: string;
 
     constructor() {
         this.id = 0;
         this.nombre = '';
+        this.enSidebar = false;
         this.descripcion = '';
     }
 }
@@ -47,17 +49,5 @@ export class Usuario_Rol {
         this.idUsuario = 0;
         this.idRol = 0;      
         this.rol = new Rol();
-    }
-}
-
-export class Rol_Permiso {
-    idRol: number;
-    idPermiso: number;
-    permiso: Permiso;
-
-    constructor() {
-        this.idRol = 0;
-        this.idPermiso = 0;
-        this.permiso = new Permiso();
     }
 }

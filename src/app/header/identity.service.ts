@@ -1,15 +1,11 @@
 import { Injectable } from '@angular/core';
-import { Usuario, Usuario_Rol, Rol, Rol_Permiso, Permiso } from "./identity";
-import { jsonUsuarios, jsonRolesUsuario, jsonRoles, jsonPermisosRol, jsonPermisos } from "./identity.json";
+import { Usuario, Usuario_Rol, Rol, Permiso } from "./identity";
+import { jsonUsuarios, jsonRolesUsuario, jsonRoles, jsonPermisos } from "./identity.json";
 
 @Injectable()
 export class IdentityService {
 
-  usuarios: Usuario[] = [];
-  roles: Rol[] = [];
-  permisos: Permiso[] = [];
   rolesUsuario: Usuario_Rol[] = [];
-  permisosRol: Rol_Permiso[] = [];
 
   constructor() { }
 
@@ -18,57 +14,72 @@ export class IdentityService {
     return jsonUsuarios[id];
   }
 
-  getRolesUsuario(id: number): Rol[] {
+  idRoles: number[] = [];
+  idRolesAux: number[] = [];
+  getIdRoles(id: number): number[] {
     //Roles del usuario con idUsuario
     this.rolesUsuario = jsonUsuarios[id].usuario_rol;
-
     //iterar lista de roles con idUsuario y guardar idRoles
     this.rolesUsuario.forEach(roles => {
-      this.idRoles.push(roles.idRol)
+      this.idRolesAux.push(roles.idRol)
     });
-    //console.log(this.idRoles)
 
-    //obtener roles con idRoles
-    //iterar lista de permisos con idRol y concatenar permisos
-    this.idRoles.forEach(idRol => {
-      this.roles.push(jsonRoles[idRol]); 
-    });
-    console.log(this.roles);
+    //limpiamos para evitar data duplicada por push
+    this.idRoles = this.idRolesAux;
+    this.idRolesAux = [];
     
-    return this.roles;
+    console.log(this.idRoles);
+    return this.idRoles;
+  }
+  
+  idRol: number = 0;
+  getIdRol(id: number): number {
+    //iterar roles con idUsuario y guardar ultimo idRol
+    this.getIdRoles(id).forEach(idRoles => {
+      this.idRol = idRoles
+    });  
+
+    console.log(this.idRol);
+    return this.idRol;
   }
 
-  idRoles: number[] = [];
-  idPermisos: number[] = [];
+  index: number = 0;
+  getRolUsuario(id: number): Rol {
+    this.index = this.getIdRol(id) - 1;
+
+    console.log(jsonRoles[this.index]);
+    return jsonRoles[this.index];
+  }
+
+  permisos: Permiso[] = [];
+  permisosAux: Permiso[] = [];
   getPermisosUsuario(id: number): Permiso[] {
-    //Roles del usuario con idUsuario
-    this.rolesUsuario = jsonUsuarios[id].usuario_rol;
-
-    //iterar lista de roles con idUsuario y guardar idRoles
-    this.rolesUsuario.forEach(roles => {
-      this.idRoles.push(roles.idRol)
-    });
-    console.log(this.idRoles)
-
     //obtener roles con idRoles
-    //iterar lista de permisos con idRol y concatenar permisos
-    this.idRoles.forEach(idRol => {
-      this.permisosRol = this.permisosRol.concat(jsonRoles[idRol - 1].rol_permiso);
+    //iterar permisos con idRol y guardarlos
+    this.getIdRoles(id).forEach(idRol => {
+      this.permisosAux = this.permisosAux.concat(jsonRoles[idRol - 1].permiso)
     });
-    console.log(this.permisosRol);
 
-    //iterar lista de permisos y guardar idPermisos
-    this.permisosRol.forEach(permisos => {
-      this.idPermisos.push(permisos.idPermiso)
-    });
-    console.log(this.idPermisos)
+    //limpiamos para evitar data duplicada por push
+    this.permisos = this.permisosAux;
+    this.permisosAux = [];
 
-    //obtener permisos con idPermisos y guardar 
-    this.idPermisos.forEach(idPermiso => {
-      this.permisos.push(jsonPermisos[idPermiso-1])
-    })
-    console.log(this.permisos)
-
+    console.log(this.permisos);
     return this.permisos;
+  }
+
+  permisosEnSidebar: Permiso[] = [];
+  getPermisosEnSideBar(id: number): Permiso[] {
+    this.getPermisosUsuario(id).forEach(permiso => {
+      if (permiso.enSidebar == true) {
+        this.permisosEnSidebar.push(permiso);        
+      }
+    });
+    
+    //usar variable aux
+    //limpiar permisosEnSidebar por data duplicada
+
+    console.log(this.permisosEnSidebar)
+    return this.permisosEnSidebar;
   }
 }
