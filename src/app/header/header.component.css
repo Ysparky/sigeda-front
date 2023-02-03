@@ -2,19 +2,18 @@
     flex: 1;
 }
 
+.d-flex-row {
+    display: flex;
+    align-items: center;
+}
+
 .unstyled-list {
     list-style-type: none;
     margin: 0;
     padding: 0;
 }
 
-.d-flex-row {
-    display: flex;
-    flex-direction: row;
-}
-
 .unstyled-link {
-    display: block;
     text-decoration: none;
 }
 
@@ -24,17 +23,19 @@
     left: 0;
     right: 0;
     height: 60px;
-    font-weight: 600;
     background-color: #1976d2;
     color: white;
 }
 
 .toolbar {
-    display: flex;
-    align-items: center;
     height: 100%;
     width: 90%;
     margin: 0 5%;
+    font-weight: 600;
+}
+
+.toolbar a {
+    color: inherit;
 }
 
 .toolbar img {
@@ -49,13 +50,14 @@
     margin: 0 16px;
 }
 
-.toolbar #twitter-logo {
+.toolbar #login-icon {
     height: 40px;
     margin-left: 16px;
     margin-right: 8px;
 }
 
-.toolbar #twitter-logo:hover,
-.toolbar #youtube-logo:hover {
+.toolbar span:hover,
+.toolbar .navlink:hover,
+.toolbar a:hover {
     opacity: 0.8;
 }
