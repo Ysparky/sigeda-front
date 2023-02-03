@@ -1,0 +1,18 @@
+.d-flex-column {
+    display: flex;
+    direction: column;
+    justify-content: center;
+}
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    color: #000;
+}
+
+.footer span {
+    margin-bottom: 8px;
+    line-height: 20px;
+}
