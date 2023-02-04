@@ -1,0 +1,24 @@
+<app-main>
+  <app-section>
+    <app-title-h1 style="text-align: center;">¿Qué necesitas hoy?</app-title-h1>
+    <div class="card-principal">
+      <app-card class="card" (click)="propagarOpcionMenu('PDI')">
+        <div class="card-header" #header>
+          PDI
+        </div>
+        <div class="card-body" #body>
+          <img src="assets/img/modulo-principal/pdi.png" alt="pdi">
+        </div>
+      </app-card>
+
+      <app-card class="card" (click)="propagarOpcionMenu('PDE')">
+        <div class="card-header" #header>
+          PDE
+        </div>
+        <div class="card-body" #body>
+          <img src="assets/img/modulo-principal/pde.png" alt="pde">
+        </div>
+      </app-card>
+      </div>
+  </app-section>
+</app-main>

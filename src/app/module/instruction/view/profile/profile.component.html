@@ -1,0 +1,191 @@
+<app-main>
+  <app-title-h4>Cuenta</app-title-h4>
+  <app-nav-navigation vistaComponente="Perfil"></app-nav-navigation>
+  <app-section class="profile">
+      <div class="row">
+        <div class="col-xl-4">
+          <app-card-profile nombre="Andersson" cargo="Desarrollador Web"></app-card-profile>
+        </div>
+        <div class="col-xl-8">
+          <app-card>
+            <div body class="card-body pt-3">
+              <ul class="nav nav-tabs nav-tabs-bordered justify-content-center">
+                <li class="nav-item">
+                  <button class="nav-link active"
+                          data-bs-toggle="tab"
+                          data-bs-target="#profile-overview">
+                    General
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <button class="nav-link"
+                          data-bs-toggle="tab"
+                          data-bs-target="#profile-edit">
+                    Editar Perfil
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <button class="nav-link"
+                          data-bs-toggle="tab"
+                          data-bs-target="#profile-change-password">
+                    Cambiar Contraseña
+                  </button>
+                </li>
+              </ul>
+              <div class="tab-content pt-2">
+                <div class="tab-pane fade show active" id="profile-overview">
+                  <app-title-h5>General</app-title-h5>
+                  <app-paragraph class="fst-italic">
+                    Información de la Persona: Lorem ipsum dolor sit amet consectetur,
+                    adipisicing elit. Dolores officia quibusdam sint optio quam? Modi cum
+                    provident ratione possimus dicta cupiditate alias assumenda reiciendis
+                    odio voluptas, officia temporibus impedit rerum.
+                  </app-paragraph>
+                  <app-title-h6>Detalle de Perfil</app-title-h6>
+                  <div class="my-2">
+                    <div class="row box-item">
+                      <app-label class="col-md-4 col-lg-3">Datos</app-label>
+                      <app-paragraph class="fs-6 col-lg-9 col-md-8">SO2 FAP Marcos Legua Andersson Youssef</app-paragraph>
+                    </div>
+                    <div class="row box-item">
+                      <app-label class="col-md-4 col-lg-3">Dependencia</app-label>
+                      <app-paragraph class="fs-6 col-lg-9 col-md-8">Estado Mayor A-6</app-paragraph>
+                    </div>
+                    <div class="row box-item">
+                      <app-label class="col-md-4 col-lg-3">Especialidad</app-label>
+                      <app-paragraph class="fs-6 col-lg-9 col-md-8">Desarrollador Web</app-paragraph>
+                    </div>
+                    <div class="row box-item">
+                      <app-label class="col-md-4 col-lg-3">Rol</app-label>
+                      <app-paragraph class="fs-6 col-lg-9 col-md-8">Administrador</app-paragraph>
+                    </div>
+                    <div class="row box-item">
+                      <app-label class="col-md-4 col-lg-3">Celular</app-label>
+                      <app-paragraph class="fs-6 col-lg-9 col-md-8">916 199 000</app-paragraph>
+                    </div>
+                    <div class="row box-item">
+                      <app-label class="col-md-4 col-lg-3">Correo</app-label>
+                      <app-paragraph class="fs-6 col-lg-9 col-md-8">[andersson@123.com]</app-paragraph>
+                    </div>
+                  </div>
+                </div>
+                <div class="tab-pane fade profile-edit pt-3" id="profile-edit">
+                  <form>
+                    <div class="row mb-3">
+                      <app-label class="col-12 text-center">Foto Perfil</app-label>
+                      <div class="col-12 my-3 text-center">
+                        <img src="assets/img/photography/611298.bmp" alt="Perfil" class="my-1" />
+                        <div class="d-flex justify-content-center">
+                          <app-button class="mx-1" type="button" [color]="10" >Subir Archivo</app-button>
+                          <app-button class="mx-1" type="button" [color]="1" >Eliminar</app-button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row box-items">
+                      <app-label class="col-md-4 col-lg-3">Nombre Completo</app-label>
+                      <div class="col-md-8 col-lg-9">
+                        <app-input type="text"
+                                   placeholder="Ingrese Nombre Usuario"
+                                   icon="bi bi-chat-left-text">
+                        </app-input>
+                      </div>
+                    </div>
+                    <div class="row box-item">
+                      <app-label class="col-md-4 col-lg-3">General</app-label>
+                      <div class="col-md-8 col-lg-9">
+                        <app-text-area placeholder="Ingrese Descripción"></app-text-area>
+                      </div>
+                    </div>
+                    <div class="row box-item">
+                      <app-label class="col-md-4 col-lg-3">Dependencia</app-label>
+                      <div class="col-md-8 col-lg-9">
+                        <app-input type="text"
+                                   placeholder="Ingrese Dependencia"
+                                   icon="bi bi-box-seam">
+                        </app-input>
+                      </div>
+                    </div>
+                    <div class="row box-item">
+                      <app-label class="col-md-4 col-lg-3">Especialidad</app-label>
+                      <div class="col-md-8 col-lg-9">
+                        <app-input type="text"
+                                   placeholder="Ingrese Especialidad"
+                                   icon="bi bi-rainbow">
+                        </app-input>
+                      </div>
+                    </div>
+                    <div class="row box-item">
+                      <app-label class="col-md-4 col-lg-3">Rol</app-label>
+                      <div class="col-md-8 col-lg-9">
+                        <app-input type="text"
+                                   placeholder="Ingrese Rol"
+                                   icon="bi bi-person-check">
+                        </app-input>
+                      </div>
+                    </div>
+                    <div class="row box-item">
+                      <app-label class="col-md-4 col-lg-3">Celular</app-label>
+                      <div class="col-md-8 col-lg-9">
+                        <app-input type="text"
+                                   placeholder="Ingrese Celular"
+                                   icon="bi bi-phone">
+                        </app-input>
+                      </div>
+                    </div>
+                    <div class="row box-item">
+                      <app-label class="col-md-4 col-lg-3">Correo</app-label>
+                      <div class="col-md-8 col-lg-9">
+                        <app-input type="text"
+                                   placeholder="Ingrese Correo"
+                                   icon="bi bi-envelope">
+                        </app-input>
+                      </div>
+                    </div>
+                    <div class="text-center">
+                      <app-button type="button" [color]="4" >Guardar Cambios</app-button>
+                    </div>
+                  </form>
+                </div>
+                <div class="tab-pane fade pt-3" id="profile-change-password">
+                  <form>
+                    <div class="row box-item">
+                      <app-label class="col-md-4 col-lg-3">Contraseña Actual</app-label>
+                      <div class="col-md-8 col-lg-9">
+                        <app-input type="text"
+                                   placeholder="Ingrese Contraseña Actual"
+                                   icon="bi bi-eye-slash">
+                        </app-input>
+                      </div>
+                    </div>
+                    <div class="row box-item">
+                      <app-label class="col-md-4 col-lg-3">Nueva Contraseña</app-label>
+                      <div class="col-md-8 col-lg-9">
+                        <app-input type="text"
+                                   placeholder="Ingrese Nueva Contraseña"
+                                   icon="bi bi-eye-slash">
+                        </app-input>
+                      </div>
+                    </div>
+                    <div class="row box-item">
+                      <app-label class="col-md-4 col-lg-3">Repetir Contraseña</app-label>
+                      <div class="col-md-8 col-lg-9">
+                        <app-input type="text"
+                                   placeholder="Repetir Contraseña Nueva"
+                                   icon="bi bi-eye-slash">
+                        </app-input>
+                      </div>
+                    </div>
+                    <div class="text-center">
+                      <app-button type="button" [color]="5" >Cambiar Contraseña</app-button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+        </app-card>
+
+
+        </div>
+      </div>
+  </app-section>
+</app-main>

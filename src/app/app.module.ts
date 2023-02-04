@@ -1,23 +1,30 @@
+import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { FormsModule,ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 
+import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { HeaderComponent } from './header/header.component';
-import { IdentityService } from './shared/identity.service';
-import { FooterComponent } from './footer/footer.component';
+import { NotFoundComponent } from './shared/pages/not-found/not-found.component';
+import { ButtonModule } from './shared/components/button/button.module';
 
 @NgModule({
   declarations: [
     AppComponent,
-    HeaderComponent,
-    FooterComponent
+    NotFoundComponent
   ],
   imports: [
-    BrowserModule
+    BrowserModule,
+    CommonModule,
+    BrowserAnimationsModule,
+    AppRoutingModule,
+    FormsModule,
+    ReactiveFormsModule,
+    ButtonModule
+
   ],
-  providers: [
-    IdentityService
-  ],
+  providers: [],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

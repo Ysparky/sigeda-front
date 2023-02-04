@@ -1,0 +1,7 @@
+  <label>{{label}}</label>
+  <input [value]="value ? value : ''"
+         (input)="onInput($event)"
+         [type]="type"
+         [placeholder]="placeholder"/>
+  <button><i [ngClass]="icon"></i></button>
+

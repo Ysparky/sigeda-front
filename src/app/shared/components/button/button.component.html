@@ -1,0 +1,9 @@
+<button class="button"
+        [class]="eventClass"
+        [type]="type"
+        [disabled]="disabled"
+        (click)="onClick($event)"
+        [ngStyle]="{'background-color': getColor()}">
+        <i [class]="icon"></i> &nbsp;
+  <ng-content></ng-content>
+</button>

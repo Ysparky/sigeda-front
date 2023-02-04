@@ -1,0 +1,28 @@
+<aside id="sidebar" class="sidebar" [hidden]="hiddenSidebar">
+    <ul class="sidebar-nav" id="sidebar-nav">
+       <li class="nav-item"> <a class="nav-link " routerLink="/instruction/dashboard"> <i class="bi bi-grid"></i> <span>Principal</span> </a></li>
+       <li class="nav-item">
+          <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#"> <i class="bi bi-menu-button-wide"></i><span>Modulos</span><i class="bi bi-chevron-down ms-auto"></i> </a>
+          <ul id="components-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+             <li> <a routerLink="/alerts"> <i class="bi bi-circle"></i><span>Adaptación</span> </a></li>
+             <li> <a routerLink="/accordion"> <i class="bi bi-circle"></i><span>Operaciones Transportadas</span> </a></li>
+             <li> <a routerLink="/badges"> <i class="bi bi-circle"></i><span>Operaciones Aero-Tácticas</span> </a></li>
+          </ul>
+       </li>
+
+
+
+       <li class="nav-heading">Control</li>
+       <li class="nav-item"> <a class="nav-link collapsed" routerLink="/establishment"> <i class="bi bi-building"></i> <span>Estándar</span> </a></li>
+       <li class="nav-item"> <a class="nav-link collapsed" routerLink="/variable"> <i class="bi bi-menu-button-wide"></i> <span>Turnos</span> </a></li>
+
+       <li class="nav-heading">Supervisión</li>
+       <li class="nav-item"> <a class="nav-link collapsed" routerLink="/visitor"> <i class="bi bi-person-bounding-box"></i> <span>Mi Escuadron</span> </a></li>
+       <li class="nav-item"> <a class="nav-link collapsed" routerLink="/antecedent"> <i class="bi bi-person-x"></i> <span>Antecedentes</span> </a></li>
+       <li class="nav-heading">Pages</li>
+       <li class="nav-item"> <a class="nav-link collapsed" routerLink="/user-profile"> <i class="bi bi-person"></i> <span>Profile</span> </a></li>
+       <li class="nav-item"> <a class="nav-link collapsed" routerLink="/pages-faq"> <i class="bi bi-question-circle"></i> <span>F.A.Q</span> </a></li>
+       <li class="nav-item"> <a class="nav-link collapsed" routerLink="/pages-contact"> <i class="bi bi-envelope"></i> <span>Contact</span> </a></li>
+       <li class="nav-item"> <a class="nav-link collapsed" routerLink="/pages-register"> <i class="bi bi-card-list"></i> <span>Register</span> </a></li>
+       </ul>
+ </aside>

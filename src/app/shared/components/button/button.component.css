@@ -1,0 +1,23 @@
+.button{
+  padding: 0.35rem;
+  width: 100%;
+  font-size: 0.97rem;
+  color: #fff;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  border: none;
+  font-weight: 400;
+  transition: .6s;
+}
+
+.button:disabled, button[disabled]{
+  color: white;
+  background: gray;
+  cursor: not-allowed;
+}
+
+.button:hover{
+  box-shadow: 0 .25rem .5rem var(--background-color-box-shadow);
+  filter: brightness(0.85);
+}
+

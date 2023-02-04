@@ -1,5 +1,5 @@
 {
-  "name": "sigeda-front",
+  "name": "autenticacion",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
@@ -19,6 +19,7 @@
     "@angular/platform-browser-dynamic": "^15.1.0",
     "@angular/router": "^15.1.0",
     "rxjs": "~7.8.0",
+    "sweetalert2": "^11.7.1",
     "tslib": "^2.3.0",
     "zone.js": "~0.12.0"
   },

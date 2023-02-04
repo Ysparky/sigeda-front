@@ -1,0 +1,51 @@
+<main class="animation fadeIn">
+     <section class="section">
+          <div class="cover">
+            <div class="carousel slide carousel-fade" data-bs-ride="carousel" id="carouselExampleFade">
+              <div class="carousel-item active"> <img src="/assets/img/principal/piloto1.jpg"></div>
+              <div class="carousel-item"> <img src="/assets/img/principal/piloto2.jpg"></div>
+              <div class="carousel-item"> <img src="/assets/img/principal/piloto3.jpg"></div>
+              <div class="carousel-item"> <img src="/assets/img/principal/piloto4.jpg"></div>
+            </div>
+          </div>
+          <div class="formulario">
+              <div class="content col-lg-4 col-md-6">
+                <div class="box-logo">
+                  <a routerLink="/" class="login-logo w-auto">
+                    <img class="img-logo" src="assets/img/logo-fap.png" alt="logo-institucional" />
+                    <span class="d-none d-lg-block">SISGEDA</span>
+                  </a>
+                </div>
+                <app-card class="box-card mb-3">
+                  <div class="card-body" #body>
+                    <div class="pt-4 pb-2">
+                      <app-title-h3 style="text-align: center;">Ingrese a su cuenta</app-title-h3>
+                      <app-paragraph>Ingrese su nombre de usuario y contraseña para iniciar sesión</app-paragraph>
+                  </div>
+                  <div class="row">
+                      <app-input type="text"
+                                label="Nombre de Usuario"
+                                placeholder="Ingrese Usuario"
+                                icon="bi bi-fonts">
+                      </app-input>
+                      <app-input type="password"
+                                label="Contraseña"
+                                placeholder="Ingrese Contraseña"
+                                icon="bi bi-eye-slash">
+                      </app-input>
+                      <app-checkbox label="Recuerdame"></app-checkbox>
+                      <app-button type="submit" [color]="9" routerLink="/instruction/transition">Acceso</app-button>
+                      <app-paragraph>
+                        ¿No tienes cuenta?
+                        <app-link link="/">
+                          Crea una cuenta
+                        </app-link>
+                      </app-paragraph>
+                    </div>
+                  </div>
+                </app-card>
+                <app-credits [opacidad]="1"></app-credits>
+              </div>
+            </div>
+      </section>
+</main>

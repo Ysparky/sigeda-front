@@ -1,0 +1,28 @@
+.content {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 2rem;
+}
+
+.info-header{
+}
+
+h1 {
+  font-weight: bold;
+  font-size: 3rem;
+}
+
+p {
+  font-weight: 200;
+}
+
+img {
+  /* position: absolute; */
+  /* top: 0; */
+  width: 60%;
+}

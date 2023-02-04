@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "sigeda-front": {
+    "autenticacion": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -13,7 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/sigeda-front",
+            "outputPath": "dist/autenticacion",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": [
@@ -60,10 +60,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "sigeda-front:build:production"
+              "browserTarget": "autenticacion:build:production"
             },
             "development": {
-              "browserTarget": "sigeda-front:build:development"
+              "browserTarget": "autenticacion:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -71,7 +71,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "sigeda-front:build"
+            "browserTarget": "autenticacion:build"
           }
         },
         "test": {
@@ -94,5 +94,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "fee16851-6c2d-47bd-b977-899c6dbdf855"
   }
 }
