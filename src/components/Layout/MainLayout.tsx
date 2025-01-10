@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
 interface MainLayoutProps {
@@ -7,7 +7,9 @@ interface MainLayoutProps {
 }
 
 function MainLayout({ children }: MainLayoutProps) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout, username } = useAuth();
 
   const handleLogout = () => {
@@ -15,37 +17,101 @@ function MainLayout({ children }: MainLayoutProps) {
     navigate('/login');
   };
 
+  const navLinks = [
+    { to: "/modulos", label: "Módulos" },
+    { to: "/estandares", label: "Estándares" },
+    { to: "/reportes", label: "Gestionar Reportes" },
+  ];
+
+  const isActiveRoute = (path: string) => location.pathname.startsWith(path);
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navbar */}
-      <nav className="bg-[#1e3a8a] text-white">
+      <nav className="bg-[#1e3a8a] text-white shadow-lg">
         <div className="mx-auto px-4">
           <div className="flex justify-between items-center h-16">
+            {/* Logo and Desktop Navigation */}
             <div className="flex items-center">
-              <Link to="/" className="text-xl font-bold">
-                SIGEDA
+              <Link to="/" className="text-xl font-bold flex items-center space-x-2">
+                <span className="text-2xl">✈️</span>
+                <span>SIGEDA</span>
               </Link>
-              <div className="ml-10 flex space-x-4">
-                <Link to="/modulos" className="px-3 py-2 rounded-md hover:bg-blue-800">
-                  Módulos
-                </Link>
-                <Link to="/estandares" className="px-3 py-2 rounded-md hover:bg-blue-800">
-                  Estándares
-                </Link>
-                <Link to="/reportes" className="px-3 py-2 rounded-md hover:bg-blue-800">
-                  Gestionar Reportes
-                </Link>
+              {/* Desktop Navigation */}
+              <div className="hidden md:flex ml-10 space-x-4">
+                {navLinks.map(({ to, label }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    className={`px-3 py-2 rounded-md transition-colors duration-200 
+                      ${isActiveRoute(to) 
+                        ? 'bg-blue-800 text-white' 
+                        : 'hover:bg-blue-800/80 text-gray-100'}`}
+                  >
+                    {label}
+                  </Link>
+                ))}
               </div>
             </div>
+
+            {/* User Menu and Mobile Button */}
             <div className="flex items-center space-x-4">
-              <div className="flex items-center">
-                <span className="px-3 py-2">{username}</span>
+              <div className="hidden md:flex items-center">
+                <span className="px-3 py-2 text-gray-100">{username}</span>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center px-3 py-2 rounded-md hover:bg-blue-800/80 transition-colors duration-200"
+                >
+                  <span>Cerrar sesión</span>
+                </button>
               </div>
+
+              {/* Mobile menu button */}
               <button
-                onClick={handleLogout}
-                className="flex items-center px-3 py-2 hover:bg-blue-800 rounded-md"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden p-2 rounded-md hover:bg-blue-800/80 focus:outline-none"
               >
-                <span>Cerrar sesión</span>
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  {isMobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Navigation */}
+          <div className={`md:hidden ${isMobileMenuOpen ? 'block' : 'hidden'} pb-3`}>
+            {navLinks.map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`block px-3 py-2 rounded-md mt-1 
+                  ${isActiveRoute(to)
+                    ? 'bg-blue-800 text-white'
+                    : 'hover:bg-blue-800/80 text-gray-100'}`}
+              >
+                {label}
+              </Link>
+            ))}
+            <div className="border-t border-blue-800 mt-3 pt-3">
+              <div className="px-3 py-2 text-gray-100">{username}</div>
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="block w-full text-left px-3 py-2 text-gray-100 hover:bg-blue-800/80 rounded-md"
+              >
+                Cerrar sesión
               </button>
             </div>
           </div>
@@ -60,9 +126,21 @@ function MainLayout({ children }: MainLayoutProps) {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t">
-        <div className="container mx-auto px-4 py-4 text-center text-sm text-gray-600">
-          SIGEDA 2025, Fuerza Aérea del Perú - Pisco
+      <footer className="bg-white border-t shadow-md">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-600">
+            <div className="mb-2 md:mb-0">
+              SIGEDA 2025, Fuerza Aérea del Perú - Pisco
+            </div>
+            <div className="flex space-x-4">
+              <Link to="/ayuda" className="hover:text-blue-600 transition-colors duration-200">
+                Ayuda
+              </Link>
+              <Link to="/contacto" className="hover:text-blue-600 transition-colors duration-200">
+                Contacto
+              </Link>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
