@@ -1,98 +1,98 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-
-interface ModuleCardProps {
-  icon: React.ReactNode;
-  title: string;
-  to: string;
-}
-
-const ModuleCard = ({ icon, title, to }: ModuleCardProps) => (
-  <Link
-    to={to}
-    className="bg-white p-8 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col items-center justify-center space-y-4"
-  >
-    <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center text-green-600">
-      {icon}
-    </div>
-    <h3 className="text-lg font-medium text-gray-900 text-center">{title}</h3>
-  </Link>
-);
+import { useState, useEffect } from 'react';
+import { fasesService, type Fase } from '../services/fases.service';
+import { useAuth } from '../hooks/useAuth';
+import { ModulesList } from '../components/modules/ModulesList';
+import { SubModulesList } from '../components/modules/SubModulesList';
 
 function DashboardPage() {
+  const [fases, setFases] = useState<Fase[]>([]);
+  const [selectedFase, setSelectedFase] = useState<Fase | null>(null);
+  const [isLoadingFases, setIsLoadingFases] = useState(true);
+  const [isLoadingSubFases, setIsLoadingSubFases] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { username } = useAuth();
+
+  useEffect(() => {
+    loadFases();
+  }, []);
+
+  const loadFases = async () => {
+    try {
+      setIsLoadingFases(true);
+      const data = await fasesService.getFases();
+      setFases(data);
+      setError(null);
+    } catch (err) {
+      setError('Error al cargar los módulos');
+      console.error(err);
+    } finally {
+      setIsLoadingFases(false);
+    }
+  };
+
+  const handleFaseClick = async (fase: Fase) => {
+    if (selectedFase?.id === fase.id) {
+      setSelectedFase(null);
+      return;
+    }
+
+    try {
+      setIsLoadingSubFases(true);
+      const faseDetail = await fasesService.getFaseById(fase.id);
+      setSelectedFase(faseDetail);
+      setError(null);
+    } catch (err) {
+      setError('Error al cargar los sub-módulos');
+      console.error(err);
+    } finally {
+      setIsLoadingSubFases(false);
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={loadFases}
+            className="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 underline"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Hola, Tomas</h1>
-        <p className="text-gray-600">Que bueno verte por aquí.</p>
-      </div>
-
-      <div className="w-full max-w-2xl">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="¿Que necesitas? Ej: Nombre de Módulo o Sub-Módulo"
-            className="w-full px-4 py-2 pl-10 pr-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-        </div>
+    <div className="max-w-6xl mx-auto space-y-8 px-4">
+      <div className="border-b pb-4">
+        <h1 className="text-2xl font-semibold text-gray-900">Hola, {username}</h1>
+        <p className="text-sm text-gray-600 mt-1">Selecciona un módulo para ver sus sub-módulos</p>
       </div>
 
       <div>
-        <h2 className="text-2xl font-semibold text-green-600 mb-6">¿Que módulo estás buscando?</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <ModuleCard
-            icon={<span className="text-2xl">📋</span>}
-            title="Adaptación"
-            to="/modulos/adaptacion"
-          />
-          <ModuleCard
-            icon={<span className="text-2xl">🏢</span>}
-            title="Operaciones Transportadas"
-            to="/modulos/operaciones-transportadas"
-          />
-          <ModuleCard
-            icon={<span className="text-2xl">🎓</span>}
-            title="Operaciones Aero-Tácticas"
-            to="/modulos/operaciones-aerotacticas"
-          />
-        </div>
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Módulos disponibles</h2>
+        <ModulesList
+          fases={fases}
+          isLoading={isLoadingFases}
+          selectedFaseId={selectedFase?.id ?? null}
+          onFaseClick={handleFaseClick}
+        />
       </div>
 
-      <div>
-        <h2 className="text-2xl font-semibold text-green-600 mb-6">¿Que sub-módulo?</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <ModuleCard
-            icon={<span className="text-2xl">📞</span>}
-            title="Contacto"
-            to="/sub-modulos/contacto"
-          />
-          <ModuleCard
-            icon={<span className="text-2xl">🧭</span>}
-            title="Navegación"
-            to="/sub-modulos/navegacion"
-          />
-          <ModuleCard
-            icon={<span className="text-2xl">🎯</span>}
-            title="Instrumentos"
-            to="/sub-modulos/instrumentos"
-          />
-          <ModuleCard
-            icon={<span className="text-2xl">📝</span>}
-            title="Campos Extraños"
-            to="/sub-modulos/campos-extranos"
-          />
-          <ModuleCard
-            icon={<span className="text-2xl">📚</span>}
-            title="Formación"
-            to="/sub-modulos/formacion"
+      {selectedFase && (
+        <div className="mt-8 pt-8 border-t">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">
+            Sub-módulos de {selectedFase.nombre}
+          </h2>
+          <SubModulesList
+            fase={selectedFase}
+            isLoading={isLoadingSubFases}
           />
         </div>
-      </div>
+      )}
     </div>
   );
 }

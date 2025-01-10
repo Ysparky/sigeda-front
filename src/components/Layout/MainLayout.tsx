@@ -16,7 +16,7 @@ function MainLayout({ children }: MainLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen flex flex-col">
       {/* Navbar */}
       <nav className="bg-[#1e3a8a] text-white">
         <div className="mx-auto px-4">
@@ -53,8 +53,10 @@ function MainLayout({ children }: MainLayoutProps) {
       </nav>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        {children}
+      <main className="flex-grow bg-gray-100">
+        <div className="container mx-auto px-4 py-8">
+          {children}
+        </div>
       </main>
 
       {/* Footer */}
