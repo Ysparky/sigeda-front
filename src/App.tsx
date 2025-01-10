@@ -1,8 +1,15 @@
-import React from 'react';
-import LoginPage from './pages/LoginPage';
+import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthProvider';
+import AppRoutes from './routes';
 
 function App() {
-  return <LoginPage />;
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
+  );
 }
 
 export default App;
