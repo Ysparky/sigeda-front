@@ -4,6 +4,7 @@ import LoginPage from '../pages/LoginPage';
 import DashboardPage from '../pages/DashboardPage';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { NotFound } from '../components/common/NotFound';
+import TurnosPage from '../pages/TurnosPage';
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
@@ -61,8 +62,7 @@ const AppRoutes = () => {
         path="/sub-modulos/:subModulo"
         element={
           <ProtectedRoute>
-            {/* TODO: Add SubModuloPage component */}
-            <div>Sub-módulo</div>
+            <TurnosPage />
           </ProtectedRoute>
         }
       />
