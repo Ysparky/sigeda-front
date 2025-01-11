@@ -70,7 +70,7 @@ function TurnosPage() {
           sortBy={sortBy}
           onSortChange={setSortBy}
         />
-        <TurnosList turnos={turnos} searchTerm={searchTerm} sortBy={sortBy} />
+        <TurnosList turnos={turnos} />
       </>
     );
   };
