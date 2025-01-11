@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import type { TurnoResponse } from "../types";
 
 interface TurnoCardProps {
@@ -5,6 +6,12 @@ interface TurnoCardProps {
 }
 
 export function TurnoCard({ turno }: TurnoCardProps) {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/turnos/${turno.id}/evaluaciones`);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6">
       <div className="flex justify-between items-start mb-4">
@@ -35,10 +42,11 @@ export function TurnoCard({ turno }: TurnoCardProps) {
       </div>
 
       <button
+        onClick={handleClick}
         className="mt-4 w-full text-blue-600 text-sm hover:text-blue-800 
                  transition-colors duration-200 text-center"
       >
-        Ver más información del turno →
+        Ver evaluaciones del turno →
       </button>
     </div>
   );
