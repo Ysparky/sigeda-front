@@ -8,11 +8,12 @@ if (!API_URL) {
 }
 
 export const turnosService = {
-  async getTurnosBySubFase(subFaseId: string, userInfo: UserInfo): Promise<TurnoResponse[]> {
+  async getTurnosBySubFase(subfaseId: string, userInfo: UserInfo): Promise<TurnoResponse[]> {
     const token = localStorage.getItem('auth_token');
+    console.log('Making API call with:', { subfaseId, userInfo });
 
     const response = await fetch(
-      `${API_URL}/api/turnos/subfase/${subFaseId}/programa/PDI/grupo/${userInfo.idGrupo}`,
+      `${API_URL}/api/turnos/subfase/${subfaseId}/programa/PDI/grupo/${userInfo.idGrupo}`,
       {
         headers: {
           'Authorization': `Bearer ${token}`,

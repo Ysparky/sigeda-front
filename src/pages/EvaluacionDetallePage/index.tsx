@@ -9,14 +9,17 @@ import { EvaluacionHeader } from "./components/EvaluacionHeader";
 import type { EvaluacionDetalle } from "./types";
 
 function EvaluacionDetallePage() {
-  const { evaluacionId, turnoId, subFaseId } = useParams();
+  const { evaluacionId, turnoId, subfaseId } = useParams();
   const [evaluacion, setEvaluacion] = useState<EvaluacionDetalle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadEvaluacionDetalle = async () => {
-      if (!evaluacionId) return;
+      if (!evaluacionId) {
+        console.error("Missing evaluacionId");
+        return;
+      }
 
       try {
         setIsLoading(true);
@@ -48,9 +51,12 @@ function EvaluacionDetallePage() {
       >
         <Breadcrumb
           items={[
-            { label: "Módulos", path: "/" },
-            { label: "Turnos", path: `/turnos/${subFaseId}` },
-            { label: "Evaluaciones", path: `/turnos/${turnoId}/evaluaciones` },
+            { label: "Inicio", path: "/" },
+            { label: "Turnos", path: `/subfase/${subfaseId}/turnos` },
+            {
+              label: "Evaluaciones",
+              path: `/subfase/${subfaseId}/turnos/${turnoId}/evaluaciones`,
+            },
             { label: "Detalle" },
           ]}
         />
@@ -62,9 +68,12 @@ function EvaluacionDetallePage() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <Breadcrumb
         items={[
-          { label: "Módulos", path: "/" },
-          { label: "Turnos", path: `/turnos/${subFaseId}` },
-          { label: "Evaluaciones", path: `/turnos/${turnoId}/evaluaciones` },
+          { label: "Inicio", path: "/" },
+          { label: "Turnos", path: `/subfase/${subfaseId}/turnos` },
+          {
+            label: "Evaluaciones",
+            path: `/subfase/${subfaseId}/turnos/${turnoId}/evaluaciones`,
+          },
           { label: "Detalle" },
         ]}
       />

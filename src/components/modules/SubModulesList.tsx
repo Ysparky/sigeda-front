@@ -26,7 +26,7 @@ export const SubModulesList = ({ fase, isLoading }: SubModulesListProps) => {
       console.error("User info not available");
       return;
     }
-    navigate(`/turnos/${subFaseId}`);
+    navigate(`/subfase/${subFaseId}/turnos`);
   };
 
   if (isLoading) return <LoadingSpinner />;

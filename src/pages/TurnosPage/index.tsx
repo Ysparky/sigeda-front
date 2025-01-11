@@ -11,7 +11,7 @@ import { TurnosList } from "./components/TurnosList";
 import type { SortOption, TurnoResponse } from "./types";
 
 function TurnosPage() {
-  const { subFaseId } = useParams();
+  const { subfaseId } = useParams();
   const { userInfo } = useData();
   const [turnos, setTurnos] = useState<TurnoResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,17 +21,17 @@ function TurnosPage() {
 
   useEffect(() => {
     const loadTurnos = async () => {
-      if (!subFaseId || !userInfo) {
-        console.log("Missing data:", { subFaseId, userInfo });
+      if (!subfaseId || !userInfo) {
+        console.log("Missing data:", { subfaseId, userInfo });
         return;
       }
 
       try {
         setIsLoading(true);
         setError(null);
-        console.log("Fetching turnos with:", { subFaseId, userInfo });
+        console.log("Fetching turnos with:", { subfaseId, userInfo });
         const data = await turnosService.getTurnosBySubFase(
-          subFaseId,
+          subfaseId,
           userInfo
         );
         console.log("Turnos loaded:", data);
@@ -45,7 +45,7 @@ function TurnosPage() {
     };
 
     loadTurnos();
-  }, [subFaseId, userInfo]);
+  }, [subfaseId, userInfo]);
 
   const renderContent = () => {
     if (isLoading) return <LoadingSpinner />;
@@ -58,7 +58,7 @@ function TurnosPage() {
           showHeader={true}
         >
           <Breadcrumb
-            items={[{ label: "Módulos", path: "/" }, { label: "Turnos" }]}
+            items={[{ label: "Inicio", path: "/" }, { label: "Turnos" }]}
           />
         </ErrorDisplay>
       );
@@ -84,7 +84,7 @@ function TurnosPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <Breadcrumb
-        items={[{ label: "Módulos", path: "/" }, { label: "Turnos" }]}
+        items={[{ label: "Inicio", path: "/" }, { label: "Turnos" }]}
       />
       {renderContent()}
     </div>

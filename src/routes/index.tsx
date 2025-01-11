@@ -28,9 +28,8 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Turnos Route */}
       <Route
-        path="/turnos/:subFaseId"
+        path="/subfase/:subfaseId/turnos"
         element={
           <ProtectedRoute>
             <TurnosPage />
@@ -38,9 +37,8 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Evaluaciones Route */}
       <Route
-        path="/turnos/:subFaseId/turno/:turnoId/evaluaciones"
+        path="/subfase/:subfaseId/turnos/:turnoId/evaluaciones"
         element={
           <ProtectedRoute>
             <EvaluacionesPage />
@@ -48,9 +46,8 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Evaluacion Detalle Route */}
       <Route
-        path="/turnos/:subFaseId/turno/:turnoId/evaluaciones/:evaluacionId"
+        path="/subfase/:subfaseId/turnos/:turnoId/evaluaciones/:evaluacionId"
         element={
           <ProtectedRoute>
             <EvaluacionDetallePage />
@@ -58,7 +55,6 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Catch all route - 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

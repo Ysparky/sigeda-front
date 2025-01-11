@@ -7,10 +7,14 @@ interface TurnoCardProps {
 
 export function TurnoCard({ turno }: TurnoCardProps) {
   const navigate = useNavigate();
-  const { subFaseId } = useParams();
+  const { subfaseId } = useParams();
 
   const handleClick = () => {
-    navigate(`/turnos/${subFaseId}/turno/${turno.id}/evaluaciones`);
+    if (!subfaseId) {
+      console.error("Missing subfaseId");
+      return;
+    }
+    navigate(`/subfase/${subfaseId}/turnos/${turno.id}/evaluaciones`);
   };
 
   return (

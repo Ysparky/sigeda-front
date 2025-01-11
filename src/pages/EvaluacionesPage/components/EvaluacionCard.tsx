@@ -7,11 +7,16 @@ interface EvaluacionCardProps {
 
 export function EvaluacionCard({ evaluacion }: EvaluacionCardProps) {
   const navigate = useNavigate();
-  const { subFaseId, turnoId } = useParams();
+  const { subfaseId, turnoId } = useParams();
 
   const handleClick = () => {
+    if (!subfaseId || !turnoId) {
+      console.error("Missing required params:", { subfaseId, turnoId });
+      return;
+    }
+
     navigate(
-      `/turnos/${subFaseId}/turno/${turnoId}/evaluaciones/${evaluacion.codigo}`
+      `/subfase/${subfaseId}/turnos/${turnoId}/evaluaciones/${evaluacion.codigo}`
     );
   };
 
