@@ -1,1 +1,0 @@
-// LoginError interface can be moved directly to LoginForm component since it's only used there 

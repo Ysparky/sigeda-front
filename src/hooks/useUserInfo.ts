@@ -1,1 +1,0 @@
-// This hook can be removed since we're using AuthContext directly 

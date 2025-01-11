@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useData } from "../../contexts/DataContext";
 import { getFullName } from "../../utils/userUtils";
+import { useAuth } from "../../hooks/useAuth";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ function MainLayout({ children }: MainLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { userInfo } = useData();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
     logout();
