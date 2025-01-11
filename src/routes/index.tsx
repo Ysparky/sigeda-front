@@ -2,9 +2,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import LoginPage from '../pages/LoginPage';
 import DashboardPage from '../pages/DashboardPage';
+import TurnosPage from '../pages/TurnosPage';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { NotFound } from '../components/common/NotFound';
-import TurnosPage from '../pages/TurnosPage';
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
@@ -28,38 +28,9 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Módulos Routes */}
+      {/* Turnos Route */}
       <Route
-        path="/modulos/adaptacion"
-        element={
-          <ProtectedRoute>
-            {/* TODO: Add AdaptacionPage component */}
-            <div>Módulo de Adaptación</div>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/modulos/operaciones-transportadas"
-        element={
-          <ProtectedRoute>
-            {/* TODO: Add OperacionesTransportadasPage component */}
-            <div>Módulo de Operaciones Transportadas</div>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/modulos/operaciones-aerotacticas"
-        element={
-          <ProtectedRoute>
-            {/* TODO: Add OperacionesAeroTacticasPage component */}
-            <div>Módulo de Operaciones Aero-Tácticas</div>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Sub-módulos Routes */}
-      <Route
-        path="/sub-modulos/:subModulo"
+        path="/turnos/:subFaseId"
         element={
           <ProtectedRoute>
             <TurnosPage />

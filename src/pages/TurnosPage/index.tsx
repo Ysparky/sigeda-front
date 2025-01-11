@@ -1,18 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import { turnosService } from '../../services/turnos.service';
+import type { TurnoResponse, SortOption } from './types';
 import { TurnosList } from './components/TurnosList';
 import { SearchSort } from './components/SearchSort';
 import { EmptyState } from './components/EmptyState';
-import { useTurnos } from './hooks/useTurnos';
-import type { SortOption } from './types';
 
 function TurnosPage() {
+  const { subFaseId } = useParams();
+  const { userInfo } = useAuth();
+  const [turnos, setTurnos] = useState<TurnoResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('fecha');
-  
-  const { subModulo } = useParams();
-  const { turnos, isLoading, error, loadTurnos } = useTurnos(subModulo);
+
+  useEffect(() => {
+    const loadTurnos = async () => {
+      if (!subFaseId || !userInfo) return;
+
+      try {
+        setIsLoading(true);
+        const data = await turnosService.getTurnosBySubFase(subFaseId, userInfo);
+        setTurnos(data);
+      } catch (err) {
+        setError('Error al cargar los turnos');
+        console.error('Error loading turnos:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadTurnos();
+  }, [subFaseId, userInfo]);
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
 
   if (error) {
     return (
@@ -20,7 +46,7 @@ function TurnosPage() {
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <button
-            onClick={loadTurnos}
+            onClick={() => window.location.reload()}
             className="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 underline"
           >
             Reintentar
@@ -30,37 +56,26 @@ function TurnosPage() {
     );
   }
 
+  if (turnos.length === 0) {
+    return <EmptyState />;
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Programación de Turnos
-        </h1>
-        <p className="text-gray-600">
-          Gestiona y visualiza los turnos programados
-        </p>
-      </div>
-
-      {turnos.length > 0 && (
-        <SearchSort
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-        />
-      )}
-
-      {isLoading ? (
-        <LoadingSpinner />
-      ) : turnos.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <TurnosList
-          turnos={turnos}
-          searchTerm={searchTerm}
-          sortBy={sortBy}
-        />
-      )}
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold text-gray-900 mb-8">
+        Turnos Disponibles
+      </h1>
+      <SearchSort 
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+      />
+      <TurnosList 
+        turnos={turnos}
+        searchTerm={searchTerm}
+        sortBy={sortBy}
+      />
     </div>
   );
 }

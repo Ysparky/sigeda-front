@@ -3,24 +3,36 @@ import { WelcomeHeader } from './components/WelcomeHeader';
 import { ModulesSection } from './components/ModulesSection';
 import { SubModulesSection } from './components/SubModulesSection';
 import { useFases } from './hooks/useFases';
+import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import { useEffect } from 'react';
 
 function DashboardPage() {
-  const { username } = useAuth();
+  const { username, userInfo, loadUserInfo } = useAuth();
   const {
     fases,
     selectedFase,
     isLoadingFases,
     isLoadingSubFases,
-    error,
+    error: fasesError,
     loadFases,
     handleFaseClick
   } = useFases();
 
-  if (error) {
+  useEffect(() => {
+    if (!userInfo) {
+      loadUserInfo().catch(console.error);
+    }
+  }, [userInfo, loadUserInfo]);
+
+  if (!userInfo) {
+    return <LoadingSpinner />;
+  }
+
+  if (fasesError) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-red-600 mb-4">{fasesError}</p>
           <button
             onClick={loadFases}
             className="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 underline"

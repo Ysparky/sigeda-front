@@ -1,4 +1,4 @@
-import { LoginCredentials, LoginResponse } from '../types/auth.types';
+import { LoginCredentials, LoginResponse, UserInfo } from '../types/auth.types';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -18,6 +18,20 @@ export const authService = {
 
     if (!response.ok) {
       throw new Error('Error en la autenticación');
+    }
+
+    return response.json();
+  },
+
+  async getUserInfo(token: string, username: string): Promise<UserInfo> {
+    const response = await fetch(`${API_URL}/api/personas/${username}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al obtener información del usuario');
     }
 
     return response.json();

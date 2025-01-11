@@ -3,6 +3,8 @@ import { LoadingSpinner } from '../common/LoadingSpinner';
 import { getSubModuleIcon } from '../../utils/moduleIcons';
 import type { Fase } from '../../services/fases.service';
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 interface SubModulesListProps {
   fase: Fase;
@@ -11,11 +13,21 @@ interface SubModulesListProps {
 
 export const SubModulesList = ({ fase, isLoading }: SubModulesListProps) => {
   const [isVisible, setIsVisible] = useState(false);
+  const { userInfo } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setIsVisible(true);
     return () => setIsVisible(false);
   }, [fase.id]);
+
+  const handleSubModuleClick = (subFaseId: number) => {
+    console.log(
+      'userInfo', userInfo
+    )
+    if (!userInfo) return;
+    navigate(`/turnos/${subFaseId}`);
+  };
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -32,9 +44,8 @@ export const SubModulesList = ({ fase, isLoading }: SubModulesListProps) => {
   }
 
   return (
-    <div 
-      className={`transition-all duration-300 transform
-        ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+    <div className={`transition-all duration-300 transform
+      ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {fase.subFases.map((subFase) => (
@@ -42,7 +53,7 @@ export const SubModulesList = ({ fase, isLoading }: SubModulesListProps) => {
             key={subFase.id}
             icon={<span className="text-xl">{getSubModuleIcon(subFase.nombre)}</span>}
             title={subFase.nombre}
-            to={`/sub-modulos/${subFase.id}`}
+            onClick={() => handleSubModuleClick(subFase.id)}
           />
         ))}
       </div>
