@@ -51,7 +51,7 @@ function EvaluacionDetallePage() {
       >
         <Breadcrumb
           items={[
-            { label: "Inicio", path: "/" },
+            { label: "Módulos", path: "/" },
             { label: "Turnos", path: `/subfase/${subfaseId}/turnos` },
             {
               label: "Evaluaciones",
@@ -68,7 +68,7 @@ function EvaluacionDetallePage() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <Breadcrumb
         items={[
-          { label: "Inicio", path: "/" },
+          { label: "Módulos", path: "/" },
           { label: "Turnos", path: `/subfase/${subfaseId}/turnos` },
           {
             label: "Evaluaciones",

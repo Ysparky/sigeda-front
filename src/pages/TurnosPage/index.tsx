@@ -58,7 +58,7 @@ function TurnosPage() {
           showHeader={true}
         >
           <Breadcrumb
-            items={[{ label: "Inicio", path: "/" }, { label: "Turnos" }]}
+            items={[{ label: "Módulos", path: "/" }, { label: "Turnos" }]}
           />
         </ErrorDisplay>
       );
@@ -84,7 +84,7 @@ function TurnosPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <Breadcrumb
-        items={[{ label: "Inicio", path: "/" }, { label: "Turnos" }]}
+        items={[{ label: "Módulos", path: "/" }, { label: "Turnos" }]}
       />
       {renderContent()}
     </div>
