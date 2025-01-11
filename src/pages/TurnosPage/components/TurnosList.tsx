@@ -1,5 +1,5 @@
-import { TurnoCard } from "./TurnoCard";
 import type { TurnoResponse } from "../types";
+import { TurnoCard } from "./TurnoCard";
 
 interface TurnosListProps {
   turnos: TurnoResponse[];

@@ -1,5 +1,5 @@
-import { EvaluacionCard } from "./EvaluacionCard";
 import type { Evaluacion } from "../types";
+import { EvaluacionCard } from "./EvaluacionCard";
 
 interface EvaluacionesListProps {
   evaluaciones: Evaluacion[];

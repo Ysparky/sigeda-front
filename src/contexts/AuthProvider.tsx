@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
-import { AuthContext } from "./AuthContext";
+import { useCallback, useEffect, useState } from "react";
+import { UserInfoError } from "../components/common/UserInfoError";
+import { useData } from "../contexts/DataContext";
+import { authService } from "../services/auth.service";
 import {
   AuthState,
   LoginCredentials,
   LoginResponse,
 } from "../types/auth.types";
-import { authService } from "../services/auth.service";
-import { UserInfoError } from "../components/common/UserInfoError";
-import { useData } from "../contexts/DataContext";
+import { AuthContext } from "./AuthContext";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { clearData } = useData();

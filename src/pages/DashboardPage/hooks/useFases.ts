@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { fasesService, type Fase } from '../../../services/fases.service';
 
 export function useFases() {

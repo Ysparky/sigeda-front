@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { WelcomeHeader } from "./components/WelcomeHeader";
-import { ModulesSection } from "./components/ModulesSection";
-import { SubModulesSection } from "./components/SubModulesSection";
-import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ErrorDisplay } from "../../components/common/ErrorDisplay";
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { useData } from "../../contexts/DataContext";
 import type { Fase } from "../../services/fases.service";
+import { ModulesSection } from "./components/ModulesSection";
+import { SubModulesSection } from "./components/SubModulesSection";
+import { WelcomeHeader } from "./components/WelcomeHeader";
 
 function DashboardPage() {
   const {

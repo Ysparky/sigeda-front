@@ -1,7 +1,7 @@
-import { ModuleCard } from './ModuleCard';
-import { LoadingSpinner } from '../common/LoadingSpinner';
-import { getModuleIcon } from '../../utils/moduleIcons';
-import type { Fase } from '../../services/fases.service';
+import type { Fase } from "../../services/fases.service";
+import { getModuleIcon } from "../../utils/moduleIcons";
+import { LoadingSpinner } from "../common/LoadingSpinner";
+import { ModuleCard } from "./ModuleCard";
 
 interface ModulesListProps {
   fases: Fase[];
@@ -10,7 +10,12 @@ interface ModulesListProps {
   onFaseClick: (fase: Fase) => void;
 }
 
-export const ModulesList = ({ fases, isLoading, selectedFaseId, onFaseClick }: ModulesListProps) => {
+export const ModulesList = ({
+  fases,
+  isLoading,
+  selectedFaseId,
+  onFaseClick,
+}: ModulesListProps) => {
   if (isLoading) return <LoadingSpinner />;
 
   return (
@@ -26,4 +31,4 @@ export const ModulesList = ({ fases, isLoading, selectedFaseId, onFaseClick }: M
       ))}
     </div>
   );
-}; 
+};

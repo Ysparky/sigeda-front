@@ -1,5 +1,5 @@
-import { SubModulesList } from "../../../components/modules/SubModulesList";
 import { ErrorDisplay } from "../../../components/common/ErrorDisplay";
+import { SubModulesList } from "../../../components/modules/SubModulesList";
 import type { SubModulesSectionProps } from "../types";
 
 export function SubModulesSection({

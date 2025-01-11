@@ -1,12 +1,12 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
-import LoginPage from "../pages/LoginPage";
-import DashboardPage from "../pages/DashboardPage";
-import TurnosPage from "../pages/TurnosPage";
+import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { NotFound } from "../components/common/NotFound";
-import EvaluacionesPage from "../pages/EvaluacionesPage";
+import { useAuth } from "../hooks/useAuth";
+import DashboardPage from "../pages/DashboardPage";
 import EvaluacionDetallePage from "../pages/EvaluacionDetallePage";
+import EvaluacionesPage from "../pages/EvaluacionesPage";
+import LoginPage from "../pages/LoginPage";
+import TurnosPage from "../pages/TurnosPage";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();

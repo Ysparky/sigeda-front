@@ -1,10 +1,10 @@
-import { ModuleCard } from "./ModuleCard";
-import { LoadingSpinner } from "../common/LoadingSpinner";
-import { getSubModuleIcon } from "../../utils/moduleIcons";
-import type { Fase } from "../../services/fases.service";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useData } from "../../contexts/DataContext";
+import type { Fase } from "../../services/fases.service";
+import { getSubModuleIcon } from "../../utils/moduleIcons";
+import { LoadingSpinner } from "../common/LoadingSpinner";
+import { ModuleCard } from "./ModuleCard";
 
 interface SubModulesListProps {
   fase: Fase;

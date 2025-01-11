@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
-import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ErrorDisplay } from "../../components/common/ErrorDisplay";
-import { EvaluacionHeader } from "./components/EvaluacionHeader";
-import { CalificacionesTable } from "./components/CalificacionesTable";
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { evaluacionDetalleService } from "../../services/evaluacionDetalle.service";
+import { CalificacionesTable } from "./components/CalificacionesTable";
+import { EvaluacionHeader } from "./components/EvaluacionHeader";
 import type { EvaluacionDetalle } from "./types";
 
 function EvaluacionDetallePage() {
