@@ -6,6 +6,7 @@ import TurnosPage from "../pages/TurnosPage";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { NotFound } from "../components/common/NotFound";
 import EvaluacionesPage from "../pages/EvaluacionesPage";
+import EvaluacionDetallePage from "../pages/EvaluacionDetallePage";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
@@ -43,6 +44,16 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <EvaluacionesPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Evaluacion Detalle Route */}
+      <Route
+        path="/turnos/:turnoId/evaluaciones/:evaluacionId"
+        element={
+          <ProtectedRoute>
+            <EvaluacionDetallePage />
           </ProtectedRoute>
         }
       />

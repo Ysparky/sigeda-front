@@ -1,3 +1,4 @@
+import { useNavigate, useParams } from "react-router-dom";
 import type { Evaluacion } from "../types";
 
 interface EvaluacionCardProps {
@@ -5,8 +6,18 @@ interface EvaluacionCardProps {
 }
 
 export function EvaluacionCard({ evaluacion }: EvaluacionCardProps) {
+  const navigate = useNavigate();
+  const { turnoId } = useParams();
+
+  const handleClick = () => {
+    navigate(`/turnos/${turnoId}/evaluaciones/${evaluacion.codigo}`);
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6">
+    <div
+      onClick={handleClick}
+      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6 cursor-pointer"
+    >
       <div className="flex justify-between items-start mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">
