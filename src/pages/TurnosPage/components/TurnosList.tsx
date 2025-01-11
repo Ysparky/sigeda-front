@@ -1,5 +1,5 @@
-import { TurnoCard } from './TurnoCard';
-import type { TurnoResponse, SortOption } from '../types';
+import { TurnoCard } from "./TurnoCard";
+import type { TurnoResponse, SortOption } from "../types";
 
 interface TurnosListProps {
   turnos: TurnoResponse[];
@@ -8,18 +8,21 @@ interface TurnosListProps {
 }
 
 export function TurnosList({ turnos, searchTerm, sortBy }: TurnosListProps) {
-  const filteredTurnos = turnos.filter(turno => 
-    turno.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    turno.programa.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTurnos = turnos.filter(
+    (turno) =>
+      turno.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      turno.programa.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const sortedTurnos = [...filteredTurnos].sort((a, b) => {
     switch (sortBy) {
-      case 'alfabetico':
+      case "alfabetico":
         return a.nombre.localeCompare(b.nombre);
-      case 'fecha':
-        return new Date(b.fechaEval).getTime() - new Date(a.fechaEval).getTime();
-      case 'conteo':
+      case "fecha":
+        return (
+          new Date(b.fechaEval).getTime() - new Date(a.fechaEval).getTime()
+        );
+      case "conteo":
         return b.cantManiobra - a.cantManiobra;
       default:
         return 0;
@@ -33,4 +36,4 @@ export function TurnosList({ turnos, searchTerm, sortBy }: TurnosListProps) {
       ))}
     </div>
   );
-} 
+}

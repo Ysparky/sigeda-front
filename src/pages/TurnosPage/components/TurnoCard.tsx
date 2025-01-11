@@ -1,4 +1,4 @@
-import type { TurnoResponse } from '../types';
+import type { TurnoResponse } from "../types";
 
 interface TurnoCardProps {
   turno: TurnoResponse;
@@ -8,14 +8,12 @@ export function TurnoCard({ turno }: TurnoCardProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6">
       <div className="flex justify-between items-start mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">
-          {turno.nombre}
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-900">{turno.nombre}</h3>
         <span className="text-sm text-gray-500">
           {new Date(turno.fechaEval).toLocaleDateString()}
         </span>
       </div>
-      
+
       <div className="space-y-2">
         <p className="text-sm text-gray-600">
           Programa: <span className="font-medium">{turno.programa}</span>
@@ -44,4 +42,4 @@ export function TurnoCard({ turno }: TurnoCardProps) {
       </button>
     </div>
   );
-} 
+}

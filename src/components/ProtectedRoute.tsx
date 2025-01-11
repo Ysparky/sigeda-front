@@ -1,6 +1,6 @@
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import MainLayout from './Layout/MainLayout';
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import MainLayout from "./Layout/MainLayout";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -17,4 +17,4 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   return <MainLayout>{children}</MainLayout>;
 };
 
-export default ProtectedRoute; 
+export default ProtectedRoute;

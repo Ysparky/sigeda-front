@@ -1,5 +1,5 @@
-import { UserInfo } from '../../../types/auth.types';
-import { getFullName } from '../../../utils/userUtils';
+import { UserInfo } from "../../../types/auth.types";
+import { getFullName } from "../../../utils/userUtils";
 
 interface WelcomeHeaderProps {
   userInfo: UserInfo | null;
@@ -16,4 +16,4 @@ export function WelcomeHeader({ userInfo }: WelcomeHeaderProps) {
       </p>
     </div>
   );
-} 
+}

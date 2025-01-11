@@ -1,4 +1,3 @@
-
 interface UserInfoErrorProps {
   onRetry: () => void;
   onLogout: () => void;
@@ -15,7 +14,8 @@ export function UserInfoError({ onRetry, onLogout }: UserInfoErrorProps) {
           Error al cargar información
         </h1>
         <p className="text-gray-600 mb-8">
-          No se pudo obtener la información del usuario. Por favor, intente nuevamente.
+          No se pudo obtener la información del usuario. Por favor, intente
+          nuevamente.
         </p>
         <div className="space-y-4">
           <button
@@ -36,4 +36,4 @@ export function UserInfoError({ onRetry, onLogout }: UserInfoErrorProps) {
       </div>
     </div>
   );
-} 
+}

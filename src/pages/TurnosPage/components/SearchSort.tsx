@@ -1,4 +1,4 @@
-import type { SortOption } from '../types';
+import type { SortOption } from "../types";
 
 interface SearchSortProps {
   searchTerm: string;
@@ -7,7 +7,12 @@ interface SearchSortProps {
   onSortChange: (value: SortOption) => void;
 }
 
-export function SearchSort({ searchTerm, onSearchChange, sortBy, onSortChange }: SearchSortProps) {
+export function SearchSort({
+  searchTerm,
+  onSearchChange,
+  sortBy,
+  onSortChange,
+}: SearchSortProps) {
   return (
     <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       {/* Search Bar */}
@@ -21,8 +26,18 @@ export function SearchSort({ searchTerm, onSearchChange, sortBy, onSortChange }:
                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <svg
+            className="w-5 h-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
         </div>
       </div>
@@ -30,31 +45,31 @@ export function SearchSort({ searchTerm, onSearchChange, sortBy, onSortChange }:
       {/* Sort Options */}
       <div className="flex gap-2">
         <button
-          onClick={() => onSortChange('alfabetico')}
+          onClick={() => onSortChange("alfabetico")}
           className={`px-3 py-1 rounded-md text-sm ${
-            sortBy === 'alfabetico' 
-              ? 'bg-blue-100 text-blue-700' 
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            sortBy === "alfabetico"
+              ? "bg-blue-100 text-blue-700"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           }`}
         >
           Alfabético
         </button>
         <button
-          onClick={() => onSortChange('fecha')}
+          onClick={() => onSortChange("fecha")}
           className={`px-3 py-1 rounded-md text-sm ${
-            sortBy === 'fecha' 
-              ? 'bg-blue-100 text-blue-700' 
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            sortBy === "fecha"
+              ? "bg-blue-100 text-blue-700"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           }`}
         >
           Fecha
         </button>
         <button
-          onClick={() => onSortChange('conteo')}
+          onClick={() => onSortChange("conteo")}
           className={`px-3 py-1 rounded-md text-sm ${
-            sortBy === 'conteo' 
-              ? 'bg-blue-100 text-blue-700' 
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            sortBy === "conteo"
+              ? "bg-blue-100 text-blue-700"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           }`}
         >
           Maniobras
@@ -62,4 +77,4 @@ export function SearchSort({ searchTerm, onSearchChange, sortBy, onSortChange }:
       </div>
     </div>
   );
-} 
+}

@@ -6,17 +6,26 @@ export function WelcomePanel() {
           <span className="text-4xl animate-bounce">✈️</span>
           <h1 className="text-4xl font-bold animate-slide-in">SIGEDA</h1>
         </div>
-        <h2 className="text-2xl font-bold animate-slide-in" style={{ animationDelay: '100ms' }}>
+        <h2
+          className="text-2xl font-bold animate-slide-in"
+          style={{ animationDelay: "100ms" }}
+        >
           Sistema de Gestión de Entrenamiento y Desarrollo Aeronáutico
         </h2>
-        <p className="mt-4 text-blue-100 animate-slide-in" style={{ animationDelay: '200ms' }}>
-          Plataforma integral para la gestión y seguimiento del entrenamiento aeronáutico 
-          de la Fuerza Aérea del Perú.
+        <p
+          className="mt-4 text-blue-100 animate-slide-in"
+          style={{ animationDelay: "200ms" }}
+        >
+          Plataforma integral para la gestión y seguimiento del entrenamiento
+          aeronáutico de la Fuerza Aérea del Perú.
         </p>
       </div>
-      <div className="text-blue-100 text-sm animate-fade-in" style={{ animationDelay: '300ms' }}>
+      <div
+        className="text-blue-100 text-sm animate-fade-in"
+        style={{ animationDelay: "300ms" }}
+      >
         Fuerza Aérea del Perú - Pisco
       </div>
     </div>
   );
-} 
+}

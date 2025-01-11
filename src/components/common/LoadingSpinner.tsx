@@ -4,4 +4,4 @@ export const LoadingSpinner = () => (
       <div className="w-full h-full rounded-full border-2 border-transparent border-t-green-600 animate-pulse"></div>
     </div>
   </div>
-); 
+);

@@ -1,5 +1,5 @@
-import { LoginForm } from './components/LoginForm';
-import { WelcomePanel } from './components/WelcomePanel';
+import { LoginForm } from "./components/LoginForm";
+import { WelcomePanel } from "./components/WelcomePanel";
 
 function LoginPage() {
   return (
@@ -16,7 +16,7 @@ function LoginPage() {
           <LoginForm />
           <div className="mt-8 text-center text-sm text-gray-600">
             <p>
-              Sistema de uso exclusivo para personal autorizado de la{' '}
+              Sistema de uso exclusivo para personal autorizado de la{" "}
               <span className="font-medium">Fuerza Aérea del Perú</span>
             </p>
           </div>
@@ -26,4 +26,4 @@ function LoginPage() {
   );
 }
 
-export default LoginPage; 
+export default LoginPage;

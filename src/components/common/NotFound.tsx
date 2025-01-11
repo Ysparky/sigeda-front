@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 export const NotFound = () => {
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ export const NotFound = () => {
               ← Volver atrás
             </button>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate("/")}
               className="block w-full md:inline md:w-auto md:ml-4 px-6 py-3 bg-gray-100 text-gray-700 
                        rounded-lg hover:bg-gray-200 hover:shadow-lg transform hover:-translate-y-0.5
                        transition-all duration-200 ease-out"
@@ -40,4 +40,4 @@ export const NotFound = () => {
       </div>
     </div>
   );
-}; 
+};

@@ -1,18 +1,21 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 interface ErrorPageProps {
   message?: string;
   onRetry?: () => void;
 }
 
-export function ErrorPage({ message = 'Ha ocurrido un error al cargar la información', onRetry }: ErrorPageProps) {
+export function ErrorPage({
+  message = "Ha ocurrido un error al cargar la información",
+  onRetry,
+}: ErrorPageProps) {
   const navigate = useNavigate();
 
   const handleLoginClick = () => {
     try {
-      navigate('/login');
+      navigate("/login");
     } catch {
-      window.location.href = '/login';
+      window.location.href = "/login";
     }
   };
 
@@ -25,9 +28,7 @@ export function ErrorPage({ message = 'Ha ocurrido un error al cargar la informa
         <h1 className="text-2xl font-bold text-gray-900 mb-4">
           Error de Sistema
         </h1>
-        <p className="text-gray-600 mb-8">
-          {message}
-        </p>
+        <p className="text-gray-600 mb-8">{message}</p>
         <div className="space-y-4">
           {onRetry && (
             <button
@@ -49,4 +50,4 @@ export function ErrorPage({ message = 'Ha ocurrido un error al cargar la informa
       </div>
     </div>
   );
-} 
+}

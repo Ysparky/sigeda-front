@@ -1,10 +1,10 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import LoginPage from '../pages/LoginPage';
-import DashboardPage from '../pages/DashboardPage';
-import TurnosPage from '../pages/TurnosPage';
-import ProtectedRoute from '../components/ProtectedRoute';
-import { NotFound } from '../components/common/NotFound';
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import LoginPage from "../pages/LoginPage";
+import DashboardPage from "../pages/DashboardPage";
+import TurnosPage from "../pages/TurnosPage";
+import ProtectedRoute from "../components/ProtectedRoute";
+import { NotFound } from "../components/common/NotFound";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
@@ -13,9 +13,7 @@ const AppRoutes = () => {
     <Routes>
       <Route
         path="/login"
-        element={
-          isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
-        }
+        element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />}
       />
 
       {/* Protected Routes */}
@@ -44,4 +42,4 @@ const AppRoutes = () => {
   );
 };
 
-export default AppRoutes; 
+export default AppRoutes;
