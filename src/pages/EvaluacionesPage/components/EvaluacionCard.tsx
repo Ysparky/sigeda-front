@@ -7,10 +7,12 @@ interface EvaluacionCardProps {
 
 export function EvaluacionCard({ evaluacion }: EvaluacionCardProps) {
   const navigate = useNavigate();
-  const { turnoId } = useParams();
+  const { subFaseId, turnoId } = useParams();
 
   const handleClick = () => {
-    navigate(`/turnos/${turnoId}/evaluaciones/${evaluacion.codigo}`);
+    navigate(
+      `/turnos/${subFaseId}/turno/${turnoId}/evaluaciones/${evaluacion.codigo}`
+    );
   };
 
   return (

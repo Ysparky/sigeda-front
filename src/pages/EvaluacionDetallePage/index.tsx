@@ -9,7 +9,7 @@ import { evaluacionDetalleService } from "../../services/evaluacionDetalle.servi
 import type { EvaluacionDetalle } from "./types";
 
 function EvaluacionDetallePage() {
-  const { evaluacionId } = useParams();
+  const { evaluacionId, turnoId, subFaseId } = useParams();
   const [evaluacion, setEvaluacion] = useState<EvaluacionDetalle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,8 +49,8 @@ function EvaluacionDetallePage() {
         <Breadcrumb
           items={[
             { label: "Módulos", path: "/" },
-            { label: "Turnos", path: "/turnos" },
-            { label: "Evaluaciones", path: "/evaluaciones" },
+            { label: "Turnos", path: `/turnos/${subFaseId}` },
+            { label: "Evaluaciones", path: `/turnos/${turnoId}/evaluaciones` },
             { label: "Detalle" },
           ]}
         />
@@ -63,8 +63,8 @@ function EvaluacionDetallePage() {
       <Breadcrumb
         items={[
           { label: "Módulos", path: "/" },
-          { label: "Turnos", path: "/turnos" },
-          { label: "Evaluaciones", path: "/evaluaciones" },
+          { label: "Turnos", path: `/turnos/${subFaseId}` },
+          { label: "Evaluaciones", path: `/turnos/${turnoId}/evaluaciones` },
           { label: "Detalle" },
         ]}
       />

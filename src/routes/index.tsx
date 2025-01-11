@@ -40,7 +40,7 @@ const AppRoutes = () => {
 
       {/* Evaluaciones Route */}
       <Route
-        path="/turnos/:turnoId/evaluaciones"
+        path="/turnos/:subFaseId/turno/:turnoId/evaluaciones"
         element={
           <ProtectedRoute>
             <EvaluacionesPage />
@@ -50,7 +50,7 @@ const AppRoutes = () => {
 
       {/* Evaluacion Detalle Route */}
       <Route
-        path="/turnos/:turnoId/evaluaciones/:evaluacionId"
+        path="/turnos/:subFaseId/turno/:turnoId/evaluaciones/:evaluacionId"
         element={
           <ProtectedRoute>
             <EvaluacionDetallePage />

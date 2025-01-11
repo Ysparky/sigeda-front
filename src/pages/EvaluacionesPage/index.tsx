@@ -10,7 +10,7 @@ import type { Evaluacion, FilterOption } from "./types";
 import { evaluacionesService } from "../../services/evaluaciones.service";
 
 function EvaluacionesPage() {
-  const { turnoId } = useParams();
+  const { turnoId, subFaseId } = useParams();
   const { userInfo } = useAuth();
   const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,7 +54,7 @@ function EvaluacionesPage() {
         <Breadcrumb
           items={[
             { label: "Módulos", path: "/" },
-            { label: "Turnos", path: "/turnos" },
+            { label: "Turnos", path: `/turnos/${subFaseId}` },
             { label: "Evaluaciones" },
           ]}
         />
@@ -67,7 +67,7 @@ function EvaluacionesPage() {
       <Breadcrumb
         items={[
           { label: "Módulos", path: "/" },
-          { label: "Turnos", path: "/turnos" },
+          { label: "Turnos", path: `/turnos/${subFaseId}` },
           { label: "Evaluaciones" },
         ]}
       />
