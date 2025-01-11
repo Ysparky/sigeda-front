@@ -5,13 +5,13 @@ import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ErrorDisplay } from "../../components/common/ErrorDisplay";
 import { EvaluacionesList } from "./components/EvaluacionesList";
 import { SearchFilter } from "./components/SearchFilter";
-import { useAuth } from "../../hooks/useAuth";
+import { useData } from "../../contexts/DataContext";
 import type { Evaluacion, FilterOption } from "./types";
 import { evaluacionesService } from "../../services/evaluaciones.service";
 
 function EvaluacionesPage() {
   const { turnoId, subFaseId } = useParams();
-  const { userInfo } = useAuth();
+  const { userInfo } = useData();
   const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useData } from "../../../contexts/DataContext";
 import { useAuth } from "../../../hooks/useAuth";
-import type { LoginError } from "../types";
+
+interface LoginError {
+  show: boolean;
+  message: string;
+}
 
 export function LoginForm() {
   const [username, setUsername] = useState("");
@@ -10,6 +15,7 @@ export function LoginForm() {
   const [error, setError] = useState<LoginError>({ show: false, message: "" });
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { loadUserInfo } = useData();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,6 +24,7 @@ export function LoginForm() {
 
     try {
       await login({ username, password });
+      await loadUserInfo();
       navigate("/");
     } catch (err: unknown) {
       setError({

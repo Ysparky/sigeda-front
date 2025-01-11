@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AuthContext } from "./AuthContext";
 import {
   AuthState,
@@ -7,8 +7,10 @@ import {
 } from "../types/auth.types";
 import { authService } from "../services/auth.service";
 import { UserInfoError } from "../components/common/UserInfoError";
+import { useData } from "../contexts/DataContext";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { clearData } = useData();
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     username: null,
@@ -63,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return response;
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("username");
     setAuthState({
@@ -72,8 +74,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       username: null,
       userInfo: null,
     });
+    clearData();
     setError(null);
-  };
+  }, [clearData]);
 
   if (error) {
     return <UserInfoError onRetry={loadUserInfo} onLogout={logout} />;

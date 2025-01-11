@@ -7,7 +7,7 @@ interface Maniobra {
   estandares: null;
 }
 
-interface Calificacion {
+export interface Calificacion {
   codEvaluacion: string;
   idManiobra: number;
   notaMin: string;

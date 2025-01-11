@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { useData } from "../../contexts/DataContext";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { turnosService } from "../../services/turnos.service";
 import type { TurnoResponse, SortOption } from "./types";
@@ -12,7 +12,7 @@ import { ErrorDisplay } from "../../components/common/ErrorDisplay";
 
 function TurnosPage() {
   const { subFaseId } = useParams();
-  const { userInfo } = useAuth();
+  const { userInfo } = useData();
   const [turnos, setTurnos] = useState<TurnoResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,18 +21,24 @@ function TurnosPage() {
 
   useEffect(() => {
     const loadTurnos = async () => {
-      if (!subFaseId || !userInfo) return;
+      if (!subFaseId || !userInfo) {
+        console.log("Missing data:", { subFaseId, userInfo });
+        return;
+      }
 
       try {
         setIsLoading(true);
+        setError(null);
+        console.log("Fetching turnos with:", { subFaseId, userInfo });
         const data = await turnosService.getTurnosBySubFase(
           subFaseId,
           userInfo
         );
+        console.log("Turnos loaded:", data);
         setTurnos(data);
       } catch (err) {
-        setError("Error al cargar los turnos");
         console.error("Error loading turnos:", err);
+        setError("Error al cargar los turnos");
       } finally {
         setIsLoading(false);
       }
