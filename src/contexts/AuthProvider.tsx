@@ -54,11 +54,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuthState({
       isAuthenticated: true,
       token: response.token,
-      username: response.Username,
+      username: response.username,
       userInfo: null,
     });
     localStorage.setItem("auth_token", response.token);
-    localStorage.setItem("username", response.Username);
+    localStorage.setItem("username", response.username);
     await loadUserInfo();
     return response;
   };
