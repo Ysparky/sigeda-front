@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ErrorDisplay } from "../../components/common/ErrorDisplay";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { UserInfoError } from "../../components/common/UserInfoError";
 import { useData } from "../../contexts/DataContext";
 import type { Fase } from "../../services/fases.service";
 import { ModulesSection } from "./components/ModulesSection";
@@ -19,14 +20,22 @@ function DashboardPage() {
   const [selectedFaseId, setSelectedFaseId] = useState<number | null>(null);
   const [isLoadingSubFases, setIsLoadingSubFases] = useState(false);
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+  const [userInfoError, setUserInfoError] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeData = async () => {
       try {
-        await Promise.all([loadUserInfo(), loadFases()]);
+        await loadUserInfo();
       } catch (error) {
-        setError("Error al cargar los datos iniciales");
+        setUserInfoError(true);
+        return;
+      }
+
+      try {
+        await loadFases();
+      } catch (error) {
+        setError("Error al cargar los módulos");
       } finally {
         setIsLoadingInitial(false);
       }
@@ -53,7 +62,28 @@ function DashboardPage() {
     }
   };
 
-  if (isLoadingInitial || !userInfo) {
+  const handleRetryUserInfo = async () => {
+    setUserInfoError(false);
+    setIsLoadingInitial(true);
+    try {
+      await loadUserInfo();
+      await loadFases();
+    } catch (error) {
+      setUserInfoError(true);
+    } finally {
+      setIsLoadingInitial(false);
+    }
+  };
+
+  if (isLoadingInitial && !userInfoError) {
+    return <LoadingSpinner />;
+  }
+
+  if (userInfoError) {
+    return <UserInfoError onRetry={handleRetryUserInfo} />;
+  }
+
+  if (!userInfo) {
     return <LoadingSpinner />;
   }
 
@@ -63,7 +93,7 @@ function DashboardPage() {
         title="No pudimos cargar los módulos"
         message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
         onRetry={() => window.location.reload()}
-        showHeader={true}
+        showHeader={false}
       >
         <WelcomeHeader userInfo={userInfo} />
       </ErrorDisplay>

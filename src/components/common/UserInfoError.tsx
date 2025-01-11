@@ -1,9 +1,20 @@
+import { useAuth } from "../../hooks/useAuth";
+
 interface UserInfoErrorProps {
-  onRetry: () => void;
-  onLogout: () => void;
+  onRetry: () => Promise<void>;
 }
 
-export function UserInfoError({ onRetry, onLogout }: UserInfoErrorProps) {
+export function UserInfoError({ onRetry }: UserInfoErrorProps) {
+  const { logout } = useAuth();
+
+  const handleRetry = async () => {
+    try {
+      await onRetry();
+    } catch (error) {
+      console.error("Error retrying user info load:", error);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
@@ -19,14 +30,14 @@ export function UserInfoError({ onRetry, onLogout }: UserInfoErrorProps) {
         </p>
         <div className="space-y-4">
           <button
-            onClick={onRetry}
+            onClick={handleRetry}
             className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
                      transition-colors duration-200 hover:shadow-lg"
           >
             Intentar nuevamente
           </button>
           <button
-            onClick={onLogout}
+            onClick={logout}
             className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 
                      transition-colors duration-200 hover:shadow-lg"
           >

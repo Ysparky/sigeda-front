@@ -17,7 +17,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     token: null,
     userInfo: null,
   });
-  const [error, setError] = useState<string | null>(null);
+  const [userInfoError, setUserInfoError] = useState(false);
 
   const loadUserInfo = async () => {
     if (!authState.token || !authState.username) return;
@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
       setAuthState((prev) => ({ ...prev, userInfo }));
     } catch (err) {
-      setError("Error al obtener información del usuario");
+      setUserInfoError(true);
       throw err;
     }
   };
@@ -75,11 +75,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       userInfo: null,
     });
     clearData();
-    setError(null);
+    setUserInfoError(false);
   }, [clearData]);
 
-  if (error) {
-    return <UserInfoError onRetry={loadUserInfo} onLogout={logout} />;
+  if (userInfoError) {
+    return <UserInfoError onRetry={loadUserInfo} />;
   }
 
   return (
