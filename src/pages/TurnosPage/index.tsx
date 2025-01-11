@@ -55,12 +55,8 @@ function TurnosPage() {
           title="No pudimos cargar los turnos"
           message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
           onRetry={() => window.location.reload()}
-          showHeader={true}
-        >
-          <Breadcrumb
-            items={[{ label: "Módulos", path: "/" }, { label: "Turnos" }]}
-          />
-        </ErrorDisplay>
+          showHeader={false}
+        />
       );
     }
     if (turnos.length === 0) return <EmptyState />;

@@ -43,25 +43,6 @@ function EvaluacionesPage() {
 
   if (isLoading) return <LoadingSpinner />;
 
-  if (error) {
-    return (
-      <ErrorDisplay
-        title="No pudimos cargar las evaluaciones"
-        message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
-        onRetry={() => window.location.reload()}
-        showHeader={true}
-      >
-        <Breadcrumb
-          items={[
-            { label: "Módulos", path: "/" },
-            { label: "Turnos", path: `/subfase/${subfaseId}/turnos` },
-            { label: "Evaluaciones" },
-          ]}
-        />
-      </ErrorDisplay>
-    );
-  }
-
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <Breadcrumb
@@ -72,18 +53,29 @@ function EvaluacionesPage() {
         ]}
       />
 
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Evaluaciones</h1>
-      </div>
+      {error ? (
+        <ErrorDisplay
+          title="No pudimos cargar las evaluaciones"
+          message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
+          onRetry={() => window.location.reload()}
+          showHeader={false}
+        />
+      ) : (
+        <>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-2xl font-bold text-gray-900">Evaluaciones</h1>
+          </div>
 
-      <SearchFilter
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        filterBy={filterBy}
-        onFilterChange={setFilterBy}
-      />
+          <SearchFilter
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            filterBy={filterBy}
+            onFilterChange={setFilterBy}
+          />
 
-      <EvaluacionesList evaluaciones={evaluaciones} />
+          <EvaluacionesList evaluaciones={evaluaciones} />
+        </>
+      )}
     </div>
   );
 }

@@ -41,29 +41,6 @@ function EvaluacionDetallePage() {
 
   if (isLoading) return <LoadingSpinner />;
 
-  if (error || !evaluacion) {
-    return (
-      <ErrorDisplay
-        title="No pudimos cargar el detalle de la evaluación"
-        message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
-        onRetry={() => window.location.reload()}
-        showHeader={true}
-      >
-        <Breadcrumb
-          items={[
-            { label: "Módulos", path: "/" },
-            { label: "Turnos", path: `/subfase/${subfaseId}/turnos` },
-            {
-              label: "Evaluaciones",
-              path: `/subfase/${subfaseId}/turnos/${turnoId}/evaluaciones`,
-            },
-            { label: "Detalle" },
-          ]}
-        />
-      </ErrorDisplay>
-    );
-  }
-
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <Breadcrumb
@@ -78,8 +55,19 @@ function EvaluacionDetallePage() {
         ]}
       />
 
-      <EvaluacionHeader evaluacion={evaluacion} />
-      <CalificacionesTable calificaciones={evaluacion.calificaciones} />
+      {error || !evaluacion ? (
+        <ErrorDisplay
+          title="No pudimos cargar el detalle de la evaluación"
+          message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
+          onRetry={() => window.location.reload()}
+          showHeader={false}
+        />
+      ) : (
+        <>
+          <EvaluacionHeader evaluacion={evaluacion} />
+          <CalificacionesTable calificaciones={evaluacion.calificaciones} />
+        </>
+      )}
     </div>
   );
 }
