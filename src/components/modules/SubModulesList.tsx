@@ -1,10 +1,10 @@
-import { ModuleCard } from './ModuleCard';
-import { LoadingSpinner } from '../common/LoadingSpinner';
-import { getSubModuleIcon } from '../../utils/moduleIcons';
-import type { Fase } from '../../services/fases.service';
-import { useEffect, useState } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { ModuleCard } from "./ModuleCard";
+import { LoadingSpinner } from "../common/LoadingSpinner";
+import { getSubModuleIcon } from "../../utils/moduleIcons";
+import type { Fase } from "../../services/fases.service";
+import { useEffect, useState } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 interface SubModulesListProps {
   fase: Fase;
@@ -22,9 +22,6 @@ export const SubModulesList = ({ fase, isLoading }: SubModulesListProps) => {
   }, [fase.id]);
 
   const handleSubModuleClick = (subFaseId: number) => {
-    console.log(
-      'userInfo', userInfo
-    )
     if (!userInfo) return;
     navigate(`/turnos/${subFaseId}`);
   };
@@ -33,7 +30,11 @@ export const SubModulesList = ({ fase, isLoading }: SubModulesListProps) => {
 
   if (!fase.subFases || fase.subFases.length === 0) {
     return (
-      <div className={`transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+      <div
+        className={`transition-opacity duration-300 ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}
+      >
         <div className="bg-gray-50 rounded-lg p-8 text-center">
           <p className="text-gray-600">
             No hay sub-módulos disponibles para este módulo.
@@ -44,14 +45,19 @@ export const SubModulesList = ({ fase, isLoading }: SubModulesListProps) => {
   }
 
   return (
-    <div className={`transition-all duration-300 transform
-      ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+    <div
+      className={`transition-all duration-300 transform
+      ${isVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {fase.subFases.map((subFase) => (
           <ModuleCard
             key={subFase.id}
-            icon={<span className="text-xl">{getSubModuleIcon(subFase.nombre)}</span>}
+            icon={
+              <span className="text-xl">
+                {getSubModuleIcon(subFase.nombre)}
+              </span>
+            }
             title={subFase.nombre}
             onClick={() => handleSubModuleClick(subFase.id)}
           />
@@ -59,4 +65,4 @@ export const SubModulesList = ({ fase, isLoading }: SubModulesListProps) => {
       </div>
     </div>
   );
-}; 
+};
