@@ -6,17 +6,18 @@ export function useFases() {
   const [selectedFase, setSelectedFase] = useState<Fase | null>(null);
   const [isLoadingFases, setIsLoadingFases] = useState(true);
   const [isLoadingSubFases, setIsLoadingSubFases] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [fasesError, setFasesError] = useState<string | null>(null);
+  const [subFasesError, setSubFasesError] = useState<string | null>(null);
   const [fasesCache, setFasesCache] = useState<Record<number, Fase>>({});
 
   const loadFases = async () => {
     try {
       setIsLoadingFases(true);
+      setFasesError(null);
       const data = await fasesService.getFases();
       setFases(data);
-      setError(null);
     } catch (err) {
-      setError('Error al cargar los módulos');
+      setFasesError('Error al cargar los módulos');
       console.error(err);
     } finally {
       setIsLoadingFases(false);
@@ -29,6 +30,8 @@ export function useFases() {
       return;
     }
 
+    setSelectedFase(fase);
+
     if (fasesCache[fase.id]) {
       setSelectedFase(fasesCache[fase.id]);
       return;
@@ -36,6 +39,7 @@ export function useFases() {
 
     try {
       setIsLoadingSubFases(true);
+      setSubFasesError(null);
       const faseDetail = await fasesService.getFaseById(fase.id);
       
       setFasesCache(prev => ({
@@ -44,10 +48,10 @@ export function useFases() {
       }));
       
       setSelectedFase(faseDetail);
-      setError(null);
     } catch (err) {
-      setError('Error al cargar los sub-módulos');
+      setSubFasesError('Error al cargar los sub-módulos');
       console.error(err);
+      setSelectedFase(fase);
     } finally {
       setIsLoadingSubFases(false);
     }
@@ -62,7 +66,8 @@ export function useFases() {
     selectedFase,
     isLoadingFases,
     isLoadingSubFases,
-    error,
+    fasesError,
+    subFasesError,
     loadFases,
     handleFaseClick
   };

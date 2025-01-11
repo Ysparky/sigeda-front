@@ -5,6 +5,7 @@ import { SubModulesSection } from "./components/SubModulesSection";
 import { useFases } from "./hooks/useFases";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { useEffect } from "react";
+import { ErrorDisplay } from "../../components/common/ErrorDisplay";
 
 function DashboardPage() {
   const { userInfo, loadUserInfo } = useAuth();
@@ -13,7 +14,8 @@ function DashboardPage() {
     selectedFase,
     isLoadingFases,
     isLoadingSubFases,
-    error: fasesError,
+    fasesError,
+    subFasesError,
     loadFases,
     handleFaseClick,
   } = useFases();
@@ -30,17 +32,14 @@ function DashboardPage() {
 
   if (fasesError) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{fasesError}</p>
-          <button
-            onClick={loadFases}
-            className="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 underline"
-          >
-            Reintentar
-          </button>
-        </div>
-      </div>
+      <ErrorDisplay
+        title="No pudimos cargar los módulos"
+        message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
+        onRetry={loadFases}
+        showHeader={true}
+      >
+        <WelcomeHeader userInfo={userInfo} />
+      </ErrorDisplay>
     );
   }
 
@@ -56,7 +55,11 @@ function DashboardPage() {
       />
 
       {selectedFase && (
-        <SubModulesSection fase={selectedFase} isLoading={isLoadingSubFases} />
+        <SubModulesSection
+          fase={selectedFase}
+          isLoading={isLoadingSubFases}
+          error={subFasesError}
+        />
       )}
     </div>
   );

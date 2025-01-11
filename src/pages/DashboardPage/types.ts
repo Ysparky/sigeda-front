@@ -10,4 +10,5 @@ export interface ModulesSectionProps {
 export interface SubModulesSectionProps {
   fase: Fase;
   isLoading: boolean;
+  error?: string | null;
 } 
