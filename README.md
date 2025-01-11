@@ -1,50 +1,81 @@
-# React + TypeScript + Vite
+# SIGEDA Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema de Gestión de Evaluaciones y Desempeño Académico (SIGEDA) - Frontend Application
 
-Currently, two official plugins are available:
+## Description
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+SIGEDA is a web application designed to manage academic evaluations and performance tracking. Built with React, TypeScript, and Tailwind CSS, it provides a modern interface for handling student evaluations, grades, and academic progress.
 
-## Expanding the ESLint configuration
+## Technologies
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- React 18
+- TypeScript
+- Tailwind CSS
+- Vite
+- React Router DOM
 
-- Configure the top-level `parserOptions` property like this:
+## Getting Started
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### Prerequisites
+
+- Node.js (v18 or higher)
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/your-org/sigeda-front.git
+cd sigeda-front
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+2. Install dependencies:
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```bash
+npm install
 ```
+
+3. Create a `.env` file in the root directory:
+
+```env
+VITE_API_URL=https://your-api-url
+```
+
+4. Start the development server:
+
+```bash
+npm run dev
+```
+
+### Building for Production
+
+```bash
+npm run build
+```
+
+## Project Structure
+
+```
+src/
+├── components/     # Reusable components
+├── contexts/       # React contexts
+├── hooks/         # Custom hooks
+├── pages/         # Page components
+├── services/      # API services
+└── types/         # TypeScript types
+```
+
+## Features
+
+- User authentication
+- Academic module management
+- Evaluation tracking
+- Performance metrics
+- Responsive design
+
+## Development
+
+- Use `npm run lint` to check for linting issues
+- Follow the existing code style and component patterns
+- Keep components small and focused
