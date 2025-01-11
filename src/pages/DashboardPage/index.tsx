@@ -42,7 +42,7 @@ function DashboardPage() {
     };
 
     initializeData();
-  }, [loadUserInfo, loadFases]);
+  }, []);
 
   const handleFaseClick = async (fase: Fase) => {
     if (selectedFaseId === fase.id) {
