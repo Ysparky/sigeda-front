@@ -1,13 +1,13 @@
-import { useAuth } from '../../hooks/useAuth';
-import { WelcomeHeader } from './components/WelcomeHeader';
-import { ModulesSection } from './components/ModulesSection';
-import { SubModulesSection } from './components/SubModulesSection';
-import { useFases } from './hooks/useFases';
-import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { useEffect } from 'react';
+import { useAuth } from "../../hooks/useAuth";
+import { WelcomeHeader } from "./components/WelcomeHeader";
+import { ModulesSection } from "./components/ModulesSection";
+import { SubModulesSection } from "./components/SubModulesSection";
+import { useFases } from "./hooks/useFases";
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { useEffect } from "react";
 
 function DashboardPage() {
-  const { username, userInfo, loadUserInfo } = useAuth();
+  const { userInfo, loadUserInfo } = useAuth();
   const {
     fases,
     selectedFase,
@@ -15,7 +15,7 @@ function DashboardPage() {
     isLoadingSubFases,
     error: fasesError,
     loadFases,
-    handleFaseClick
+    handleFaseClick,
   } = useFases();
 
   useEffect(() => {
@@ -46,8 +46,8 @@ function DashboardPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 px-4">
-      <WelcomeHeader username={username} />
-      
+      <WelcomeHeader userInfo={userInfo} />
+
       <ModulesSection
         fases={fases}
         isLoading={isLoadingFases}
@@ -56,13 +56,10 @@ function DashboardPage() {
       />
 
       {selectedFase && (
-        <SubModulesSection
-          fase={selectedFase}
-          isLoading={isLoadingSubFases}
-        />
+        <SubModulesSection fase={selectedFase} isLoading={isLoadingSubFases} />
       )}
     </div>
   );
 }
 
-export default DashboardPage; 
+export default DashboardPage;

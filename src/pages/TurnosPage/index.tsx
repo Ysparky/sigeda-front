@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { turnosService } from '../../services/turnos.service';
-import type { TurnoResponse, SortOption } from './types';
-import { TurnosList } from './components/TurnosList';
-import { SearchSort } from './components/SearchSort';
-import { EmptyState } from './components/EmptyState';
-import { Breadcrumb } from '../../components/common/Breadcrumb';
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { turnosService } from "../../services/turnos.service";
+import type { TurnoResponse, SortOption } from "./types";
+import { TurnosList } from "./components/TurnosList";
+import { SearchSort } from "./components/SearchSort";
+import { EmptyState } from "./components/EmptyState";
+import { Breadcrumb } from "../../components/common/Breadcrumb";
 
 function TurnosPage() {
   const { subFaseId } = useParams();
@@ -15,8 +15,8 @@ function TurnosPage() {
   const [turnos, setTurnos] = useState<TurnoResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<SortOption>('fecha');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("fecha");
 
   useEffect(() => {
     const loadTurnos = async () => {
@@ -24,11 +24,14 @@ function TurnosPage() {
 
       try {
         setIsLoading(true);
-        const data = await turnosService.getTurnosBySubFase(subFaseId, userInfo);
+        const data = await turnosService.getTurnosBySubFase(
+          subFaseId,
+          userInfo
+        );
         setTurnos(data);
       } catch (err) {
-        setError('Error al cargar los turnos');
-        console.error('Error loading turnos:', err);
+        setError("Error al cargar los turnos");
+        console.error("Error loading turnos:", err);
       } finally {
         setIsLoading(false);
       }
@@ -61,30 +64,25 @@ function TurnosPage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-8">
           Turnos Disponibles
         </h1>
-        <SearchSort 
+        <SearchSort
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           sortBy={sortBy}
           onSortChange={setSortBy}
         />
-        <TurnosList 
-          turnos={turnos}
-          searchTerm={searchTerm}
-          sortBy={sortBy}
-        />
+        <TurnosList turnos={turnos} searchTerm={searchTerm} sortBy={sortBy} />
       </>
     );
   };
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <Breadcrumb items={[
-        { label: 'Módulos', path: '/' },
-        { label: 'Turnos' }
-      ]} />
+      <Breadcrumb
+        items={[{ label: "Módulos", path: "/" }, { label: "Turnos" }]}
+      />
       {renderContent()}
     </div>
   );
 }
 
-export default TurnosPage; 
+export default TurnosPage;
