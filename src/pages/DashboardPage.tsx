@@ -11,6 +11,9 @@ function DashboardPage() {
   const [isLoadingSubFases, setIsLoadingSubFases] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { username } = useAuth();
+  
+  // Add cache for fases details
+  const [fasesCache, setFasesCache] = useState<Record<number, Fase>>({});
 
   useEffect(() => {
     loadFases();
@@ -36,9 +39,22 @@ function DashboardPage() {
       return;
     }
 
+    // Check if we already have the fase details in cache
+    if (fasesCache[fase.id]) {
+      setSelectedFase(fasesCache[fase.id]);
+      return;
+    }
+
     try {
       setIsLoadingSubFases(true);
       const faseDetail = await fasesService.getFaseById(fase.id);
+      
+      // Save to cache
+      setFasesCache(prev => ({
+        ...prev,
+        [fase.id]: faseDetail
+      }));
+      
       setSelectedFase(faseDetail);
       setError(null);
     } catch (err) {
