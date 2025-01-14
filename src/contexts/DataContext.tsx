@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useState } from "react";
 import { authService } from "../services/auth.service";
 import { fasesService, type Fase } from "../services/fases.service";
+import { SubFase, subfasesService } from "../services/subfases.service";
 import type { UserInfo } from "../types/auth.types";
 
 interface DataContextType {
@@ -11,6 +12,8 @@ interface DataContextType {
   loadFases: () => Promise<void>;
   loadFaseDetail: (faseId: number) => Promise<void>;
   clearData: () => void;
+  subfases: SubFase[];
+  loadSubFases: () => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -19,6 +22,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [fases, setFases] = useState<Fase[]>([]);
   const [fasesDetail, setFasesDetail] = useState<Record<number, Fase>>({});
+  const [subfases, setSubFases] = useState<SubFase[]>([]);
 
   const loadUserInfo = useCallback(async () => {
     if (userInfo) return; // Return if already loaded
@@ -67,6 +71,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     [fasesDetail]
   );
 
+  const loadSubFases = useCallback(async () => {
+    if (subfases.length > 0) return; // Return if already loaded
+
+    try {
+      const data = await subfasesService.getAssignedSubFases();
+      setSubFases(data);
+    } catch (err) {
+      console.error("Error loading subfases:", err);
+      throw err;
+    }
+  }, [subfases.length]);
+
   const clearData = useCallback(() => {
     setUserInfo(null);
     setFases([]);
@@ -83,6 +99,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         loadFases,
         loadFaseDetail,
         clearData,
+        subfases,
+        loadSubFases,
       }}
     >
       {children}

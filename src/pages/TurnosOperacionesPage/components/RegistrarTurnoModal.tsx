@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useData } from "../../../contexts/DataContext";
 import { SeleccionarGruposModal } from "./SeleccionarGruposModal";
-import { SeleccionarManiobrasModal } from "./SeleccionarManiobrasModal";
+import {
+  ManiobraSeleccionada,
+  SeleccionarManiobrasModal,
+} from "./SeleccionarManiobrasModal";
 
 interface RegistrarTurnoModalProps {
   isOpen: boolean;
@@ -13,17 +17,24 @@ export function RegistrarTurnoModal({
   onClose,
   onSubmit,
 }: RegistrarTurnoModalProps) {
+  const { subfases, loadSubFases } = useData();
   const [formData, setFormData] = useState({
     nombre: "",
     subfase: "",
     programa: "",
     fecha: "",
-    maniobras: [] as string[],
+    maniobras: [] as ManiobraSeleccionada[],
     grupos: [] as string[],
   });
 
   const [isManiobraModalOpen, setIsManiobraModalOpen] = useState(false);
   const [isGruposModalOpen, setIsGruposModalOpen] = useState(false);
+
+  const isManiobrasDivEnabled = formData.subfase !== "";
+
+  useEffect(() => {
+    loadSubFases().catch(console.error);
+  }, [loadSubFases]);
 
   if (!isOpen) return null;
 
@@ -101,7 +112,11 @@ export function RegistrarTurnoModal({
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Seleccione la subfase</option>
-                {/* Add subfase options */}
+                {subfases.map((subfase) => (
+                  <option key={subfase.id} value={subfase.id}>
+                    {subfase.nombre}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -129,37 +144,41 @@ export function RegistrarTurnoModal({
                 Maniobras
               </label>
               <div
-                onClick={() => setIsManiobraModalOpen(true)}
-                className="border border-gray-300 rounded-md p-4 h-48 overflow-y-auto bg-gray-50 cursor-pointer hover:bg-gray-100"
+                onClick={() =>
+                  isManiobrasDivEnabled && setIsManiobraModalOpen(true)
+                }
+                className={`border border-gray-300 rounded-md p-4 h-48 overflow-y-auto transition-all duration-200
+                            ${
+                              isManiobrasDivEnabled
+                                ? "bg-gray-50 cursor-pointer hover:bg-gray-100 hover:border-blue-300 hover:shadow-sm"
+                                : "bg-gray-100 cursor-not-allowed opacity-75"
+                            }`}
               >
                 {formData.maniobras.length > 0 ? (
                   <table className="min-w-full">
-                    <thead>
+                    <thead className="bg-white sticky top-0 shadow-sm">
                       <tr>
-                        <th className="text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="text-left text-xs font-medium text-gray-500 uppercase px-2 py-2">
                           Maniobra
                         </th>
-                        <th className="text-left text-xs font-medium text-gray-500 uppercase">
-                          Descripción
-                        </th>
-                        <th className="text-left text-xs font-medium text-gray-500 uppercase">
-                          Requerido
+                        <th className="text-left text-xs font-medium text-gray-500 uppercase px-2 py-2 w-20">
+                          Req.
                         </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {formData.maniobras.map((maniobra: any) => (
-                        <tr key={maniobra.id} className="text-sm">
-                          <td className="py-2 text-gray-900">
+                      {formData.maniobras.map((maniobra) => (
+                        <tr
+                          key={maniobra.id}
+                          className="text-sm hover:bg-gray-50"
+                        >
+                          <td className="px-2 py-2 text-gray-900 font-medium">
                             {maniobra.nombre}
                           </td>
-                          <td className="py-2 text-gray-500 text-xs">
-                            {maniobra.descripcion.length > 50
-                              ? `${maniobra.descripcion.substring(0, 50)}...`
-                              : maniobra.descripcion}
-                          </td>
-                          <td className="py-2 text-gray-900">
-                            {maniobra.requerido ? "D" : ""}
+                          <td className="px-2 py-2">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {maniobra.requerido}
+                            </span>
                           </td>
                         </tr>
                       ))}
@@ -168,20 +187,26 @@ export function RegistrarTurnoModal({
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-500">
                     <div className="text-center">
-                      <svg
-                        className="mx-auto h-12 w-12 text-gray-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
-                      <p className="mt-2">Clic en el + para añadir maniobras</p>
+                      <div className="mx-auto h-12 w-12 text-gray-400 bg-gray-50 rounded-full flex items-center justify-center border-2 border-dashed border-gray-300">
+                        <svg
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                      </div>
+                      <p className="mt-2 text-sm">
+                        {isManiobrasDivEnabled
+                          ? "Clic para añadir maniobras"
+                          : "Seleccione una subfase primero"}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -280,29 +305,8 @@ export function RegistrarTurnoModal({
           setFormData({ ...formData, maniobras: selectedManiobras });
           setIsManiobraModalOpen(false);
         }}
-        maniobras={[
-          {
-            id: 1,
-            nombre: "Maniobra 1",
-            descripcion:
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Egestas dui id ornare arcu. Neque laoreet suspendisse interdum consectetur libero id faucibus.",
-            requerido: true,
-          },
-          {
-            id: 2,
-            nombre: "Maniobra 1",
-            descripcion:
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Egestas dui id ornare arcu. Neque laoreet suspendisse interdum consectetur libero id faucibus.",
-            requerido: true,
-          },
-          {
-            id: 3,
-            nombre: "Maniobra 1",
-            descripcion:
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Egestas dui id ornare arcu. Neque laoreet suspendisse interdum consectetur libero id faucibus.",
-            requerido: true,
-          },
-        ]}
+        subfaseId={Number(formData.subfase)}
+        currentSelections={formData.maniobras}
       />
 
       <SeleccionarGruposModal
