@@ -6,6 +6,8 @@ import {
   AuthState,
   LoginCredentials,
   LoginResponse,
+  RoleName,
+  UserInfo,
 } from "../types/auth.types";
 import { AuthContext } from "./AuthContext";
 
@@ -16,8 +18,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     username: null,
     token: null,
     userInfo: null,
+    role: null,
   });
   const [userInfoError, setUserInfoError] = useState(false);
+
+  const getRoleFromUserInfo = (userInfo: UserInfo): RoleName => {
+    return userInfo.usuario.usuarioRoles[0].rol.nombre;
+  };
 
   const loadUserInfo = async () => {
     if (!authState.token || !authState.username) return;
@@ -27,7 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         authState.token,
         authState.username
       );
-      setAuthState((prev) => ({ ...prev, userInfo }));
+      const role = getRoleFromUserInfo(userInfo);
+      setAuthState((prev) => ({ ...prev, userInfo, role }));
     } catch (err) {
       setUserInfoError(true);
       throw err;
@@ -58,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       token: response.token,
       username: response.username,
       userInfo: null,
+      role: null,
     });
     localStorage.setItem("auth_token", response.token);
     localStorage.setItem("username", response.username);
@@ -73,6 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       token: null,
       username: null,
       userInfo: null,
+      role: null,
     });
     clearData();
     setUserInfoError(false);

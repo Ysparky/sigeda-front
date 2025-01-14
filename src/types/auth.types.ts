@@ -9,14 +9,31 @@ export interface LoginResponse {
   token: string;
 }
 
+export type RoleName = 'Alumno' | 'Instructor' | 'Jefe de Operaciones';
+
+interface Rol {
+  id: number;
+  nombre: RoleName;
+}
+
+interface UsuarioRol {
+  rol: Rol;
+}
+
+interface Usuario {
+  id: number;
+  usuarioRoles: UsuarioRol[];
+  nombre: string;
+  correo: string;
+}
+
 export interface UserInfo {
   codigo: string;
   idGrupo: number;
   nombre: string;
   aPaterno: string;
   aMaterno: string;
-  estado: string;
-  rango: string;
+  usuario: Usuario;
 }
 
 export interface AuthState {
@@ -24,6 +41,7 @@ export interface AuthState {
   username: string | null;
   token: string | null;
   userInfo: UserInfo | null;
+  role: RoleName | null;
 }
 
 export interface AuthContextType {
@@ -31,6 +49,7 @@ export interface AuthContextType {
   username: string | null;
   token: string | null;
   userInfo: UserInfo | null;
+  role: RoleName | null;
   login: (credentials: LoginCredentials) => Promise<LoginResponse>;
   logout: () => void;
   loadUserInfo: () => Promise<void>;
