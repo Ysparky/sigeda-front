@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { useData } from "../../../contexts/DataContext";
-import { SeleccionarGruposModal } from "./SeleccionarGruposModal";
+import { turnosService } from "../../../services/turnos.service";
+import { TurnoDetalle } from "../../../types/turno.types";
+import {
+  GrupoSeleccionado,
+  SeleccionarGruposModal,
+} from "./SeleccionarGruposModal";
 import {
   ManiobraSeleccionada,
   SeleccionarManiobrasModal,
@@ -9,13 +14,13 @@ import {
 interface RegistrarTurnoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (turnoData: any) => void;
+  onTurnoCreated: (turno: TurnoDetalle) => void;
 }
 
 export function RegistrarTurnoModal({
   isOpen,
   onClose,
-  onSubmit,
+  onTurnoCreated,
 }: RegistrarTurnoModalProps) {
   const { subfases, loadSubFases } = useData();
   const [formData, setFormData] = useState({
@@ -24,11 +29,12 @@ export function RegistrarTurnoModal({
     programa: "",
     fecha: "",
     maniobras: [] as ManiobraSeleccionada[],
-    grupos: [] as string[],
+    grupos: [] as GrupoSeleccionado[],
   });
 
   const [isManiobraModalOpen, setIsManiobraModalOpen] = useState(false);
   const [isGruposModalOpen, setIsGruposModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const isManiobrasDivEnabled = formData.subfase !== "";
 
@@ -38,14 +44,58 @@ export function RegistrarTurnoModal({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const isFormValid = () => {
+    return (
+      formData.nombre.trim() !== "" &&
+      formData.fecha !== "" &&
+      formData.subfase !== "" &&
+      formData.programa !== "" &&
+      formData.maniobras.length > 0 &&
+      formData.grupos.length > 0
+    );
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    setError(null);
+
+    try {
+      const requestData = {
+        nombre: formData.nombre,
+        fechaEval: formData.fecha,
+        programa: formData.programa,
+        idSubFase: Number(formData.subfase),
+        grupoTurnos: formData.grupos.map((g) => ({
+          codInstructor: g.instructorId,
+          idGrupo: g.personas[0].idGrupo,
+        })),
+        turnoManiobras: formData.maniobras.map((m) => ({
+          idManiobra: m.id,
+          nota_min: m.requerido.toLowerCase(),
+        })),
+      };
+
+      const response = await turnosService.createTurno(requestData);
+      onTurnoCreated(response.turno);
+      onClose();
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Error al crear el turno");
+      }
+    }
+  };
+
+  const getTomorrow = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split("T")[0];
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-2xl p-6 relative animate-fade-in">
+      <div className="bg-white rounded-lg w-full max-w-3xl p-8 relative animate-fade-in">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -91,6 +141,7 @@ export function RegistrarTurnoModal({
               <input
                 type="date"
                 value={formData.fecha}
+                min={getTomorrow()}
                 onChange={(e) =>
                   setFormData({ ...formData, fecha: e.target.value })
                 }
@@ -147,7 +198,7 @@ export function RegistrarTurnoModal({
                 onClick={() =>
                   isManiobrasDivEnabled && setIsManiobraModalOpen(true)
                 }
-                className={`border border-gray-300 rounded-md p-4 h-48 overflow-y-auto transition-all duration-200
+                className={`border border-gray-300 rounded-md p-2 h-56 overflow-y-auto transition-all duration-200
                             ${
                               isManiobrasDivEnabled
                                 ? "bg-gray-50 cursor-pointer hover:bg-gray-100 hover:border-blue-300 hover:shadow-sm"
@@ -218,39 +269,52 @@ export function RegistrarTurnoModal({
                 Grupos
               </label>
               <div
-                onClick={() => setIsGruposModalOpen(true)}
-                className="border border-gray-300 rounded-md p-4 h-48 overflow-y-auto bg-gray-50 cursor-pointer hover:bg-gray-100"
+                onClick={() => formData.programa && setIsGruposModalOpen(true)}
+                className={`border border-gray-300 rounded-md p-2 h-56 overflow-y-auto transition-all duration-200
+                            ${
+                              formData.programa
+                                ? "bg-gray-50 cursor-pointer hover:bg-gray-100 hover:border-blue-300 hover:shadow-sm"
+                                : "bg-gray-100 cursor-not-allowed opacity-75"
+                            }`}
               >
                 {formData.grupos.length > 0 ? (
                   <table className="min-w-full">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-white sticky top-0 shadow-sm">
                       <tr>
-                        <th className="text-left text-xs font-medium text-gray-500 uppercase px-3 py-2">
-                          Grupos
+                        <th className="text-left text-xs font-medium text-gray-500 uppercase px-2 py-2">
+                          Grupo
                         </th>
-                        <th className="text-left text-xs font-medium text-gray-500 uppercase px-3 py-2">
+                        <th className="text-left text-xs font-medium text-gray-500 uppercase px-2 py-2">
                           Alumnos
                         </th>
-                        <th className="text-left text-xs font-medium text-gray-500 uppercase px-3 py-2">
+                        <th className="text-left text-xs font-medium text-gray-500 uppercase px-2 py-2">
                           Instructor
                         </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {formData.grupos.map((grupo: any) => (
-                        <tr key={grupo.id} className="text-sm">
-                          <td className="px-3 py-2 text-gray-900 align-top">
-                            {grupo.nombre}
+                      {formData.grupos.map((grupo) => (
+                        <tr
+                          key={grupo.personas[0]?.idGrupo}
+                          className="text-sm hover:bg-gray-50"
+                        >
+                          <td className="px-2 py-2 text-gray-900 font-medium">
+                            Grupo {grupo.personas[0]?.idGrupo}
                           </td>
-                          <td className="px-3 py-2 text-gray-900 align-top">
-                            {grupo.alumnos.map((alumno: any) => (
-                              <div key={alumno.id} className="text-sm">
-                                {alumno.nombre}
-                              </div>
-                            ))}
+                          <td className="px-2 py-2 text-gray-500">
+                            <ul className="list-disc list-inside">
+                              {grupo.personas.map((persona) => (
+                                <li key={persona.codigo} className="text-xs">
+                                  {persona.nombre} {persona.aPaterno}{" "}
+                                  {persona.aMaterno}
+                                </li>
+                              ))}
+                            </ul>
                           </td>
-                          <td className="px-3 py-2 text-gray-900 align-top">
-                            {grupo.instructor}
+                          <td className="px-2 py-2">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {grupo.instructor}
+                            </span>
                           </td>
                         </tr>
                       ))}
@@ -259,26 +323,55 @@ export function RegistrarTurnoModal({
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-500">
                     <div className="text-center">
-                      <svg
-                        className="mx-auto h-12 w-12 text-gray-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
-                      <p className="mt-2">Clic en el + para añadir alumnos</p>
+                      <div className="mx-auto h-12 w-12 text-gray-400 bg-gray-50 rounded-full flex items-center justify-center border-2 border-dashed border-gray-300">
+                        <svg
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                      </div>
+                      <p className="mt-2 text-sm">
+                        {formData.programa
+                          ? "Clic para añadir grupos"
+                          : "Seleccione un programa primero"}
+                      </p>
                     </div>
                   </div>
                 )}
               </div>
             </div>
           </div>
+
+          {error && (
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-red-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">{error}</h3>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-end space-x-3 mt-6">
             <button
@@ -290,7 +383,13 @@ export function RegistrarTurnoModal({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              disabled={!isFormValid()}
+              className={`px-4 py-2 text-sm font-medium text-white rounded-md
+                        ${
+                          isFormValid()
+                            ? "bg-blue-600 hover:bg-blue-700"
+                            : "bg-gray-400 cursor-not-allowed"
+                        }`}
             >
               Registrar Turno
             </button>
@@ -316,41 +415,8 @@ export function RegistrarTurnoModal({
           setFormData({ ...formData, grupos: selectedGrupos });
           setIsGruposModalOpen(false);
         }}
-        grupos={[
-          {
-            id: 1,
-            nombre: "Grupo 1",
-            alumnos: [
-              { id: 1, nombre: "Oscar Lopez" },
-              { id: 2, nombre: "Diego Falconi" },
-              { id: 3, nombre: "Manuel Maldonado" },
-              { id: 4, nombre: "Erick Quispe" },
-              { id: 5, nombre: "Carlos Manuel" },
-            ],
-          },
-          {
-            id: 2,
-            nombre: "Grupo 1",
-            alumnos: [
-              { id: 6, nombre: "Oscar Lopez" },
-              { id: 7, nombre: "Diego Falconi" },
-              { id: 8, nombre: "Manuel Maldonado" },
-              { id: 9, nombre: "Erick Quispe" },
-              { id: 10, nombre: "Carlos Manuel" },
-            ],
-          },
-          {
-            id: 3,
-            nombre: "Grupo 1",
-            alumnos: [
-              { id: 11, nombre: "Oscar Lopez" },
-              { id: 12, nombre: "Diego Falconi" },
-              { id: 13, nombre: "Manuel Maldonado" },
-              { id: 14, nombre: "Erick Quispe" },
-              { id: 15, nombre: "Carlos Manuel" },
-            ],
-          },
-        ]}
+        programa={formData.programa}
+        currentSelections={formData.grupos}
       />
     </div>
   );

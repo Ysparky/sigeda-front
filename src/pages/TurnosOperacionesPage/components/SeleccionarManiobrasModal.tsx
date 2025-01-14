@@ -99,8 +99,8 @@ export function SeleccionarManiobrasModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-4xl p-6 relative animate-fade-in">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-5xl p-8 relative animate-fade-in">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -120,7 +120,7 @@ export function SeleccionarManiobrasModal({
           </svg>
         </button>
 
-        <h2 className="text-xl font-bold mb-6">Seleccionar Maniobras</h2>
+        <h2 className="text-2xl font-bold mb-8">Seleccionar Maniobras</h2>
 
         {isLoading ? (
           <LoadingSpinner />

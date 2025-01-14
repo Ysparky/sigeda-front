@@ -14,8 +14,7 @@ export function SearchSort({
   onSortChange,
 }: SearchSortProps) {
   return (
-    <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-      {/* Search Bar */}
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div className="relative w-full sm:w-96">
         <input
           type="text"
@@ -42,35 +41,37 @@ export function SearchSort({
         </div>
       </div>
 
-      {/* Sort Options */}
       <div className="flex gap-2">
         <button
           onClick={() => onSortChange("alfabetico")}
-          className={`px-3 py-1 rounded-md text-sm ${
-            sortBy === "alfabetico"
-              ? "bg-blue-100 text-blue-700"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
+          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200
+                    ${
+                      sortBy === "alfabetico"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
         >
           Alfabético
         </button>
         <button
           onClick={() => onSortChange("fecha")}
-          className={`px-3 py-1 rounded-md text-sm ${
-            sortBy === "fecha"
-              ? "bg-blue-100 text-blue-700"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
+          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200
+                    ${
+                      sortBy === "fecha"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
         >
           Fecha
         </button>
         <button
-          onClick={() => onSortChange("conteo")}
-          className={`px-3 py-1 rounded-md text-sm ${
-            sortBy === "conteo"
-              ? "bg-blue-100 text-blue-700"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
+          onClick={() => onSortChange("maniobras")}
+          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200
+                    ${
+                      sortBy === "maniobras"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
         >
           Maniobras
         </button>

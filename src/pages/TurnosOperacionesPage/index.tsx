@@ -3,8 +3,11 @@ import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { ErrorDisplay } from "../../components/common/ErrorDisplay";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { operacionesTurnosService } from "../../services/operacionesTurnos.service";
+import { TurnoDetalle } from "../../types/turno.types";
 import { SearchSort } from "../TurnosPage/components/SearchSort";
 import type { SortOption, TurnoResponse } from "../TurnosPage/types";
+import { Pagination } from "./components/Pagination";
+import { RegistrarTurnoModal } from "./components/RegistrarTurnoModal";
 import { TurnosActions } from "./components/TurnosActions";
 import { TurnosList } from "./components/TurnosList";
 
@@ -14,24 +17,37 @@ function TurnosOperacionesPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("fecha");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [pageSize] = useState(9);
+
+  const loadTurnos = async (page: number) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await operacionesTurnosService.getAllTurnos({
+        page,
+        size: pageSize,
+      });
+      setTurnos(data.content);
+      setTotalPages(data.totalPages);
+      setCurrentPage(page);
+    } catch (err) {
+      console.error("Error al cargar los turnos", err);
+      setError("Error al cargar los turnos");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadTurnos = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const data = await operacionesTurnosService.getAllTurnos();
-        setTurnos(data);
-      } catch (err) {
-        console.error("Error al cargar los turnos", err);
-        setError("Error al cargar los turnos");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadTurnos();
+    loadTurnos(0);
   }, []);
+
+  const handlePageChange = (newPage: number) => {
+    loadTurnos(newPage);
+  };
 
   const handleModifyTurno = (turno: TurnoResponse) => {
     // TODO: Implement modify functionality
@@ -41,6 +57,21 @@ function TurnosOperacionesPage() {
   const handleDeleteTurno = (turno: TurnoResponse) => {
     // TODO: Implement delete functionality
     console.log("Delete turno:", turno);
+  };
+
+  const handleTurnoCreated = (newTurno: TurnoDetalle) => {
+    const turnoResponse: TurnoResponse = {
+      id: newTurno.id,
+      nombre: newTurno.nombre,
+      fase: newTurno.fase,
+      fechaEval: newTurno.fechaEval,
+      programa: newTurno.programa,
+      cantGrupo: newTurno.cantGrupo,
+      cantManiobra: newTurno.cantManiobra,
+    };
+
+    setTurnos((prev) => [...prev, turnoResponse]);
+    loadTurnos(0); // Refresh the first page after creating a new turno
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -64,7 +95,7 @@ function TurnosOperacionesPage() {
               Gestiona los turnos de evaluación del programa
             </p>
           </div>
-          <TurnosActions />
+          <TurnosActions onNewTurno={() => setIsModalOpen(true)} />
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-6">
@@ -79,20 +110,35 @@ function TurnosOperacionesPage() {
             <ErrorDisplay
               title="No pudimos cargar los turnos"
               message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
-              onRetry={() => window.location.reload()}
+              onRetry={() => loadTurnos(currentPage)}
               showHeader={false}
             />
           ) : (
-            <div className="mt-6">
-              <TurnosList
-                turnos={turnos}
-                onModifyTurno={handleModifyTurno}
-                onDeleteTurno={handleDeleteTurno}
-              />
-            </div>
+            <>
+              <div className="mt-6">
+                <TurnosList
+                  turnos={turnos}
+                  onModifyTurno={handleModifyTurno}
+                  onDeleteTurno={handleDeleteTurno}
+                />
+              </div>
+              <div className="mt-6">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            </>
           )}
         </div>
       </div>
+
+      <RegistrarTurnoModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onTurnoCreated={handleTurnoCreated}
+      />
     </div>
   );
 }

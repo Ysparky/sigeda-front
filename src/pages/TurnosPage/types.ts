@@ -16,4 +16,4 @@ export interface PaginatedResponse {
   number: number;
 }
 
-export type SortOption = 'alfabetico' | 'fecha' | 'conteo'; 
+export type SortOption = 'alfabetico' | 'fecha' | 'maniobras'; 
