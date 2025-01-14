@@ -18,12 +18,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     username: null,
     token: null,
     userInfo: null,
-    role: null,
+    roles: [],
   });
   const [userInfoError, setUserInfoError] = useState(false);
 
-  const getRoleFromUserInfo = (userInfo: UserInfo): RoleName => {
-    return userInfo.usuario.usuarioRoles[0].rol.nombre;
+  const getRolesFromUserInfo = (userInfo: UserInfo): RoleName[] => {
+    return userInfo.usuario.usuarioRoles.map((ur) => ur.rol.nombre);
   };
 
   const loadUserInfo = async () => {
@@ -34,8 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         authState.token,
         authState.username
       );
-      const role = getRoleFromUserInfo(userInfo);
-      setAuthState((prev) => ({ ...prev, userInfo, role }));
+      const roles = getRolesFromUserInfo(userInfo);
+      setAuthState((prev) => ({ ...prev, userInfo, roles }));
     } catch (err) {
       setUserInfoError(true);
       throw err;
@@ -53,9 +53,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         username,
       }));
-      loadUserInfo().catch(() => {});
     }
   }, []);
+
+  useEffect(() => {
+    if (authState.isAuthenticated && !authState.userInfo) {
+      loadUserInfo().catch(() => {});
+    }
+  }, [authState.isAuthenticated]);
 
   const login = async (
     credentials: LoginCredentials
@@ -66,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       token: response.token,
       username: response.username,
       userInfo: null,
-      role: null,
+      roles: [],
     });
     localStorage.setItem("auth_token", response.token);
     localStorage.setItem("username", response.username);
@@ -82,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       token: null,
       username: null,
       userInfo: null,
-      role: null,
+      roles: [],
     });
     clearData();
     setUserInfoError(false);

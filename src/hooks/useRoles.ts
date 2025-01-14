@@ -1,16 +1,27 @@
-import type { RoleName } from '../types/auth.types';
-import { useAuth } from './useAuth';
+import type { RoleName } from "../types/auth.types";
+import { useAuth } from "./useAuth";
+
+const ROLE_HIERARCHY: Record<RoleName, number> = {
+  "Jefe de Operaciones": 3,
+  Instructor: 2,
+  Alumno: 1,
+};
 
 export const useRoles = () => {
-  const { role } = useAuth();
+  const { roles } = useAuth();
 
-  const hasRole = (checkRole: RoleName) => role === checkRole;
+  console.log("roles", roles);
+
+  const hasRole = (role: RoleName) => roles.includes(role);
+  const hasHigherRole = (baseRole: RoleName) =>
+    roles.some((role) => ROLE_HIERARCHY[role] >= ROLE_HIERARCHY[baseRole]);
 
   return {
-    role,
+    roles,
     hasRole,
-    isAlumno: role === 'Alumno',
-    isInstructor: role === 'Instructor',
-    isJefeOperaciones: role === 'Jefe de Operaciones',
+    hasHigherRole,
+    isAlumno: hasRole("Alumno"),
+    isInstructor: hasRole("Instructor"),
+    isJefeOperaciones: hasHigherRole("Jefe de Operaciones"),
   };
-}; 
+};

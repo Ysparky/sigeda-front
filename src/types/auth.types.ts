@@ -41,7 +41,7 @@ export interface AuthState {
   username: string | null;
   token: string | null;
   userInfo: UserInfo | null;
-  role: RoleName | null;
+  roles: RoleName[];
 }
 
 export interface AuthContextType {
@@ -49,7 +49,7 @@ export interface AuthContextType {
   username: string | null;
   token: string | null;
   userInfo: UserInfo | null;
-  role: RoleName | null;
+  roles: RoleName[];
   login: (credentials: LoginCredentials) => Promise<LoginResponse>;
   logout: () => void;
   loadUserInfo: () => Promise<void>;
