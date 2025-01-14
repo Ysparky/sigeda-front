@@ -63,10 +63,6 @@ export function EvaluacionHeader({ evaluacion }: EvaluacionHeaderProps) {
               <span className="text-gray-600">Evaluador:</span>{" "}
               <span className="font-medium">{evaluacion.evaluador}</span>
             </p>
-            <p className="text-sm">
-              <span className="text-gray-600">Estado Alumno:</span>{" "}
-              <span className="font-medium">{evaluacion.estadoAlumno}</span>
-            </p>
           </div>
         </div>
 
