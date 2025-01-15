@@ -13,7 +13,7 @@ import TurnosPage from "../pages/TurnosPage";
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
   const { isJefeOperaciones } = useRoles();
-  console.log("isJefeOperaciones", isJefeOperaciones);
+
   return (
     <Routes>
       <Route

@@ -1,27 +1,38 @@
 import type { RoleName } from "../types/auth.types";
 import { useAuth } from "./useAuth";
 
-const ROLE_HIERARCHY: Record<RoleName, number> = {
-  "Jefe de Operaciones": 3,
-  Instructor: 2,
-  Alumno: 1,
-};
-
-export const useRoles = () => {
+export function useRoles() {
   const { roles } = useAuth();
 
-  console.log("roles", roles);
+  const getPrimaryRole = (): RoleName => {
 
-  const hasRole = (role: RoleName) => roles.includes(role);
-  const hasHigherRole = (baseRole: RoleName) =>
-    roles.some((role) => ROLE_HIERARCHY[role] >= ROLE_HIERARCHY[baseRole]);
+    if(roles.includes("Jefe de Operaciones")) {
+      return "Jefe de Operaciones";
+    }
+    if(roles.includes("Instructor")) {
+      return "Instructor";
+    }
+    if(roles.includes("Alumno")) {
+      return "Alumno";
+    }
+    
+    return roles[0] || "";
+  };
+
+  const hasRole = (role: RoleName): boolean => {
+    return roles.includes(role);
+  };
+
+  const hasAnyRole = (requiredRoles: RoleName[]): boolean =>
+    requiredRoles.some((role) => hasRole(role));
 
   return {
     roles,
     hasRole,
-    hasHigherRole,
-    isAlumno: hasRole("Alumno"),
-    isInstructor: hasRole("Instructor"),
-    isJefeOperaciones: hasHigherRole("Jefe de Operaciones"),
+    hasAnyRole,
+    isJefeOperaciones: getPrimaryRole() === "Jefe de Operaciones",
+    isInstructor: getPrimaryRole() === "Instructor",
+    isAlumno: getPrimaryRole() === "Alumno",
+    primaryRole: getPrimaryRole(),
   };
-};
+}
