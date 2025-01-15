@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { ErrorDisplay } from "../../components/common/ErrorDisplay";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { Snackbar } from "../../components/common/Snackbar";
 import { operacionesTurnosService } from "../../services/operacionesTurnos.service";
+import { turnosService } from "../../services/turnos.service";
 import { TurnoDetalle } from "../../types/turno.types";
 import { SearchSort } from "../TurnosPage/components/SearchSort";
 import type { SortOption, TurnoResponse } from "../TurnosPage/types";
@@ -21,6 +23,10 @@ function TurnosOperacionesPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [pageSize] = useState(9);
+  const [turnoToDelete, setTurnoToDelete] = useState<TurnoResponse | null>(
+    null
+  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const loadTurnos = async (page: number) => {
     try {
@@ -54,9 +60,30 @@ function TurnosOperacionesPage() {
     console.log("Modify turno:", turno);
   };
 
-  const handleDeleteTurno = (turno: TurnoResponse) => {
-    // TODO: Implement delete functionality
-    console.log("Delete turno:", turno);
+  const handleDeleteTurno = async (turno: TurnoResponse) => {
+    setTurnoToDelete(turno);
+  };
+
+  const confirmDelete = async () => {
+    if (!turnoToDelete) return;
+
+    try {
+      await turnosService.deleteTurno(turnoToDelete.id);
+      setTurnos(turnos.filter((t) => t.id !== turnoToDelete.id));
+    } catch (err) {
+      console.error("Error deleting turno:", err);
+      if (err instanceof Error) {
+        if (err.message.includes("403")) {
+          setErrorMessage("No tiene permisos para realizar esta acción");
+        } else if (err.message.includes("404")) {
+          setErrorMessage("El turno especificado no existe");
+        } else {
+          setErrorMessage("Error al eliminar el turno");
+        }
+      }
+    } finally {
+      setTurnoToDelete(null);
+    }
   };
 
   const handleTurnoCreated = (newTurno: TurnoDetalle) => {
@@ -72,7 +99,6 @@ function TurnosOperacionesPage() {
     };
 
     setTurnos((prev) => [...prev, turnoResponse]);
-    // loadTurnos(0); // Refresh the first page after creating a new turno
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -140,6 +166,41 @@ function TurnosOperacionesPage() {
         onClose={() => setIsModalOpen(false)}
         onTurnoCreated={handleTurnoCreated}
       />
+
+      {turnoToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              ¿Está seguro de eliminar este turno?
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Esta acción no se puede deshacer.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setTurnoToDelete(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {errorMessage && (
+        <Snackbar
+          message={errorMessage}
+          type="error"
+          onClose={() => setErrorMessage(null)}
+        />
+      )}
     </div>
   );
 }

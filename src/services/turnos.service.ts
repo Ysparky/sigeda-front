@@ -69,4 +69,26 @@ export const turnosService = {
 
     return responseData;
   },
+
+  async deleteTurno(turnoId: number): Promise<{ mensaje: string }> {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_URL}/api/turnos/${turnoId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (response.status === 403) {
+      throw new Error('403: No tiene permisos para realizar esta acción');
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`${response.status}: ${data.mensaje || 'Error al eliminar el turno'}`);
+    }
+
+    return data;
+  },
 }; 
