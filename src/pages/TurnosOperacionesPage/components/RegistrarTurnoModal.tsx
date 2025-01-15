@@ -15,8 +15,10 @@ interface RegistrarTurnoModalProps {
   isOpen: boolean;
   onClose: () => void;
   onTurnoCreated: (turno: TurnoDetalle) => void;
+  onTurnoUpdated?: (changes: string[]) => void;
   turnoId?: number;
-  mode?: "create" | "view";
+  mode?: "create" | "view" | "edit";
+  showNotification: (message: string, type: "success" | "error") => void;
 }
 
 export function RegistrarTurnoModal({
@@ -25,6 +27,8 @@ export function RegistrarTurnoModal({
   onTurnoCreated,
   turnoId,
   mode = "create",
+  onTurnoUpdated,
+  showNotification,
 }: RegistrarTurnoModalProps) {
   const { subfases, loadSubFases } = useData();
   const initialFormState = {
@@ -64,7 +68,7 @@ export function RegistrarTurnoModal({
   }, [loadSubFases]);
 
   useEffect(() => {
-    if (isOpen && mode === "view" && turnoId) {
+    if (isOpen && (mode === "view" || mode === "edit") && turnoId) {
       const loadTurno = async () => {
         try {
           const turnoDetail = await turnosService.getTurno(turnoId);
@@ -122,29 +126,51 @@ export function RegistrarTurnoModal({
     setError(null);
 
     try {
-      const requestData = {
-        nombre: formData.nombre,
-        fechaEval: formData.fecha,
-        programa: formData.programa,
-        idSubFase: Number(formData.subfase),
-        grupoTurnos: formData.grupos.map((g) => ({
-          codInstructor: g.instructorId,
-          idGrupo: g.personas[0].idGrupo,
-        })),
-        turnoManiobras: formData.maniobras.map((m) => ({
-          idManiobra: m.id,
-          nota_min: m.requerido.toLowerCase(),
-        })),
-      };
+      if (mode === "edit" && turnoId) {
+        const updateData = {
+          nombre: formData.nombre,
+          fechaEval: formData.fecha,
+          grupoTurnos: formData.grupos.map((g) => ({
+            codInstructor: g.instructorId,
+            idGrupo: g.personas[0].idGrupo,
+            checked: g.selected,
+          })),
+          turnoManiobras: formData.maniobras.map((m) => ({
+            idManiobra: m.id,
+            checked: m.selected,
+            nota_min: m.requerido.toLowerCase(),
+          })),
+        };
 
-      const response = await turnosService.createTurno(requestData);
-      onTurnoCreated(response.turno);
+        const response = await turnosService.updateTurno(turnoId, updateData);
+        onTurnoUpdated?.(response.turno);
+        showNotification("Turno actualizado exitosamente", "success");
+      } else {
+        const requestData = {
+          nombre: formData.nombre,
+          fechaEval: formData.fecha,
+          programa: formData.programa,
+          idSubFase: Number(formData.subfase),
+          grupoTurnos: formData.grupos.map((g) => ({
+            codInstructor: g.instructorId,
+            idGrupo: g.personas[0].idGrupo,
+          })),
+          turnoManiobras: formData.maniobras.map((m) => ({
+            idManiobra: m.id,
+            nota_min: m.requerido.toLowerCase(),
+          })),
+        };
+
+        const response = await turnosService.createTurno(requestData);
+        onTurnoCreated(response.turno);
+      }
       onClose();
     } catch (error) {
+      console.error("Error:", error);
       if (error instanceof Error) {
         setError(error.message);
       } else {
-        setError("Error al crear el turno");
+        setError("Error al procesar el turno");
       }
     }
   };
@@ -153,6 +179,19 @@ export function RegistrarTurnoModal({
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toISOString().split("T")[0];
+  };
+
+  const isEditOrCreateMode = mode === "edit" || mode === "create";
+
+  const getModalTitle = () => {
+    switch (mode) {
+      case "view":
+        return "Detalle del Turno";
+      case "edit":
+        return "Editar Turno";
+      default:
+        return "Registrar Nuevo Turno";
+    }
   };
 
   return (
@@ -177,9 +216,7 @@ export function RegistrarTurnoModal({
           </svg>
         </button>
 
-        <h2 className="text-xl font-bold mb-6">
-          {isViewMode ? "Detalle del Turno" : "Registrar Nuevo Turno"}
-        </h2>
+        <h2 className="text-xl font-bold mb-6">{getModalTitle()}</h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
@@ -188,7 +225,7 @@ export function RegistrarTurnoModal({
                 Nombre
               </label>
               <input
-                disabled={isViewMode}
+                disabled={!isEditOrCreateMode}
                 type="text"
                 value={formData.nombre}
                 onChange={(e) =>
@@ -204,7 +241,7 @@ export function RegistrarTurnoModal({
                 Fecha
               </label>
               <input
-                disabled={isViewMode}
+                disabled={!isEditOrCreateMode}
                 type="date"
                 value={formData.fecha}
                 min={getTomorrow()}
@@ -222,7 +259,7 @@ export function RegistrarTurnoModal({
                 Subfase
               </label>
               <select
-                disabled={isViewMode}
+                disabled={!isEditOrCreateMode || mode === "edit"}
                 value={formData.subfase}
                 onChange={(e) =>
                   setFormData({ ...formData, subfase: e.target.value })
@@ -243,7 +280,7 @@ export function RegistrarTurnoModal({
                 Programa
               </label>
               <select
-                disabled={isViewMode}
+                disabled={!isEditOrCreateMode || mode === "edit"}
                 value={formData.programa}
                 onChange={(e) =>
                   setFormData({ ...formData, programa: e.target.value })
@@ -462,13 +499,13 @@ export function RegistrarTurnoModal({
                 type="submit"
                 disabled={!isFormValid()}
                 className={`px-4 py-2 text-sm font-medium text-white rounded-md
-                            ${
-                              isFormValid()
-                                ? "bg-blue-600 hover:bg-blue-700"
-                                : "bg-gray-400 cursor-not-allowed"
-                            }`}
+                  ${
+                    isFormValid()
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : "bg-gray-400 cursor-not-allowed"
+                  }`}
               >
-                Registrar Turno
+                {mode === "edit" ? "Guardar Cambios" : "Registrar Turno"}
               </button>
             </div>
           )}

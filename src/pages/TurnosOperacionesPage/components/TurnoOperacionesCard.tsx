@@ -13,6 +13,16 @@ export function TurnoOperacionesCard({
   onDelete,
   onClick,
 }: TurnoOperacionesCardProps) {
+  const handleModifyClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onModify(turno);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete(turno);
+  };
+
   return (
     <div
       key={turno.id}
@@ -40,7 +50,7 @@ export function TurnoOperacionesCard({
       <div className="flex justify-between items-center">
         <div className="flex space-x-2">
           <button
-            onClick={() => onModify(turno)}
+            onClick={handleModifyClick}
             className="p-1 text-gray-400 hover:text-blue-600 transition-colors duration-200"
             title="Editar turno"
           >
@@ -59,7 +69,7 @@ export function TurnoOperacionesCard({
             </svg>
           </button>
           <button
-            onClick={() => onDelete(turno)}
+            onClick={handleDeleteClick}
             className="p-1 text-gray-400 hover:text-red-600 transition-colors duration-200"
             title="Eliminar turno"
           >

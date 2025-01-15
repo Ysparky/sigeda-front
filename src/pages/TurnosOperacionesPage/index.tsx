@@ -31,6 +31,9 @@ function TurnosOperacionesPage() {
     type: "success" | "error";
   } | null>(null);
   const [selectedTurno, setSelectedTurno] = useState<number | null>(null);
+  const [modalMode, setModalMode] = useState<"create" | "view" | "edit">(
+    "create"
+  );
 
   const loadTurnos = async (page: number) => {
     try {
@@ -60,8 +63,9 @@ function TurnosOperacionesPage() {
   };
 
   const handleModifyTurno = (turno: TurnoResponse) => {
-    // TODO: Implement modify functionality
-    console.log("Modify turno:", turno);
+    setSelectedTurno(turno.id);
+    setModalMode("edit");
+    setIsModalOpen(true);
   };
 
   const handleDeleteTurno = async (turno: TurnoResponse) => {
@@ -116,7 +120,14 @@ function TurnosOperacionesPage() {
 
   const handleTurnoClick = (turno: TurnoResponse) => {
     setSelectedTurno(turno.id);
+    setModalMode("view");
     setIsModalOpen(true);
+  };
+
+  const handleTurnoUpdated = (changes: string[]) => {
+    console.log("changes", changes);
+    showNotification("Turno actualizado exitosamente", "success");
+    loadTurnos(currentPage);
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -187,8 +198,10 @@ function TurnosOperacionesPage() {
           setSelectedTurno(null);
         }}
         onTurnoCreated={handleTurnoCreated}
+        onTurnoUpdated={handleTurnoUpdated}
         turnoId={selectedTurno ?? undefined}
-        mode={selectedTurno ? "view" : "create"}
+        mode={selectedTurno ? modalMode : "create"}
+        showNotification={showNotification}
       />
 
       {turnoToDelete && (

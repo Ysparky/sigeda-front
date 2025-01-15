@@ -56,6 +56,26 @@ interface TurnoDetail {
   subfase: string;
 }
 
+interface UpdateTurnoRequest {
+  nombre: string;
+  fechaEval: string;
+  grupoTurnos: {
+    codInstructor: number;
+    idGrupo: number;
+    checked: boolean;
+  }[];
+  turnoManiobras: {
+    idManiobra: number;
+    checked: boolean;
+    nota_min: string;
+  }[];
+}
+
+interface UpdateTurnoResponse {
+  mensaje: string;
+  turno: string[];
+}
+
 export const turnosService = {
   async getTurnosBySubFase(subfaseId: string, userInfo: UserInfo): Promise<TurnoResponse[]> {
     const token = localStorage.getItem('auth_token');
@@ -137,5 +157,25 @@ export const turnosService = {
     }
 
     return response.json();
+  },
+
+  async updateTurno(turnoId: number, data: UpdateTurnoRequest): Promise<UpdateTurnoResponse> {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_URL}/api/turnos/${turnoId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(responseData.mensaje || 'Error al actualizar el turno');
+    }
+
+    return responseData;
   },
 }; 
