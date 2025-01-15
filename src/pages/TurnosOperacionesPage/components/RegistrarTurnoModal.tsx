@@ -23,18 +23,35 @@ export function RegistrarTurnoModal({
   onTurnoCreated,
 }: RegistrarTurnoModalProps) {
   const { subfases, loadSubFases } = useData();
-  const [formData, setFormData] = useState({
+  const initialFormState = {
     nombre: "",
     subfase: "",
     programa: "",
     fecha: "",
     maniobras: [] as ManiobraSeleccionada[],
     grupos: [] as GrupoSeleccionado[],
-  });
+  };
 
+  const [formData, setFormData] = useState(initialFormState);
   const [isManiobraModalOpen, setIsManiobraModalOpen] = useState(false);
   const [isGruposModalOpen, setIsGruposModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setFormData(initialFormState);
+    setError(null);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  useEffect(() => {
+    if (!isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
 
   const isManiobrasDivEnabled = formData.subfase !== "";
 
@@ -97,7 +114,7 @@ export function RegistrarTurnoModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg w-full max-w-3xl p-8 relative animate-fade-in">
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
         >
           <svg
@@ -199,11 +216,11 @@ export function RegistrarTurnoModal({
                   isManiobrasDivEnabled && setIsManiobraModalOpen(true)
                 }
                 className={`border border-gray-300 rounded-md p-2 h-56 overflow-y-auto transition-all duration-200
-                            ${
-                              isManiobrasDivEnabled
-                                ? "bg-gray-50 cursor-pointer hover:bg-gray-100 hover:border-blue-300 hover:shadow-sm"
-                                : "bg-gray-100 cursor-not-allowed opacity-75"
-                            }`}
+                              ${
+                                isManiobrasDivEnabled
+                                  ? "bg-gray-50 cursor-pointer hover:bg-gray-100 hover:border-blue-300 hover:shadow-sm"
+                                  : "bg-gray-100 cursor-not-allowed opacity-75"
+                              }`}
               >
                 {formData.maniobras.length > 0 ? (
                   <table className="min-w-full">
@@ -271,11 +288,11 @@ export function RegistrarTurnoModal({
               <div
                 onClick={() => formData.programa && setIsGruposModalOpen(true)}
                 className={`border border-gray-300 rounded-md p-2 h-56 overflow-y-auto transition-all duration-200
-                            ${
-                              formData.programa
-                                ? "bg-gray-50 cursor-pointer hover:bg-gray-100 hover:border-blue-300 hover:shadow-sm"
-                                : "bg-gray-100 cursor-not-allowed opacity-75"
-                            }`}
+                              ${
+                                formData.programa
+                                  ? "bg-gray-50 cursor-pointer hover:bg-gray-100 hover:border-blue-300 hover:shadow-sm"
+                                  : "bg-gray-100 cursor-not-allowed opacity-75"
+                              }`}
               >
                 {formData.grupos.length > 0 ? (
                   <table className="min-w-full">
@@ -376,7 +393,7 @@ export function RegistrarTurnoModal({
           <div className="flex justify-end space-x-3 mt-6">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
             >
               Cancelar
@@ -385,11 +402,11 @@ export function RegistrarTurnoModal({
               type="submit"
               disabled={!isFormValid()}
               className={`px-4 py-2 text-sm font-medium text-white rounded-md
-                        ${
-                          isFormValid()
-                            ? "bg-blue-600 hover:bg-blue-700"
-                            : "bg-gray-400 cursor-not-allowed"
-                        }`}
+                          ${
+                            isFormValid()
+                              ? "bg-blue-600 hover:bg-blue-700"
+                              : "bg-gray-400 cursor-not-allowed"
+                          }`}
             >
               Registrar Turno
             </button>

@@ -26,7 +26,10 @@ function TurnosOperacionesPage() {
   const [turnoToDelete, setTurnoToDelete] = useState<TurnoResponse | null>(
     null
   );
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
   const loadTurnos = async (page: number) => {
     try {
@@ -64,6 +67,10 @@ function TurnosOperacionesPage() {
     setTurnoToDelete(turno);
   };
 
+  const showNotification = (message: string, type: "success" | "error") => {
+    setNotification({ message, type });
+  };
+
   const confirmDelete = async () => {
     if (!turnoToDelete) return;
 
@@ -74,11 +81,14 @@ function TurnosOperacionesPage() {
       console.error("Error deleting turno:", err);
       if (err instanceof Error) {
         if (err.message.includes("403")) {
-          setErrorMessage("No tiene permisos para realizar esta acción");
+          showNotification(
+            "No tiene permisos para realizar esta acción",
+            "error"
+          );
         } else if (err.message.includes("404")) {
-          setErrorMessage("El turno especificado no existe");
+          showNotification("El turno especificado no existe", "error");
         } else {
-          setErrorMessage("Error al eliminar el turno");
+          showNotification("Error al eliminar el turno", "error");
         }
       }
     } finally {
@@ -99,6 +109,8 @@ function TurnosOperacionesPage() {
     };
 
     setTurnos((prev) => [...prev, turnoResponse]);
+    showNotification("Turno creado exitosamente", "success");
+    setIsModalOpen(false);
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -194,11 +206,11 @@ function TurnosOperacionesPage() {
         </div>
       )}
 
-      {errorMessage && (
+      {notification && (
         <Snackbar
-          message={errorMessage}
-          type="error"
-          onClose={() => setErrorMessage(null)}
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
         />
       )}
     </div>
