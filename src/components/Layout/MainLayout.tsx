@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useData } from "../../contexts/DataContext";
 import { useAuth } from "../../hooks/useAuth";
 import { getFullName } from "../../utils/userUtils";
@@ -11,7 +11,6 @@ interface MainLayoutProps {
 function MainLayout({ children }: MainLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
   const { userInfo } = useData();
   const { logout } = useAuth();
 
@@ -19,14 +18,6 @@ function MainLayout({ children }: MainLayoutProps) {
     logout();
     navigate("/login");
   };
-
-  const navLinks = [
-    { to: "/modulos", label: "Módulos" },
-    { to: "/estandares", label: "Estándares" },
-    { to: "/reportes", label: "Gestionar Reportes" },
-  ];
-
-  const isActiveRoute = (path: string) => location.pathname.startsWith(path);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -43,23 +34,6 @@ function MainLayout({ children }: MainLayoutProps) {
                 <span className="text-2xl">✈️</span>
                 <span>SIGEDA</span>
               </Link>
-              {/* Desktop Navigation */}
-              <div className="hidden md:flex ml-10 space-x-4">
-                {navLinks.map(({ to, label }) => (
-                  <Link
-                    key={to}
-                    to={to}
-                    className={`px-3 py-2 rounded-md transition-all duration-200 
-                      ${
-                        isActiveRoute(to)
-                          ? "bg-blue-800 text-white transform scale-105"
-                          : "hover:bg-blue-800/80 text-gray-100 hover:-translate-y-0.5"
-                      }`}
-                  >
-                    {label}
-                  </Link>
-                ))}
-              </div>
             </div>
 
             {/* User Menu and Mobile Button */}
@@ -116,21 +90,6 @@ function MainLayout({ children }: MainLayoutProps) {
                           : "max-h-0 opacity-0"
                       }`}
           >
-            {navLinks.map(({ to, label }) => (
-              <Link
-                key={to}
-                to={to}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`block px-3 py-2 rounded-md mt-1 
-                  ${
-                    isActiveRoute(to)
-                      ? "bg-blue-800 text-white"
-                      : "hover:bg-blue-800/80 text-gray-100"
-                  }`}
-              >
-                {label}
-              </Link>
-            ))}
             <div className="border-t border-blue-800 mt-3 pt-3">
               <div className="px-3 py-2 text-gray-100">
                 {getFullName(userInfo)}
