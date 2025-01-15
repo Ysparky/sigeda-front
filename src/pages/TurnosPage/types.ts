@@ -4,6 +4,7 @@ export interface TurnoResponse {
   cantGrupo: number;
   cantManiobra: number;
   fase: string;
+  subfase: string;
   programa: string;
   fechaEval: string;
 }

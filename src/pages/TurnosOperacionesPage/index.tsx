@@ -68,10 +68,11 @@ function TurnosOperacionesPage() {
       programa: newTurno.programa,
       cantGrupo: newTurno.cantGrupo,
       cantManiobra: newTurno.cantManiobra,
+      subfase: newTurno.subfase,
     };
 
     setTurnos((prev) => [...prev, turnoResponse]);
-    loadTurnos(0); // Refresh the first page after creating a new turno
+    // loadTurnos(0); // Refresh the first page after creating a new turno
   };
 
   if (isLoading) return <LoadingSpinner />;
