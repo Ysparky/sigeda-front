@@ -30,6 +30,7 @@ function TurnosOperacionesPage() {
     message: string;
     type: "success" | "error";
   } | null>(null);
+  const [selectedTurno, setSelectedTurno] = useState<number | null>(null);
 
   const loadTurnos = async (page: number) => {
     try {
@@ -113,6 +114,11 @@ function TurnosOperacionesPage() {
     setIsModalOpen(false);
   };
 
+  const handleTurnoClick = (turno: TurnoResponse) => {
+    setSelectedTurno(turno.id);
+    setIsModalOpen(true);
+  };
+
   if (isLoading) return <LoadingSpinner />;
 
   return (
@@ -159,6 +165,7 @@ function TurnosOperacionesPage() {
                   turnos={turnos}
                   onModifyTurno={handleModifyTurno}
                   onDeleteTurno={handleDeleteTurno}
+                  onClickTurno={handleTurnoClick}
                 />
               </div>
               <div className="mt-6">
@@ -175,8 +182,13 @@ function TurnosOperacionesPage() {
 
       <RegistrarTurnoModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedTurno(null);
+        }}
         onTurnoCreated={handleTurnoCreated}
+        turnoId={selectedTurno ?? undefined}
+        mode={selectedTurno ? "view" : "create"}
       />
 
       {turnoToDelete && (

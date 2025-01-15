@@ -4,17 +4,20 @@ interface TurnoOperacionesCardProps {
   turno: TurnoResponse;
   onModify: (turno: TurnoResponse) => void;
   onDelete: (turno: TurnoResponse) => void;
+  onClick: (turno: TurnoResponse) => void;
 }
 
 export function TurnoOperacionesCard({
   turno,
   onModify,
   onDelete,
+  onClick,
 }: TurnoOperacionesCardProps) {
   return (
     <div
       key={turno.id}
-      className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all duration-200"
+      className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all duration-200 cursor-pointer"
+      onClick={() => onClick(turno)}
     >
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-lg font-semibold text-gray-900">{turno.nombre}</h3>

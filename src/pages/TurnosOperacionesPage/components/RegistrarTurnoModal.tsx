@@ -15,12 +15,16 @@ interface RegistrarTurnoModalProps {
   isOpen: boolean;
   onClose: () => void;
   onTurnoCreated: (turno: TurnoDetalle) => void;
+  turnoId?: number;
+  mode?: "create" | "view";
 }
 
 export function RegistrarTurnoModal({
   isOpen,
   onClose,
   onTurnoCreated,
+  turnoId,
+  mode = "create",
 }: RegistrarTurnoModalProps) {
   const { subfases, loadSubFases } = useData();
   const initialFormState = {
@@ -58,6 +62,47 @@ export function RegistrarTurnoModal({
   useEffect(() => {
     loadSubFases().catch(console.error);
   }, [loadSubFases]);
+
+  useEffect(() => {
+    if (isOpen && mode === "view" && turnoId) {
+      const loadTurno = async () => {
+        try {
+          const turnoDetail = await turnosService.getTurno(turnoId);
+          const subfaseId =
+            subfases
+              .find((s) => s.nombre === turnoDetail.subfase)
+              ?.id.toString() || "";
+
+          setFormData({
+            nombre: turnoDetail.nombre,
+            subfase: subfaseId,
+            programa: turnoDetail.programa,
+            fecha: turnoDetail.fechaEval,
+            maniobras: turnoDetail.turnoManiobras.map((tm) => ({
+              id: tm.maniobra.id,
+              nombre: tm.maniobra.nombre,
+              descripcion: tm.maniobra.descripcion,
+              selected: true,
+              requerido: tm.nota_min,
+            })),
+            grupos: turnoDetail.grupoTurnos.map((gt) => ({
+              personas: gt.grupo.personas,
+              selected: true,
+              instructor: gt.instructor,
+              instructorId: parseInt(gt.codInstructor),
+            })),
+          });
+        } catch (error) {
+          console.error("Error loading turno:", error);
+          setError("Error al cargar el turno");
+        }
+      };
+
+      loadTurno();
+    }
+  }, [isOpen, turnoId, mode, subfases]);
+
+  const isViewMode = mode === "view";
 
   if (!isOpen) return null;
 
@@ -132,7 +177,9 @@ export function RegistrarTurnoModal({
           </svg>
         </button>
 
-        <h2 className="text-xl font-bold mb-6">Registrar Nuevo Turno</h2>
+        <h2 className="text-xl font-bold mb-6">
+          {isViewMode ? "Detalle del Turno" : "Registrar Nuevo Turno"}
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
@@ -141,6 +188,7 @@ export function RegistrarTurnoModal({
                 Nombre
               </label>
               <input
+                disabled={isViewMode}
                 type="text"
                 value={formData.nombre}
                 onChange={(e) =>
@@ -156,6 +204,7 @@ export function RegistrarTurnoModal({
                 Fecha
               </label>
               <input
+                disabled={isViewMode}
                 type="date"
                 value={formData.fecha}
                 min={getTomorrow()}
@@ -173,6 +222,7 @@ export function RegistrarTurnoModal({
                 Subfase
               </label>
               <select
+                disabled={isViewMode}
                 value={formData.subfase}
                 onChange={(e) =>
                   setFormData({ ...formData, subfase: e.target.value })
@@ -193,6 +243,7 @@ export function RegistrarTurnoModal({
                 Programa
               </label>
               <select
+                disabled={isViewMode}
                 value={formData.programa}
                 onChange={(e) =>
                   setFormData({ ...formData, programa: e.target.value })
@@ -213,14 +264,18 @@ export function RegistrarTurnoModal({
               </label>
               <div
                 onClick={() =>
-                  isManiobrasDivEnabled && setIsManiobraModalOpen(true)
+                  !isViewMode &&
+                  isManiobrasDivEnabled &&
+                  setIsManiobraModalOpen(true)
                 }
                 className={`border border-gray-300 rounded-md p-2 h-56 overflow-y-auto transition-all duration-200
-                              ${
-                                isManiobrasDivEnabled
-                                  ? "bg-gray-50 cursor-pointer hover:bg-gray-100 hover:border-blue-300 hover:shadow-sm"
-                                  : "bg-gray-100 cursor-not-allowed opacity-75"
-                              }`}
+                  ${
+                    isViewMode
+                      ? "bg-gray-50"
+                      : isManiobrasDivEnabled
+                      ? "bg-gray-50 cursor-pointer hover:bg-gray-100 hover:border-blue-300 hover:shadow-sm"
+                      : "bg-gray-100 cursor-not-allowed opacity-75"
+                  }`}
               >
                 {formData.maniobras.length > 0 ? (
                   <table className="min-w-full">
@@ -286,13 +341,17 @@ export function RegistrarTurnoModal({
                 Grupos
               </label>
               <div
-                onClick={() => formData.programa && setIsGruposModalOpen(true)}
+                onClick={() =>
+                  !isViewMode && formData.programa && setIsGruposModalOpen(true)
+                }
                 className={`border border-gray-300 rounded-md p-2 h-56 overflow-y-auto transition-all duration-200
-                              ${
-                                formData.programa
-                                  ? "bg-gray-50 cursor-pointer hover:bg-gray-100 hover:border-blue-300 hover:shadow-sm"
-                                  : "bg-gray-100 cursor-not-allowed opacity-75"
-                              }`}
+                  ${
+                    isViewMode
+                      ? "bg-gray-50"
+                      : formData.programa
+                      ? "bg-gray-50 cursor-pointer hover:bg-gray-100 hover:border-blue-300 hover:shadow-sm"
+                      : "bg-gray-100 cursor-not-allowed opacity-75"
+                  }`}
               >
                 {formData.grupos.length > 0 ? (
                   <table className="min-w-full">
@@ -390,27 +449,29 @@ export function RegistrarTurnoModal({
             </div>
           )}
 
-          <div className="flex justify-end space-x-3 mt-6">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={!isFormValid()}
-              className={`px-4 py-2 text-sm font-medium text-white rounded-md
-                          ${
-                            isFormValid()
-                              ? "bg-blue-600 hover:bg-blue-700"
-                              : "bg-gray-400 cursor-not-allowed"
-                          }`}
-            >
-              Registrar Turno
-            </button>
-          </div>
+          {!isViewMode && (
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={!isFormValid()}
+                className={`px-4 py-2 text-sm font-medium text-white rounded-md
+                            ${
+                              isFormValid()
+                                ? "bg-blue-600 hover:bg-blue-700"
+                                : "bg-gray-400 cursor-not-allowed"
+                            }`}
+              >
+                Registrar Turno
+              </button>
+            </div>
+          )}
         </form>
       </div>
 

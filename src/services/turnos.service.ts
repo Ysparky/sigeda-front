@@ -23,6 +23,38 @@ interface CreateTurnoRequest {
   }[];
 }
 
+interface TurnoDetail {
+  id: number;
+  programa: string;
+  fechaEval: string;
+  turnoManiobras: {
+    nota_min: string;
+    maniobra: {
+      id: number;
+      descripcion: string;
+      nombre: string;
+    };
+  }[];
+  grupoTurnos: {
+    instructor: string;
+    codInstructor: string;
+    grupo: {
+      id: number;
+      personas: {
+        aMaterno: string;
+        aPaterno: string;
+        codigo: string;
+        nombre: string;
+        idGrupo: number;
+        estado: string;
+      }[];
+      nombre: string;
+    };
+  }[];
+  fase: string;
+  nombre: string;
+  subfase: string;
+}
 
 export const turnosService = {
   async getTurnosBySubFase(subfaseId: string, userInfo: UserInfo): Promise<TurnoResponse[]> {
@@ -90,5 +122,20 @@ export const turnosService = {
     }
 
     return data;
+  },
+
+  async getTurno(turnoId: number): Promise<TurnoDetail> {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_URL}/api/turnos/${turnoId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al obtener el turno');
+    }
+
+    return response.json();
   },
 }; 
