@@ -7,12 +7,13 @@ import DashboardPage from "../pages/DashboardPage";
 import EvaluacionDetallePage from "../pages/EvaluacionDetallePage";
 import EvaluacionesPage from "../pages/EvaluacionesPage";
 import LoginPage from "../pages/LoginPage";
+import MiEscuadronPage from "../pages/MiEscuadronPage";
 import TurnosOperacionesPage from "../pages/TurnosOperacionesPage";
 import TurnosPage from "../pages/TurnosPage";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
-  const { isJefeOperaciones } = useRoles();
+  const { isJefeOperaciones, isInstructor } = useRoles();
 
   return (
     <Routes>
@@ -28,6 +29,8 @@ const AppRoutes = () => {
           <ProtectedRoute>
             {isJefeOperaciones ? (
               <Navigate to="/turnos" replace />
+            ) : isInstructor ? (
+              <Navigate to="/mi-escuadron" replace />
             ) : (
               <DashboardPage />
             )}
@@ -67,6 +70,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <EvaluacionDetallePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/mi-escuadron"
+        element={
+          <ProtectedRoute>
+            <MiEscuadronPage />
           </ProtectedRoute>
         }
       />
