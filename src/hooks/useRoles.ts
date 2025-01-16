@@ -1,37 +1,41 @@
+import { useMemo } from "react";
 import { useAuth } from "../contexts/auth";
 import type { RoleName } from "../types/auth.types";
+
+const ROLE_PRIORITY: RoleName[] = [
+  "Jefe de Operaciones",
+  "Instructor",
+  "Alumno",
+] as const;
 
 export function useRoles() {
   const { roles } = useAuth();
 
-  const getPrimaryRole = (): RoleName => {
-    if (roles.includes("Jefe de Operaciones")) {
-      return "Jefe de Operaciones";
-    }
-    if (roles.includes("Instructor")) {
-      return "Instructor";
-    }
-    if (roles.includes("Alumno")) {
-      return "Alumno";
-    }
+  const primaryRole = useMemo((): RoleName => {
+    return ROLE_PRIORITY.find((role) => roles.includes(role)) || roles[0] || "";
+  }, [roles]);
 
-    return roles[0] || "";
-  };
+  const hasRole = useMemo(
+    () =>
+      (role: RoleName): boolean =>
+        roles.includes(role),
+    [roles]
+  );
 
-  const hasRole = (role: RoleName): boolean => {
-    return roles.includes(role);
-  };
-
-  const hasAnyRole = (requiredRoles: RoleName[]): boolean =>
-    requiredRoles.some((role) => hasRole(role));
+  const hasAnyRole = useMemo(
+    () =>
+      (requiredRoles: RoleName[]): boolean =>
+        requiredRoles.some((role) => roles.includes(role)),
+    [roles]
+  );
 
   return {
     roles,
     hasRole,
     hasAnyRole,
-    isJefeOperaciones: getPrimaryRole() === "Jefe de Operaciones",
-    isInstructor: getPrimaryRole() === "Instructor",
-    isAlumno: getPrimaryRole() === "Alumno",
-    primaryRole: getPrimaryRole(),
-  };
+    isJefeOperaciones: primaryRole === "Jefe de Operaciones",
+    isInstructor: primaryRole === "Instructor",
+    isAlumno: primaryRole === "Alumno",
+    primaryRole,
+  } as const;
 }
