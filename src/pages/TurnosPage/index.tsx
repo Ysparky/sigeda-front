@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { ErrorDisplay } from "../../components/common/ErrorDisplay";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
-import { useData } from "../../contexts/DataContext";
+import { useAuth } from "../../hooks/useAuth";
 import { turnosService } from "../../services/turnos.service";
 import { EmptyState } from "./components/EmptyState";
 import { SearchSort } from "./components/SearchSort";
@@ -12,7 +12,7 @@ import type { SortOption, TurnoResponse } from "./types";
 
 function TurnosPage() {
   const { subfaseId } = useParams();
-  const { userInfo } = useData();
+  const { userInfo } = useAuth();
   const [turnos, setTurnos] = useState<TurnoResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -19,7 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userInfo: null,
     roles: [],
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [userInfoError, setUserInfoError] = useState(false);
 
   const getRolesFromUserInfo = useCallback((userInfo: UserInfo): RoleName[] => {
@@ -27,11 +27,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loadUserInfo = useCallback(async () => {
-    if (!authState.token || !authState.username) return;
-    if (authState.userInfo) return; // Don't reload if we already have user info
-
-    setIsLoading(true);
-    setUserInfoError(false);
+    if (!authState.token || !authState.username) {
+      setIsLoading(false);
+      return;
+    }
+    if (authState.userInfo) {
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const userInfo = await authService.getUserInfo(
@@ -40,9 +43,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
       const roles = getRolesFromUserInfo(userInfo);
       setAuthState((prev) => ({ ...prev, userInfo, roles }));
-    } catch (err) {
+    } catch (_) {
       setUserInfoError(true);
-      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -54,7 +56,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ]);
 
   const retryLoadUserInfo = useCallback(async () => {
-    if (!authState.token || !authState.username) return;
+    if (!authState.token || !authState.username) {
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
     setUserInfoError(false);
@@ -76,25 +81,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize auth state from localStorage
   useEffect(() => {
-    const token = localStorage.getItem("auth_token");
-    const username = localStorage.getItem("username");
+    const initializeAuth = async () => {
+      const token = localStorage.getItem("auth_token");
+      const username = localStorage.getItem("username");
 
-    if (token && username) {
-      setAuthState((prev) => ({
-        ...prev,
-        isAuthenticated: true,
-        token,
-        username,
-      }));
-    }
-  }, []);
+      if (token && username) {
+        setAuthState((prev) => ({
+          ...prev,
+          isAuthenticated: true,
+          token,
+          username,
+        }));
 
-  // Load user info when authenticated
+        try {
+          const userInfo = await authService.getUserInfo(token, username);
+          const roles = getRolesFromUserInfo(userInfo);
+          setAuthState((prev) => ({ ...prev, userInfo, roles }));
+        } catch (_) {
+          setUserInfoError(true);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initializeAuth();
+  }, [getRolesFromUserInfo]);
+
+  // No need for a separate effect to load user info since we do it in initialization
   useEffect(() => {
-    if (authState.isAuthenticated && !authState.userInfo && !isLoading) {
-      loadUserInfo().catch(() => {}); // Silent catch as error state is handled
+    if (
+      authState.isAuthenticated &&
+      !authState.userInfo &&
+      !isLoading &&
+      !userInfoError
+    ) {
+      loadUserInfo().catch(() => {
+        setIsLoading(false);
+      });
     }
-  }, [authState.isAuthenticated, authState.userInfo, isLoading, loadUserInfo]);
+  }, [
+    authState.isAuthenticated,
+    authState.userInfo,
+    isLoading,
+    loadUserInfo,
+    userInfoError,
+  ]);
 
   const login = useCallback(
     async (credentials: LoginCredentials): Promise<LoginResponse> => {
@@ -119,17 +150,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(() => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("username");
-    setAuthState({
-      isAuthenticated: false,
-      token: null,
-      username: null,
-      userInfo: null,
-      roles: [],
-    });
-    clearData();
-    setUserInfoError(false);
+    setIsLoading(true);
+    try {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("username");
+      setAuthState({
+        isAuthenticated: false,
+        token: null,
+        username: null,
+        userInfo: null,
+        roles: [],
+      });
+      clearData();
+      setUserInfoError(false);
+    } finally {
+      setIsLoading(false);
+    }
   }, [clearData]);
 
   return (
