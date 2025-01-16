@@ -23,15 +23,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { clearData } = useData();
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Actions
-  const setLoading = useCallback((isLoading: boolean) => {
-    dispatch({ type: "SET_LOADING", payload: isLoading });
-  }, []);
+  // Dispatch actions
+  const dispatchActions = useMemo(
+    () => ({
+      setLoading: (isLoading: boolean) =>
+        dispatch({ type: "SET_LOADING", payload: isLoading }),
+      setUserInfoError: (hasError: boolean) =>
+        dispatch({ type: "SET_USER_INFO_ERROR", payload: hasError }),
+      setAuthData: (token: string, username: string) =>
+        dispatch({ type: "SET_AUTH_DATA", payload: { token, username } }),
+      setUserInfo: (userInfo: UserInfo, roles: RoleName[]) =>
+        dispatch({ type: "SET_USER_INFO", payload: { userInfo, roles } }),
+      clearAuth: () => dispatch({ type: "CLEAR_AUTH" }),
+    }),
+    []
+  );
 
-  const setUserInfoError = useCallback((hasError: boolean) => {
-    dispatch({ type: "SET_USER_INFO_ERROR", payload: hasError });
-  }, []);
-
+  // User info helpers
   const getRolesFromUserInfo = useCallback((userInfo: UserInfo): RoleName[] => {
     return userInfo.usuario.usuarioRoles.map((ur) => ur.rol.nombre);
   }, []);
@@ -41,71 +49,91 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const userInfo = await authService.getUserInfo(username);
         const roles = getRolesFromUserInfo(userInfo);
-        dispatch({
-          type: "SET_USER_INFO",
-          payload: { userInfo, roles },
-        });
-        setUserInfoError(false);
+        dispatchActions.setUserInfo(userInfo, roles);
+        dispatchActions.setUserInfoError(false);
       } catch (error) {
-        setUserInfoError(true);
+        dispatchActions.setUserInfoError(true);
         throw error;
       }
     },
-    [getRolesFromUserInfo, setUserInfoError]
+    [getRolesFromUserInfo, dispatchActions]
   );
 
+  // Auth state management
   const handleAuthStateChange = useCallback(
     async (token: string, username: string) => {
-      dispatch({
-        type: "SET_AUTH_DATA",
-        payload: { token, username },
-      });
-
+      dispatchActions.setAuthData(token, username);
       try {
         await fetchUserInfo(username);
       } catch {
         // Error already handled in fetchUserInfo
       }
     },
-    [fetchUserInfo]
+    [fetchUserInfo, dispatchActions]
   );
 
-  const loadUserInfo = useCallback(async () => {
-    if (!authService.isAuthenticated() || !authService.getStoredUsername()) {
-      setLoading(false);
-      return;
+  const validateAuthState = useCallback(() => {
+    const isValid =
+      authService.isAuthenticated() && authService.getStoredUsername();
+    if (!isValid) {
+      dispatchActions.setLoading(false);
     }
-    if (state.data.userInfo) {
-      setLoading(false);
+    return isValid;
+  }, [dispatchActions]);
+
+  // Public methods
+  const loadUserInfo = useCallback(async () => {
+    if (!validateAuthState() || state.data.userInfo) {
+      dispatchActions.setLoading(false);
       return;
     }
 
     try {
-      const username = authService.getStoredUsername()!;
-      await fetchUserInfo(username);
+      await fetchUserInfo(authService.getStoredUsername()!);
     } finally {
-      setLoading(false);
+      dispatchActions.setLoading(false);
     }
-  }, [state.data.userInfo, fetchUserInfo, setLoading]);
+  }, [state.data.userInfo, fetchUserInfo, validateAuthState, dispatchActions]);
 
   const retryLoadUserInfo = useCallback(async () => {
-    if (!authService.isAuthenticated() || !authService.getStoredUsername()) {
-      setLoading(false);
-      return;
-    }
+    if (!validateAuthState()) return;
 
-    setLoading(true);
-    setUserInfoError(false);
+    dispatchActions.setLoading(true);
+    dispatchActions.setUserInfoError(false);
 
     try {
-      const username = authService.getStoredUsername()!;
-      await fetchUserInfo(username);
+      await fetchUserInfo(authService.getStoredUsername()!);
     } finally {
-      setLoading(false);
+      dispatchActions.setLoading(false);
     }
-  }, [fetchUserInfo, setLoading, setUserInfoError]);
+  }, [fetchUserInfo, validateAuthState, dispatchActions]);
 
-  // Initialize auth state from localStorage
+  const login = useCallback(
+    async (credentials: LoginCredentials): Promise<LoginResponse> => {
+      dispatchActions.setLoading(true);
+      try {
+        const response = await authService.login(credentials);
+        await handleAuthStateChange(response.token, response.username);
+        return response;
+      } finally {
+        dispatchActions.setLoading(false);
+      }
+    },
+    [handleAuthStateChange, dispatchActions]
+  );
+
+  const logout = useCallback(() => {
+    dispatchActions.setLoading(true);
+    try {
+      authService.logout();
+      dispatchActions.clearAuth();
+      clearData();
+    } finally {
+      dispatchActions.setLoading(false);
+    }
+  }, [clearData, dispatchActions]);
+
+  // Initialize auth state
   useEffect(() => {
     const initializeAuth = async () => {
       const token = authService.getStoredToken();
@@ -114,38 +142,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (token && username) {
         await handleAuthStateChange(token, username);
       }
-      setLoading(false);
+      dispatchActions.setLoading(false);
     };
 
     initializeAuth();
-  }, [handleAuthStateChange, setLoading]);
+  }, [handleAuthStateChange, dispatchActions]);
 
-  const login = useCallback(
-    async (credentials: LoginCredentials): Promise<LoginResponse> => {
-      setLoading(true);
-      try {
-        const response = await authService.login(credentials);
-        await handleAuthStateChange(response.token, response.username);
-        return response;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [handleAuthStateChange, setLoading]
-  );
-
-  const logout = useCallback(() => {
-    setLoading(true);
-    try {
-      authService.logout();
-      dispatch({ type: "CLEAR_AUTH" });
-      clearData();
-    } finally {
-      setLoading(false);
-    }
-  }, [clearData, setLoading]);
-
-  // Memoized context value
+  // Context value
   const value = useMemo(
     () => ({
       ...state.data,
