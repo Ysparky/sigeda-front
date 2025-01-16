@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { ErrorDisplay } from "../../components/common/ErrorDisplay";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { UserInfoError } from "../../components/common/UserInfoError";
 import { useData } from "../../contexts/DataContext";
@@ -9,6 +8,11 @@ import { ModulesSection } from "./components/ModulesSection";
 import { SubModulesSection } from "./components/SubModulesSection";
 import { WelcomeHeader } from "./components/WelcomeHeader";
 
+interface ErrorState {
+  message: string;
+  type: "fases" | "subfases";
+}
+
 function DashboardPage() {
   const {
     userInfo,
@@ -17,19 +21,27 @@ function DashboardPage() {
     isLoading: isLoadingAuth,
   } = useAuth();
   const { loadFases, fases, fasesDetail, loadFaseDetail } = useData();
+
+  // State management
   const [selectedFaseId, setSelectedFaseId] = useState<number | null>(null);
   const [isLoadingSubFases, setIsLoadingSubFases] = useState(false);
   const [isLoadingFases, setIsLoadingFases] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorState | null>(null);
 
+  // Initialize data
   useEffect(() => {
     const initializeData = async () => {
       if (!userInfo) return; // Wait for user info before loading fases
 
       try {
+        setIsLoadingFases(true);
+        setError(null);
         await loadFases();
       } catch {
-        setError("Error al cargar los módulos");
+        setError({
+          message: "Error al cargar los módulos",
+          type: "fases",
+        });
       } finally {
         setIsLoadingFases(false);
       }
@@ -38,36 +50,75 @@ function DashboardPage() {
     initializeData();
   }, [userInfo, loadFases]);
 
-  const handleFaseClick = async (fase: Fase) => {
-    if (selectedFaseId === fase.id) {
-      setSelectedFaseId(null);
-      return;
-    }
+  // Handlers
+  const handleFaseClick = useCallback(
+    async (fase: Fase) => {
+      if (selectedFaseId === fase.id) {
+        setSelectedFaseId(null);
+        return;
+      }
 
-    setSelectedFaseId(fase.id);
+      setSelectedFaseId(fase.id);
 
+      try {
+        setIsLoadingSubFases(true);
+        setError(null);
+        await loadFaseDetail(fase.id);
+      } catch {
+        setError({
+          message: "Error al cargar los sub-módulos",
+          type: "subfases",
+        });
+      } finally {
+        setIsLoadingSubFases(false);
+      }
+    },
+    [selectedFaseId, loadFaseDetail]
+  );
+
+  const handleRetryFases = useCallback(async () => {
     try {
-      setIsLoadingSubFases(true);
-      await loadFaseDetail(fase.id);
-    } catch {
-      setError("Error al cargar los sub-módulos");
-    } finally {
-      setIsLoadingSubFases(false);
-    }
-  };
-
-  const handleRetry = async () => {
-    setError(null);
-    setIsLoadingFases(true);
-    try {
+      setIsLoadingFases(true);
+      setError(null);
       await loadFases();
     } catch {
-      setError("Error al cargar los módulos");
+      setError({
+        message: "Error al cargar los módulos",
+        type: "fases",
+      });
     } finally {
       setIsLoadingFases(false);
     }
-  };
+  }, [loadFases]);
 
+  const handleRetrySubFases = useCallback(async () => {
+    if (!selectedFaseId) return;
+
+    try {
+      setIsLoadingSubFases(true);
+      setError(null);
+      await loadFaseDetail(selectedFaseId);
+    } catch {
+      setError({
+        message: "Error al cargar los sub-módulos",
+        type: "subfases",
+      });
+    } finally {
+      setIsLoadingSubFases(false);
+    }
+  }, [selectedFaseId, loadFaseDetail]);
+
+  // Computed values
+  const selectedFase = useMemo(
+    () =>
+      selectedFaseId
+        ? fasesDetail[selectedFaseId] ||
+          fases.find((f) => f.id === selectedFaseId)
+        : null,
+    [selectedFaseId, fasesDetail, fases]
+  );
+
+  // Loading states
   if (isLoadingAuth) {
     return <LoadingSpinner />;
   }
@@ -80,23 +131,6 @@ function DashboardPage() {
     return <LoadingSpinner />;
   }
 
-  if (error) {
-    return (
-      <ErrorDisplay
-        title="No pudimos cargar los módulos"
-        message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
-        onRetry={handleRetry}
-        showHeader={false}
-      >
-        <WelcomeHeader userInfo={userInfo} />
-      </ErrorDisplay>
-    );
-  }
-
-  const selectedFase = selectedFaseId
-    ? fasesDetail[selectedFaseId] || fases.find((f) => f.id === selectedFaseId)
-    : null;
-
   return (
     <div className="max-w-6xl mx-auto space-y-8 px-4">
       <WelcomeHeader userInfo={userInfo} />
@@ -106,13 +140,16 @@ function DashboardPage() {
         isLoading={isLoadingFases}
         selectedFase={selectedFase}
         onFaseClick={handleFaseClick}
+        error={error?.type === "fases" ? error.message : null}
+        onRetry={handleRetryFases}
       />
 
       {selectedFase && (
         <SubModulesSection
           fase={selectedFase}
           isLoading={isLoadingSubFases}
-          error={error}
+          error={error?.type === "subfases" ? error.message : null}
+          onRetry={handleRetrySubFases}
         />
       )}
     </div>

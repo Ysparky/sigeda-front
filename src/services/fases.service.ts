@@ -38,7 +38,7 @@ export const fasesService = {
 
   async getFaseById(id: number): Promise<Fase> {
     const token = localStorage.getItem("auth_token");
-    const response = await fetch(`${API_URL}/api/fases/${id}2`, {
+    const response = await fetch(`${API_URL}/api/fases/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

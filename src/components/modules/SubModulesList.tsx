@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useData } from "../../contexts/DataContext";
+import { useAuth } from "../../hooks/useAuth";
 import type { Fase } from "../../services/fases.service";
 import { getSubModuleIcon } from "../../utils/moduleIcons";
 import { LoadingSpinner } from "../common/LoadingSpinner";
@@ -14,7 +14,7 @@ interface SubModulesListProps {
 export const SubModulesList = ({ fase, isLoading }: SubModulesListProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const navigate = useNavigate();
-  const { userInfo } = useData();
+  const { userInfo } = useAuth();
 
   useEffect(() => {
     setIsVisible(true);

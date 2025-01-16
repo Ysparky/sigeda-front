@@ -16,7 +16,7 @@ export function ErrorDisplay({
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       {showHeader && children}
-      <div className="mt-8 bg-white rounded-lg shadow-sm p-8">
+      <div className="bg-white rounded-lg shadow-sm p-8">
         <div className="text-center">
           <span className="text-5xl mb-4 block">😕</span>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">{title}</h2>
