@@ -10,6 +10,8 @@ interface DataContextType {
   clearData: () => void;
   subfases: SubFase[];
   loadSubFases: () => Promise<void>;
+  selectedFaseId: number | null;
+  setSelectedFaseId: (id: number | null) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -18,6 +20,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [fases, setFases] = useState<Fase[]>([]);
   const [fasesDetail, setFasesDetail] = useState<Record<number, Fase>>({});
   const [subfases, setSubFases] = useState<SubFase[]>([]);
+  const [selectedFaseId, setSelectedFaseId] = useState<number | null>(null);
 
   const loadFases = useCallback(async () => {
     if (fases.length > 0) return; // Return if already loaded
@@ -64,6 +67,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const clearData = useCallback(() => {
     setFases([]);
     setFasesDetail({});
+    setSubFases([]);
+    setSelectedFaseId(null);
   }, []);
 
   return (
@@ -76,6 +81,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         clearData,
         subfases,
         loadSubFases,
+        selectedFaseId,
+        setSelectedFaseId,
       }}
     >
       {children}

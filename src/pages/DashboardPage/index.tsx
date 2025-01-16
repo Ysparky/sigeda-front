@@ -20,24 +20,36 @@ function DashboardPage() {
     retryLoadUserInfo,
     isLoading: isLoadingAuth,
   } = useAuth();
-  const { loadFases, fases, fasesDetail, loadFaseDetail } = useData();
+  const {
+    loadFases,
+    fases,
+    fasesDetail,
+    loadFaseDetail,
+    selectedFaseId,
+    setSelectedFaseId,
+  } = useData();
 
-  // State management
-  const [selectedFaseId, setSelectedFaseId] = useState<number | null>(null);
   const [isLoadingSubFases, setIsLoadingSubFases] = useState(false);
   const [isLoadingFases, setIsLoadingFases] = useState(true);
   const [error, setError] = useState<ErrorState | null>(null);
 
-  // Initialize data
+  // Load initial data including selected fase
   useEffect(() => {
     const initializeData = async () => {
-      if (!userInfo) return; // Wait for user info before loading fases
+      if (!userInfo) return;
 
       try {
         setIsLoadingFases(true);
         setError(null);
         await loadFases();
-      } catch {
+
+        // If there's a selected fase, load its details
+        if (selectedFaseId) {
+          setIsLoadingSubFases(true);
+          await loadFaseDetail(selectedFaseId);
+          setIsLoadingSubFases(false);
+        }
+      } catch (err) {
         setError({
           message: "Error al cargar los módulos",
           type: "fases",
@@ -48,9 +60,9 @@ function DashboardPage() {
     };
 
     initializeData();
-  }, [userInfo, loadFases]);
+  }, [userInfo, loadFases, selectedFaseId, loadFaseDetail]);
 
-  // Handlers
+  // Handle fase click
   const handleFaseClick = useCallback(
     async (fase: Fase) => {
       if (selectedFaseId === fase.id) {
@@ -73,7 +85,7 @@ function DashboardPage() {
         setIsLoadingSubFases(false);
       }
     },
-    [selectedFaseId, loadFaseDetail]
+    [selectedFaseId, setSelectedFaseId, loadFaseDetail]
   );
 
   const handleRetryFases = useCallback(async () => {
