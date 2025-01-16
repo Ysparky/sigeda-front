@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { useData } from "../contexts/DataContext";
 import { authService } from "../services/auth.service";
 import {
   AuthState,
@@ -9,6 +8,7 @@ import {
   UserInfo,
 } from "../types/auth.types";
 import { AuthContext } from "./AuthContext";
+import { useData } from "./data";
 
 const initialAuthState: AuthState = {
   isAuthenticated: false,

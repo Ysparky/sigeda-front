@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useData } from "../../../contexts/DataContext";
+import { useData } from "../../../contexts/data";
 import { turnosService } from "../../../services/turnos.service";
 import { TurnoDetalle } from "../../../types/turno.types";
 import {

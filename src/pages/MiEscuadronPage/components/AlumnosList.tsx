@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LoadingSpinner } from "../../../components/common/LoadingSpinner";
-import { useData } from "../../../contexts/DataContext";
+import { useAuth } from "../../../hooks/useAuth";
 import { gruposService } from "../../../services/grupos.service";
 import { AlumnoCard } from "./AlumnoCard";
 
@@ -19,7 +19,7 @@ interface AlumnosListProps {
 }
 
 export function AlumnosList({ searchTerm, filter }: AlumnosListProps) {
-  const { userInfo } = useData();
+  const { userInfo } = useAuth();
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

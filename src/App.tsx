@@ -1,6 +1,6 @@
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthProvider";
-import { DataProvider } from "./contexts/DataContext";
+import { DataProvider } from "./contexts/data";
 import AppRoutes from "./routes";
 
 function App() {

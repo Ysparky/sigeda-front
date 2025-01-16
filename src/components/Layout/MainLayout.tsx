@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useData } from "../../contexts/DataContext";
 import { useAuth } from "../../hooks/useAuth";
 import { getFullName } from "../../utils/userUtils";
 
@@ -11,8 +10,7 @@ interface MainLayoutProps {
 function MainLayout({ children }: MainLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const { userInfo } = useData();
-  const { logout } = useAuth();
+  const { userInfo, logout } = useAuth();
 
   const handleLogout = () => {
     logout();

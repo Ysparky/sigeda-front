@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { ErrorDisplay } from "../../components/common/ErrorDisplay";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
-import { useData } from "../../contexts/DataContext";
+import { useAuth } from "../../hooks/useAuth";
 import { evaluacionesService } from "../../services/evaluaciones.service";
 import { EvaluacionesList } from "./components/EvaluacionesList";
 import { SearchFilter } from "./components/SearchFilter";
@@ -11,7 +11,7 @@ import type { Evaluacion, FilterOption } from "./types";
 
 function EvaluacionesPage() {
   const { turnoId, subfaseId } = useParams();
-  const { userInfo } = useData();
+  const { userInfo } = useAuth();
   const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
