@@ -51,6 +51,7 @@ export interface AuthContextType {
   userInfo: UserInfo | null;
   roles: RoleName[];
   userInfoError: boolean;
+  isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<LoginResponse>;
   logout: () => void;
   loadUserInfo: () => Promise<void>;

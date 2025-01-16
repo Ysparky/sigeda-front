@@ -10,26 +10,33 @@ import { SubModulesSection } from "./components/SubModulesSection";
 import { WelcomeHeader } from "./components/WelcomeHeader";
 
 function DashboardPage() {
-  const { userInfo, userInfoError, retryLoadUserInfo } = useAuth();
+  const {
+    userInfo,
+    userInfoError,
+    retryLoadUserInfo,
+    isLoading: isLoadingAuth,
+  } = useAuth();
   const { loadFases, fases, fasesDetail, loadFaseDetail } = useData();
   const [selectedFaseId, setSelectedFaseId] = useState<number | null>(null);
   const [isLoadingSubFases, setIsLoadingSubFases] = useState(false);
-  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+  const [isLoadingFases, setIsLoadingFases] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeData = async () => {
+      if (!userInfo) return; // Wait for user info before loading fases
+
       try {
         await loadFases();
       } catch {
         setError("Error al cargar los módulos");
       } finally {
-        setIsLoadingInitial(false);
+        setIsLoadingFases(false);
       }
     };
 
     initializeData();
-  }, []);
+  }, [userInfo, loadFases]);
 
   const handleFaseClick = async (fase: Fase) => {
     if (selectedFaseId === fase.id) {
@@ -49,7 +56,19 @@ function DashboardPage() {
     }
   };
 
-  if (isLoadingInitial && !userInfoError) {
+  const handleRetry = async () => {
+    setError(null);
+    setIsLoadingFases(true);
+    try {
+      await loadFases();
+    } catch {
+      setError("Error al cargar los módulos");
+    } finally {
+      setIsLoadingFases(false);
+    }
+  };
+
+  if (isLoadingAuth) {
     return <LoadingSpinner />;
   }
 
@@ -66,7 +85,7 @@ function DashboardPage() {
       <ErrorDisplay
         title="No pudimos cargar los módulos"
         message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
-        onRetry={() => window.location.reload()}
+        onRetry={handleRetry}
         showHeader={false}
       >
         <WelcomeHeader userInfo={userInfo} />
@@ -84,7 +103,7 @@ function DashboardPage() {
 
       <ModulesSection
         fases={fases}
-        isLoading={isLoadingInitial}
+        isLoading={isLoadingFases}
         selectedFase={selectedFase}
         onFaseClick={handleFaseClick}
       />
