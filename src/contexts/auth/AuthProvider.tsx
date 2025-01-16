@@ -37,9 +37,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchUserInfo = useCallback(
-    async (token: string, username: string) => {
+    async (username: string) => {
       try {
-        const userInfo = await authService.getUserInfo(token, username);
+        const userInfo = await authService.getUserInfo(username);
         const roles = getRolesFromUserInfo(userInfo);
         dispatch({
           type: "SET_USER_INFO",
@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       try {
-        await fetchUserInfo(token, username);
+        await fetchUserInfo(username);
       } catch {
         // Error already handled in fetchUserInfo
       }
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const loadUserInfo = useCallback(async () => {
-    if (!state.data.token || !state.data.username) {
+    if (!authService.isAuthenticated() || !authService.getStoredUsername()) {
       setLoading(false);
       return;
     }
@@ -81,20 +81,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      await fetchUserInfo(state.data.token, state.data.username);
+      const username = authService.getStoredUsername()!;
+      await fetchUserInfo(username);
     } finally {
       setLoading(false);
     }
-  }, [
-    state.data.token,
-    state.data.username,
-    state.data.userInfo,
-    fetchUserInfo,
-    setLoading,
-  ]);
+  }, [state.data.userInfo, fetchUserInfo, setLoading]);
 
   const retryLoadUserInfo = useCallback(async () => {
-    if (!state.data.token || !state.data.username) {
+    if (!authService.isAuthenticated() || !authService.getStoredUsername()) {
       setLoading(false);
       return;
     }
@@ -103,23 +98,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserInfoError(false);
 
     try {
-      await fetchUserInfo(state.data.token, state.data.username);
+      const username = authService.getStoredUsername()!;
+      await fetchUserInfo(username);
     } finally {
       setLoading(false);
     }
-  }, [
-    state.data.token,
-    state.data.username,
-    fetchUserInfo,
-    setLoading,
-    setUserInfoError,
-  ]);
+  }, [fetchUserInfo, setLoading, setUserInfoError]);
 
   // Initialize auth state from localStorage
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem("auth_token");
-      const username = localStorage.getItem("username");
+      const token = authService.getStoredToken();
+      const username = authService.getStoredUsername();
 
       if (token && username) {
         await handleAuthStateChange(token, username);
@@ -135,8 +125,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       try {
         const response = await authService.login(credentials);
-        localStorage.setItem("auth_token", response.token);
-        localStorage.setItem("username", response.username);
         await handleAuthStateChange(response.token, response.username);
         return response;
       } finally {
@@ -149,8 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     setLoading(true);
     try {
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("username");
+      authService.logout();
       dispatch({ type: "CLEAR_AUTH" });
       clearData();
     } finally {
