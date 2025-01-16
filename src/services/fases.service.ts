@@ -1,8 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL;
-
-if (!API_URL) {
-  throw new Error("API URL not defined in environment variables");
-}
+import { api } from "./api";
 
 export interface Fase {
   id: number;
@@ -22,32 +18,12 @@ export interface SubFase {
 
 export const fasesService = {
   async getFases(): Promise<Fase[]> {
-    const token = localStorage.getItem("auth_token");
-    const response = await fetch(`${API_URL}/api/fases`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Error al obtener fases");
-    }
-
-    return response.json();
+    const response = await api.get<Fase[]>("/fases");
+    return response.data;
   },
 
   async getFaseById(id: number): Promise<Fase> {
-    const token = localStorage.getItem("auth_token");
-    const response = await fetch(`${API_URL}/api/fases/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Error al obtener fase");
-    }
-
-    return response.json();
+    const response = await api.get<Fase>(`/fases/${id}`);
+    return response.data;
   },
 };
