@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from "react";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { UserInfoError } from "../../components/common/UserInfoError";
+import { useAuth } from "../../contexts/auth";
 import { useData } from "../../contexts/data";
-import { useAuth } from "../../hooks/useAuth";
 import { ModulesSection } from "./components/ModulesSection";
 import { SubModulesSection } from "./components/SubModulesSection";
 import { WelcomeHeader } from "./components/WelcomeHeader";

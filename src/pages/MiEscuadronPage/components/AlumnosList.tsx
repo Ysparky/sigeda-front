@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LoadingSpinner } from "../../../components/common/LoadingSpinner";
-import { useAuth } from "../../../hooks/useAuth";
+import { useAuth } from "../../../contexts/auth";
 import { gruposService } from "../../../services/grupos.service";
 import { AlumnoCard } from "./AlumnoCard";
 

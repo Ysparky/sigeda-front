@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { ErrorDisplay } from "../../components/common/ErrorDisplay";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../contexts/auth";
 import { turnosService } from "../../services/turnos.service";
 import { EmptyState } from "./components/EmptyState";
 import { SearchSort } from "./components/SearchSort";

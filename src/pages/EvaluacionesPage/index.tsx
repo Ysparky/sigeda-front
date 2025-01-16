@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { ErrorDisplay } from "../../components/common/ErrorDisplay";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../contexts/auth";
 import { evaluacionesService } from "../../services/evaluaciones.service";
 import { EvaluacionesList } from "./components/EvaluacionesList";
 import { SearchFilter } from "./components/SearchFilter";

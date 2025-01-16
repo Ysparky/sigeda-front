@@ -1,21 +1,20 @@
+import { useAuth } from "../contexts/auth";
 import type { RoleName } from "../types/auth.types";
-import { useAuth } from "./useAuth";
 
 export function useRoles() {
   const { roles } = useAuth();
 
   const getPrimaryRole = (): RoleName => {
-
-    if(roles.includes("Jefe de Operaciones")) {
+    if (roles.includes("Jefe de Operaciones")) {
       return "Jefe de Operaciones";
     }
-    if(roles.includes("Instructor")) {
+    if (roles.includes("Instructor")) {
       return "Instructor";
     }
-    if(roles.includes("Alumno")) {
+    if (roles.includes("Alumno")) {
       return "Alumno";
     }
-    
+
     return roles[0] || "";
   };
 

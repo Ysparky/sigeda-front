@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../contexts/auth";
 import type { Fase } from "../../services/fases.service";
 import { getSubModuleIcon } from "../../utils/moduleIcons";
 import { LoadingSpinner } from "../common/LoadingSpinner";

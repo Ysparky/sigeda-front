@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../contexts/auth";
 import { LoadingSpinner } from "./common/LoadingSpinner";
 import MainLayout from "./Layout/MainLayout";
 
