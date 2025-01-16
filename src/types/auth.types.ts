@@ -9,7 +9,7 @@ export interface LoginResponse {
   token: string;
 }
 
-export type RoleName = 'Alumno' | 'Instructor' | 'Jefe de Operaciones';
+export type RoleName = "Alumno" | "Instructor" | "Jefe de Operaciones";
 
 interface Rol {
   id: number;
@@ -50,7 +50,9 @@ export interface AuthContextType {
   token: string | null;
   userInfo: UserInfo | null;
   roles: RoleName[];
+  userInfoError: boolean;
   login: (credentials: LoginCredentials) => Promise<LoginResponse>;
   logout: () => void;
   loadUserInfo: () => Promise<void>;
+  retryLoadUserInfo: () => Promise<void>;
 }

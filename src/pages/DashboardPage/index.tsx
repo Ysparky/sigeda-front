@@ -3,38 +3,25 @@ import { ErrorDisplay } from "../../components/common/ErrorDisplay";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { UserInfoError } from "../../components/common/UserInfoError";
 import { useData } from "../../contexts/DataContext";
+import { useAuth } from "../../hooks/useAuth";
 import type { Fase } from "../../services/fases.service";
 import { ModulesSection } from "./components/ModulesSection";
 import { SubModulesSection } from "./components/SubModulesSection";
 import { WelcomeHeader } from "./components/WelcomeHeader";
 
 function DashboardPage() {
-  const {
-    loadUserInfo,
-    loadFases,
-    userInfo,
-    fases,
-    fasesDetail,
-    loadFaseDetail,
-  } = useData();
+  const { userInfo, userInfoError, retryLoadUserInfo } = useAuth();
+  const { loadFases, fases, fasesDetail, loadFaseDetail } = useData();
   const [selectedFaseId, setSelectedFaseId] = useState<number | null>(null);
   const [isLoadingSubFases, setIsLoadingSubFases] = useState(false);
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
-  const [userInfoError, setUserInfoError] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeData = async () => {
       try {
-        await loadUserInfo();
-      } catch (error) {
-        setUserInfoError(true);
-        return;
-      }
-
-      try {
         await loadFases();
-      } catch (error) {
+      } catch {
         setError("Error al cargar los módulos");
       } finally {
         setIsLoadingInitial(false);
@@ -62,25 +49,12 @@ function DashboardPage() {
     }
   };
 
-  const handleRetryUserInfo = async () => {
-    setUserInfoError(false);
-    setIsLoadingInitial(true);
-    try {
-      await loadUserInfo();
-      await loadFases();
-    } catch (error) {
-      setUserInfoError(true);
-    } finally {
-      setIsLoadingInitial(false);
-    }
-  };
-
   if (isLoadingInitial && !userInfoError) {
     return <LoadingSpinner />;
   }
 
   if (userInfoError) {
-    return <UserInfoError onRetry={handleRetryUserInfo} />;
+    return <UserInfoError onRetry={retryLoadUserInfo} />;
   }
 
   if (!userInfo) {

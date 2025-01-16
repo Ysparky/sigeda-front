@@ -1,14 +1,10 @@
 import { createContext, useCallback, useContext, useState } from "react";
-import { authService } from "../services/auth.service";
 import { fasesService, type Fase } from "../services/fases.service";
 import { SubFase, subfasesService } from "../services/subfases.service";
-import type { UserInfo } from "../types/auth.types";
 
 interface DataContextType {
-  userInfo: UserInfo | null;
   fases: Fase[];
   fasesDetail: Record<number, Fase>;
-  loadUserInfo: () => Promise<void>;
   loadFases: () => Promise<void>;
   loadFaseDetail: (faseId: number) => Promise<void>;
   clearData: () => void;
@@ -19,27 +15,9 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [fases, setFases] = useState<Fase[]>([]);
   const [fasesDetail, setFasesDetail] = useState<Record<number, Fase>>({});
   const [subfases, setSubFases] = useState<SubFase[]>([]);
-
-  const loadUserInfo = useCallback(async () => {
-    if (userInfo) return; // Return if already loaded
-
-    const token = localStorage.getItem("auth_token");
-    const username = localStorage.getItem("username");
-
-    if (!token || !username) return;
-
-    try {
-      const data = await authService.getUserInfo(token, username);
-      setUserInfo(data);
-    } catch (err) {
-      console.error("Error loading user info:", err);
-      throw err;
-    }
-  }, [userInfo]);
 
   const loadFases = useCallback(async () => {
     if (fases.length > 0) return; // Return if already loaded
@@ -84,7 +62,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [subfases.length]);
 
   const clearData = useCallback(() => {
-    setUserInfo(null);
     setFases([]);
     setFasesDetail({});
   }, []);
@@ -92,10 +69,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   return (
     <DataContext.Provider
       value={{
-        userInfo,
         fases,
         fasesDetail,
-        loadUserInfo,
         loadFases,
         loadFaseDetail,
         clearData,

@@ -36,10 +36,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
       const roles = getRolesFromUserInfo(userInfo);
       setAuthState((prev) => ({ ...prev, userInfo, roles }));
+      setUserInfoError(false);
     } catch (err) {
       setUserInfoError(true);
       throw err;
     }
+  };
+
+  const retryLoadUserInfo = async () => {
+    setUserInfoError(false);
+    await loadUserInfo();
   };
 
   useEffect(() => {
@@ -75,7 +81,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     localStorage.setItem("auth_token", response.token);
     localStorage.setItem("username", response.username);
-    await loadUserInfo();
     return response;
   };
 
@@ -98,7 +103,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ ...authState, login, logout, loadUserInfo }}>
+    <AuthContext.Provider
+      value={{
+        ...authState,
+        login,
+        logout,
+        loadUserInfo,
+        retryLoadUserInfo,
+        userInfoError,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
