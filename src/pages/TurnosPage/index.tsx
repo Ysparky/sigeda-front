@@ -62,7 +62,7 @@ function TurnosPage() {
     if (turnos.length === 0) return <EmptyState />;
 
     return (
-      <>
+      <div className="space-y-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-8">
           Turnos Disponibles
         </h1>
@@ -73,7 +73,7 @@ function TurnosPage() {
           onSortChange={setSortBy}
         />
         <TurnosList turnos={turnos} />
-      </>
+      </div>
     );
   };
 
