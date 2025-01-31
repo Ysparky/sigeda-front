@@ -1,181 +1,126 @@
-import type { PaginatedResponse, TurnoResponse } from '../pages/TurnosPage/types';
-import type { UserInfo } from '../types/auth.types';
-import { CreateTurnoResponse } from '../types/turno.types';
+import { AxiosError } from "axios";
+import type {
+  PaginatedResponse,
+  TurnoResponse,
+} from "../pages/TurnosPage/types";
+import type { UserInfo } from "../types/auth.types";
+import { CreateTurnoResponse } from "../types/turno.types";
+import { api } from "./api";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-if (!API_URL) {
-  throw new Error('API URL not defined in environment variables');
+// Types
+export interface Maniobra {
+  id: number;
+  descripcion: string;
+  nombre: string;
 }
 
-interface CreateTurnoRequest {
+export interface TurnoManiobra {
+  idManiobra: number;
+  nota_min: string;
+  checked?: boolean;
+  maniobra?: Maniobra;
+}
+
+export interface GrupoTurno {
+  codInstructor: number;
+  idGrupo: number;
+  checked?: boolean;
+  instructor?: string;
+  grupo?: {
+    id: number;
+    nombre: string;
+    personas: {
+      aMaterno: string;
+      aPaterno: string;
+      codigo: string;
+      nombre: string;
+      idGrupo: number;
+      estado: string;
+    }[];
+  };
+}
+
+export interface CreateTurnoRequest {
   nombre: string;
   fechaEval: string;
   programa: string;
   idSubFase: number;
-  grupoTurnos: {
-    codInstructor: number;
-    idGrupo: number;
-  }[];
-  turnoManiobras: {
-    idManiobra: number;
-    nota_min: string;
-  }[];
+  grupoTurnos: GrupoTurno[];
+  turnoManiobras: TurnoManiobra[];
 }
 
-interface TurnoDetail {
+export interface TurnoDetail {
   id: number;
   programa: string;
   fechaEval: string;
-  turnoManiobras: {
-    nota_min: string;
-    maniobra: {
-      id: number;
-      descripcion: string;
-      nombre: string;
-    };
-  }[];
-  grupoTurnos: {
-    instructor: string;
-    codInstructor: string;
-    grupo: {
-      id: number;
-      personas: {
-        aMaterno: string;
-        aPaterno: string;
-        codigo: string;
-        nombre: string;
-        idGrupo: number;
-        estado: string;
-      }[];
-      nombre: string;
-    };
-  }[];
+  turnoManiobras: TurnoManiobra[];
+  grupoTurnos: GrupoTurno[];
   fase: string;
   nombre: string;
   subfase: string;
 }
 
-interface UpdateTurnoRequest {
-  nombre: string;
-  fechaEval: string;
-  grupoTurnos: {
-    codInstructor: number;
-    idGrupo: number;
-    checked: boolean;
-  }[];
-  turnoManiobras: {
-    idManiobra: number;
-    checked: boolean;
-    nota_min: string;
-  }[];
-}
+export type UpdateTurnoRequest = Omit<
+  CreateTurnoRequest,
+  "programa" | "idSubFase"
+>;
 
-interface UpdateTurnoResponse {
+export interface UpdateTurnoResponse {
   mensaje: string;
   turno: string[];
 }
 
 export const turnosService = {
-  async getTurnosBySubFase(subfaseId: string, userInfo: UserInfo): Promise<TurnoResponse[]> {
-    const token = localStorage.getItem('auth_token');
-    console.log('Making API call with:', { subfaseId, userInfo });
-
-    const response = await fetch(
-      `${API_URL}/api/turnos/subfase/${subfaseId}/programa/PDI/grupo/${userInfo.idGrupo}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+  async getTurnosBySubFase(
+    subfaseId: string,
+    userInfo: UserInfo
+  ): Promise<TurnoResponse[]> {
+    try {
+      const response = await api.get<PaginatedResponse>(
+        `/turnos/subfase/${subfaseId}/programa/PDI/grupo/${userInfo.idGrupo}`
+      );
+      return response.data.content;
+    } catch (error) {
+      if ((error as AxiosError).response?.status === 404) {
+        return [];
       }
-    );
-
-    if (response.status === 404) {
-      return [];
+      throw error;
     }
-
-    if (!response.ok) {
-      throw new Error('Error al obtener los turnos');
-    }
-
-    const data: PaginatedResponse = await response.json();
-    return data.content;
   },
 
   async createTurno(data: CreateTurnoRequest): Promise<CreateTurnoResponse> {
-    const token = localStorage.getItem('auth_token');
-    const response = await fetch(`${API_URL}/api/turnos`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    const responseData = await response.json();
-
-    if (!response.ok) {
-      throw new Error(responseData.mensaje || 'Error al crear el turno');
-    }
-
-    return responseData;
+    const response = await api.post<CreateTurnoResponse>("/turnos", data);
+    return response.data;
   },
 
   async deleteTurno(turnoId: number): Promise<{ mensaje: string }> {
-    const token = localStorage.getItem('auth_token');
-    const response = await fetch(`${API_URL}/api/turnos/${turnoId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (response.status === 403) {
-      throw new Error('403: No tiene permisos para realizar esta acción');
+    try {
+      const response = await api.delete<{ mensaje: string }>(
+        `/turnos/${turnoId}`
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      if (axiosError.response?.status === 403) {
+        throw new Error("403: No tiene permisos para realizar esta acción");
+      }
+      throw error;
     }
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(`${response.status}: ${data.mensaje || 'Error al eliminar el turno'}`);
-    }
-
-    return data;
   },
 
   async getTurno(turnoId: number): Promise<TurnoDetail> {
-    const token = localStorage.getItem('auth_token');
-    const response = await fetch(`${API_URL}/api/turnos/${turnoId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Error al obtener el turno');
-    }
-
-    return response.json();
+    const response = await api.get<TurnoDetail>(`/turnos/${turnoId}`);
+    return response.data;
   },
 
-  async updateTurno(turnoId: number, data: UpdateTurnoRequest): Promise<UpdateTurnoResponse> {
-    const token = localStorage.getItem('auth_token');
-    const response = await fetch(`${API_URL}/api/turnos/${turnoId}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    const responseData = await response.json();
-
-    if (!response.ok) {
-      throw new Error(responseData.mensaje || 'Error al actualizar el turno');
-    }
-
-    return responseData;
+  async updateTurno(
+    turnoId: number,
+    data: UpdateTurnoRequest
+  ): Promise<UpdateTurnoResponse> {
+    const response = await api.put<UpdateTurnoResponse>(
+      `/turnos/${turnoId}`,
+      data
+    );
+    return response.data;
   },
-}; 
+};

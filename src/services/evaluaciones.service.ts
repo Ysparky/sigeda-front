@@ -1,28 +1,28 @@
-import type { Evaluacion } from '../pages/EvaluacionesPage/types';
+import { EvaluacionDetalle } from "../pages/EvaluacionDetallePage/types";
+import type { Evaluacion } from "../pages/EvaluacionesPage/types";
+import { api } from "./api";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-if (!API_URL) {
-  throw new Error('API URL not defined in environment variables');
+// Types
+export interface GetEvaluacionesParams {
+  personaId: string;
+  turnoId: string;
 }
 
 export const evaluacionesService = {
-  async getEvaluacionesByPersonaAndTurno(personaId: string, turnoId: string): Promise<Evaluacion[]> {
-    const token = localStorage.getItem('auth_token');
-
-    const response = await fetch(
-      `${API_URL}/api/evaluaciones/persona/${personaId}/turno/${turnoId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      }
+  async getEvaluacionesByPersonaAndTurno({
+    personaId,
+    turnoId,
+  }: GetEvaluacionesParams): Promise<Evaluacion[]> {
+    const response = await api.get<Evaluacion[]>(
+      `/evaluaciones/persona/${personaId}/turno/${turnoId}`
     );
-
-    if (!response.ok) {
-      throw new Error('Error al obtener las evaluaciones');
-    }
-
-    return response.json();
+    return response.data;
   },
-}; 
+
+  async getEvaluacionDetalle(evaluacionId: string): Promise<EvaluacionDetalle> {
+    const response = await api.get<EvaluacionDetalle>(
+      `/evaluaciones/${evaluacionId}`
+    );
+    return response.data;
+  },
+};

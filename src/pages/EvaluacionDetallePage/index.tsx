@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { ErrorDisplay } from "../../components/common/ErrorDisplay";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
-import { evaluacionDetalleService } from "../../services/evaluacionDetalle.service";
+import { evaluacionesService } from "../../services/evaluaciones.service";
 import { CalificacionesTable } from "./components/CalificacionesTable";
 import { EvaluacionHeader } from "./components/EvaluacionHeader";
 import type { EvaluacionDetalle } from "./types";
@@ -24,7 +24,7 @@ function EvaluacionDetallePage() {
       try {
         setIsLoading(true);
         setError(null);
-        const data = await evaluacionDetalleService.getEvaluacionDetalle(
+        const data = await evaluacionesService.getEvaluacionDetalle(
           evaluacionId
         );
         setEvaluacion(data);

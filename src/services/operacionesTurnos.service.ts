@@ -1,26 +1,26 @@
-import type { TurnoResponse } from '../pages/TurnosPage/types';
-import type { PaginatedResponse } from '../types/common.types';
+import type { TurnoResponse } from "../pages/TurnosPage/types";
+import type { PaginatedResponse } from "../types/common.types";
+import { api } from "./api";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-interface GetTurnosParams {
+// Types
+export interface GetTurnosParams {
   page?: number;
   size?: number;
 }
 
+export type TurnoOperacionesResponse = PaginatedResponse<TurnoResponse>;
+
 export const operacionesTurnosService = {
-  async getAllTurnos({ page = 0, size = 10 }: GetTurnosParams = {}): Promise<PaginatedResponse<TurnoResponse>> {
-    const token = localStorage.getItem('auth_token');
-    const response = await fetch(`${API_URL}/api/turnos?page=${page}&size=${size}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
+  async getAllTurnos({
+    page = 0,
+    size = 10,
+  }: GetTurnosParams = {}): Promise<TurnoOperacionesResponse> {
+    const response = await api.get<TurnoOperacionesResponse>("/turnos", {
+      params: {
+        page,
+        size,
       },
     });
-
-    if (!response.ok) {
-      throw new Error('Error al obtener los turnos');
-    }
-
-    return response.json();
+    return response.data;
   },
-}; 
+};
