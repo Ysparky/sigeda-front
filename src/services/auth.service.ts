@@ -56,9 +56,14 @@ export const authService = {
     }
   },
 
-  logout(): void {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("username");
+  async logout(): Promise<void> {
+    try {
+      await api.post("/auth/logout");
+    } finally {
+      // Always clear local storage even if the server request fails
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("username");
+    }
   },
 
   getStoredToken(): string | null {

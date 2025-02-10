@@ -122,10 +122,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [handleAuthStateChange, dispatchActions]
   );
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     dispatchActions.setLoading(true);
     try {
-      authService.logout();
+      await authService.logout();
+      dispatchActions.clearAuth();
+      clearData();
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Still clear local state even if server logout fails
       dispatchActions.clearAuth();
       clearData();
     } finally {
