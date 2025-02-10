@@ -26,8 +26,10 @@ function EvaluacionesPage() {
         setIsLoading(true);
         setError(null);
         const data = await evaluacionesService.getEvaluacionesByPersonaAndTurno(
-          userInfo.codigo,
-          turnoId
+          {
+            personaId: userInfo.codigo,
+            turnoId: turnoId,
+          }
         );
         setEvaluaciones(data);
       } catch (err) {
