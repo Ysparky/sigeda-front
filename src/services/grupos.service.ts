@@ -1,4 +1,5 @@
 import { AxiosError } from "axios";
+import type { PaginatedResponse } from "../types/common.types";
 import { api } from "./api";
 
 // Types
@@ -22,6 +23,8 @@ export interface Grupo {
   personas: Persona[];
 }
 
+export type AlumnosResponse = PaginatedResponse<GrupoResponse>;
+
 export const gruposService = {
   async getGruposByPrograma(programa: string): Promise<Grupo[]> {
     try {
@@ -36,9 +39,13 @@ export const gruposService = {
   },
 
   async getAlumnosByInstructor(instructorId: string): Promise<Alumno[]> {
-    const response = await api.get<GrupoResponse[]>(
+    const response = await api.get<AlumnosResponse>(
       `/grupos/instructor/${instructorId}/programa/PDI`
     );
-    return response.data[0]?.personas || [];
+
+    // Flatten all personas arrays from all grupos into a single array of alumnos
+    return response.data.content.reduce<Alumno[]>((acc, grupo) => {
+      return [...acc, ...grupo.personas];
+    }, []);
   },
 };
