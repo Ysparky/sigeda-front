@@ -30,8 +30,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         dispatch({ type: "SET_LOADING", payload: isLoading }),
       setUserInfoError: (hasError: boolean) =>
         dispatch({ type: "SET_USER_INFO_ERROR", payload: hasError }),
-      setAuthData: (token: string, username: string) =>
-        dispatch({ type: "SET_AUTH_DATA", payload: { token, username } }),
+      setAuthData: (token: string, refreshToken: string, username: string) =>
+        dispatch({
+          type: "SET_AUTH_DATA",
+          payload: { token, refreshToken, username },
+        }),
       setUserInfo: (userInfo: UserInfo, roles: RoleName[]) =>
         dispatch({ type: "SET_USER_INFO", payload: { userInfo, roles } }),
       clearAuth: () => dispatch({ type: "CLEAR_AUTH" }),
@@ -61,8 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Auth state management
   const handleAuthStateChange = useCallback(
-    async (token: string, username: string) => {
-      dispatchActions.setAuthData(token, username);
+    async (token: string, refreshToken: string, username: string) => {
+      dispatchActions.setAuthData(token, refreshToken, username);
       try {
         await fetchUserInfo(username);
       } catch {
@@ -80,6 +83,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     return isValid;
   }, [dispatchActions]);
+
+  const logout = useCallback(async () => {
+    dispatchActions.setLoading(true);
+    try {
+      await authService.logout();
+      dispatchActions.clearAuth();
+      clearData();
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Still clear local state even if server logout fails
+      dispatchActions.clearAuth();
+      clearData();
+    } finally {
+      dispatchActions.setLoading(false);
+    }
+  }, [clearData, dispatchActions]);
+
+  // Token refresh
+  const handleTokenRefresh = useCallback(async () => {
+    try {
+      const response = await authService.refreshToken();
+      await handleAuthStateChange(
+        response.accessToken,
+        response.refreshToken,
+        authService.getStoredUsername()!
+      );
+      return true;
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+      await logout();
+      return false;
+    }
+  }, [handleAuthStateChange, logout]);
+
+  // Initialize auth state
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = authService.getStoredToken();
+      const refreshToken = authService.getStoredRefreshToken();
+      const username = authService.getStoredUsername();
+
+      if (token && refreshToken && username) {
+        await handleAuthStateChange(token, refreshToken, username);
+      }
+      dispatchActions.setLoading(false);
+    };
+
+    initializeAuth();
+  }, [handleAuthStateChange, dispatchActions]);
+
+  // Setup token refresh interval
+  useEffect(() => {
+    if (!state.data.isAuthenticated) return;
+
+    // Refresh token 5 minutes before expiry
+    const refreshInterval = setInterval(() => {
+      handleTokenRefresh();
+    }, 24 * 60 * 60 * 1000 - 5 * 60 * 1000); // 24 hours - 5 minutes
+
+    return () => clearInterval(refreshInterval);
+  }, [state.data.isAuthenticated, handleTokenRefresh]);
 
   // Public methods
   const loadUserInfo = useCallback(async () => {
@@ -113,7 +177,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       dispatchActions.setLoading(true);
       try {
         const response = await authService.login(credentials);
-        await handleAuthStateChange(response.token, response.username);
+        await handleAuthStateChange(
+          response.token,
+          response.refresh_token,
+          response.username
+        );
         return response;
       } finally {
         dispatchActions.setLoading(false);
@@ -121,37 +189,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [handleAuthStateChange, dispatchActions]
   );
-
-  const logout = useCallback(async () => {
-    dispatchActions.setLoading(true);
-    try {
-      await authService.logout();
-      dispatchActions.clearAuth();
-      clearData();
-    } catch (error) {
-      console.error("Error during logout:", error);
-      // Still clear local state even if server logout fails
-      dispatchActions.clearAuth();
-      clearData();
-    } finally {
-      dispatchActions.setLoading(false);
-    }
-  }, [clearData, dispatchActions]);
-
-  // Initialize auth state
-  useEffect(() => {
-    const initializeAuth = async () => {
-      const token = authService.getStoredToken();
-      const username = authService.getStoredUsername();
-
-      if (token && username) {
-        await handleAuthStateChange(token, username);
-      }
-      dispatchActions.setLoading(false);
-    };
-
-    initializeAuth();
-  }, [handleAuthStateChange, dispatchActions]);
 
   // Context value
   const value = useMemo(

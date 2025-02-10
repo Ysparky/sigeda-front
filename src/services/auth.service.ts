@@ -1,5 +1,12 @@
 import axios from "axios";
-import { LoginCredentials, LoginResponse, UserInfo } from "../types/auth.types";
+import {
+  LoginCredentials,
+  LoginResponse,
+  LogoutRequest,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
+  UserInfo,
+} from "../types/auth.types";
 import { api } from "./api";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -24,9 +31,10 @@ export const authService = {
         credentials
       );
 
-      // Store token in localStorage
-      if (response.data.token) {
+      // Store tokens in localStorage
+      if (response.data.token && response.data.refresh_token) {
         localStorage.setItem("auth_token", response.data.token);
+        localStorage.setItem("refresh_token", response.data.refresh_token);
         localStorage.setItem("username", response.data.username);
       }
 
@@ -38,6 +46,35 @@ export const authService = {
         );
       }
       throw new Error("Error al intentar iniciar sesión");
+    }
+  },
+
+  async refreshToken(): Promise<RefreshTokenResponse> {
+    try {
+      const refreshToken = this.getStoredRefreshToken();
+      if (!refreshToken) {
+        throw new Error("No refresh token available");
+      }
+
+      const response = await authApi.post<RefreshTokenResponse>(
+        "/auth/refresh",
+        {
+          refreshToken,
+        } as RefreshTokenRequest
+      );
+
+      // Update tokens in localStorage
+      localStorage.setItem("auth_token", response.data.accessToken);
+      localStorage.setItem("refresh_token", response.data.refreshToken);
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(
+          error.response.data.message || "Error refreshing token"
+        );
+      }
+      throw error;
     }
   },
 
@@ -58,16 +95,24 @@ export const authService = {
 
   async logout(): Promise<void> {
     try {
-      await api.post("/auth/logout");
+      const refreshToken = this.getStoredRefreshToken();
+      if (refreshToken) {
+        await authApi.post("/auth/logout", { refreshToken } as LogoutRequest);
+      }
     } finally {
       // Always clear local storage even if the server request fails
       localStorage.removeItem("auth_token");
+      localStorage.removeItem("refresh_token");
       localStorage.removeItem("username");
     }
   },
 
   getStoredToken(): string | null {
     return localStorage.getItem("auth_token");
+  },
+
+  getStoredRefreshToken(): string | null {
+    return localStorage.getItem("refresh_token");
   },
 
   getStoredUsername(): string | null {

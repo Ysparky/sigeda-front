@@ -4,9 +4,23 @@ export interface LoginCredentials {
 }
 
 export interface LoginResponse {
-  message: string;
-  username: string;
+  refresh_token: string;
   token: string;
+  username: string;
+}
+
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+export interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+}
+
+export interface LogoutRequest {
+  refreshToken: string;
 }
 
 export type RoleName = "Alumno" | "Instructor" | "Jefe de Operaciones";
@@ -36,6 +50,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   username: string | null;
   token: string | null;
+  refreshToken: string | null;
   userInfo: UserInfo | null;
   roles: RoleName[];
 }
@@ -44,12 +59,13 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   username: string | null;
   token: string | null;
+  refreshToken: string | null;
   userInfo: UserInfo | null;
   roles: RoleName[];
   userInfoError: boolean;
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<LoginResponse>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loadUserInfo: () => Promise<void>;
   retryLoadUserInfo: () => Promise<void>;
 }
