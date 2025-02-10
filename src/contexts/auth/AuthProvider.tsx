@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // User info helpers
   const getRolesFromUserInfo = useCallback((userInfo: UserInfo): RoleName[] => {
-    return userInfo.usuario.usuarioRoles.map((ur) => ur.rol.nombre);
+    return [userInfo.usuario.rol.nombre];
   }, []);
 
   const fetchUserInfo = useCallback(

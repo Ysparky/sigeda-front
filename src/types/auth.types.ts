@@ -16,20 +16,16 @@ interface Rol {
   nombre: RoleName;
 }
 
-interface UsuarioRol {
-  rol: Rol;
-}
-
 interface Usuario {
   id: number;
-  usuarioRoles: UsuarioRol[];
-  nombre: string;
   correo: string;
+  nombre: string;
+  rol: Rol;
 }
 
 export interface UserInfo {
   codigo: string;
-  idGrupo: number;
+  idGrupo: number | null;
   nombre: string;
   aPaterno: string;
   aMaterno: string;
