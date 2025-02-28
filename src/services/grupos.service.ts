@@ -6,10 +6,10 @@ import { api } from "./api";
 export interface PersonaBase {
   codigo: string;
   nombre: string;
-  idGrupo: number;
   estado: string;
   aPaterno: string;
   aMaterno: string;
+  idGrupo?: number;
 }
 
 export type Persona = PersonaBase;
@@ -20,7 +20,17 @@ export interface GrupoResponse {
 }
 
 export interface Grupo {
+  id: number;
+  nombre: string;
+  programa: string;
   personas: Persona[];
+}
+
+export interface Instructor {
+  codigo: string;
+  nombre: string;
+  aPaterno: string;
+  aMaterno: string;
 }
 
 export type AlumnosResponse = PaginatedResponse<GrupoResponse>;
@@ -28,7 +38,21 @@ export type AlumnosResponse = PaginatedResponse<GrupoResponse>;
 export const gruposService = {
   async getGruposByPrograma(programa: string): Promise<Grupo[]> {
     try {
-      const response = await api.get<Grupo[]>(`/grupos/programa/${programa}`);
+      const response = await api.get<Grupo[]>(`/alumnos/programa/${programa}`);
+      return response.data;
+    } catch (error) {
+      if ((error as AxiosError).response?.status === 404) {
+        return [];
+      }
+      throw error;
+    }
+  },
+
+  async getInstructoresByPrograma(programa: string): Promise<Instructor[]> {
+    try {
+      const response = await api.get<Instructor[]>(
+        `/personas/instructor/Instructor ${programa}`
+      );
       return response.data;
     } catch (error) {
       if ((error as AxiosError).response?.status === 404) {

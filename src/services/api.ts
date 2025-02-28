@@ -30,7 +30,9 @@ api.interceptors.response.use(
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx
       throw new Error(
-        error.response.data.message || "Error en la respuesta del servidor"
+        error.response.data.mensaje ||
+          error.response.data.message ||
+          "Error en la respuesta del servidor"
       );
     } else if (error.request) {
       // The request was made but no response was received

@@ -83,17 +83,20 @@ export function RegistrarTurnoModal({
             programa: turnoDetail.programa,
             fecha: turnoDetail.fechaEval,
             maniobras: turnoDetail.turnoManiobras.map((tm) => ({
-              id: tm.maniobra.id,
-              nombre: tm.maniobra.nombre,
-              descripcion: tm.maniobra.descripcion,
+              id: tm.maniobra?.id || 0,
+              nombre: tm.maniobra?.nombre || "",
+              descripcion: tm.maniobra?.descripcion || "",
               selected: true,
-              requerido: tm.nota_min,
+              requerido: tm.nota_min || "",
             })),
             grupos: turnoDetail.grupoTurnos.map((gt) => ({
-              personas: gt.grupo.personas,
+              personas: gt.grupo?.personas || [],
               selected: true,
-              instructor: gt.instructor,
-              instructorId: parseInt(gt.codInstructor),
+              instructor: gt.instructor || "",
+              instructorId: String(gt.codInstructor || ""),
+              id: gt.grupo?.id || 0,
+              nombre: gt.grupo?.nombre || `Grupo ${gt.grupo?.id || 0}`,
+              programa: turnoDetail.programa,
             })),
           });
         } catch (error) {
@@ -113,6 +116,8 @@ export function RegistrarTurnoModal({
   const isFormValid = () => {
     return (
       formData.nombre.trim() !== "" &&
+      formData.nombre.trim().length >= 10 &&
+      formData.nombre.trim().length <= 30 &&
       formData.fecha !== "" &&
       formData.subfase !== "" &&
       formData.programa !== "" &&
@@ -125,14 +130,23 @@ export function RegistrarTurnoModal({
     e.preventDefault();
     setError(null);
 
+    // Validate nombre length
+    if (
+      formData.nombre.trim().length < 10 ||
+      formData.nombre.trim().length > 30
+    ) {
+      setError("Nombre: Nombre debe tener de 10 a 30 caracteres.");
+      return;
+    }
+
     try {
       if (mode === "edit" && turnoId) {
         const updateData = {
           nombre: formData.nombre,
           fechaEval: formData.fecha,
           grupoTurnos: formData.grupos.map((g) => ({
-            codInstructor: g.instructorId,
-            idGrupo: g.personas[0].idGrupo,
+            codInstructor: Number(g.instructorId),
+            idGrupo: g.id,
             checked: g.selected,
           })),
           turnoManiobras: formData.maniobras.map((m) => ({
@@ -142,9 +156,20 @@ export function RegistrarTurnoModal({
           })),
         };
 
-        const response = await turnosService.updateTurno(turnoId, updateData);
-        onTurnoUpdated?.(response.turno);
-        showNotification("Turno actualizado exitosamente", "success");
+        try {
+          const response = await turnosService.updateTurno(turnoId, updateData);
+          onTurnoUpdated?.(response.turno);
+          showNotification("Turno actualizado exitosamente", "success");
+          onClose();
+        } catch (error) {
+          console.error("Error updating turno:", error);
+          if (error instanceof Error) {
+            setError(error.message);
+          } else {
+            setError("Error al actualizar el turno");
+          }
+          return;
+        }
       } else {
         const requestData = {
           nombre: formData.nombre,
@@ -152,8 +177,8 @@ export function RegistrarTurnoModal({
           programa: formData.programa,
           idSubFase: Number(formData.subfase),
           grupoTurnos: formData.grupos.map((g) => ({
-            codInstructor: g.instructorId,
-            idGrupo: g.personas[0].idGrupo,
+            codInstructor: Number(g.instructorId),
+            idGrupo: g.id,
           })),
           turnoManiobras: formData.maniobras.map((m) => ({
             idManiobra: m.id,
@@ -161,10 +186,20 @@ export function RegistrarTurnoModal({
           })),
         };
 
-        const response = await turnosService.createTurno(requestData);
-        onTurnoCreated(response.turno);
+        try {
+          const response = await turnosService.createTurno(requestData);
+          onTurnoCreated(response.turno);
+          onClose();
+        } catch (error) {
+          console.error("Error creating turno:", error);
+          if (error instanceof Error) {
+            setError(error.message);
+          } else {
+            setError("Error al crear el turno");
+          }
+          return;
+        }
       }
-      onClose();
     } catch (error) {
       console.error("Error:", error);
       if (error instanceof Error) {
@@ -231,9 +266,31 @@ export function RegistrarTurnoModal({
                 onChange={(e) =>
                   setFormData({ ...formData, nombre: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border ${
+                  formData.nombre.trim().length > 0 &&
+                  (formData.nombre.trim().length < 10 ||
+                    formData.nombre.trim().length > 30)
+                    ? "border-red-300 focus:ring-red-500"
+                    : "border-gray-300 focus:ring-blue-500"
+                } rounded-md focus:outline-none focus:ring-2`}
                 placeholder="Ingresa nombre del turno"
               />
+              <div className="mt-1 flex justify-between">
+                <span
+                  className={`text-xs ${
+                    formData.nombre.trim().length > 0 &&
+                    (formData.nombre.trim().length < 10 ||
+                      formData.nombre.trim().length > 30)
+                      ? "text-red-500"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {formData.nombre.trim().length > 0
+                    ? `${formData.nombre.trim().length} caracteres`
+                    : ""}
+                </span>
+                <span className="text-xs text-gray-500">10-30 caracteres</span>
+              </div>
             </div>
 
             <div>
@@ -406,13 +463,13 @@ export function RegistrarTurnoModal({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {formData.grupos.map((grupo) => (
+                      {formData.grupos.map((grupo, index) => (
                         <tr
-                          key={grupo.personas[0]?.idGrupo}
+                          key={grupo.id ?? `grupo-${index}`}
                           className="text-sm hover:bg-gray-50"
                         >
                           <td className="px-2 py-2 text-gray-900 font-medium">
-                            Grupo {grupo.personas[0]?.idGrupo}
+                            Grupo {grupo.nombre || (grupo.id ?? "N/A")}
                           </td>
                           <td className="px-2 py-2 text-gray-500">
                             <ul className="list-disc list-inside">

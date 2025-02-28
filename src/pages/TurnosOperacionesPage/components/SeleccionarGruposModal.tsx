@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { LoadingSpinner } from "../../../components/common/LoadingSpinner";
-import { Grupo, gruposService } from "../../../services/grupos.service";
+import {
+  Grupo,
+  Instructor as InstructorType,
+  gruposService,
+} from "../../../services/grupos.service";
 
 export interface GrupoSeleccionado extends Grupo {
   selected: boolean;
   instructor: string;
-  instructorId: number;
+  instructorId: string;
 }
 
 interface SeleccionarGruposModalProps {
@@ -16,11 +20,6 @@ interface SeleccionarGruposModalProps {
   currentSelections?: GrupoSeleccionado[];
 }
 
-interface Instructor {
-  id: number;
-  nombre: string;
-}
-
 export function SeleccionarGruposModal({
   isOpen,
   onClose,
@@ -29,14 +28,13 @@ export function SeleccionarGruposModal({
   currentSelections = [],
 }: SeleccionarGruposModalProps) {
   const [grupos, setGrupos] = useState<GrupoSeleccionado[]>([]);
+  const [instructores, setInstructores] = useState<InstructorType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingInstructores, setIsLoadingInstructores] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const dummyInstructores: Instructor[] = [
-    { id: 1, nombre: "Juan Perez Torres" },
-    { id: 2, nombre: "Carlos Rodriguez Silva" },
-    { id: 3, nombre: "Miguel Sanchez Vargas" },
-  ];
+  const [errorInstructores, setErrorInstructores] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     const loadGrupos = async () => {
@@ -49,14 +47,14 @@ export function SeleccionarGruposModal({
 
         const mergedGrupos = data.map((grupo) => {
           const existingSelection = currentSelections.find(
-            (s) => s.personas[0]?.idGrupo === grupo.personas[0]?.idGrupo
+            (s) => s.id === grupo.id
           );
           return (
             existingSelection || {
               ...grupo,
               selected: false,
               instructor: "",
-              instructorId: 0,
+              instructorId: "",
             }
           );
         });
@@ -74,19 +72,41 @@ export function SeleccionarGruposModal({
       }
     };
 
+    const loadInstructores = async () => {
+      if (!programa) return;
+
+      try {
+        setIsLoadingInstructores(true);
+        setErrorInstructores(null);
+        const data = await gruposService.getInstructoresByPrograma(programa);
+        setInstructores(data);
+      } catch (err) {
+        if (err instanceof Error && err.message.includes("404")) {
+          setInstructores([]);
+        } else {
+          setErrorInstructores("Error al cargar los instructores");
+          console.error(err);
+        }
+      } finally {
+        setIsLoadingInstructores(false);
+      }
+    };
+
     if (isOpen) {
       loadGrupos();
+      loadInstructores();
     }
   }, [isOpen, programa, currentSelections]);
 
   const handleToggleGrupo = (grupoId: number) => {
     setGrupos((prev) =>
       prev.map((g) => {
-        if (g.personas[0]?.idGrupo === grupoId) {
+        if (g.id === grupoId) {
           return {
             ...g,
             selected: !g.selected,
             instructor: !g.selected ? g.instructor : "",
+            instructorId: !g.selected ? g.instructorId : "",
           };
         }
         return g;
@@ -96,15 +116,17 @@ export function SeleccionarGruposModal({
 
   const handleInstructorChange = (
     grupoId: number,
-    instructorId: number,
-    nombre: string
+    instructorId: string,
+    nombre: string,
+    aPaterno: string,
+    aMaterno: string
   ) => {
     setGrupos((prev) =>
       prev.map((g) => {
-        if (g.personas[0]?.idGrupo === grupoId) {
+        if (g.id === grupoId) {
           return {
             ...g,
-            instructor: nombre,
+            instructor: `${nombre} ${aPaterno} ${aMaterno}`.trim(),
             instructorId: instructorId,
           };
         }
@@ -190,7 +212,7 @@ export function SeleccionarGruposModal({
               <tbody className="bg-white divide-y divide-gray-200">
                 {grupos.map((grupo, index) => (
                   <tr
-                    key={grupo.personas[0]?.idGrupo}
+                    key={grupo.id ?? index}
                     className={`${
                       index % 2 === 0 ? "bg-white" : "bg-gray-50"
                     } hover:bg-gray-100`}
@@ -199,14 +221,12 @@ export function SeleccionarGruposModal({
                       <input
                         type="checkbox"
                         checked={grupo.selected}
-                        onChange={() =>
-                          handleToggleGrupo(grupo.personas[0]?.idGrupo)
-                        }
+                        onChange={() => handleToggleGrupo(grupo.id ?? 0)}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      Grupo {grupo.personas[0]?.idGrupo}
+                      Grupo {grupo.nombre || (grupo.id ?? "N/A")}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       <ul className="list-disc list-inside space-y-1">
@@ -222,26 +242,38 @@ export function SeleccionarGruposModal({
                       <select
                         value={grupo.instructorId || ""}
                         onChange={(e) => {
-                          const instructor = dummyInstructores.find(
-                            (i) => i.id === Number(e.target.value)
+                          const instructor = instructores.find(
+                            (i) => i.codigo === e.target.value
                           );
                           if (instructor) {
                             handleInstructorChange(
-                              grupo.personas[0]?.idGrupo,
-                              instructor.id,
-                              instructor.nombre
+                              grupo.id ?? 0,
+                              instructor.codigo,
+                              instructor.nombre,
+                              instructor.aPaterno,
+                              instructor.aMaterno
                             );
                           }
                         }}
-                        disabled={!grupo.selected}
+                        disabled={!grupo.selected || isLoadingInstructores}
                         className="w-full px-2 py-1 border border-gray-300 rounded-md 
                                  focus:outline-none focus:ring-2 focus:ring-blue-500
                                  disabled:bg-gray-100 disabled:text-gray-400"
                       >
-                        <option value="">Seleccione instructor</option>
-                        {dummyInstructores.map((instructor) => (
-                          <option key={instructor.id} value={instructor.id}>
-                            {instructor.nombre}
+                        <option value="">
+                          {isLoadingInstructores
+                            ? "Cargando instructores..."
+                            : errorInstructores
+                            ? "Error al cargar instructores"
+                            : "Seleccione instructor"}
+                        </option>
+                        {instructores.map((instructor) => (
+                          <option
+                            key={instructor.codigo}
+                            value={instructor.codigo}
+                          >
+                            {instructor.nombre} {instructor.aPaterno}{" "}
+                            {instructor.aMaterno}
                           </option>
                         ))}
                       </select>
