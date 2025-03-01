@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import type { Calificacion } from "../types";
 
 interface CalificacionesTableProps {
@@ -97,9 +97,8 @@ export function CalificacionesTable({
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {calificaciones.map((calificacion, index) => (
-              <>
+              <React.Fragment key={calificacion.idManiobra}>
                 <tr
-                  key={calificacion.idManiobra}
                   className={`hover:bg-gray-50 transition-colors duration-150 ${
                     expandedRow === calificacion.idManiobra ? "bg-blue-50" : ""
                   }`}
@@ -198,7 +197,7 @@ export function CalificacionesTable({
                     </td>
                   </tr>
                 )}
-              </>
+              </React.Fragment>
             ))}
           </tbody>
         </table>
