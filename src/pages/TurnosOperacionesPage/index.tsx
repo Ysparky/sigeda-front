@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { ErrorDisplay } from "../../components/common/ErrorDisplay";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { Portal } from "../../components/common/Portal";
 import { Snackbar } from "../../components/common/Snackbar";
 import { operacionesTurnosService } from "../../services/operacionesTurnos.service";
 import { turnosService } from "../../services/turnos.service";
@@ -35,6 +36,7 @@ function TurnosOperacionesPage() {
     "create"
   );
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   const loadTurnos = async (page: number) => {
     try {
@@ -72,6 +74,7 @@ function TurnosOperacionesPage() {
 
   const handleDeleteTurno = async (turno: TurnoResponse) => {
     setTurnoToDelete(turno);
+    setShowDeleteConfirmation(true);
   };
 
   const showNotification = (message: string, type: "success" | "error") => {
@@ -101,6 +104,7 @@ function TurnosOperacionesPage() {
       }
     } finally {
       setTurnoToDelete(null);
+      setShowDeleteConfirmation(false);
     }
   };
 
@@ -290,31 +294,33 @@ function TurnosOperacionesPage() {
         showNotification={showNotification}
       />
 
-      {turnoToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[1000] p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl animate-fade-in">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              ¿Está seguro de eliminar este turno?
-            </h3>
-            <p className="text-sm text-gray-500 mb-4">
-              Esta acción no se puede deshacer.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setTurnoToDelete(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
-              >
-                Eliminar
-              </button>
+      {showDeleteConfirmation && (
+        <Portal>
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[1000] p-4">
+            <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                ¿Está seguro de eliminar este turno?
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Esta acción no se puede deshacer.
+              </p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowDeleteConfirmation(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+                >
+                  Eliminar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
 
       {notification && (
