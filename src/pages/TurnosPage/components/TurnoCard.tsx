@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import type { TurnoResponse } from "../types";
 
 interface TurnoCardProps {
@@ -7,14 +7,9 @@ interface TurnoCardProps {
 
 export function TurnoCard({ turno }: TurnoCardProps) {
   const navigate = useNavigate();
-  const { subfaseId } = useParams();
 
   const handleClick = () => {
-    if (!subfaseId) {
-      console.error("Missing subfaseId");
-      return;
-    }
-    navigate(`/subfase/${subfaseId}/turnos/${turno.id}/evaluaciones`);
+    navigate(`/turnos/${turno.id}/evaluaciones`);
   };
 
   return (

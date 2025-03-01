@@ -16,20 +16,18 @@ const ROUTES = {
   LOGIN: "/login",
   HOME: "/",
   TURNOS: "/turnos",
-  SUBFASE_TURNOS: "/subfase/:subfaseId/turnos",
-  SUBFASE_TURNO_EVALUACIONES:
-    "/subfase/:subfaseId/turnos/:turnoId/evaluaciones",
-  SUBFASE_TURNO_EVALUACION:
-    "/subfase/:subfaseId/turnos/:turnoId/evaluaciones/:evaluacionId",
+  TURNO_EVALUACIONES: "/turnos/:turnoId/evaluaciones",
+  TURNO_EVALUACION: "/turnos/:turnoId/evaluaciones/:evaluacionId",
   MI_ESCUADRON: "/mi-escuadron",
 } as const;
 
 // Component to handle home route logic
 const HomeRoute = () => {
-  const { isJefeOperaciones, isInstructor } = useRoles();
+  const { isJefeOperaciones, isInstructor, isAlumno } = useRoles();
 
   if (isJefeOperaciones) return <Navigate to={ROUTES.TURNOS} replace />;
   if (isInstructor) return <Navigate to={ROUTES.MI_ESCUADRON} replace />;
+  if (isAlumno) return <Navigate to={ROUTES.TURNOS} replace />;
   return <DashboardPage />;
 };
 
@@ -76,16 +74,7 @@ const AppRoutes = () => {
       />
 
       <Route
-        path={ROUTES.SUBFASE_TURNOS}
-        element={
-          <ProtectedRoute>
-            <TurnosPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path={ROUTES.SUBFASE_TURNO_EVALUACIONES}
+        path={ROUTES.TURNO_EVALUACIONES}
         element={
           <ProtectedRoute>
             <EvaluacionesPage />
@@ -94,7 +83,7 @@ const AppRoutes = () => {
       />
 
       <Route
-        path={ROUTES.SUBFASE_TURNO_EVALUACION}
+        path={ROUTES.TURNO_EVALUACION}
         element={
           <ProtectedRoute>
             <EvaluacionDetallePage />
