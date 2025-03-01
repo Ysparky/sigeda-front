@@ -165,9 +165,7 @@ function TurnosPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <Breadcrumb
-        items={[{ label: "Módulos", path: "/" }, { label: "Turnos" }]}
-      />
+      <Breadcrumb items={[{ label: "Turnos", path: "/turnos" }]} />
 
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">

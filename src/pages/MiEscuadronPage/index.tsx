@@ -14,6 +14,7 @@ function MiEscuadronPage() {
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       <Breadcrumb
         items={[{ label: "Módulos", path: "/" }, { label: "Mi Escuadrón" }]}
+        showHome={true}
       />
 
       <div className="flex flex-col space-y-6">

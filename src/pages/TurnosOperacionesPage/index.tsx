@@ -139,6 +139,7 @@ function TurnosOperacionesPage() {
           { label: "Módulos", path: "/" },
           { label: "Programación de Turnos" },
         ]}
+        showHome={true}
       />
 
       <div className="flex flex-col space-y-6">
@@ -160,6 +161,7 @@ function TurnosOperacionesPage() {
             onSearchChange={setSearchTerm}
             sortBy={sortBy}
             onSortChange={setSortBy}
+            totalResults={turnos.length}
           />
 
           {error ? (

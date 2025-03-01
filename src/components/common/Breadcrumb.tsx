@@ -7,20 +7,23 @@ interface BreadcrumbItem {
 
 interface BreadcrumbProps {
   items: BreadcrumbItem[];
+  showHome?: boolean;
 }
 
-export function Breadcrumb({ items }: BreadcrumbProps) {
+export function Breadcrumb({ items, showHome = false }: BreadcrumbProps) {
   return (
     <nav className="mb-6">
       <ol className="flex items-center space-x-2 text-sm text-gray-500">
-        <li>
-          <Link to="/" className="hover:text-blue-600">
-            Inicio
-          </Link>
-        </li>
+        {showHome && (
+          <li>
+            <Link to="/" className="hover:text-blue-600">
+              Inicio
+            </Link>
+          </li>
+        )}
         {items.map((item, index) => (
           <li key={index} className="flex items-center">
-            <span className="mx-2">/</span>
+            {(index > 0 || showHome) && <span className="mx-2">/</span>}
             {item.path ? (
               <Link to={item.path} className="hover:text-blue-600">
                 {item.label}

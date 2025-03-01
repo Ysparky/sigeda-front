@@ -50,7 +50,6 @@ function EvaluacionDetallePage() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <Breadcrumb
           items={[
-            { label: "Módulos", path: "/" },
             { label: "Turnos", path: "/turnos" },
             {
               label: "Evaluaciones",
@@ -58,6 +57,7 @@ function EvaluacionDetallePage() {
             },
             { label: "Detalle" },
           ]}
+          showHome={false}
         />
         <div className="w-full min-h-[300px] flex items-center justify-center">
           <LoadingSpinner />
@@ -71,7 +71,6 @@ function EvaluacionDetallePage() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <Breadcrumb
           items={[
-            { label: "Módulos", path: "/" },
             { label: "Turnos", path: "/turnos" },
             {
               label: "Evaluaciones",
@@ -79,6 +78,7 @@ function EvaluacionDetallePage() {
             },
             { label: "Detalle" },
           ]}
+          showHome={false}
         />
         <ErrorDisplay
           title="No pudimos cargar los detalles de la evaluación"
@@ -93,7 +93,6 @@ function EvaluacionDetallePage() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <Breadcrumb
         items={[
-          { label: "Módulos", path: "/" },
           { label: "Turnos", path: "/turnos" },
           {
             label: "Evaluaciones",
@@ -101,6 +100,7 @@ function EvaluacionDetallePage() {
           },
           { label: "Detalle" },
         ]}
+        showHome={false}
       />
 
       <div className="mb-8">
