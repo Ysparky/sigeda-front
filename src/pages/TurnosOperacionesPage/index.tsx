@@ -34,6 +34,7 @@ function TurnosOperacionesPage() {
   const [modalMode, setModalMode] = useState<"create" | "view" | "edit">(
     "create"
   );
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const loadTurnos = async (page: number) => {
     try {
@@ -46,6 +47,7 @@ function TurnosOperacionesPage() {
       setTurnos(data.content);
       setTotalPages(data.totalPages);
       setCurrentPage(page);
+      setLastUpdated(new Date());
     } catch (err) {
       console.error("Error al cargar los turnos", err);
       setError("Error al cargar los turnos");
@@ -82,6 +84,7 @@ function TurnosOperacionesPage() {
     try {
       await turnosService.deleteTurno(turnoToDelete.id);
       setTurnos(turnos.filter((t) => t.id !== turnoToDelete.id));
+      showNotification("Turno eliminado exitosamente", "success");
     } catch (err) {
       console.error("Error deleting turno:", err);
       if (err instanceof Error) {
@@ -130,20 +133,33 @@ function TurnosOperacionesPage() {
     loadTurnos(currentPage);
   };
 
-  if (isLoading) return <LoadingSpinner />;
+  // Filter turnos based on search term
+  const filteredTurnos = turnos.filter((turno) => {
+    if (!searchTerm.trim()) return true;
+
+    const searchLower = searchTerm.toLowerCase().trim();
+    return (
+      turno.nombre.toLowerCase().includes(searchLower) ||
+      turno.subfase.toLowerCase().includes(searchLower) ||
+      turno.programa.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Check if we have any active filters
+  const hasActiveFilters = searchTerm.trim() !== "";
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-      <Breadcrumb
-        items={[
-          { label: "Módulos", path: "/" },
-          { label: "Programación de Turnos" },
-        ]}
-        showHome={true}
-      />
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="space-y-6">
+        <Breadcrumb
+          items={[
+            { label: "Inicio", path: "/" },
+            { label: "Módulos", path: "/" },
+            { label: "Programación de Turnos" },
+          ]}
+        />
 
-      <div className="flex flex-col space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
               Programación de Turnos
@@ -152,41 +168,93 @@ function TurnosOperacionesPage() {
               Gestiona los turnos de evaluación del programa
             </p>
           </div>
-          <TurnosActions onNewTurno={() => setIsModalOpen(true)} />
+
+          <div className="flex items-center space-x-4">
+            {!isLoading && !error && lastUpdated && (
+              <div className="flex items-center text-sm">
+                <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                <span className="text-gray-600">
+                  Última actualización: {lastUpdated.toLocaleTimeString()}
+                </span>
+              </div>
+            )}
+            <TurnosActions onNewTurno={() => setIsModalOpen(true)} />
+          </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <SearchSort
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            totalResults={turnos.length}
-          />
+        <SearchSort
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          totalResults={filteredTurnos.length}
+        />
 
-          {error ? (
+        <div className="min-h-[300px] transition-all duration-300">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <LoadingSpinner />
+            </div>
+          ) : error ? (
             <ErrorDisplay
               title="No pudimos cargar los turnos"
               message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
               onRetry={() => loadTurnos(currentPage)}
               showHeader={false}
             />
+          ) : filteredTurnos.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+              <svg
+                className="w-16 h-16 mx-auto text-gray-400 mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {hasActiveFilters
+                  ? "No se encontraron turnos con ese criterio"
+                  : "No hay turnos programados"}
+              </h3>
+              <p className="text-gray-500 mb-4">
+                {hasActiveFilters
+                  ? "Intenta con otros términos de búsqueda o limpia los filtros"
+                  : "Crea un nuevo turno para comenzar"}
+              </p>
+              {hasActiveFilters && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100"
+                >
+                  Limpiar filtros
+                </button>
+              )}
+            </div>
           ) : (
             <>
-              <div className="mt-6">
+              <div className="bg-white rounded-lg shadow-sm p-6">
                 <TurnosList
-                  turnos={turnos}
+                  turnos={filteredTurnos}
                   onModifyTurno={handleModifyTurno}
                   onDeleteTurno={handleDeleteTurno}
                   onClickTurno={handleTurnoClick}
                 />
-              </div>
-              <div className="mt-6">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                />
+
+                {totalPages > 1 && (
+                  <div className="mt-6 pt-4 border-t border-gray-100">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={handlePageChange}
+                    />
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -207,8 +275,8 @@ function TurnosOperacionesPage() {
       />
 
       {turnoToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[1000] p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl animate-fade-in">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               ¿Está seguro de eliminar este turno?
             </h3>
@@ -218,13 +286,13 @@ function TurnosOperacionesPage() {
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setTurnoToDelete(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={confirmDelete}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
               >
                 Eliminar
               </button>
