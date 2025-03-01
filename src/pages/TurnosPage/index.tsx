@@ -2,13 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { ErrorDisplay } from "../../components/common/ErrorDisplay";
-import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { useAuth } from "../../contexts/auth";
 import { useRoles } from "../../hooks/useRoles";
 import { turnosService } from "../../services/turnos.service";
 import { EmptyState } from "./components/EmptyState";
 import { FaseSubfaseFilter } from "./components/FaseSubfaseFilter";
 import { SearchSort } from "./components/SearchSort";
+import { SkeletonLoader } from "./components/SkeletonLoader";
 import { TurnosList } from "./components/TurnosList";
 import type { SortOption, TurnoResponse } from "./types";
 
@@ -152,45 +152,77 @@ function TurnosPage() {
     });
   }, [turnos, searchTerm, sortBy]);
 
-  const renderTurnosList = () => {
-    if (isLoading) return <LoadingSpinner />;
-    if (error) {
-      return (
-        <ErrorDisplay
-          title="No pudimos cargar los turnos"
-          message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
-          onRetry={() => loadTurnos()}
-          showHeader={false}
-        />
-      );
-    }
-    if (turnos.length === 0) return <EmptyState />;
+  // Handle clearing all filters
+  const handleClearFilters = useCallback(() => {
+    setSearchTerm("");
+    setSelectedSubfaseId(null);
+    loadTurnos(null);
+  }, [loadTurnos]);
 
-    return <TurnosList turnos={filteredTurnos} />;
-  };
+  // Check if we have any active filters
+  const hasActiveFilters =
+    selectedSubfaseId !== null || searchTerm.trim() !== "";
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <Breadcrumb
         items={[{ label: "Módulos", path: "/" }, { label: "Turnos" }]}
       />
-      <div className="space-y-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">
-          Turnos Disponibles
-        </h1>
+
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Turnos Disponibles
+          </h1>
+
+          {/* Status indicator */}
+          {!isLoading && !error && (
+            <div className="flex items-center text-sm">
+              <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+              <span className="text-gray-600">
+                Última actualización: {new Date().toLocaleTimeString()}
+              </span>
+            </div>
+          )}
+        </div>
+
         {isAlumno && (
           <FaseSubfaseFilter
             onFilterChange={handleFilterChange}
             initialSubfaseId={selectedSubfaseId}
           />
         )}
+
         <SearchSort
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           sortBy={sortBy}
           onSortChange={setSortBy}
+          totalResults={filteredTurnos.length}
         />
-        <div ref={turnosContainerRef}>{renderTurnosList()}</div>
+
+        <div
+          ref={turnosContainerRef}
+          className="min-h-[300px] transition-all duration-300"
+        >
+          {isLoading ? (
+            <SkeletonLoader />
+          ) : error ? (
+            <ErrorDisplay
+              title="No pudimos cargar los turnos"
+              message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
+              onRetry={() => loadTurnos()}
+              showHeader={false}
+            />
+          ) : turnos.length === 0 || filteredTurnos.length === 0 ? (
+            <EmptyState
+              hasFilters={hasActiveFilters}
+              onClearFilters={handleClearFilters}
+            />
+          ) : (
+            <TurnosList turnos={filteredTurnos} />
+          )}
+        </div>
       </div>
     </div>
   );
