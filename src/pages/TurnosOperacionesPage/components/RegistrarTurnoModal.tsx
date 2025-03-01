@@ -427,7 +427,7 @@ export function RegistrarTurnoModal({
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-2">
                   <h3 className="text-lg font-medium text-gray-800">
-                    Maniobras
+                    {formData.maniobras.length === 1 ? "Maniobra" : "Maniobras"}
                   </h3>
                   {formData.maniobras.length > 0 && (
                     <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
@@ -461,7 +461,11 @@ export function RegistrarTurnoModal({
                     ></path>
                   </svg>
                   {formData.maniobras.length > 0
-                    ? "Modificar maniobras"
+                    ? `Modificar ${
+                        formData.maniobras.length === 1
+                          ? "maniobra"
+                          : "maniobras"
+                      }`
                     : "Agregar maniobras"}
                 </button>
               </div>
@@ -531,7 +535,13 @@ export function RegistrarTurnoModal({
                       </div>
                       <p className="mt-2 text-sm">
                         {isManiobrasDivEnabled
-                          ? "Clic para añadir maniobras"
+                          ? `Clic para añadir ${
+                              formData.maniobras.length === 0
+                                ? "maniobras"
+                                : formData.maniobras.length === 1
+                                ? "otra maniobra"
+                                : "más maniobras"
+                            }`
                           : "Seleccione una subfase primero"}
                       </p>
                     </div>
@@ -543,7 +553,9 @@ export function RegistrarTurnoModal({
             <div className="border-b pb-5 space-y-5">
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-2">
-                  <h3 className="text-lg font-medium text-gray-800">Grupos</h3>
+                  <h3 className="text-lg font-medium text-gray-800">
+                    {formData.grupos.length === 1 ? "Grupo" : "Grupos"}
+                  </h3>
                   {formData.grupos.length > 0 && (
                     <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
                       {formData.grupos.length}
@@ -576,7 +588,9 @@ export function RegistrarTurnoModal({
                     ></path>
                   </svg>
                   {formData.grupos.length > 0
-                    ? "Modificar grupos"
+                    ? `Modificar ${
+                        formData.grupos.length === 1 ? "grupo" : "grupos"
+                      }`
                     : "Agregar grupos"}
                 </button>
               </div>
@@ -659,7 +673,13 @@ export function RegistrarTurnoModal({
                       </div>
                       <p className="mt-2 text-sm">
                         {formData.programa
-                          ? "Clic para añadir grupos"
+                          ? `Clic para añadir ${
+                              formData.grupos.length === 0
+                                ? "grupos"
+                                : formData.grupos.length === 1
+                                ? "otro grupo"
+                                : "más grupos"
+                            }`
                           : "Seleccione un programa primero"}
                       </p>
                     </div>

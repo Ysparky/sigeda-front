@@ -145,6 +145,22 @@ function TurnosOperacionesPage() {
     );
   });
 
+  // Sort turnos based on sortBy option
+  const sortedTurnos = [...filteredTurnos].sort((a, b) => {
+    switch (sortBy) {
+      case "alfabetico":
+        return a.nombre.localeCompare(b.nombre);
+      case "fecha":
+        return (
+          new Date(b.fechaEval).getTime() - new Date(a.fechaEval).getTime()
+        );
+      case "maniobras":
+        return b.cantManiobra - a.cantManiobra;
+      default:
+        return 0;
+    }
+  });
+
   // Check if we have any active filters
   const hasActiveFilters = searchTerm.trim() !== "";
 
@@ -187,7 +203,7 @@ function TurnosOperacionesPage() {
           onSearchChange={setSearchTerm}
           sortBy={sortBy}
           onSortChange={setSortBy}
-          totalResults={filteredTurnos.length}
+          totalResults={sortedTurnos.length}
         />
 
         <div className="min-h-[300px] transition-all duration-300">
@@ -202,7 +218,7 @@ function TurnosOperacionesPage() {
               onRetry={() => loadTurnos(currentPage)}
               showHeader={false}
             />
-          ) : filteredTurnos.length === 0 ? (
+          ) : sortedTurnos.length === 0 ? (
             <div className="bg-white rounded-lg shadow-sm p-8 text-center">
               <svg
                 className="w-16 h-16 mx-auto text-gray-400 mb-4"
@@ -240,7 +256,7 @@ function TurnosOperacionesPage() {
             <>
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <TurnosList
-                  turnos={filteredTurnos}
+                  turnos={sortedTurnos}
                   onModifyTurno={handleModifyTurno}
                   onDeleteTurno={handleDeleteTurno}
                   onClickTurno={handleTurnoClick}
