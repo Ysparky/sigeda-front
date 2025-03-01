@@ -95,8 +95,8 @@ function EvaluacionesPage() {
         ]}
       />
 
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold text-gray-900">
             Evaluaciones: {turnoNombre}
           </h1>
@@ -111,35 +111,35 @@ function EvaluacionesPage() {
             </div>
           )}
         </div>
-      </div>
 
-      <SearchFilter
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        filterBy={filterBy}
-        onFilterChange={setFilterBy}
-        totalResults={filteredEvaluaciones.length}
-      />
+        <SearchFilter
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          filterBy={filterBy}
+          onFilterChange={setFilterBy}
+          totalResults={filteredEvaluaciones.length}
+        />
 
-      <div className="min-h-[300px] transition-all duration-300">
-        {isLoading ? (
-          <SkeletonLoader />
-        ) : error ? (
-          <ErrorDisplay
-            title="No pudimos cargar las evaluaciones"
-            message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
-            onRetry={() => loadData()}
-            showHeader={false}
-          />
-        ) : (
-          <EvaluacionesList
-            evaluaciones={evaluaciones}
-            searchTerm={searchTerm}
-            filterBy={filterBy}
-            hasFilters={hasActiveFilters}
-            onClearFilters={handleClearFilters}
-          />
-        )}
+        <div className="min-h-[300px] transition-all duration-300">
+          {isLoading ? (
+            <SkeletonLoader />
+          ) : error ? (
+            <ErrorDisplay
+              title="No pudimos cargar las evaluaciones"
+              message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
+              onRetry={() => loadData()}
+              showHeader={false}
+            />
+          ) : (
+            <EvaluacionesList
+              evaluaciones={evaluaciones}
+              searchTerm={searchTerm}
+              filterBy={filterBy}
+              hasFilters={hasActiveFilters}
+              onClearFilters={handleClearFilters}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

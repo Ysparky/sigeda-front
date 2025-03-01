@@ -38,8 +38,7 @@ function EvaluacionDetallePage() {
     loadEvaluacionDetalle();
   }, [evaluacionId]);
 
-  // Common layout wrapper
-  const PageWrapper = ({ children }: { children: React.ReactNode }) => (
+  return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <Breadcrumb
         items={[
@@ -52,45 +51,15 @@ function EvaluacionDetallePage() {
         ]}
         showHome={false}
       />
-      {children}
-    </div>
-  );
 
-  if (isLoading) {
-    return (
-      <PageWrapper>
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Cargando detalles de evaluación...
-          </h1>
-        </div>
-        <SkeletonLoader />
-      </PageWrapper>
-    );
-  }
-
-  if (error || !evaluacion) {
-    return (
-      <PageWrapper>
-        <ErrorDisplay
-          title="No pudimos cargar los detalles de la evaluación"
-          message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
-          onRetry={() => window.location.reload()}
-        />
-      </PageWrapper>
-    );
-  }
-
-  return (
-    <PageWrapper>
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold text-gray-900">
             Detalle de Evaluación
           </h1>
 
           {/* Status indicator */}
-          {lastUpdated && (
+          {!isLoading && !error && lastUpdated && (
             <div className="flex items-center text-sm">
               <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
               <span className="text-gray-600">
@@ -99,11 +68,26 @@ function EvaluacionDetallePage() {
             </div>
           )}
         </div>
-      </div>
 
-      <EvaluacionHeader evaluacion={evaluacion} />
-      <CalificacionesTable calificaciones={evaluacion.calificaciones} />
-    </PageWrapper>
+        <div className="min-h-[300px] transition-all duration-300">
+          {isLoading ? (
+            <SkeletonLoader />
+          ) : error || !evaluacion ? (
+            <ErrorDisplay
+              title="No pudimos cargar los detalles de la evaluación"
+              message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
+              onRetry={() => window.location.reload()}
+              showHeader={false}
+            />
+          ) : (
+            <>
+              <EvaluacionHeader evaluacion={evaluacion} />
+              <CalificacionesTable calificaciones={evaluacion.calificaciones} />
+            </>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
