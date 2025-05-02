@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { ErrorDisplay } from "../../components/common/ErrorDisplay";
+import { useRoles } from "../../hooks/useRoles";
 import { evaluacionesService } from "../../services/evaluaciones.service";
 import { CalificacionesTable } from "./components/CalificacionesTable";
 import { EvaluacionHeader } from "./components/EvaluacionHeader";
@@ -10,6 +11,12 @@ import type { EvaluacionDetalle } from "./types";
 
 function EvaluacionDetallePage() {
   const { evaluacionId, turnoId } = useParams();
+  const [searchParams] = useSearchParams();
+  const alumnoId = searchParams.get("alumno");
+  const sourceGrupoId = searchParams.get("sourceGrupoId");
+  
+  const { isInstructor } = useRoles();
+  
   const [evaluacion, setEvaluacion] = useState<EvaluacionDetalle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,11 +49,26 @@ function EvaluacionDetallePage() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <Breadcrumb
         items={[
-          { label: "Turnos", path: "/turnos" },
-          {
-            label: "Evaluaciones",
-            path: turnoId ? `/turnos/${turnoId}/evaluaciones` : undefined,
-          },
+          ...(isInstructor && alumnoId
+            ? [
+                { label: "Mi Escuadrón", path: "/mi-escuadron" },
+                { 
+                  label: "Turnos de Alumno", 
+                  path: `/turnos/instructor?alumno=${alumnoId}${sourceGrupoId ? `&idGrupo=${sourceGrupoId}` : ''}` 
+                },
+                {
+                  label: "Evaluaciones",
+                  path: turnoId ? `/turnos/${turnoId}/evaluaciones?alumno=${alumnoId}${sourceGrupoId ? `&sourceGrupoId=${sourceGrupoId}` : ''}` : undefined,
+                }
+              ]
+            : [
+                { label: "Turnos", path: "/turnos" },
+                {
+                  label: "Evaluaciones",
+                  path: turnoId ? `/turnos/${turnoId}/evaluaciones` : undefined,
+                }
+              ]
+          ),
           { label: "Detalle" }
         ]}
         showHome={true}

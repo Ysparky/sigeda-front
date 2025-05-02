@@ -1,4 +1,5 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useRoles } from "../../../hooks/useRoles";
 import type { Evaluacion } from "../types";
 
 interface EvaluacionCardProps {
@@ -9,6 +10,11 @@ interface EvaluacionCardProps {
 export function EvaluacionCard({ evaluacion, index = 0 }: EvaluacionCardProps) {
   const navigate = useNavigate();
   const { turnoId } = useParams();
+  const [searchParams] = useSearchParams();
+  const { isInstructor } = useRoles();
+  
+  const alumnoId = searchParams.get("alumno");
+  const sourceGrupoId = searchParams.get("sourceGrupoId");
 
   const handleClick = () => {
     if (!turnoId) {
@@ -16,7 +22,18 @@ export function EvaluacionCard({ evaluacion, index = 0 }: EvaluacionCardProps) {
       return;
     }
 
-    navigate(`/turnos/${turnoId}/evaluaciones/${evaluacion.codigo}`);
+    // Build query parameters for instructor users
+    const queryParams = new URLSearchParams();
+    
+    if (isInstructor && alumnoId) {
+      queryParams.set("alumno", alumnoId);
+      if (sourceGrupoId) {
+        queryParams.set("sourceGrupoId", sourceGrupoId);
+      }
+    }
+    
+    const queryString = queryParams.toString();
+    navigate(`/turnos/${turnoId}/evaluaciones/${evaluacion.codigo}${queryString ? `?${queryString}` : ''}`);
   };
 
   // Format date for better display
