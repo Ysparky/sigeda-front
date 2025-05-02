@@ -1,7 +1,7 @@
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./contexts/auth";
 import { DataProvider } from "./contexts/data";
-import { AlumnosProvider } from "./contexts/data/AlumnosContext";
+import { ConditionalAlumnosProvider } from "./components/providers/ConditionalAlumnosProvider";
 import AppRoutes from "./routes";
 
 function App() {
@@ -9,9 +9,9 @@ function App() {
     <BrowserRouter>
       <DataProvider>
         <AuthProvider>
-          <AlumnosProvider>
+          <ConditionalAlumnosProvider>
             <AppRoutes />
-          </AlumnosProvider>
+          </ConditionalAlumnosProvider>
         </AuthProvider>
       </DataProvider>
     </BrowserRouter>

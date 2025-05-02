@@ -68,7 +68,15 @@ export const AlumnosProvider: React.FC<{ children: React.ReactNode }> = ({ child
 export const useAlumnos = (): AlumnosContextType => {
   const context = useContext(AlumnosContext);
   if (context === undefined) {
-    throw new Error("useAlumnos must be used within an AlumnosProvider");
+    return {
+      alumnos: [],
+      selectedAlumnoId: null,
+      setSelectedAlumnoId: () => {},
+      getAlumnoById: () => undefined,
+      isLoading: false,
+      error: null,
+      loadAlumnos: async () => {}
+    };
   }
   return context;
 }; 
