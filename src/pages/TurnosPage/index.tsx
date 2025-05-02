@@ -14,6 +14,7 @@ import type { SortOption, TurnoResponse } from "./types";
 
 function TurnosPage() {
   const { subfaseId } = useParams();
+  
   const { userInfo } = useAuth();
   const { isAlumno } = useRoles();
   const [turnos, setTurnos] = useState<TurnoResponse[]>([]);

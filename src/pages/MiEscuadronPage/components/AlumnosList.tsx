@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { LoadingSpinner } from "../../../components/common/LoadingSpinner";
 import { useAuth } from "../../../contexts/auth";
 import { gruposService } from "../../../services/grupos.service";
@@ -9,7 +10,7 @@ interface Alumno {
   aPaterno: string;
   codigo: string;
   nombre: string;
-  idGrupo: number;
+  idGrupo?: number;
   estado: string;
 }
 
@@ -19,6 +20,7 @@ interface AlumnosListProps {
 }
 
 export function AlumnosList({ searchTerm, filter }: AlumnosListProps) {
+  const navigate = useNavigate();
   const { userInfo } = useAuth();
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,6 +64,16 @@ export function AlumnosList({ searchTerm, filter }: AlumnosListProps) {
     }
   });
 
+  const handleAlumnoClick = (alumno: Alumno) => {
+    console.log("Clicked on alumno:", alumno);
+    if (alumno.idGrupo) {
+      console.log(`Navigating to /turnos/instructor with idGrupo=${alumno.idGrupo} and alumno=${alumno.codigo}`);
+      navigate(`/turnos/instructor?idGrupo=${alumno.idGrupo}&alumno=${alumno.codigo}`);
+    } else {
+      console.error("No grupo ID available for this alumno:", alumno);
+    }
+  };
+
   if (isLoading) return <LoadingSpinner />;
   if (error) return <div className="text-red-600">{error}</div>;
 
@@ -75,7 +87,7 @@ export function AlumnosList({ searchTerm, filter }: AlumnosListProps) {
             orden: "N/A",
             foto: `https://robohash.org/${alumno.codigo}.png?set=set2&size=150x150`,
           }}
-          onClick={() => console.log("Clicked:", alumno)}
+          onClick={() => handleAlumnoClick(alumno)}
         />
       ))}
     </div>

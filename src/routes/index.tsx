@@ -8,6 +8,7 @@ import EvaluacionDetallePage from "../pages/EvaluacionDetallePage";
 import EvaluacionesPage from "../pages/EvaluacionesPage";
 import LoginPage from "../pages/LoginPage";
 import MiEscuadronPage from "../pages/MiEscuadronPage";
+import TurnosInstructorPage from "../pages/TurnosInstructorPage";
 import TurnosOperacionesPage from "../pages/TurnosOperacionesPage";
 import TurnosPage from "../pages/TurnosPage";
 
@@ -16,6 +17,7 @@ const ROUTES = {
   LOGIN: "/login",
   HOME: "/",
   TURNOS: "/turnos",
+  TURNOS_INSTRUCTOR: "/turnos/instructor",
   TURNO_EVALUACIONES: "/turnos/:turnoId/evaluaciones",
   TURNO_EVALUACION: "/turnos/:turnoId/evaluaciones/:evaluacionId",
   MI_ESCUADRON: "/mi-escuadron",
@@ -96,6 +98,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <MiEscuadronPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path={ROUTES.TURNOS_INSTRUCTOR}
+        element={
+          <ProtectedRoute>
+            <TurnosInstructorPage />
           </ProtectedRoute>
         }
       />
