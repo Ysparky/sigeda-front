@@ -57,26 +57,28 @@ function DashboardPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 px-4">
-      <WelcomeHeader userInfo={userInfo} />
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="space-y-6 mt-4">
+        <WelcomeHeader userInfo={userInfo} />
 
-      <ModulesSection
-        fases={fases}
-        isLoading={isLoadingFases}
-        selectedFase={selectedFase}
-        onFaseClick={handleFaseClick}
-        error={error?.type === "fases" ? error.message : null}
-        onRetry={handleRetryFases}
-      />
-
-      {selectedFase && (
-        <SubModulesSection
-          fase={selectedFase}
-          isLoading={isLoadingSubFases}
-          error={error?.type === "subfases" ? error.message : null}
-          onRetry={handleRetrySubFases}
+        <ModulesSection
+          fases={fases}
+          isLoading={isLoadingFases}
+          selectedFase={selectedFase}
+          onFaseClick={handleFaseClick}
+          error={error?.type === "fases" ? error.message : null}
+          onRetry={handleRetryFases}
         />
-      )}
+
+        {selectedFase && (
+          <SubModulesSection
+            fase={selectedFase}
+            isLoading={isLoadingSubFases}
+            error={error?.type === "subfases" ? error.message : null}
+            onRetry={handleRetrySubFases}
+          />
+        )}
+      </div>
     </div>
   );
 }

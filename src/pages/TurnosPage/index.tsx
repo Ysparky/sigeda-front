@@ -168,7 +168,7 @@ function TurnosPage() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <Breadcrumb items={[{ label: "Turnos", path: "/turnos" }]} />
 
-      <div className="space-y-6">
+      <div className="space-y-6 mt-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold text-gray-900">
             Turnos Disponibles

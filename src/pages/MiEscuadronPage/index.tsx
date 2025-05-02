@@ -11,13 +11,13 @@ function MiEscuadronPage() {
   >("all");
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 py-8">
       <Breadcrumb
         items={[{ label: "Módulos", path: "/" }, { label: "Mi Escuadrón" }]}
         showHome={true}
       />
 
-      <div className="flex flex-col space-y-6">
+      <div className="space-y-6 mt-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Mi Escuadrón</h1>
           <p className="mt-1 text-sm text-gray-500">
