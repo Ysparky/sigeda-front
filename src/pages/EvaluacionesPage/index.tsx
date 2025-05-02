@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { Breadcrumb } from "../../components/common/Breadcrumb";
 import { ErrorDisplay } from "../../components/common/ErrorDisplay";
 import { useAuth } from "../../contexts/auth";
+import { useAlumnos } from "../../contexts/data/AlumnosContext";
+import { useRoles } from "../../hooks/useRoles";
 import { evaluacionesService } from "../../services/evaluaciones.service";
 import { turnosService } from "../../services/turnos.service";
 import { EvaluacionesList } from "./components/EvaluacionesList";
@@ -12,7 +14,15 @@ import type { Evaluacion, FilterOption } from "./types";
 
 function EvaluacionesPage() {
   const { turnoId } = useParams();
+  const [searchParams] = useSearchParams();
+  const alumnoId = searchParams.get("alumno");
+  const sourceGrupoId = searchParams.get("sourceGrupoId");
+  
   const { userInfo } = useAuth();
+  const { isInstructor, isAlumno } = useRoles();
+  const { getAlumnoById } = useAlumnos();
+  const alumno = alumnoId ? getAlumnoById(alumnoId) : undefined;
+  
   const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
   const [turnoNombre, setTurnoNombre] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
@@ -20,9 +30,29 @@ function EvaluacionesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState<FilterOption>("fecha");
 
+  // Determine which personaId to use based on role
+  const getPersonaId = useCallback(() => {
+    if (isInstructor && alumnoId) {
+      return alumnoId;
+    }
+    
+    if (isAlumno && userInfo) {
+      return userInfo.codigo;
+    }
+    
+    return null;
+  }, [isInstructor, isAlumno, alumnoId, userInfo]);
+
   // Load evaluaciones data
   const loadData = useCallback(async () => {
     if (!turnoId || !userInfo) return;
+    
+    const personaId = getPersonaId();
+    if (!personaId) {
+      setError("No se pudo determinar el alumno");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -37,9 +67,9 @@ function EvaluacionesPage() {
       }
 
       // Load evaluaciones
-      const data = await evaluacionesService.getEvaluacionesByPersonaAndTurno({
-        personaId: userInfo.codigo,
-        turnoId: turnoId,
+      const data = await evaluacionesService.getEvaluacionesByFilter({
+        personaId,
+        idTurno: parseInt(turnoId)
       });
       setEvaluaciones(data);
     } catch (err) {
@@ -48,7 +78,7 @@ function EvaluacionesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [turnoId, userInfo]);
+  }, [turnoId, userInfo, getPersonaId]);
 
   useEffect(() => {
     loadData();
@@ -90,7 +120,13 @@ function EvaluacionesPage() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <Breadcrumb
         items={[
-          { label: "Turnos", path: "/turnos" },
+          ...(isInstructor && alumnoId 
+            ? [
+                { label: "Mi Escuadrón", path: "/mi-escuadron" },
+                { label: "Turnos de Alumno", path: `/turnos/instructor?alumno=${alumnoId}${sourceGrupoId ? `&idGrupo=${sourceGrupoId}` : ''}` },
+              ] 
+            : [{ label: "Turnos", path: "/turnos" }]
+          ),
           { label: "Evaluaciones" }
         ]}
         showHome={true}
@@ -99,7 +135,10 @@ function EvaluacionesPage() {
       <div className="space-y-6 mt-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold text-gray-900">
-            Evaluaciones: {turnoNombre}
+            {isInstructor && alumnoId 
+              ? `Evaluaciones de ${alumno?.nombre}: ${turnoNombre}`
+              : `Evaluaciones: ${turnoNombre}`
+            }
           </h1>
 
           {/* Status indicator */}

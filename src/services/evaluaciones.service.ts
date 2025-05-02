@@ -4,21 +4,27 @@ import type { PaginatedResponse } from "../types/common.types";
 import { api } from "./api";
 
 // Types
-export interface GetEvaluacionesParams {
+export interface GetEvaluacionesByFilterParams {
   personaId: string;
-  turnoId: string;
+  property?: string;
+  idTurno?: number;
 }
 
 export type EvaluacionesResponse = PaginatedResponse<Evaluacion>;
 
 export const evaluacionesService = {
-  async getEvaluacionesByPersonaAndTurno({
+  async getEvaluacionesByFilter({
     personaId,
-    turnoId,
-  }: GetEvaluacionesParams): Promise<Evaluacion[]> {
-    const response = await api.get<EvaluacionesResponse>(
-      `/evaluaciones/persona/${personaId}/turno/${turnoId}`
-    );
+    property = "codigo",
+    idTurno,
+  }: GetEvaluacionesByFilterParams): Promise<Evaluacion[]> {
+    let url = `/evaluaciones/filter/persona/${personaId}?property=${property}`;
+
+    if (idTurno !== undefined) {
+      url += `&idTurno=${idTurno}`;
+    }
+
+    const response = await api.get<EvaluacionesResponse>(url);
     return response.data.content;
   },
 

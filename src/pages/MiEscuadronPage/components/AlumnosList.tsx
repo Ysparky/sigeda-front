@@ -1,18 +1,7 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LoadingSpinner } from "../../../components/common/LoadingSpinner";
-import { useAuth } from "../../../contexts/auth";
-import { gruposService } from "../../../services/grupos.service";
+import { useAlumnos } from "../../../contexts/data/AlumnosContext";
 import { AlumnoCard } from "./AlumnoCard";
-
-interface Alumno {
-  aMaterno: string;
-  aPaterno: string;
-  codigo: string;
-  nombre: string;
-  idGrupo?: number;
-  estado: string;
-}
 
 interface AlumnosListProps {
   searchTerm: string;
@@ -21,32 +10,8 @@ interface AlumnosListProps {
 
 export function AlumnosList({ searchTerm, filter }: AlumnosListProps) {
   const navigate = useNavigate();
-  const { userInfo } = useAuth();
-  const [alumnos, setAlumnos] = useState<Alumno[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { alumnos, isLoading, error, setSelectedAlumnoId } = useAlumnos();
 
-  useEffect(() => {
-    const loadAlumnos = async () => {
-      if (!userInfo) return;
-
-      try {
-        setIsLoading(true);
-        setError(null);
-        const data = await gruposService.getAlumnosByInstructor(
-          userInfo.codigo
-        );
-        setAlumnos(data);
-      } catch (err) {
-        setError("Error al cargar los alumnos");
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadAlumnos();
-  }, [userInfo]);
 
   const filteredAlumnos = alumnos.filter((alumno) => {
     const matchesSearch =
@@ -64,10 +29,11 @@ export function AlumnosList({ searchTerm, filter }: AlumnosListProps) {
     }
   });
 
-  const handleAlumnoClick = (alumno: Alumno) => {
-    console.log("Clicked on alumno:", alumno);
+  const handleAlumnoClick = (alumno: typeof alumnos[0]) => {
     if (alumno.idGrupo) {
-      console.log(`Navigating to /turnos/instructor with idGrupo=${alumno.idGrupo} and alumno=${alumno.codigo}`);
+      // Store the selected alumno ID in the context
+      setSelectedAlumnoId(alumno.codigo);
+      // Navigate to the turnos page
       navigate(`/turnos/instructor?idGrupo=${alumno.idGrupo}&alumno=${alumno.codigo}`);
     } else {
       console.error("No grupo ID available for this alumno:", alumno);
