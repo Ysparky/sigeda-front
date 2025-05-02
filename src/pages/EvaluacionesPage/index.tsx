@@ -91,8 +91,9 @@ function EvaluacionesPage() {
       <Breadcrumb
         items={[
           { label: "Turnos", path: "/turnos" },
-          { label: "Evaluaciones" },
+          { label: "Evaluaciones" }
         ]}
+        showHome={true}
       />
 
       <div className="space-y-6 mt-4">

@@ -113,8 +113,9 @@ function TurnosInstructorPage() {
       <Breadcrumb 
         items={[
           { label: "Mi Escuadrón", path: "/mi-escuadron" },
-          { label: `Turnos de Alumno: ${queryAlumnoId}`, path: "" }
+          { label: "Turnos de Alumno" }
         ]} 
+        showHome={true}
       />
 
       <div className="space-y-6 mt-4">

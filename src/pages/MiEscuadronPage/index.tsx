@@ -13,7 +13,7 @@ function MiEscuadronPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <Breadcrumb
-        items={[{ label: "Módulos", path: "/" }, { label: "Mi Escuadrón" }]}
+        items={[{ label: "Mi Escuadrón" }]}
         showHome={true}
       />
 

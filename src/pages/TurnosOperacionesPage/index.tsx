@@ -171,11 +171,8 @@ function TurnosOperacionesPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <Breadcrumb
-        items={[
-          { label: "Inicio", path: "/" },
-          { label: "Módulos", path: "/" },
-          { label: "Programación de Turnos" },
-        ]}
+        items={[{ label: "Programación de Turnos" }]}
+        showHome={true}
       />
 
       <div className="space-y-6 mt-4">

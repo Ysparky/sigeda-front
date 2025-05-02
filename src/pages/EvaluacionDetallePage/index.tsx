@@ -47,9 +47,9 @@ function EvaluacionDetallePage() {
             label: "Evaluaciones",
             path: turnoId ? `/turnos/${turnoId}/evaluaciones` : undefined,
           },
-          { label: "Detalle" },
+          { label: "Detalle" }
         ]}
-        showHome={false}
+        showHome={true}
       />
 
       <div className="space-y-6 mt-4">
