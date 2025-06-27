@@ -70,19 +70,32 @@ export interface UpdateTurnoResponse {
   turno: string[];
 }
 
+export interface GetTurnosParams {
+  page?: number;
+  size?: number;
+}
+
 export const turnosService = {
   async getTurnosBySubFase(
     subfaseId: string,
-    userInfo: UserInfo
-  ): Promise<TurnoResponse[]> {
+    userInfo: UserInfo,
+    params: GetTurnosParams = { page: 0, size: 10 }
+  ): Promise<PaginatedResponse> {
     try {
       const response = await api.get<PaginatedResponse>(
-        `/turnos/subfase/${subfaseId}/programa/PDI/grupo/${userInfo.idGrupo}`
+        `/turnos/subfase/${subfaseId}/programa/PDI/grupo/${userInfo.idGrupo}`,
+        { params }
       );
-      return response.data.content;
+      return response.data;
     } catch (error) {
       if ((error as AxiosError).response?.status === 404) {
-        return [];
+        return {
+          content: [],
+          totalElements: 0,
+          totalPages: 0,
+          size: params.size || 10,
+          number: params.page || 0
+        };
       }
       throw error;
     }
@@ -90,16 +103,24 @@ export const turnosService = {
 
   async getTurnosByGrupo(
     idGrupo: number,
-    idSubfase?: number
-  ): Promise<TurnoResponse[]> {
+    idSubfase?: number,
+    params: GetTurnosParams = { page: 0, size: 10 }
+  ): Promise<PaginatedResponse> {
     try {
       const response = await api.get<PaginatedResponse>(
-        `/turnos?idGrupo=${idGrupo}${idSubfase ? `&idSubfase=${idSubfase}` : ""}`
+        `/turnos?idGrupo=${idGrupo}${idSubfase ? `&idSubfase=${idSubfase}` : ""}`,
+        { params }
       );
-      return response.data.content;
+      return response.data;
     } catch (error) {
       if ((error as AxiosError).response?.status === 404) {
-        return [];
+        return {
+          content: [],
+          totalElements: 0,
+          totalPages: 0,
+          size: params.size || 10,
+          number: params.page || 0
+        };
       }
       throw error;
     }

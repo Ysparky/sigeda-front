@@ -12,6 +12,8 @@ import { SkeletonLoader } from "./components/SkeletonLoader";
 import { TurnosList } from "./components/TurnosList";
 import type { SortOption, TurnoResponse } from "./types";
 
+const ITEMS_PER_PAGE = 10;
+
 function TurnosPage() {
   const { subfaseId } = useParams();
   
@@ -25,6 +27,11 @@ function TurnosPage() {
   const [selectedSubfaseId, setSelectedSubfaseId] = useState<number | null>(
     subfaseId ? parseInt(subfaseId) : null
   );
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
 
   // Ref to track if this is the initial load
   const initialLoadRef = useRef(true);
@@ -49,27 +56,54 @@ function TurnosPage() {
         setIsLoading(true);
         setError(null);
 
-        let data: TurnoResponse[] = [];
+        const paginationParams = {
+          page: currentPage,
+          size: ITEMS_PER_PAGE
+        };
+
         const logParams = {
           idGrupo: userInfo.idGrupo,
           subfaseId: subfaseIdToUse,
           programa: "PDI",
+          ...paginationParams
         };
 
+        let response;
         // Determine which endpoint to use based on user role and filters
         if (isAlumno) {
           console.log("Fetching turnos for alumno with params:", logParams);
-          data = await turnosService.getTurnosByGrupo(
+          response = await turnosService.getTurnosByGrupo(
             userInfo.idGrupo,
-            subfaseIdToUse || undefined
+            subfaseIdToUse || undefined,
+            paginationParams
           );
         } else if (subfaseId) {
           console.log("Fetching turnos for instructor with params:", { subfaseId, userInfo });
-          data = await turnosService.getTurnosBySubFase(subfaseId, userInfo);
+          response = await turnosService.getTurnosBySubFase(
+            subfaseId,
+            userInfo,
+            paginationParams
+          );
+        } else {
+          response = {
+            content: [],
+            totalElements: 0,
+            totalPages: 0,
+            size: ITEMS_PER_PAGE,
+            number: 0
+          };
         }
 
-        console.log("Turnos loaded successfully:", { count: data.length });
-        setTurnos(data);
+        console.log("Turnos loaded successfully:", {
+          count: response.content.length,
+          total: response.totalElements,
+          page: response.number + 1,
+          pages: response.totalPages
+        });
+
+        setTurnos(response.content);
+        setTotalPages(response.totalPages);
+        setTotalElements(response.totalElements);
       } catch (err) {
         console.error("Error loading turnos:", err);
         const errorMessage = err instanceof Error 
@@ -80,7 +114,7 @@ function TurnosPage() {
         setIsLoading(false);
       }
     },
-    [subfaseId, userInfo, isAlumno, selectedSubfaseId]
+    [subfaseId, userInfo, isAlumno, selectedSubfaseId, currentPage]
   );
 
   // Initial load
@@ -91,26 +125,37 @@ function TurnosPage() {
     }
   }, [loadTurnos]);
 
+  // Handle page change
+  const handlePageChange = useCallback((newPage: number) => {
+    setCurrentPage(newPage);
+    // Save current scroll position
+    const scrollPosition = window.scrollY;
+
+    // Scroll to the turnos container after loading
+    setTimeout(() => {
+      if (turnosContainerRef.current) {
+        window.scrollTo({
+          top: scrollPosition,
+          behavior: "auto",
+        });
+      }
+    }, 100);
+  }, []);
+
+  // Reload when page changes
+  useEffect(() => {
+    if (!initialLoadRef.current) {
+      loadTurnos();
+    }
+  }, [currentPage, loadTurnos]);
+
   // Handle filter change from the FaseSubfaseFilter component
   const handleFilterChange = useCallback(
     (subfaseId: number | null) => {
-      // Save current scroll position
-      const scrollPosition = window.scrollY;
-
+      // Reset to first page when filter changes
+      setCurrentPage(0);
       setSelectedSubfaseId(subfaseId);
-
-      // Only reload the turnos section, not the entire page
       loadTurnos(subfaseId);
-
-      // Scroll to the turnos container after loading
-      setTimeout(() => {
-        if (turnosContainerRef.current) {
-          window.scrollTo({
-            top: scrollPosition,
-            behavior: "auto",
-          });
-        }
-      }, 100);
     },
     [loadTurnos]
   );
@@ -149,6 +194,7 @@ function TurnosPage() {
   const handleClearFilters = useCallback(() => {
     setSearchTerm("");
     setSelectedSubfaseId(null);
+    setCurrentPage(0);
     loadTurnos(null);
   }, [loadTurnos]);
 
@@ -189,7 +235,7 @@ function TurnosPage() {
           onSearchChange={setSearchTerm}
           sortBy={sortBy}
           onSortChange={setSortBy}
-          totalResults={filteredTurnos.length}
+          totalResults={totalElements}
         />
 
         <div
@@ -211,7 +257,40 @@ function TurnosPage() {
               onClearFilters={handleClearFilters}
             />
           ) : (
-            <TurnosList turnos={filteredTurnos} />
+            <>
+              <TurnosList turnos={filteredTurnos} />
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-6 flex justify-center">
+                  <nav className="flex items-center gap-2">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 0}
+                      className="px-3 py-1 rounded-md border border-gray-300 
+                               disabled:opacity-50 disabled:cursor-not-allowed
+                               hover:bg-gray-50 transition-colors duration-200"
+                    >
+                      Anterior
+                    </button>
+                    
+                    <span className="text-sm text-gray-700">
+                      Página {currentPage + 1} de {totalPages}
+                    </span>
+                    
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage >= totalPages - 1}
+                      className="px-3 py-1 rounded-md border border-gray-300
+                               disabled:opacity-50 disabled:cursor-not-allowed
+                               hover:bg-gray-50 transition-colors duration-200"
+                    >
+                      Siguiente
+                    </button>
+                  </nav>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
