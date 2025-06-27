@@ -88,28 +88,13 @@ export const turnosService = {
     }
   },
 
-  async getTurnosByGrupo(idGrupo: number): Promise<TurnoResponse[]> {
-    try {
-      const response = await api.get<PaginatedResponse>(
-        `/turnos?idGrupo=${idGrupo}`
-      );
-      return response.data.content;
-    } catch (error) {
-      if ((error as AxiosError).response?.status === 404) {
-        return [];
-      }
-      throw error;
-    }
-  },
-
-  async getTurnosByFilter(
-    idSubfase: number,
-    programa: string,
-    idGrupo: number
+  async getTurnosByGrupo(
+    idGrupo: number,
+    idSubfase?: number
   ): Promise<TurnoResponse[]> {
     try {
       const response = await api.get<PaginatedResponse>(
-        `/turnos/filter?idSubfase=${idSubfase}&programa=${programa}&idGrupo=${idGrupo}`
+        `/turnos?idGrupo=${idGrupo}${idSubfase ? `&idSubfase=${idSubfase}` : ""}`
       );
       return response.data.content;
     } catch (error) {

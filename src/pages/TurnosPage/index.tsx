@@ -49,41 +49,33 @@ function TurnosPage() {
         setIsLoading(true);
         setError(null);
 
-        // If we're an Alumno and have a selected subfase, use the filter endpoint
-        if (isAlumno && subfaseIdToUse) {
-          console.log("Fetching filtered turnos with:", {
-            subfaseId: subfaseIdToUse,
-            programa: "PDI",
-            idGrupo: userInfo.idGrupo,
-          });
-          const data = await turnosService.getTurnosByFilter(
-            subfaseIdToUse,
-            "PDI",
-            userInfo.idGrupo
+        let data: TurnoResponse[] = [];
+        const logParams = {
+          idGrupo: userInfo.idGrupo,
+          subfaseId: subfaseIdToUse,
+          programa: "PDI",
+        };
+
+        // Determine which endpoint to use based on user role and filters
+        if (isAlumno) {
+          console.log("Fetching turnos for alumno with params:", logParams);
+          data = await turnosService.getTurnosByGrupo(
+            userInfo.idGrupo,
+            subfaseIdToUse || undefined
           );
-          console.log("Filtered turnos loaded:", data);
-          setTurnos(data);
+        } else if (subfaseId) {
+          console.log("Fetching turnos for instructor with params:", { subfaseId, userInfo });
+          data = await turnosService.getTurnosBySubFase(subfaseId, userInfo);
         }
-        // If we're an Alumno without a subfase filter, use the direct grupo endpoint
-        else if (isAlumno) {
-          console.log("Fetching turnos by grupo:", userInfo.idGrupo);
-          const data = await turnosService.getTurnosByGrupo(userInfo.idGrupo);
-          console.log("Turnos by grupo loaded:", data);
-          setTurnos(data);
-        }
-        // Otherwise use the original subfase endpoint
-        else if (subfaseId) {
-          console.log("Fetching turnos with:", { subfaseId, userInfo });
-          const data = await turnosService.getTurnosBySubFase(
-            subfaseId,
-            userInfo
-          );
-          console.log("Turnos loaded:", data);
-          setTurnos(data);
-        }
+
+        console.log("Turnos loaded successfully:", { count: data.length });
+        setTurnos(data);
       } catch (err) {
         console.error("Error loading turnos:", err);
-        setError("Error al cargar los turnos");
+        const errorMessage = err instanceof Error 
+          ? err.message 
+          : "Error al cargar los turnos";
+        setError(errorMessage);
       } finally {
         setIsLoading(false);
       }
