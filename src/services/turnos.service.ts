@@ -1,8 +1,5 @@
 import { AxiosError } from "axios";
-import type {
-  PaginatedResponse,
-  TurnoResponse,
-} from "../pages/TurnosPage/types";
+import type { PaginatedResponse } from "../pages/TurnosPage/types";
 import type { UserInfo } from "../types/auth.types";
 import { CreateTurnoResponse } from "../types/turno.types";
 import { api } from "./api";
