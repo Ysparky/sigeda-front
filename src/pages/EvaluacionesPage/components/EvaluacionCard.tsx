@@ -52,7 +52,11 @@ export function EvaluacionCard({ evaluacion, index = 0 }: EvaluacionCardProps) {
   };
 
   // Get color based on classification
-  const getClassificationColor = (classification: string) => {
+  const getClassificationColor = (classification: string | null) => {
+    if (!classification) {
+      return "bg-gray-100 text-gray-800";
+    }
+
     switch (classification.toLowerCase()) {
       case "bueno":
       case "excelente":
@@ -127,7 +131,7 @@ export function EvaluacionCard({ evaluacion, index = 0 }: EvaluacionCardProps) {
               evaluacion.clasificacion
             )}`}
           >
-            {evaluacion.clasificacion}
+            {evaluacion.clasificacion || "Sin clasificación"}
           </span>
         </div>
       </div>

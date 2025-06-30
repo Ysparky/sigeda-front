@@ -10,7 +10,33 @@ export interface GetEvaluacionesByFilterParams {
   idTurno?: number;
 }
 
+export interface CreateEvaluacionRequest {
+  nombre: string;
+  recomendacion: string;
+  categoria: string;
+  codEvaluador: number;
+  calificaciones: Array<{
+    idManiobra: number;
+    nota: string;
+    causa: string;
+    observacion: string;
+    recomendacion: string;
+  }>;
+}
+
 export type EvaluacionesResponse = PaginatedResponse<Evaluacion>;
+
+export interface CategoriaEvaluacion {
+  value: string;
+  label: string;
+}
+
+export const CATEGORIAS_MAP: Record<string, string> = {
+  Ponderada: "Ponderada",
+  Chequeo: "Chequeo",
+  chequeoSubFase: "Chequeo Sub Fase",
+  Complementacion: "Complementación"
+};
 
 export const evaluacionesService = {
   async getEvaluacionesByFilter({
@@ -34,4 +60,24 @@ export const evaluacionesService = {
     );
     return response.data;
   },
+
+  async createEvaluacion(
+    turnoId: number,
+    personaId: string,
+    data: CreateEvaluacionRequest
+  ): Promise<EvaluacionDetalle> {
+    const response = await api.post<EvaluacionDetalle>(
+      `/evaluaciones/turno/${turnoId}/persona/${personaId}`,
+      data
+    );
+    return response.data;
+  },
+
+  async getCategoriasEvaluacion(personaId: string): Promise<CategoriaEvaluacion[]> {
+    const response = await api.get<string[]>(`/personas/${personaId}/status`);
+    return response.data.map(categoria => ({
+      value: categoria,
+      label: CATEGORIAS_MAP[categoria] || categoria
+    }));
+  }
 };

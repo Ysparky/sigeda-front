@@ -26,7 +26,7 @@ export interface EvaluacionDetalle {
   fecha: string;
   programa: string;
   categoria: string;
-  clasificacion: string;
+  clasificacion: string | null;
   promedio: string;
   recomendacion: string;
   idSubFase: number;

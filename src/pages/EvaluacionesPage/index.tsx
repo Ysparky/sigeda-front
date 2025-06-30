@@ -8,6 +8,7 @@ import { useRoles } from "../../hooks/useRoles";
 import { evaluacionesService } from "../../services/evaluaciones.service";
 import { turnosService } from "../../services/turnos.service";
 import { EvaluacionesList } from "./components/EvaluacionesList";
+import { RegistrarEvaluacionModal } from "./components/RegistrarEvaluacionModal";
 import { SearchFilter } from "./components/SearchFilter";
 import { SkeletonLoader } from "./components/SkeletonLoader";
 import type { Evaluacion, FilterOption } from "./types";
@@ -16,7 +17,6 @@ function EvaluacionesPage() {
   const { turnoId } = useParams();
   const [searchParams] = useSearchParams();
   const alumnoId = searchParams.get("alumno");
-  const sourceGrupoId = searchParams.get("sourceGrupoId");
   
   const { userInfo } = useAuth();
   const { isInstructor, isAlumno } = useRoles();
@@ -29,6 +29,7 @@ function EvaluacionesPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState<FilterOption>("fecha");
+  const [isRegistrarModalOpen, setIsRegistrarModalOpen] = useState(false);
 
   // Determine which personaId to use based on role
   const getPersonaId = useCallback(() => {
@@ -66,121 +67,120 @@ function EvaluacionesPage() {
         console.error("Error loading turno details:", err);
       }
 
-      // Load evaluaciones
       const data = await evaluacionesService.getEvaluacionesByFilter({
         personaId,
-        idTurno: parseInt(turnoId)
+        property: filterBy,
+        idTurno: parseInt(turnoId),
       });
       setEvaluaciones(data);
     } catch (err) {
-      setError("Error al cargar las evaluaciones");
       console.error("Error loading evaluaciones:", err);
+      setError("Error al cargar las evaluaciones");
     } finally {
       setIsLoading(false);
     }
-  }, [turnoId, userInfo, getPersonaId]);
+  }, [turnoId, userInfo, getPersonaId, filterBy]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  // Handle clearing filters
-  const handleClearFilters = useCallback(() => {
+  const handleFilterChange = (newFilter: FilterOption) => {
+    setFilterBy(newFilter);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+  };
+
+  const handleClearFilters = () => {
     setSearchTerm("");
     setFilterBy("fecha");
-  }, []);
+  };
 
-  // Filter evaluaciones based on search term
   const filteredEvaluaciones = useMemo(() => {
-    if (!evaluaciones.length) return [];
-
-    if (!searchTerm.trim()) return evaluaciones;
-
-    const searchLower = searchTerm.toLowerCase().trim();
     return evaluaciones.filter((evaluacion) => {
-      switch (filterBy) {
-        case "fecha":
-          return evaluacion.fecha.toLowerCase().includes(searchLower);
-        case "clasificacion":
-          return evaluacion.clasificacion.toLowerCase().includes(searchLower);
-        case "calificacion":
-          return (
-            evaluacion.promedio?.toLowerCase().includes(searchLower) || false
-          );
-        default:
-          return true;
-      }
+      const searchTermLower = searchTerm.toLowerCase();
+      return (
+        evaluacion.nombre.toLowerCase().includes(searchTermLower) ||
+        evaluacion.alumno.toLowerCase().includes(searchTermLower) ||
+        evaluacion.evaluador.toLowerCase().includes(searchTermLower)
+      );
     });
-  }, [evaluaciones, searchTerm, filterBy]);
+  }, [evaluaciones, searchTerm]);
 
-  // Check if we have any active filters
-  const hasActiveFilters = searchTerm.trim() !== "";
+  if (error) {
+    return <ErrorDisplay message={error} />;
+  }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
       <Breadcrumb
         items={[
-          ...(isInstructor && alumnoId 
-            ? [
-                { label: "Mi Escuadrón", path: "/mi-escuadron" },
-                { label: "Turnos de Alumno", path: `/turnos/instructor?alumno=${alumnoId}${sourceGrupoId ? `&idGrupo=${sourceGrupoId}` : ''}` },
-              ] 
-            : [{ label: "Turnos", path: "/turnos" }]
-          ),
-          { label: "Evaluaciones" }
+          { label: "Turnos", path: "/turnos" },
+          { label: turnoNombre || "Turno", path: `/turnos/${turnoId}` },
+          {
+            label: alumno ? `Evaluaciones de ${alumno.nombre}` : "Evaluaciones",
+            path: "#",
+          },
         ]}
-        showHome={true}
       />
 
-      <div className="space-y-6 mt-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
-            {isInstructor && alumnoId 
-              ? `Evaluaciones de ${alumno?.nombre}: ${turnoNombre}`
-              : `Evaluaciones: ${turnoNombre}`
-            }
-          </h1>
-
-          {/* Status indicator */}
-          {!isLoading && !error && (
-            <div className="flex items-center text-sm">
-              <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-              <span className="text-gray-600">
-                Última actualización: {new Date().toLocaleTimeString()}
-              </span>
-            </div>
-          )}
-        </div>
-
-        <SearchFilter
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          filterBy={filterBy}
-          onFilterChange={setFilterBy}
-          totalResults={filteredEvaluaciones.length}
-        />
-
-        <div className="min-h-[300px] transition-all duration-300">
-          {isLoading ? (
-            <SkeletonLoader />
-          ) : error ? (
-            <ErrorDisplay
-              title="No pudimos cargar las evaluaciones"
-              message="Hubo un problema al obtener la información. Por favor, intente nuevamente."
-              onRetry={() => loadData()}
-              showHeader={false}
-            />
-          ) : (
-            <EvaluacionesList
-              evaluaciones={evaluaciones}
-              searchTerm={searchTerm}
-              filterBy={filterBy}
-              hasFilters={hasActiveFilters}
-              onClearFilters={handleClearFilters}
-            />
-          )}
-        </div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">
+          {alumno ? `Evaluaciones de ${alumno.nombre}` : "Evaluaciones"}
+        </h1>
+        {isInstructor && alumnoId && turnoId && (
+          <button
+            onClick={() => setIsRegistrarModalOpen(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center"
+          >
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              />
+            </svg>
+            Nueva Evaluación
+          </button>
+        )}
       </div>
+
+      <SearchFilter
+        searchTerm={searchTerm}
+        filterBy={filterBy}
+        onSearchChange={handleSearchChange}
+        onFilterChange={handleFilterChange}
+      />
+
+      {isLoading ? (
+        <SkeletonLoader />
+      ) : (
+        <EvaluacionesList
+          evaluaciones={filteredEvaluaciones}
+          searchTerm={searchTerm}
+          filterBy={filterBy}
+          hasFilters={searchTerm !== "" || filterBy !== "fecha"}
+          onClearFilters={handleClearFilters}
+        />
+      )}
+
+      {isInstructor && alumnoId && turnoId && (
+        <RegistrarEvaluacionModal
+          isOpen={isRegistrarModalOpen}
+          onClose={() => setIsRegistrarModalOpen(false)}
+          onEvaluacionCreated={loadData}
+          turnoId={parseInt(turnoId)}
+          alumnoId={alumnoId}
+        />
+      )}
     </div>
   );
 }

@@ -63,8 +63,8 @@ function TurnosPage() {
 
         const logParams = {
           idGrupo: userInfo.idGrupo,
-          subfaseId: subfaseIdToUse,
-          programa: "PDI",
+            subfaseId: subfaseIdToUse,
+            programa: "PDI",
           ...paginationParams
         };
 
@@ -128,18 +128,18 @@ function TurnosPage() {
   // Handle page change
   const handlePageChange = useCallback((newPage: number) => {
     setCurrentPage(newPage);
-    // Save current scroll position
-    const scrollPosition = window.scrollY;
+      // Save current scroll position
+      const scrollPosition = window.scrollY;
 
-    // Scroll to the turnos container after loading
-    setTimeout(() => {
-      if (turnosContainerRef.current) {
-        window.scrollTo({
-          top: scrollPosition,
-          behavior: "auto",
-        });
-      }
-    }, 100);
+      // Scroll to the turnos container after loading
+      setTimeout(() => {
+        if (turnosContainerRef.current) {
+          window.scrollTo({
+            top: scrollPosition,
+            behavior: "auto",
+          });
+        }
+      }, 100);
   }, []);
 
   // Reload when page changes
@@ -258,7 +258,7 @@ function TurnosPage() {
             />
           ) : (
             <>
-              <TurnosList turnos={filteredTurnos} />
+            <TurnosList turnos={filteredTurnos} />
               
               {/* Pagination */}
               {totalPages > 1 && (

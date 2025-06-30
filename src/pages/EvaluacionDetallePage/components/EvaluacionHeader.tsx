@@ -20,7 +20,11 @@ export function EvaluacionHeader({ evaluacion }: EvaluacionHeaderProps) {
   };
 
   // Get classification color based on classification value
-  const getClassificationColor = (classification: string) => {
+  const getClassificationColor = (classification: string | null) => {
+    if (!classification) {
+      return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+
     const lowerClass = classification.toLowerCase();
     if (
       lowerClass.includes("bueno") ||
@@ -104,7 +108,7 @@ export function EvaluacionHeader({ evaluacion }: EvaluacionHeaderProps) {
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            {evaluacion.clasificacion}
+            {evaluacion.clasificacion || "Sin clasificación"}
           </span>
         </div>
       </div>
