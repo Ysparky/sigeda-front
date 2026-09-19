@@ -30,7 +30,7 @@ Object.defineProperty(Element.prototype, 'hasPointerCapture', { writable: true, 
 Object.defineProperty(Element.prototype, 'releasePointerCapture', { writable: true, value: () => {} })
 Object.defineProperty(Element.prototype, 'scrollIntoView', { writable: true, value: () => {} })
 
-const ancla = document.createElement('button')
+const ancla = document.createElement('div')
 ancla.tabIndex = -1
 document.body.append(ancla)
 
