@@ -21,3 +21,7 @@ export function aPagina<T>(pagina: PaginaSpring<T>): Pagina<T> {
 export function paginaVacia<T>(page = 0, size = 0): Pagina<T> {
   return { items: [], page, size, total: 0, totalPages: 0 }
 }
+
+export type DireccionOrden = 'ASC' | 'DESC'
+
+export type ParametrosPagina = { page: number; size: number; property?: string; direction: DireccionOrden }
