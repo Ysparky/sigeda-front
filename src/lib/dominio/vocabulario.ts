@@ -27,6 +27,13 @@ export const ESTADOS_ALUMNO = {
   'No Apto': { etiqueta: 'No apto', tono: 'peligro' },
 } as const satisfies Record<string, Termino>
 
+export const ESTADOS_AERONAVE = {
+  Disponible: { etiqueta: 'Disponible', tono: 'exito' },
+  En_Mantenimiento: { etiqueta: 'En mantenimiento', tono: 'aviso' },
+  No_Disponible: { etiqueta: 'No disponible', tono: 'alerta' },
+  Desconocido: { etiqueta: 'Desconocido', tono: 'neutro' },
+} as const satisfies Record<string, Termino>
+
 export type Calificativo = keyof typeof CALIFICATIVOS
 export type Clasificacion = keyof typeof CLASIFICACIONES
 export type EstadoAlumno = keyof typeof ESTADOS_ALUMNO
@@ -35,6 +42,7 @@ const VOCABULARIOS = {
   calificativo: CALIFICATIVOS,
   clasificacion: CLASIFICACIONES,
   estado: ESTADOS_ALUMNO,
+  aeronave: ESTADOS_AERONAVE,
 } as const
 
 export type Vocabulario = keyof typeof VOCABULARIOS

@@ -9,3 +9,9 @@ export const CLASES_TONO: Record<Tono, string> = {
   peligro: 'border-tono-peligro/40 bg-tono-peligro/10 text-tono-peligro-texto',
   violeta: 'border-tono-violeta/40 bg-tono-violeta/10 text-tono-violeta-texto',
 }
+
+export const CLASES_ETIQUETA_DEBRIEFING = {
+  observacion: 'text-tono-peligro-texto',
+  causa: 'text-tono-info-texto',
+  recomendacion: '',
+} as const

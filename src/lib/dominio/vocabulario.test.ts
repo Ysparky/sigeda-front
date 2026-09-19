@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CALIFICATIVOS, CLASIFICACIONES, ESTADOS_ALUMNO, termino } from './vocabulario'
+import { CALIFICATIVOS, CLASIFICACIONES, ESTADOS_AERONAVE, ESTADOS_ALUMNO, termino } from './vocabulario'
 
 describe('vocabulario del dominio', () => {
   it('cubre los calificativos DIRBE', () => {
@@ -33,5 +33,12 @@ describe('vocabulario del dominio', () => {
 
   it('devuelve un término neutro con el valor original cuando no lo conoce', () => {
     expect(termino('estado', 'Suspendido')).toEqual({ etiqueta: 'Suspendido', tono: 'neutro' })
+  })
+})
+
+describe('estados de aeronave', () => {
+  it('cubre los nombres del enum EstadoAeronave del backend', () => {
+    expect(Object.keys(ESTADOS_AERONAVE)).toEqual(['Disponible', 'En_Mantenimiento', 'No_Disponible', 'Desconocido'])
+    expect(termino('aeronave', 'En_Mantenimiento').etiqueta).toBe('En mantenimiento')
   })
 })
