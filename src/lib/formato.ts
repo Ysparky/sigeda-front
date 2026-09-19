@@ -1,9 +1,12 @@
-import { format, parseISO } from 'date-fns'
+import { format, isValid, parseISO } from 'date-fns'
 
 export function formatearFecha(iso: string): string {
-  return format(parseISO(iso), 'dd/MM/yyyy')
+  if (!iso) return '—'
+  const fecha = parseISO(iso)
+  return isValid(fecha) ? format(fecha, 'dd/MM/yyyy') : '—'
 }
 
-export function formatearNota(nota: number): string {
+export function formatearNota(nota: number | null | undefined): string {
+  if (nota === null || nota === undefined || Number.isNaN(nota)) return '—'
   return nota.toFixed(2)
 }
