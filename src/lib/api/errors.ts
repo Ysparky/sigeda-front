@@ -65,8 +65,9 @@ function errorDelServidor(status: number, cuerpo: unknown): ApiError {
     return new ApiError(status, MENSAJE_GENERICO)
   }
   if (esRegistro(cuerpo)) {
-    if ('mensaje' in cuerpo) console.error(cuerpo.mensaje)
-    if ('message' in cuerpo) console.error(cuerpo.message)
+    if (esTexto(cuerpo.mensaje)) console.error(cuerpo.mensaje)
+    if (esTexto(cuerpo.message)) console.error(cuerpo.message)
+    if (esListaDeTextos(cuerpo.messages) && cuerpo.messages.length > 0) console.error(cuerpo.messages)
     if (esTexto(cuerpo.error)) return new ApiError(status, cuerpo.error)
   }
   return new ApiError(status, MENSAJE_GENERICO)

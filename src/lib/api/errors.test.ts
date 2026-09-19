@@ -169,6 +169,18 @@ describe('normalizarError con las respuestas de turnos y evaluaciones', () => {
     expect(error.message).toBe('Error inesperado')
     expect(error.erroresDeCampo).toEqual({})
     expect(consola).toHaveBeenCalledWith('could not execute statement; SQL [update personas set estado=?]')
+    expect(consola).toHaveBeenCalledWith(["'estado': SQL [update personas]"])
+  })
+
+  it('en un 5xx no llama console.error con null', () => {
+    const consola = vi.spyOn(console, 'error').mockImplementation(() => {})
+    normalizarError(500, {
+      timestamp: '2026-09-19T10:00:00',
+      status: 500,
+      error: 'Error inesperado',
+      message: null,
+    })
+    expect(consola).not.toHaveBeenCalledWith(null)
   })
 
   it('en un 5xx no muestra el mensaje de una regla ni un texto plano', () => {
