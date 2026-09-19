@@ -71,4 +71,16 @@ describe('Modificar turno', () => {
     await usuario.click(screen.getByRole('button', { name: 'Guardar turno' }))
     expect(await screen.findByText('No se puede modificar. El turno ya ha sido evaluado.')).toBeInTheDocument()
   })
+
+  it('CA-TUR-12 si no cargan los catálogos muestra el error en vez del formulario', async () => {
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/aeronaves`, () =>
+        HttpResponse.text('Catálogo no disponible.', { status: 400 }),
+      ),
+    )
+    await abrirEdicion()
+    expect(await screen.findByText('No se pudieron cargar los datos del formulario')).toBeInTheDocument()
+    expect(screen.getByText('Catálogo no disponible.')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Nombre')).not.toBeInTheDocument()
+  })
 })
