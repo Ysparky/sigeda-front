@@ -16,7 +16,9 @@ Registro de decisiones que no se leen en el código. El código no lleva comenta
 - **Los permisos replican `Role.java` en `src/lib/auth/permisos.ts`.** `Rol.permisos` no tiene mapeo JSON en el backend y, si se serializara, usaría los nombres de las constantes (`MANAGE_SHIFTS`) en lugar de los que evalúa `@PreAuthorize` (`Manage Shifts`). Si el backend cambia un rol, se actualiza la tabla y su prueba.
 - **La sesión no trae datos de la persona.** `Usuario.getPersona()` está comentado en el backend; la interfaz muestra el nombre de usuario hasta que se exponga (dependencia 11 del spec).
 - **Navegación por el router.** Iniciar o cerrar sesión solo cambia el estado de la sesión; `App` invalida el router y las guardas `beforeLoad` redirigen. Así no hay dos lugares que decidan a dónde ir.
-- **Destino tras el login.** Solo se aceptan rutas internas (`/…`, nunca `//…` ni `/login…`), para evitar redirecciones abiertas.
+- **Destino tras el login.** Solo se aceptan rutas internas, resueltas contra el origen actual (mismo origen, ruta que no empiece con `/login`), para evitar redirecciones abiertas.
+- **El modo mock solo existe en desarrollo.** `import('./mocks/browser')` se guarda tras `import.meta.env.DEV && config.mockApi` para que Rollup elimine el chunk de MSW (con `USUARIOS_MOCK` y la contraseña `123`) del build de producción; `mockServiceWorker.js` vive en `public-mock/`, servido solo cuando `vite --mode mock` cambia el `publicDir`, y nunca en `pnpm build`.
+- **Un 403 en `/auth/login` significa credenciales inválidas.** El despacho de errores de Spring tras un fallo de autenticación puede responder 401 o 403 según el filtro que lo intercepte primero; `sesion.iniciar` trata ambos como el mismo `MENSAJE_CREDENCIALES` sin distinguir cuál falló.
 
 ## Formularios y errores
 
