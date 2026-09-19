@@ -2,6 +2,8 @@ import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 import { server } from '@/mocks/server'
+import { sesion } from '@/lib/auth/sesion'
+import { reiniciarAuthMock } from '@/mocks/sigeda/auth'
 
 class ResizeObserverDePrueba {
   observe() {}
@@ -35,6 +37,10 @@ beforeAll(() => {
 afterEach(() => {
   cleanup()
   server.resetHandlers()
+  reiniciarAuthMock()
+  sesion.expirar()
+  localStorage.clear()
+  document.documentElement.className = ''
 })
 
 afterAll(() => {
