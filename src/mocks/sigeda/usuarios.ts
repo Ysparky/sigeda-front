@@ -23,6 +23,13 @@ export const USUARIOS_MOCK: Record<string, UsuarioMock> = {
     codPersona: '444444',
     rol: { id: 4, nombre: 'Instructor', descripcion: 'Evaluación y seguimiento de alumnos' },
   },
+  'instructor.mendoza': {
+    id: 8,
+    username: 'instructor.mendoza',
+    correo: 'instructor2@sigeda.com',
+    codPersona: '888888',
+    rol: { id: 4, nombre: 'Instructor', descripcion: 'Evaluación y seguimiento de alumnos' },
+  },
   'alumno.lopez': {
     id: 3,
     username: 'alumno.lopez',

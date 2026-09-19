@@ -3,7 +3,7 @@ import { cleanup } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 import { server } from '@/mocks/server'
 import { sesion } from '@/lib/auth/sesion'
-import { reiniciarAuthMock } from '@/mocks/sigeda/auth'
+import { reiniciarMocks } from '@/mocks/reiniciar'
 
 class ResizeObserverDePrueba {
   observe() {}
@@ -42,7 +42,7 @@ afterEach(() => {
   cleanup()
   ancla.focus()
   server.resetHandlers()
-  reiniciarAuthMock()
+  reiniciarMocks()
   sesion.expirar()
   localStorage.clear()
   document.documentElement.className = ''
