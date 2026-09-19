@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { AppShell } from '@/components/app-shell'
 
 export const Route = createFileRoute('/_app')({
   beforeLoad: ({ context, location }) => {
@@ -9,8 +10,8 @@ export const Route = createFileRoute('/_app')({
 
 function DisposicionApp() {
   return (
-    <div className="p-6">
+    <AppShell>
       <Outlet />
-    </div>
+    </AppShell>
   )
 }
