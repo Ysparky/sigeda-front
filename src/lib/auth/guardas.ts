@@ -12,7 +12,7 @@ export class SinPermisoError extends Error {
 
 export function exigirPantalla(pantalla: Pantalla, actual: Sesion | null, esDesarrollo: boolean = import.meta.env.DEV) {
   if (pantalla.soloDesarrollo && !esDesarrollo) throw notFound()
-  if (!actual || !pantallaVisible(pantalla, actual.permisos, esDesarrollo)) throw new SinPermisoError()
+  if (!actual || !pantallaVisible(pantalla, actual, esDesarrollo)) throw new SinPermisoError()
 }
 
 export function destinoSeguro(destino: string | undefined): string {

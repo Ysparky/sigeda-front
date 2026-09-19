@@ -8,7 +8,7 @@ import { useSesion } from '@/lib/auth/use-sesion'
 export function InicioPage() {
   const actual = useSesion()
   if (!actual) return null
-  const accesos = accesosPara(actual.permisos, import.meta.env.DEV)
+  const accesos = accesosPara(actual, import.meta.env.DEV)
 
   return (
     <>

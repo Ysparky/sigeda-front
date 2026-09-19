@@ -14,6 +14,19 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppCuentaRouteImport } from './routes/_app/cuenta'
 import { Route as AppGuiaRouteImport } from './routes/_app/guia'
+import { Route as AppMisEvaluacionesRouteImport } from './routes/_app/mis-evaluaciones'
+import { Route as AppMisTurnosRouteImport } from './routes/_app/mis-turnos'
+import { Route as AppEvaluacionesIndexRouteImport } from './routes/_app/evaluaciones/index'
+import { Route as AppTurnosIndexRouteImport } from './routes/_app/turnos/index'
+import { Route as AppTurnosNuevoRouteImport } from './routes/_app/turnos/nuevo'
+import { Route as AppEvaluacionesCodIndexRouteImport } from './routes/_app/evaluaciones/$cod/index'
+import { Route as AppEvaluacionesCodEditarRouteImport } from './routes/_app/evaluaciones/$cod/editar'
+import { Route as AppTurnosIdIndexRouteImport } from './routes/_app/turnos/$id/index'
+import { Route as AppTurnosIdEditarRouteImport } from './routes/_app/turnos/$id/editar'
+import { Route as AppTurnosDiaIndexRouteImport } from './routes/_app/turnos/dia/index'
+import { Route as AppTurnosDiaFechaRouteImport } from './routes/_app/turnos/dia/$fecha'
+import { Route as AppTurnosIdBriefingAlumnoRouteImport } from './routes/_app/turnos/$id/briefing/$alumno'
+import { Route as AppTurnosIdEvaluarAlumnoRouteImport } from './routes/_app/turnos/$id/evaluar/$alumno'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -39,18 +52,112 @@ const AppGuiaRoute = AppGuiaRouteImport.update({
   path: '/guia',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMisEvaluacionesRoute = AppMisEvaluacionesRouteImport.update({
+  id: '/mis-evaluaciones',
+  path: '/mis-evaluaciones',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMisTurnosRoute = AppMisTurnosRouteImport.update({
+  id: '/mis-turnos',
+  path: '/mis-turnos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEvaluacionesIndexRoute = AppEvaluacionesIndexRouteImport.update({
+  id: '/evaluaciones/',
+  path: '/evaluaciones/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTurnosIndexRoute = AppTurnosIndexRouteImport.update({
+  id: '/turnos/',
+  path: '/turnos/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTurnosNuevoRoute = AppTurnosNuevoRouteImport.update({
+  id: '/turnos/nuevo',
+  path: '/turnos/nuevo',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEvaluacionesCodIndexRoute = AppEvaluacionesCodIndexRouteImport.update({
+  id: '/evaluaciones/$cod/',
+  path: '/evaluaciones/$cod/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEvaluacionesCodEditarRoute =
+  AppEvaluacionesCodEditarRouteImport.update({
+    id: '/evaluaciones/$cod/editar',
+    path: '/evaluaciones/$cod/editar',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppTurnosIdIndexRoute = AppTurnosIdIndexRouteImport.update({
+  id: '/turnos/$id/',
+  path: '/turnos/$id/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTurnosIdEditarRoute = AppTurnosIdEditarRouteImport.update({
+  id: '/turnos/$id/editar',
+  path: '/turnos/$id/editar',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTurnosDiaIndexRoute = AppTurnosDiaIndexRouteImport.update({
+  id: '/turnos/dia/',
+  path: '/turnos/dia/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTurnosDiaFechaRoute = AppTurnosDiaFechaRouteImport.update({
+  id: '/turnos/dia/$fecha',
+  path: '/turnos/dia/$fecha',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTurnosIdBriefingAlumnoRoute =
+  AppTurnosIdBriefingAlumnoRouteImport.update({
+    id: '/turnos/$id/briefing/$alumno',
+    path: '/turnos/$id/briefing/$alumno',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppTurnosIdEvaluarAlumnoRoute =
+  AppTurnosIdEvaluarAlumnoRouteImport.update({
+    id: '/turnos/$id/evaluar/$alumno',
+    path: '/turnos/$id/evaluar/$alumno',
+    getParentRoute: () => AppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/cuenta': typeof AppCuentaRoute
   '/guia': typeof AppGuiaRoute
+  '/mis-evaluaciones': typeof AppMisEvaluacionesRoute
+  '/mis-turnos': typeof AppMisTurnosRoute
+  '/turnos/nuevo': typeof AppTurnosNuevoRoute
+  '/evaluaciones/': typeof AppEvaluacionesIndexRoute
+  '/turnos/': typeof AppTurnosIndexRoute
+  '/evaluaciones/$cod/editar': typeof AppEvaluacionesCodEditarRoute
+  '/turnos/$id/editar': typeof AppTurnosIdEditarRoute
+  '/turnos/dia/$fecha': typeof AppTurnosDiaFechaRoute
+  '/evaluaciones/$cod/': typeof AppEvaluacionesCodIndexRoute
+  '/turnos/$id/': typeof AppTurnosIdIndexRoute
+  '/turnos/dia/': typeof AppTurnosDiaIndexRoute
+  '/turnos/$id/briefing/$alumno': typeof AppTurnosIdBriefingAlumnoRoute
+  '/turnos/$id/evaluar/$alumno': typeof AppTurnosIdEvaluarAlumnoRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/cuenta': typeof AppCuentaRoute
   '/guia': typeof AppGuiaRoute
+  '/mis-evaluaciones': typeof AppMisEvaluacionesRoute
+  '/mis-turnos': typeof AppMisTurnosRoute
   '/': typeof AppIndexRoute
+  '/turnos/nuevo': typeof AppTurnosNuevoRoute
+  '/evaluaciones': typeof AppEvaluacionesIndexRoute
+  '/turnos': typeof AppTurnosIndexRoute
+  '/evaluaciones/$cod/editar': typeof AppEvaluacionesCodEditarRoute
+  '/turnos/$id/editar': typeof AppTurnosIdEditarRoute
+  '/turnos/dia/$fecha': typeof AppTurnosDiaFechaRoute
+  '/evaluaciones/$cod': typeof AppEvaluacionesCodIndexRoute
+  '/turnos/$id': typeof AppTurnosIdIndexRoute
+  '/turnos/dia': typeof AppTurnosDiaIndexRoute
+  '/turnos/$id/briefing/$alumno': typeof AppTurnosIdBriefingAlumnoRoute
+  '/turnos/$id/evaluar/$alumno': typeof AppTurnosIdEvaluarAlumnoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -58,14 +165,80 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/cuenta': typeof AppCuentaRoute
   '/_app/guia': typeof AppGuiaRoute
+  '/_app/mis-evaluaciones': typeof AppMisEvaluacionesRoute
+  '/_app/mis-turnos': typeof AppMisTurnosRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/turnos/nuevo': typeof AppTurnosNuevoRoute
+  '/_app/evaluaciones/': typeof AppEvaluacionesIndexRoute
+  '/_app/turnos/': typeof AppTurnosIndexRoute
+  '/_app/evaluaciones/$cod/editar': typeof AppEvaluacionesCodEditarRoute
+  '/_app/turnos/$id/editar': typeof AppTurnosIdEditarRoute
+  '/_app/turnos/dia/$fecha': typeof AppTurnosDiaFechaRoute
+  '/_app/evaluaciones/$cod/': typeof AppEvaluacionesCodIndexRoute
+  '/_app/turnos/$id/': typeof AppTurnosIdIndexRoute
+  '/_app/turnos/dia/': typeof AppTurnosDiaIndexRoute
+  '/_app/turnos/$id/briefing/$alumno': typeof AppTurnosIdBriefingAlumnoRoute
+  '/_app/turnos/$id/evaluar/$alumno': typeof AppTurnosIdEvaluarAlumnoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/cuenta' | '/guia'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/cuenta'
+    | '/guia'
+    | '/mis-evaluaciones'
+    | '/mis-turnos'
+    | '/turnos/nuevo'
+    | '/evaluaciones/'
+    | '/turnos/'
+    | '/evaluaciones/$cod/editar'
+    | '/turnos/$id/editar'
+    | '/turnos/dia/$fecha'
+    | '/evaluaciones/$cod/'
+    | '/turnos/$id/'
+    | '/turnos/dia/'
+    | '/turnos/$id/briefing/$alumno'
+    | '/turnos/$id/evaluar/$alumno'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/cuenta' | '/guia' | '/'
-  id: '__root__' | '/_app' | '/login' | '/_app/cuenta' | '/_app/guia' | '/_app/'
+  to:
+    | '/login'
+    | '/cuenta'
+    | '/guia'
+    | '/mis-evaluaciones'
+    | '/mis-turnos'
+    | '/'
+    | '/turnos/nuevo'
+    | '/evaluaciones'
+    | '/turnos'
+    | '/evaluaciones/$cod/editar'
+    | '/turnos/$id/editar'
+    | '/turnos/dia/$fecha'
+    | '/evaluaciones/$cod'
+    | '/turnos/$id'
+    | '/turnos/dia'
+    | '/turnos/$id/briefing/$alumno'
+    | '/turnos/$id/evaluar/$alumno'
+  id:
+    | '__root__'
+    | '/_app'
+    | '/login'
+    | '/_app/cuenta'
+    | '/_app/guia'
+    | '/_app/mis-evaluaciones'
+    | '/_app/mis-turnos'
+    | '/_app/'
+    | '/_app/turnos/nuevo'
+    | '/_app/evaluaciones/'
+    | '/_app/turnos/'
+    | '/_app/evaluaciones/$cod/editar'
+    | '/_app/turnos/$id/editar'
+    | '/_app/turnos/dia/$fecha'
+    | '/_app/evaluaciones/$cod/'
+    | '/_app/turnos/$id/'
+    | '/_app/turnos/dia/'
+    | '/_app/turnos/$id/briefing/$alumno'
+    | '/_app/turnos/$id/evaluar/$alumno'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -110,19 +283,136 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGuiaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/mis-evaluaciones': {
+      id: '/_app/mis-evaluaciones'
+      path: '/mis-evaluaciones'
+      fullPath: '/mis-evaluaciones'
+      preLoaderRoute: typeof AppMisEvaluacionesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/mis-turnos': {
+      id: '/_app/mis-turnos'
+      path: '/mis-turnos'
+      fullPath: '/mis-turnos'
+      preLoaderRoute: typeof AppMisTurnosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/evaluaciones/': {
+      id: '/_app/evaluaciones/'
+      path: '/evaluaciones'
+      fullPath: '/evaluaciones/'
+      preLoaderRoute: typeof AppEvaluacionesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/turnos/': {
+      id: '/_app/turnos/'
+      path: '/turnos'
+      fullPath: '/turnos/'
+      preLoaderRoute: typeof AppTurnosIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/turnos/nuevo': {
+      id: '/_app/turnos/nuevo'
+      path: '/turnos/nuevo'
+      fullPath: '/turnos/nuevo'
+      preLoaderRoute: typeof AppTurnosNuevoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/evaluaciones/$cod/': {
+      id: '/_app/evaluaciones/$cod/'
+      path: '/evaluaciones/$cod'
+      fullPath: '/evaluaciones/$cod/'
+      preLoaderRoute: typeof AppEvaluacionesCodIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/evaluaciones/$cod/editar': {
+      id: '/_app/evaluaciones/$cod/editar'
+      path: '/evaluaciones/$cod/editar'
+      fullPath: '/evaluaciones/$cod/editar'
+      preLoaderRoute: typeof AppEvaluacionesCodEditarRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/turnos/$id/': {
+      id: '/_app/turnos/$id/'
+      path: '/turnos/$id'
+      fullPath: '/turnos/$id/'
+      preLoaderRoute: typeof AppTurnosIdIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/turnos/$id/editar': {
+      id: '/_app/turnos/$id/editar'
+      path: '/turnos/$id/editar'
+      fullPath: '/turnos/$id/editar'
+      preLoaderRoute: typeof AppTurnosIdEditarRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/turnos/dia/': {
+      id: '/_app/turnos/dia/'
+      path: '/turnos/dia'
+      fullPath: '/turnos/dia/'
+      preLoaderRoute: typeof AppTurnosDiaIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/turnos/dia/$fecha': {
+      id: '/_app/turnos/dia/$fecha'
+      path: '/turnos/dia/$fecha'
+      fullPath: '/turnos/dia/$fecha'
+      preLoaderRoute: typeof AppTurnosDiaFechaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/turnos/$id/briefing/$alumno': {
+      id: '/_app/turnos/$id/briefing/$alumno'
+      path: '/turnos/$id/briefing/$alumno'
+      fullPath: '/turnos/$id/briefing/$alumno'
+      preLoaderRoute: typeof AppTurnosIdBriefingAlumnoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/turnos/$id/evaluar/$alumno': {
+      id: '/_app/turnos/$id/evaluar/$alumno'
+      path: '/turnos/$id/evaluar/$alumno'
+      fullPath: '/turnos/$id/evaluar/$alumno'
+      preLoaderRoute: typeof AppTurnosIdEvaluarAlumnoRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppCuentaRoute: typeof AppCuentaRoute
   AppGuiaRoute: typeof AppGuiaRoute
+  AppMisEvaluacionesRoute: typeof AppMisEvaluacionesRoute
+  AppMisTurnosRoute: typeof AppMisTurnosRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppTurnosNuevoRoute: typeof AppTurnosNuevoRoute
+  AppEvaluacionesIndexRoute: typeof AppEvaluacionesIndexRoute
+  AppTurnosIndexRoute: typeof AppTurnosIndexRoute
+  AppEvaluacionesCodEditarRoute: typeof AppEvaluacionesCodEditarRoute
+  AppTurnosIdEditarRoute: typeof AppTurnosIdEditarRoute
+  AppTurnosDiaFechaRoute: typeof AppTurnosDiaFechaRoute
+  AppEvaluacionesCodIndexRoute: typeof AppEvaluacionesCodIndexRoute
+  AppTurnosIdIndexRoute: typeof AppTurnosIdIndexRoute
+  AppTurnosDiaIndexRoute: typeof AppTurnosDiaIndexRoute
+  AppTurnosIdBriefingAlumnoRoute: typeof AppTurnosIdBriefingAlumnoRoute
+  AppTurnosIdEvaluarAlumnoRoute: typeof AppTurnosIdEvaluarAlumnoRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppCuentaRoute: AppCuentaRoute,
   AppGuiaRoute: AppGuiaRoute,
+  AppMisEvaluacionesRoute: AppMisEvaluacionesRoute,
+  AppMisTurnosRoute: AppMisTurnosRoute,
   AppIndexRoute: AppIndexRoute,
+  AppTurnosNuevoRoute: AppTurnosNuevoRoute,
+  AppEvaluacionesIndexRoute: AppEvaluacionesIndexRoute,
+  AppTurnosIndexRoute: AppTurnosIndexRoute,
+  AppEvaluacionesCodEditarRoute: AppEvaluacionesCodEditarRoute,
+  AppTurnosIdEditarRoute: AppTurnosIdEditarRoute,
+  AppTurnosDiaFechaRoute: AppTurnosDiaFechaRoute,
+  AppEvaluacionesCodIndexRoute: AppEvaluacionesCodIndexRoute,
+  AppTurnosIdIndexRoute: AppTurnosIdIndexRoute,
+  AppTurnosDiaIndexRoute: AppTurnosDiaIndexRoute,
+  AppTurnosIdBriefingAlumnoRoute: AppTurnosIdBriefingAlumnoRoute,
+  AppTurnosIdEvaluarAlumnoRoute: AppTurnosIdEvaluarAlumnoRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

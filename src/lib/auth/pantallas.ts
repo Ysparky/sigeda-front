@@ -1,4 +1,14 @@
-import { House, KeyRound, Palette, type LucideIcon } from 'lucide-react'
+import {
+  CalendarClock,
+  ClipboardCheck,
+  ClipboardList,
+  House,
+  KeyRound,
+  Palette,
+  Plane,
+  PlaneTakeoff,
+  type LucideIcon,
+} from 'lucide-react'
 import type { FileRouteTypes } from '@/routeTree.gen'
 import { puede, type Permiso } from './permisos'
 
@@ -25,6 +35,8 @@ export const ORDEN_GRUPOS: readonly GrupoMenu[] = [
   'Aprendizaje',
 ]
 
+export type Perfil = { permisos: ReadonlySet<Permiso>; rol: { nombre: string } }
+
 export type Pantalla = {
   ruta: RutaApp
   titulo: string
@@ -32,9 +44,14 @@ export type Pantalla = {
   grupo: GrupoMenu
   icono: LucideIcon
   permiso?: Permiso
+  roles?: readonly string[]
+  padre?: RutaApp
   enMenu: boolean
   soloDesarrollo?: boolean
 }
+
+const PERSONAL = ['Administrador Web', 'Comandante de Escuadrón', 'Jefe de Operaciones', 'Instructor'] as const
+const SOLO_ALUMNO = ['Alumno'] as const
 
 export const PANTALLAS = {
   inicio: {
@@ -63,31 +80,185 @@ export const PANTALLAS = {
     enMenu: true,
     soloDesarrollo: true,
   },
+  turnos: {
+    ruta: '/turnos',
+    titulo: 'Programación de turnos',
+    descripcion: 'Turnos de vuelo por sub fase, programa y fecha.',
+    grupo: 'Operaciones de vuelo',
+    icono: CalendarClock,
+    permiso: 'Read',
+    roles: PERSONAL,
+    enMenu: true,
+  },
+  ordenDeVuelo: {
+    ruta: '/turnos/dia',
+    titulo: 'Orden de vuelo del día',
+    descripcion: 'Vuelos del día agrupados por aeronave y ordenados por hora.',
+    grupo: 'Operaciones de vuelo',
+    icono: PlaneTakeoff,
+    permiso: 'Read',
+    roles: PERSONAL,
+    enMenu: true,
+  },
+  ordenDeVueloDelDia: {
+    ruta: '/turnos/dia/$fecha',
+    titulo: 'Orden de vuelo del día',
+    descripcion: 'Vuelos del día agrupados por aeronave y ordenados por hora.',
+    grupo: 'Operaciones de vuelo',
+    icono: PlaneTakeoff,
+    permiso: 'Read',
+    roles: PERSONAL,
+    padre: '/turnos',
+    enMenu: false,
+  },
+  registrarTurno: {
+    ruta: '/turnos/nuevo',
+    titulo: 'Registrar turno',
+    descripcion: 'Programe un turno de vuelo con sus alumnos y maniobras.',
+    grupo: 'Operaciones de vuelo',
+    icono: CalendarClock,
+    permiso: 'Manage Shifts',
+    padre: '/turnos',
+    enMenu: false,
+  },
+  turno: {
+    ruta: '/turnos/$id',
+    titulo: 'Detalle de turno',
+    descripcion: 'Datos del turno y ciclo de la misión por alumno.',
+    grupo: 'Operaciones de vuelo',
+    icono: CalendarClock,
+    permiso: 'Read',
+    padre: '/turnos',
+    enMenu: false,
+  },
+  modificarTurno: {
+    ruta: '/turnos/$id/editar',
+    titulo: 'Modificar turno',
+    descripcion: 'Cambie los datos, alumnos o maniobras del turno.',
+    grupo: 'Operaciones de vuelo',
+    icono: CalendarClock,
+    permiso: 'Manage Shifts',
+    padre: '/turnos/$id',
+    enMenu: false,
+  },
+  hojaDeBriefing: {
+    ruta: '/turnos/$id/briefing/$alumno',
+    titulo: 'Hoja de briefing',
+    descripcion: 'Quién explica cada maniobra en el briefing de detalle.',
+    grupo: 'Operaciones de vuelo',
+    icono: CalendarClock,
+    permiso: 'Read',
+    padre: '/turnos/$id',
+    enMenu: false,
+  },
+  registrarEvaluacion: {
+    ruta: '/turnos/$id/evaluar/$alumno',
+    titulo: 'Registrar evaluación',
+    descripcion: 'Califique cada maniobra del turno.',
+    grupo: 'Evaluaciones',
+    icono: ClipboardList,
+    permiso: 'Write',
+    padre: '/turnos/$id',
+    enMenu: false,
+  },
+  misTurnos: {
+    ruta: '/mis-turnos',
+    titulo: 'Mis turnos',
+    descripcion: 'Sus turnos de vuelo programados.',
+    grupo: 'Operaciones de vuelo',
+    icono: Plane,
+    permiso: 'Read',
+    roles: SOLO_ALUMNO,
+    enMenu: true,
+  },
+  evaluaciones: {
+    ruta: '/evaluaciones',
+    titulo: 'Evaluaciones',
+    descripcion: 'Evaluaciones prácticas de cada alumno.',
+    grupo: 'Evaluaciones',
+    icono: ClipboardList,
+    permiso: 'Read',
+    roles: PERSONAL,
+    enMenu: true,
+  },
+  evaluacion: {
+    ruta: '/evaluaciones/$cod',
+    titulo: 'Detalle de evaluación',
+    descripcion: 'Calificación de cada maniobra de la evaluación.',
+    grupo: 'Evaluaciones',
+    icono: ClipboardList,
+    permiso: 'Read',
+    padre: '/evaluaciones',
+    enMenu: false,
+  },
+  modificarEvaluacion: {
+    ruta: '/evaluaciones/$cod/editar',
+    titulo: 'Modificar evaluación',
+    descripcion: 'Corrija la última evaluación del alumno.',
+    grupo: 'Evaluaciones',
+    icono: ClipboardList,
+    permiso: 'Modify Evaluations',
+    padre: '/evaluaciones/$cod',
+    enMenu: false,
+  },
+  misEvaluaciones: {
+    ruta: '/mis-evaluaciones',
+    titulo: 'Mis evaluaciones',
+    descripcion: 'Sus evaluaciones prácticas y su clasificación.',
+    grupo: 'Evaluaciones',
+    icono: ClipboardCheck,
+    permiso: 'Read',
+    roles: SOLO_ALUMNO,
+    enMenu: true,
+  },
 } satisfies Record<string, Pantalla>
 
 const TODAS: readonly Pantalla[] = Object.values(PANTALLAS)
 
 export type SeccionMenu = { grupo: GrupoMenu; pantallas: Pantalla[] }
 
-export function pantallaVisible(pantalla: Pantalla, permisos: ReadonlySet<Permiso>, esDesarrollo: boolean) {
-  return (!pantalla.soloDesarrollo || esDesarrollo) && puede(permisos, pantalla.permiso)
+export function pantallaVisible(pantalla: Pantalla, perfil: Perfil, esDesarrollo: boolean) {
+  return (
+    (!pantalla.soloDesarrollo || esDesarrollo) &&
+    puede(perfil.permisos, pantalla.permiso) &&
+    (pantalla.roles === undefined || pantalla.roles.includes(perfil.rol.nombre))
+  )
 }
 
-export function menuPara(
-  permisos: ReadonlySet<Permiso>,
-  esDesarrollo: boolean,
-  pantallas: readonly Pantalla[] = TODAS,
-): SeccionMenu[] {
-  const visibles = pantallas.filter((pantalla) => pantalla.enMenu && pantallaVisible(pantalla, permisos, esDesarrollo))
+export function menuPara(perfil: Perfil, esDesarrollo: boolean, pantallas: readonly Pantalla[] = TODAS): SeccionMenu[] {
+  const visibles = pantallas.filter((pantalla) => pantalla.enMenu && pantallaVisible(pantalla, perfil, esDesarrollo))
   return ORDEN_GRUPOS.map((grupo) => ({ grupo, pantallas: visibles.filter((pantalla) => pantalla.grupo === grupo) })).filter(
     (seccion) => seccion.pantallas.length > 0,
   )
 }
 
-export function accesosPara(
-  permisos: ReadonlySet<Permiso>,
+export function accesosPara(perfil: Perfil, esDesarrollo: boolean, pantallas: readonly Pantalla[] = TODAS): Pantalla[] {
+  return pantallas.filter(
+    (pantalla) => pantalla.ruta !== '/' && !pantalla.ruta.includes('$') && pantallaVisible(pantalla, perfil, esDesarrollo),
+  )
+}
+
+export function veSoloLoPropio(perfil: Perfil): boolean {
+  return perfil.rol.nombre === 'Alumno'
+}
+
+export function pantallaPorRuta(ruta: string, pantallas: readonly Pantalla[] = TODAS): Pantalla | undefined {
+  return pantallas.find((pantalla) => pantalla.ruta === ruta)
+}
+
+export function migasPara(
+  ruta: string,
+  perfil: Perfil,
   esDesarrollo: boolean,
   pantallas: readonly Pantalla[] = TODAS,
 ): Pantalla[] {
-  return pantallas.filter((pantalla) => pantalla.ruta !== '/' && pantallaVisible(pantalla, permisos, esDesarrollo))
+  const actual = pantallaPorRuta(ruta, pantallas)
+  if (!actual || actual.ruta === '/') return []
+  const ancestros: Pantalla[] = []
+  let padre = actual.padre ? pantallaPorRuta(actual.padre, pantallas) : undefined
+  while (padre) {
+    if (pantallaVisible(padre, perfil, esDesarrollo)) ancestros.unshift(padre)
+    padre = padre.padre ? pantallaPorRuta(padre.padre, pantallas) : undefined
+  }
+  return [...ancestros, actual]
 }

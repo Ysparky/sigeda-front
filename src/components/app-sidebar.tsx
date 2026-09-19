@@ -17,7 +17,7 @@ import { useSesion } from '@/lib/auth/use-sesion'
 
 export function AppSidebar() {
   const actual = useSesion()
-  const secciones = actual ? menuPara(actual.permisos, import.meta.env.DEV) : []
+  const secciones = actual ? menuPara(actual, import.meta.env.DEV) : []
 
   return (
     <Sidebar collapsible="icon" aria-label="Menú principal">
