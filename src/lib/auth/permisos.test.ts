@@ -33,6 +33,10 @@ describe('permisosDeRol replica Role.java', () => {
   it('un rol desconocido no tiene permisos', () => {
     expect(permisosDeRol('Visitante').size).toBe(0)
   })
+
+  it('un rol que coincide con una propiedad heredada de Object no tiene permisos', () => {
+    expect(permisosDeRol('constructor').size).toBe(0)
+  })
 })
 
 describe('puede', () => {

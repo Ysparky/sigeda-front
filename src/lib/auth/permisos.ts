@@ -60,7 +60,7 @@ const PERMISOS_POR_ROL: Record<string, readonly Permiso[]> = {
 }
 
 export function permisosDeRol(nombreRol: string): ReadonlySet<Permiso> {
-  return new Set(PERMISOS_POR_ROL[nombreRol] ?? [])
+  return new Set(Object.hasOwn(PERMISOS_POR_ROL, nombreRol) ? PERMISOS_POR_ROL[nombreRol] : [])
 }
 
 export function puede(permisos: ReadonlySet<Permiso>, requerido: Permiso | undefined): boolean {
