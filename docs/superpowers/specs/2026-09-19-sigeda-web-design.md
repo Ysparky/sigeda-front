@@ -159,14 +159,22 @@ runs on `:5173`, the origin `sigeda-back` already allows in CORS.
 Node runs from nvm at `/Volumes/ORICO/sdks/nvm` (v25.1.0), which non-interactive
 shells do not load; scripts put its `bin` on `PATH` explicitly.
 
+Tooling follows the official Vite React template as of 2026-09: TypeScript 6.0
+(not 7) and oxlint (not ESLint). shadcn/ui uses the Radix base and the Nova
+preset; `src/components/ui` is vendored CLI output, excluded from lint.
+
 ## 5. Session, permissions and API layer
 
 ### 5.1 Session
 
 1. `POST /auth/login` with `{ "username", "password" }` (Jackson names on
    `Usuario`) → `{ token, refresh_token, username }`.
-2. `GET /api/usuarios/nombre/{username}` → `codPersona`, `persona`, `rol`.
-   Session = `{ usuario, persona: { codigo, nombre, tipo, idGrupo }, rol, permisos }`.
+2. `GET /api/usuarios/nombre/{username}` → `id`, `username`, `correo`,
+   `codPersona`, `rol`. `Usuario.getPersona()` is commented out in the
+   backend, so no persona data arrives; the UI shows the username until
+   backend dependency 11 lands. The response also carries the password hash,
+   which the session parser drops.
+   Session = `{ usuario: { id, username, correo }, codPersona, rol, permisos }`.
 3. Access token (24 h) in memory; refresh token (7 d) in `localStorage`. On
    boot: `POST /auth/refresh { refreshToken }` → `{ accessToken }`, then step 2.
 4. Any 401: refresh once and retry; if refresh fails, clear the session and go
@@ -176,9 +184,11 @@ shells do not load; scripts put its `bin` on `PATH` explicitly.
 ### 5.2 Permissions
 
 - The UI checks permission names (`Manage Shifts`), never role names.
-- Source: `rol.permisos` from the session response. The first M0 task verifies
-  this with a live call; if absent, `permissions.ts` holds a table mirroring
-  `Role.java`, recorded in `docs/decisiones.md`.
+- Source: `permisos.ts` mirrors `Role.java`, keyed by `rol.nombre`. The
+  backend's `rol.permisos` has no JSON mapping and would serialize enum
+  constant names (`MANAGE_SHIFTS`) rather than the names `@PreAuthorize`
+  checks (`Manage Shifts`), so it is not used. Recorded in
+  `docs/decisiones.md`.
 - One **route registry** declares path, required permission and nav entry per
   screen. Route `beforeLoad` guards and the sidebar both read it. `<Can>` hides
   actions.
@@ -387,7 +397,7 @@ A checklist for `sigeda-back` (Victor) and `sigeda_chat_status`.
 |---|---|---|---|
 | 1 | `GET /api/aeronaves` (id, nombre, estado) | back | M1 — blocks Registrar turno |
 | 2 | Stop serializing the password hash in `/api/usuarios/nombre/{nombre}` | back | M0 — security |
-| 3 | Confirm or add `rol.permisos` in the session response | back | M0 — frontend has a fallback |
+| 3 | `PUT /api/usuarios/{id}` accepts any id from any user with `Update` and does not ask for the current password: restrict to the user themself or Administrador, require the current password | back | M0 — security |
 | 4 | `Manage Groups` for Administrador only | back | M2 |
 | 5 | Materia catalog + CRUD + `Manage Subjects` (Comandante) | back | M2 |
 | 6 | Theory API (§11) + `Manage Questions`, `Manage Exams` (Instructor), `Take Exams` (Alumno) | back | M4 |
@@ -395,6 +405,7 @@ A checklist for `sigeda-back` (Victor) and `sigeda_chat_status`.
 | 8 | NIT / NIA / NFPI and orden de mérito | back | M5 |
 | 9 | Accept `sigeda-back`'s JWT (shared secret) so documents are per user; prediction over real evaluaciones | chat_status | M3 / M5 |
 | 10 | Evaluation list across alumnos with the same filters | back | M1 nice-to-have |
+| 11 | Include persona (nombre, apellidos, tipo, idGrupo) in `/api/usuarios/nombre/{nombre}` | back | M1 — header and "mine" screens |
 
 ## 11. Theory API contract
 
