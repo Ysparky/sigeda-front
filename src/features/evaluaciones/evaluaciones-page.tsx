@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
-import { UserSearch } from 'lucide-react'
+import { CircleAlert, UserSearch } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
 import { PageHeader } from '@/components/page-header'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { NativeSelect, NativeSelectOptGroup, NativeSelectOption } from '@/components/ui/native-select'
 import { agruparPorGrupo, consultasCatalogos, fuenteDeAlumnos } from '@/features/catalogos/api'
+import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { usePuede, useSesion } from '@/lib/auth/use-sesion'
 import { MOTIVO_NO_ES_ULTIMA } from '@/lib/dominio/evaluacion'
 import { consultasEvaluaciones } from './api'
@@ -59,6 +61,15 @@ export function EvaluacionesPage() {
           </NativeSelect>
         </Field>
       </FiltrosEvaluaciones>
+      {alumnos.isError && (
+        <Alert variant="destructive">
+          <CircleAlert />
+          <AlertTitle>No se pudieron cargar los alumnos</AlertTitle>
+          <AlertDescription>
+            {alumnos.error instanceof ApiError ? alumnos.error.message : MENSAJE_GENERICO}
+          </AlertDescription>
+        </Alert>
+      )}
       {busqueda.alumno === undefined ? (
         <EmptyState
           icono={UserSearch}
@@ -67,7 +78,18 @@ export function EvaluacionesPage() {
         />
       ) : (
         <>
-          {puedeModificar && <p className="text-sm text-muted-foreground">{MOTIVO_NO_ES_ULTIMA}</p>}
+          {puedeModificar &&
+            (ultima.isError ? (
+              <Alert variant="destructive">
+                <CircleAlert />
+                <AlertTitle>No se pudo identificar la última evaluación</AlertTitle>
+                <AlertDescription>
+                  {ultima.error instanceof ApiError ? ultima.error.message : MENSAJE_GENERICO}
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <p className="text-sm text-muted-foreground">{MOTIVO_NO_ES_ULTIMA}</p>
+            ))}
           <TablaEvaluaciones
             codPersona={busqueda.alumno}
             filtros={busqueda}
