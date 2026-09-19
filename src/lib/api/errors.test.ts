@@ -89,3 +89,92 @@ describe('normalizarError', () => {
     expect(error.message).not.toBe('x')
   })
 })
+
+describe('normalizarError con las respuestas de turnos y evaluaciones', () => {
+  it('CA-TUR-13 convierte los messages de ErrorResponse en errores de campo', () => {
+    const error = normalizarError(400, {
+      timestamp: '2026-09-19T10:00:00',
+      status: 400,
+      error: 'Error al validar el modelo',
+      message: null,
+      messages: [
+        "'fechaEval': La fecha del turno debe ser posterior a hoy.",
+        "'alumnosTurno[0].horaInicio': La hora debe estar en formato HH:mm (09:00, 14:00)",
+      ],
+    })
+    expect(error.message).toBe(MENSAJE_REVISAR_CAMPOS)
+    expect(error.erroresDeCampo).toEqual({
+      fechaEval: 'La fecha del turno debe ser posterior a hoy.',
+      'alumnosTurno[0].horaInicio': 'La hora debe estar en formato HH:mm (09:00, 14:00)',
+    })
+  })
+
+  it('en un 4xx con forma ErrorResponse muestra "message", también en el 410 de un turno vencido', () => {
+    const vencido = normalizarError(410, {
+      timestamp: '2026-09-19T10:00:00',
+      status: 410,
+      error: 'Fecha de modificación expiró',
+      message: 'No se puede modificar. El turno ya ha sido evaluado.',
+      messages: null,
+    })
+    expect(vencido.status).toBe(410)
+    expect(vencido.message).toBe('No se puede modificar. El turno ya ha sido evaluado.')
+    expect(
+      normalizarError(404, { status: 404, error: 'Recurso no encontrado', message: 'No existe información de subfase.' })
+        .message,
+    ).toBe('No existe información de subfase.')
+  })
+
+  it('en un 4xx con forma ErrorResponse sin "message" muestra "error"', () => {
+    expect(
+      normalizarError(400, { status: 400, error: 'Error al validar el modelo', message: null, messages: null }).message,
+    ).toBe('Error al validar el modelo')
+  })
+
+  it('CA-EVA-13 muestra el mensaje de una regla de negocio, incluso con 403', () => {
+    expect(normalizarError(400, { mensaje: 'El alumno debe ser apto para realizar evaluaciones ponderadas.' }).message).toBe(
+      'El alumno debe ser apto para realizar evaluaciones ponderadas.',
+    )
+    expect(normalizarError(403, { mensaje: 'La evaluación ya ha sido registrada.' }).message).toBe(
+      'La evaluación ya ha sido registrada.',
+    )
+  })
+
+  it('CA-EVA-13 une la lista de mensajes de notas incorrectas, con o sin los dos puntos en la clave', () => {
+    const mensajes = [
+      'Las notas con id: 3 no utilizan el sistema de calificación.',
+      'La nota de las maniobras con id: 5 no son correctas.',
+    ]
+    const esperado = 'Las notas con id: 3 no utilizan el sistema de calificación. La nota de las maniobras con id: 5 no son correctas.'
+    expect(normalizarError(400, { 'mensaje:': mensajes }).message).toBe(esperado)
+    expect(normalizarError(400, { mensaje: mensajes }).message).toBe(esperado)
+  })
+
+  it('sigue ocultando el mensaje técnico cuando la respuesta trae error y mensaje', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(normalizarError(400, { error: 'Argumento incorrecto', mensaje: 'Dirección debe ser asc' }).message).toBe(
+      'Argumento incorrecto',
+    )
+  })
+
+  it('en un 5xx con forma ErrorResponse no muestra message, messages ni SQL', () => {
+    const consola = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const error = normalizarError(500, {
+      timestamp: '2026-09-19T10:00:00',
+      status: 500,
+      error: 'Error inesperado',
+      message: 'could not execute statement; SQL [update personas set estado=?]',
+      messages: ["'estado': SQL [update personas]"],
+    })
+    expect(error.message).toBe('Error inesperado')
+    expect(error.erroresDeCampo).toEqual({})
+    expect(consola).toHaveBeenCalledWith('could not execute statement; SQL [update personas set estado=?]')
+  })
+
+  it('en un 5xx no muestra el mensaje de una regla ni un texto plano', () => {
+    const consola = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(normalizarError(503, { mensaje: 'SQL [select * from turnos]' }).message).toBe(MENSAJE_GENERICO)
+    expect(normalizarError(500, 'java.sql.SQLException: SQL [insert into turnos]').message).toBe(MENSAJE_GENERICO)
+    expect(consola).toHaveBeenCalledWith('java.sql.SQLException: SQL [insert into turnos]')
+  })
+})

@@ -42,27 +42,57 @@ function esListaDeTextos(valor: unknown): valor is string[] {
   return Array.isArray(valor) && valor.every((elemento) => typeof elemento === 'string')
 }
 
-export function normalizarError(status: number, cuerpo: unknown): ApiError {
-  if (status === 403) return new ApiError(status, MENSAJE_SIN_PERMISO)
-  if (esListaDeTextos(cuerpo)) {
-    const { campos, otros } = parsearErroresDeCampo(cuerpo)
-    return new ApiError(status, otros[0] ?? MENSAJE_REVISAR_CAMPOS, campos)
+function esTexto(valor: unknown): valor is string {
+  return typeof valor === 'string' && valor.trim() !== ''
+}
+
+function desdeLineas(status: number, lineas: readonly string[]) {
+  const { campos, otros } = parsearErroresDeCampo(lineas)
+  return new ApiError(status, otros[0] ?? MENSAJE_REVISAR_CAMPOS, campos)
+}
+
+function mensajeDeRegla(cuerpo: Record<string, unknown>): string | null {
+  if ('error' in cuerpo) return null
+  const valor = cuerpo.mensaje ?? cuerpo['mensaje:']
+  if (esTexto(valor)) return valor.trim()
+  if (esListaDeTextos(valor) && valor.length > 0) return valor.join(' ')
+  return null
+}
+
+function errorDelServidor(status: number, cuerpo: unknown): ApiError {
+  if (esTexto(cuerpo)) {
+    console.error(cuerpo)
+    return new ApiError(status, MENSAJE_GENERICO)
   }
-  if (typeof cuerpo === 'string' && cuerpo.trim() !== '') return new ApiError(status, cuerpo.trim())
+  if (esRegistro(cuerpo)) {
+    if ('mensaje' in cuerpo) console.error(cuerpo.mensaje)
+    if ('message' in cuerpo) console.error(cuerpo.message)
+    if (esTexto(cuerpo.error)) return new ApiError(status, cuerpo.error)
+  }
+  return new ApiError(status, MENSAJE_GENERICO)
+}
+
+export function normalizarError(status: number, cuerpo: unknown): ApiError {
+  if (status >= 500) return errorDelServidor(status, cuerpo)
+  if (esRegistro(cuerpo)) {
+    const regla = mensajeDeRegla(cuerpo)
+    if (regla) return new ApiError(status, regla)
+  }
+  if (status === 403) return new ApiError(status, MENSAJE_SIN_PERMISO)
+  if (esListaDeTextos(cuerpo)) return desdeLineas(status, cuerpo)
+  if (esTexto(cuerpo)) return new ApiError(status, cuerpo.trim())
   if (esRegistro(cuerpo)) {
     if (typeof cuerpo.error === 'string' && typeof cuerpo.mensaje === 'string') {
       console.error(cuerpo.mensaje)
       return new ApiError(status, cuerpo.error)
     }
-    if (status >= 500) {
-      if ('message' in cuerpo) console.error(cuerpo.message)
-      if (typeof cuerpo.error === 'string') return new ApiError(status, cuerpo.error)
-      return new ApiError(status, MENSAJE_GENERICO)
-    }
     if ('statusCode' in cuerpo) {
-      if (typeof cuerpo.message === 'string') return new ApiError(status, cuerpo.message)
+      if (esTexto(cuerpo.message)) return new ApiError(status, cuerpo.message)
       if (esListaDeTextos(cuerpo.message)) return new ApiError(status, cuerpo.message.join('. '))
     }
+    if (esListaDeTextos(cuerpo.messages) && cuerpo.messages.length > 0) return desdeLineas(status, cuerpo.messages)
+    if (esTexto(cuerpo.message)) return new ApiError(status, cuerpo.message.trim())
+    if (esTexto(cuerpo.error)) return new ApiError(status, cuerpo.error.trim())
   }
   return new ApiError(status, MENSAJE_GENERICO)
 }
