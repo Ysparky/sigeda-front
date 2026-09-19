@@ -4,7 +4,7 @@ import { sesion } from '@/lib/auth/sesion'
 import { iniciarComo, renderApp } from '@/test/render'
 
 describe('navegación protegida', () => {
-  it('CA-SES-04 sin sesión, una ruta protegida redirige a /login conservando el destino', async () => {
+  it('sin sesión, una ruta protegida redirige a /login conservando el destino', async () => {
     const { router } = renderApp('/')
     expect(await screen.findByRole('heading', { name: 'Iniciar sesión' })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/login')
@@ -21,6 +21,13 @@ describe('navegación protegida', () => {
   it('ignora destinos externos después del login', async () => {
     await iniciarComo('alumno.lopez')
     const { router } = renderApp('/login?redirect=%2F%2Fevil.com')
+    expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
+    expect(router.state.location.href).toBe('/')
+  })
+
+  it('ignora un redirect que no es texto y lleva a Inicio', async () => {
+    await iniciarComo('alumno.lopez')
+    const { router } = renderApp('/login?redirect=123')
     expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
     expect(router.state.location.href).toBe('/')
   })

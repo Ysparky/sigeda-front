@@ -62,10 +62,20 @@ describe('destinoSeguro', () => {
     expect(destinoSeguro('/cuenta?x=1')).toBe('/cuenta?x=1')
   })
 
+  it('acepta rutas internas con hash', () => {
+    expect(destinoSeguro('/cuenta?x=1#y')).toBe('/cuenta?x=1#y')
+  })
+
   it('descarta destinos externos, vacíos o de vuelta al login', () => {
     expect(destinoSeguro(undefined)).toBe('/')
     expect(destinoSeguro('https://evil.com')).toBe('/')
     expect(destinoSeguro('//evil.com')).toBe('/')
     expect(destinoSeguro('/login?redirect=%2F')).toBe('/')
+  })
+
+  it('descarta destinos que abusan de barras invertidas o de esquemas peligrosos', () => {
+    expect(destinoSeguro('/\\evil.com')).toBe('/')
+    expect(destinoSeguro('/\t/evil.com')).toBe('/')
+    expect(destinoSeguro('javascript:alert(1)')).toBe('/')
   })
 })

@@ -16,6 +16,14 @@ export function exigirPantalla(pantalla: Pantalla, actual: Sesion | null, esDesa
 }
 
 export function destinoSeguro(destino: string | undefined): string {
-  if (!destino || !destino.startsWith('/') || destino.startsWith('//') || destino.startsWith('/login')) return '/'
-  return destino
+  if (!destino) return '/'
+  let url: URL
+  try {
+    url = new URL(destino, window.location.origin)
+  } catch {
+    return '/'
+  }
+  if (url.origin !== window.location.origin) return '/'
+  if (url.pathname.startsWith('/login')) return '/'
+  return url.pathname + url.search + url.hash
 }
