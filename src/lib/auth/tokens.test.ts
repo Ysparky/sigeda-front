@@ -17,6 +17,10 @@ describe('usernameDelToken', () => {
   it('devuelve null cuando el token no es un JWT', () => {
     expect(usernameDelToken('vencido')).toBeNull()
   })
+
+  it('decodifica un subject con caracteres UTF-8', () => {
+    expect(usernameDelToken(jwtDePrueba('alumno.muñoz'))).toBe('alumno.muñoz')
+  })
 })
 
 describe('tokens', () => {
@@ -36,12 +40,35 @@ describe('tokens', () => {
       }),
     )
     tokens.guardar('viejo', 'refresh-1')
-    await expect(Promise.all([tokens.renovar(), tokens.renovar()])).resolves.toEqual(['nuevo', 'nuevo'])
+    await expect(Promise.all([tokens.renovar(), tokens.renovar()])).resolves.toEqual([
+      { estado: 'renovado', token: 'nuevo' },
+      { estado: 'renovado', token: 'nuevo' },
+    ])
     expect(llamadas).toBe(1)
     expect(tokens.acceso()).toBe('nuevo')
   })
 
   it('no renueva sin refresh token', async () => {
-    await expect(tokens.renovar()).resolves.toBeNull()
+    await expect(tokens.renovar()).resolves.toEqual({ estado: 'rechazado' })
+  })
+
+  it('CA-SES-02 no elimina el refresh token cuando /auth/refresh responde 500', async () => {
+    server.use(http.post(`${config.sigedaApiUrl}/auth/refresh`, () => new HttpResponse(null, { status: 500 })))
+    tokens.guardar('viejo', 'refresh-1')
+    await expect(tokens.renovar()).resolves.toEqual({ estado: 'no-disponible' })
+    expect(localStorage.getItem(CLAVE_REFRESH)).toBe('refresh-1')
+  })
+
+  it('CA-SES-02 no elimina el refresh token cuando /auth/refresh no responde', async () => {
+    server.use(http.post(`${config.sigedaApiUrl}/auth/refresh`, () => HttpResponse.error()))
+    tokens.guardar('viejo', 'refresh-1')
+    await expect(tokens.renovar()).resolves.toEqual({ estado: 'no-disponible' })
+    expect(localStorage.getItem(CLAVE_REFRESH)).toBe('refresh-1')
+  })
+
+  it('rechaza la renovación cuando /auth/refresh responde 401', async () => {
+    server.use(http.post(`${config.sigedaApiUrl}/auth/refresh`, () => new HttpResponse(null, { status: 401 })))
+    tokens.guardar('viejo', 'refresh-1')
+    await expect(tokens.renovar()).resolves.toEqual({ estado: 'rechazado' })
   })
 })

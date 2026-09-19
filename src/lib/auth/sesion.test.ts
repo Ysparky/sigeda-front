@@ -1,5 +1,8 @@
+import { http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import { sigeda } from '@/lib/api/sigeda'
+import { config } from '@/lib/config'
+import { server } from '@/mocks/server'
 import { CLAVE_REFRESH, tokens } from './tokens'
 import { MENSAJE_CREDENCIALES, sesion } from './sesion'
 
@@ -40,6 +43,26 @@ describe('sesion', () => {
 
   it('no restaura nada sin refresh token', async () => {
     await expect(sesion.restaurar()).resolves.toBeNull()
+  })
+
+  it('CA-SES-02 una falla temporal en /auth/refresh (500) no borra el refresh token', async () => {
+    await sesion.iniciar('comandante.aguirre', '123')
+    const refresh = tokens.refresh()
+    sesion.expirar()
+    localStorage.setItem(CLAVE_REFRESH, refresh ?? '')
+    server.use(http.post(`${config.sigedaApiUrl}/auth/refresh`, () => new HttpResponse(null, { status: 500 })))
+    await expect(sesion.restaurar()).resolves.toBeNull()
+    expect(localStorage.getItem(CLAVE_REFRESH)).toBe(refresh)
+  })
+
+  it('CA-SES-02 una falla de red en /auth/refresh no borra el refresh token', async () => {
+    await sesion.iniciar('comandante.aguirre', '123')
+    const refresh = tokens.refresh()
+    sesion.expirar()
+    localStorage.setItem(CLAVE_REFRESH, refresh ?? '')
+    server.use(http.post(`${config.sigedaApiUrl}/auth/refresh`, () => HttpResponse.error()))
+    await expect(sesion.restaurar()).resolves.toBeNull()
+    expect(localStorage.getItem(CLAVE_REFRESH)).toBe(refresh)
   })
 
   it('CA-SES-03 una petición con el token vencido se renueva y se reintenta', async () => {

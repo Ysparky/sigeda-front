@@ -1,9 +1,10 @@
+import type { ResultadoRenovacion } from '@/lib/api/http'
 import { config } from '@/lib/config'
 
 export const CLAVE_REFRESH = 'sigeda.refresh'
 
 let tokenDeAcceso: string | null = null
-let renovacionEnCurso: Promise<string | null> | null = null
+let renovacionEnCurso: Promise<ResultadoRenovacion> | null = null
 let oyenteDeExpiracion: () => void = () => undefined
 
 function leerRefresh(): string | null {
@@ -23,23 +24,25 @@ function escribirRefresh(valor: string | null) {
   }
 }
 
-async function pedirRenovacion(): Promise<string | null> {
+async function pedirRenovacion(): Promise<ResultadoRenovacion> {
   const refresh = leerRefresh()
-  if (!refresh) return null
+  if (!refresh) return { estado: 'rechazado' }
+  let respuesta: Response
   try {
-    const respuesta = await fetch(`${config.sigedaApiUrl}/auth/refresh`, {
+    respuesta = await fetch(`${config.sigedaApiUrl}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ refreshToken: refresh }),
     })
-    if (!respuesta.ok) return null
-    const datos = (await respuesta.json()) as { accessToken?: unknown }
-    if (typeof datos.accessToken !== 'string') return null
-    tokenDeAcceso = datos.accessToken
-    return tokenDeAcceso
   } catch {
-    return null
+    return { estado: 'no-disponible' }
   }
+  if (respuesta.status === 401 || respuesta.status === 403) return { estado: 'rechazado' }
+  if (!respuesta.ok) return { estado: 'no-disponible' }
+  const datos = (await respuesta.json()) as { accessToken?: unknown }
+  if (typeof datos.accessToken !== 'string') return { estado: 'rechazado' }
+  tokenDeAcceso = datos.accessToken
+  return { estado: 'renovado', token: tokenDeAcceso }
 }
 
 export function usernameDelToken(token: string): string | null {
@@ -47,7 +50,8 @@ export function usernameDelToken(token: string): string | null {
   if (!carga) return null
   try {
     const base64 = carga.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(carga.length / 4) * 4, '=')
-    const datos = JSON.parse(atob(base64)) as { sub?: unknown }
+    const bytes = Uint8Array.from(atob(base64), (caracter) => caracter.charCodeAt(0))
+    const datos = JSON.parse(new TextDecoder().decode(bytes)) as { sub?: unknown }
     return typeof datos.sub === 'string' ? datos.sub : null
   } catch {
     return null
@@ -65,7 +69,7 @@ export const tokens = {
     tokenDeAcceso = null
     escribirRefresh(null)
   },
-  renovar(): Promise<string | null> {
+  renovar(): Promise<ResultadoRenovacion> {
     renovacionEnCurso ??= pedirRenovacion().finally(() => {
       renovacionEnCurso = null
     })

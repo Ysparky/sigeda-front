@@ -3,9 +3,14 @@ import { aPagina, paginaVacia, type Pagina, type PaginaSpring } from './pagina'
 
 export type Parametros = Record<string, string | number | boolean | null | undefined>
 
+export type ResultadoRenovacion =
+  | { estado: 'renovado'; token: string }
+  | { estado: 'rechazado' }
+  | { estado: 'no-disponible' }
+
 export type Autenticacion = {
   obtenerToken: () => string | null
-  renovarToken: () => Promise<string | null>
+  renovarToken: () => Promise<ResultadoRenovacion>
   alExpirar: () => void
 }
 
@@ -62,8 +67,9 @@ export function crearCliente(base: string, autenticacion: Autenticacion) {
     }
 
     if (respuesta.status === 401 && reintentar && !esRutaDeAutenticacion(ruta)) {
-      const renovado = await autenticacion.renovarToken()
-      if (renovado) return solicitar<T>(metodo, ruta, cuerpo, parametros, false)
+      const resultado = await autenticacion.renovarToken()
+      if (resultado.estado === 'renovado') return solicitar<T>(metodo, ruta, cuerpo, parametros, false)
+      if (resultado.estado === 'no-disponible') throw new ApiError(0, MENSAJE_SIN_CONEXION)
       autenticacion.alExpirar()
     }
 

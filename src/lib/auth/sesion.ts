@@ -73,8 +73,13 @@ export const sesion = {
   },
   async restaurar(): Promise<Sesion | null> {
     if (!tokens.refresh()) return null
-    const acceso = await tokens.renovar()
-    const username = acceso ? usernameDelToken(acceso) : null
+    const resultado = await tokens.renovar()
+    if (resultado.estado === 'rechazado') {
+      tokens.limpiar()
+      return null
+    }
+    if (resultado.estado === 'no-disponible') return null
+    const username = usernameDelToken(resultado.token)
     if (!username) {
       tokens.limpiar()
       return null

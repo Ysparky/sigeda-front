@@ -9,7 +9,7 @@ const BASE = 'http://api.prueba'
 function autenticacion(parcial: Partial<Autenticacion> = {}): Autenticacion {
   return {
     obtenerToken: () => 'token-1',
-    renovarToken: vi.fn(async () => null),
+    renovarToken: vi.fn(async () => ({ estado: 'rechazado' }) as const),
     alExpirar: vi.fn(),
     ...parcial,
   }
@@ -58,7 +58,7 @@ describe('crearCliente', () => {
       obtenerToken: () => vigentes.at(-1) ?? null,
       renovarToken: vi.fn(async () => {
         vigentes.push('nuevo')
-        return 'nuevo'
+        return { estado: 'renovado', token: 'nuevo' } as const
       }),
     })
     server.use(
@@ -78,6 +78,18 @@ describe('crearCliente', () => {
     server.use(http.get(`${BASE}/api/eco`, () => new HttpResponse(null, { status: 401 })))
     await expect(crearCliente(BASE, auth).get('/api/eco')).rejects.toMatchObject({ status: 401 })
     expect(auth.alExpirar).toHaveBeenCalledOnce()
+  })
+
+  it('informa la falta de conexión cuando la renovación no está disponible y no expira la sesión', async () => {
+    const auth = autenticacion({
+      renovarToken: vi.fn(async () => ({ estado: 'no-disponible' }) as const),
+    })
+    server.use(http.get(`${BASE}/api/eco`, () => new HttpResponse(null, { status: 401 })))
+    await expect(crearCliente(BASE, auth).get('/api/eco')).rejects.toMatchObject({
+      status: 0,
+      message: MENSAJE_SIN_CONEXION,
+    })
+    expect(auth.alExpirar).not.toHaveBeenCalled()
   })
 
   it('no intenta renovar en las rutas /auth/', async () => {
