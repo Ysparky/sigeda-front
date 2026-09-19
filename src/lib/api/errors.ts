@@ -54,8 +54,15 @@ export function normalizarError(status: number, cuerpo: unknown): ApiError {
       console.error(cuerpo.mensaje)
       return new ApiError(status, cuerpo.error)
     }
-    if (typeof cuerpo.message === 'string') return new ApiError(status, cuerpo.message)
-    if (esListaDeTextos(cuerpo.message)) return new ApiError(status, cuerpo.message.join('. '))
+    if (status >= 500) {
+      if ('message' in cuerpo) console.error(cuerpo.message)
+      if (typeof cuerpo.error === 'string') return new ApiError(status, cuerpo.error)
+      return new ApiError(status, MENSAJE_GENERICO)
+    }
+    if ('statusCode' in cuerpo) {
+      if (typeof cuerpo.message === 'string') return new ApiError(status, cuerpo.message)
+      if (esListaDeTextos(cuerpo.message)) return new ApiError(status, cuerpo.message.join('. '))
+    }
   }
   return new ApiError(status, MENSAJE_GENERICO)
 }

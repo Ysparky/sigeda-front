@@ -63,4 +63,29 @@ describe('normalizarError', () => {
   it('usa un mensaje genérico cuando el cuerpo no se entiende', () => {
     expect(normalizarError(500, null).message).toBe(MENSAJE_GENERICO)
   })
+
+  it('en un 500 con forma ErrorResponse nunca muestra "message" (puede traer SQL)', () => {
+    const consola = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const error = normalizarError(500, {
+      timestamp: '2026-09-19T00:00:00Z',
+      status: 500,
+      error: 'Error al acceder a base de datos',
+      message: 'could not execute statement; SQL [insert into turnos]',
+      messages: null,
+    })
+    expect(error.message).toBe('Error al acceder a base de datos')
+    expect(consola).toHaveBeenCalledWith('could not execute statement; SQL [insert into turnos]')
+  })
+
+  it('en un 500 de Spring por defecto no muestra "message"', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const error = normalizarError(500, {
+      timestamp: '2026-09-19T00:00:00Z',
+      status: 500,
+      error: 'Internal Server Error',
+      message: 'x',
+      path: '/api/turnos',
+    })
+    expect(error.message).not.toBe('x')
+  })
 })
