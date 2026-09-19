@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
-import { afterEach } from 'vitest'
+import { afterAll, afterEach, beforeAll } from 'vitest'
+import { server } from '@/mocks/server'
 
 class ResizeObserverDePrueba {
   observe() {}
@@ -27,6 +28,15 @@ Object.defineProperty(Element.prototype, 'hasPointerCapture', { writable: true, 
 Object.defineProperty(Element.prototype, 'releasePointerCapture', { writable: true, value: () => {} })
 Object.defineProperty(Element.prototype, 'scrollIntoView', { writable: true, value: () => {} })
 
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'error' })
+})
+
 afterEach(() => {
   cleanup()
+  server.resetHandlers()
+})
+
+afterAll(() => {
+  server.close()
 })
