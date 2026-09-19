@@ -89,6 +89,20 @@ describe('Registrar evaluación', () => {
     expect(screen.queryByRole('button', { name: 'Guardar evaluación' })).not.toBeInTheDocument()
   })
 
+  it('conserva el formulario si falla una recarga en segundo plano', async () => {
+    const { usuario, queryClient } = await abrirFormulario()
+    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Contacto Medio')
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/evaluaciones/persona/:cod`, () =>
+        HttpResponse.text('No se pudo recargar la evaluación.', { status: 400 }),
+      ),
+    )
+    await queryClient.invalidateQueries()
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0))
+    expect(screen.getByLabelText('Nombre')).toHaveValue('Ponderada Contacto Medio')
+    expect(screen.queryByText('No se pudieron cargar los datos de la evaluación')).not.toBeInTheDocument()
+  })
+
   it('CA-EVA-04 solo habilita las calificaciones válidas para la nota mínima', async () => {
     await abrirFormulario('instructor.perez', '/turnos/8/evaluar/111111')
     const habilitadas = (nombre: string) =>

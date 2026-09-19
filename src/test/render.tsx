@@ -16,5 +16,5 @@ export function renderApp(ruta = '/') {
   const router = crearRouter(queryClient, createMemoryHistory({ initialEntries: [ruta] }))
   const usuario = userEvent.setup()
   const resultado = render(<App router={router} queryClient={queryClient} />)
-  return { ...resultado, router, usuario }
+  return { ...resultado, router, usuario, queryClient }
 }

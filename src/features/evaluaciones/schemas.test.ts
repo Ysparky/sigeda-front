@@ -77,4 +77,17 @@ describe('esquema de la evaluación', () => {
     })
     expect(aCuerpoEvaluacion(valida({ categoria: 'chequeoSubFase' })).categoria).toBe('chequeoSubFase')
   })
+
+  it('descarta el debriefing de las maniobras que no están bajo el estándar', () => {
+    const valores = valida()
+    valores.calificaciones[0] = { ...valores.calificaciones[0]!, causa: 'x'.repeat(300) }
+    expect(esquemaEvaluacion.safeParse(valores).success).toBe(true)
+    expect(aCuerpoEvaluacion(valores).calificaciones[0]).toEqual({
+      idManiobra: 1,
+      nota: 'B',
+      causa: null,
+      observacion: null,
+      recomendacion: null,
+    })
+  })
 })

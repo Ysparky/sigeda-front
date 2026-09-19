@@ -37,6 +37,12 @@ const MENSAJES_BAJO_ESTANDAR = {
   recomendacion: 'La recomendación es requerida para calificaciones bajo el estándar.',
 } as const
 
+const ETIQUETAS_BAJO_ESTANDAR = {
+  causa: 'Causa',
+  observacion: 'Observación',
+  recomendacion: 'Recomendación',
+} as const
+
 function esEnlace(valor: string) {
   try {
     const url = new URL(valor)
@@ -69,9 +75,9 @@ export const esquemaEvaluacion = z
         maniobra: z.string(),
         notaMin: z.string(),
         nota: z.string().min(1, 'Califique la maniobra.'),
-        causa: textoLargo('Causa'),
-        observacion: textoLargo('Observación'),
-        recomendacion: textoLargo('Recomendación'),
+        causa: z.string(),
+        observacion: z.string(),
+        recomendacion: z.string(),
       }),
     ),
   })
@@ -94,10 +100,17 @@ export const esquemaEvaluacion = z
       }
       if (!esBajoEstandar(calificacion.notaMin, calificacion.nota)) return
       for (const campo of ['causa', 'observacion', 'recomendacion'] as const) {
-        if (calificacion[campo].trim() === '') {
+        const valor = calificacion[campo].trim()
+        if (valor === '') {
           contexto.addIssue({
             code: 'custom',
             message: MENSAJES_BAJO_ESTANDAR[campo],
+            path: ['calificaciones', indice, campo],
+          })
+        } else if (valor.length > 250) {
+          contexto.addIssue({
+            code: 'custom',
+            message: `${ETIQUETAS_BAJO_ESTANDAR[campo]} debe tener un máximo de 250 caracteres.`,
             path: ['calificaciones', indice, campo],
           })
         }
@@ -147,18 +160,18 @@ export function aCuerpoEvaluacion(valores: ValoresEvaluacion): CuerpoEvaluacion 
     recomendacion: textoONulo(valores.recomendacion),
     url: textoONulo(valores.url),
     codEvaluador: requiereEvaluador(categoria) ? valores.codEvaluador.trim() : null,
-    calificaciones: valores.calificaciones.flatMap((calificacion) =>
-      esNotaDirbe(calificacion.nota)
-        ? [
-            {
-              idManiobra: calificacion.idManiobra,
-              nota: calificacion.nota,
-              causa: textoONulo(calificacion.causa),
-              observacion: textoONulo(calificacion.observacion),
-              recomendacion: textoONulo(calificacion.recomendacion),
-            },
-          ]
-        : [],
-    ),
+    calificaciones: valores.calificaciones.flatMap((calificacion) => {
+      if (!esNotaDirbe(calificacion.nota)) return []
+      const bajo = esBajoEstandar(calificacion.notaMin, calificacion.nota)
+      return [
+        {
+          idManiobra: calificacion.idManiobra,
+          nota: calificacion.nota,
+          causa: bajo ? textoONulo(calificacion.causa) : null,
+          observacion: bajo ? textoONulo(calificacion.observacion) : null,
+          recomendacion: bajo ? textoONulo(calificacion.recomendacion) : null,
+        },
+      ]
+    }),
   }
 }

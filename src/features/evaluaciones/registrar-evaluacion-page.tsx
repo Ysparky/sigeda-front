@@ -43,18 +43,9 @@ export function RegistrarEvaluacionPage({ id, codAlumno }: { id: number; codAlum
   function contenido() {
     if (!esSuInstructor) return <Aviso titulo="No disponible">{MENSAJE_SOLO_INSTRUCTOR}</Aviso>
     if (existentes.isPending || categorias.isPending) return <Skeleton className="h-64 w-full" />
-    const fallo = existentes.error ?? categorias.error
-    if (fallo) {
-      return (
-        <Alert variant="destructive">
-          <CircleAlert />
-          <AlertTitle>No se pudieron cargar los datos de la evaluación</AlertTitle>
-          <AlertDescription>{fallo instanceof ApiError ? fallo.message : MENSAJE_GENERICO}</AlertDescription>
-        </Alert>
-      )
-    }
+    const enCurso = guardar.isPending || guardar.isSuccess
     const registrada = existentes.data?.[0]
-    if (registrada) {
+    if (registrada && !enCurso) {
       return (
         <Aviso titulo="Evaluación registrada">
           <p>La evaluación ya ha sido registrada.</p>
@@ -64,8 +55,18 @@ export function RegistrarEvaluacionPage({ id, codAlumno }: { id: number; codAlum
         </Aviso>
       )
     }
+    const fallo = (existentes.data === undefined ? existentes.error : null) ?? (categorias.data === undefined ? categorias.error : null)
+    if (fallo) {
+      return (
+        <Alert variant="destructive">
+          <CircleAlert />
+          <AlertTitle>No se pudieron cargar los datos de la evaluación</AlertTitle>
+          <AlertDescription>{fallo instanceof ApiError ? fallo.message : MENSAJE_GENERICO}</AlertDescription>
+        </Alert>
+      )
+    }
     const sugeridas = categorias.data ?? []
-    if (sugeridas.length === 0) {
+    if (sugeridas.length === 0 && !enCurso) {
       return (
         <Aviso titulo="Sin categorías disponibles">
           El estado actual del alumno no habilita ninguna categoría de evaluación.
