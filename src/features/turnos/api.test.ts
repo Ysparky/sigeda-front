@@ -144,4 +144,31 @@ describe('api de turnos', () => {
     })
     await expect(eliminarTurno(8)).resolves.toBe('Turno eliminado con éxito.')
   })
+
+  it('rechaza nota_min faltante con el mensaje de campo requerido, no el de patrón', async () => {
+    await iniciarComo('jefe.operaciones')
+    const cuerpo = cuerpoValido({
+      maniobrasTurno: [{ idManiobra: 1 } as unknown as CuerpoTurno['maniobrasTurno'][number]],
+    })
+    await expect(crearTurno(cuerpo)).rejects.toMatchObject({
+      status: 400,
+      erroresDeCampo: { 'maniobrasTurno[0].nota_min': 'Ingresar nota mínima de maniobra.' },
+    })
+  })
+
+  it('devuelve el error de nombre y el de solape de horario en el mismo 400', async () => {
+    await iniciarComo('jefe.operaciones')
+    const cuerpo = cuerpoValido({
+      nombre: 'Corto',
+      fechaEval: EN_UNA_SEMANA,
+      alumnosTurno: [{ codAlumno: '111111', horaInicio: '09:30', horaFin: '10:00' }],
+    })
+    await expect(crearTurno(cuerpo)).rejects.toMatchObject({
+      status: 400,
+      erroresDeCampo: {
+        nombre: 'Nombre debe tener de 10 a 30 caracteres.',
+        'alumnosTurno[0].codAlumno': 'El alumno 111111 tiene un horario que se cruza con otro turno de la aeronave.',
+      },
+    })
+  })
 })

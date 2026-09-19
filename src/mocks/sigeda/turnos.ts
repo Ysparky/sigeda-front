@@ -104,7 +104,10 @@ function validarCampos(cuerpo: CuerpoTurno, conProgramaYSubfase: boolean): strin
   if (maniobras.length === 0) errores.push("'maniobrasTurno': La asignación de maniobras es requerida")
   maniobras.forEach((maniobra, indice) => {
     if (!(Number(maniobra.idManiobra) > 0)) errores.push(`'maniobrasTurno[${indice}].idManiobra': La maniobra es requerida`)
-    if (!/^(D|I|R|B|E)$/i.test(texto(maniobra.nota_min))) {
+    const notaMin = maniobra.nota_min
+    if (notaMin === undefined || notaMin === null || texto(notaMin).trim() === '') {
+      errores.push(`'maniobrasTurno[${indice}].nota_min': Ingresar nota mínima de maniobra.`)
+    } else if (!/^(D|I|R|B|E)$/i.test(texto(notaMin))) {
       errores.push(`'maniobrasTurno[${indice}].nota_min': Nota mínima debe utilizar sistema de calificación`)
     }
   })
@@ -116,11 +119,12 @@ function erroresDeSolape(alumnos: AlumnoTurnoMock[], fechaEval: string, idAerona
     .turnos.filter((turno) => turno.id !== idPropio && turno.fechaEval === fechaEval && turno.idAeronave === idAeronave)
     .flatMap((turno) => turno.alumnos)
   return alumnos
-    .map((alumno, indice) =>
-      ocupados.some((ocupado) => seSuperponen(alumno, ocupado))
+    .map((alumno, indice) => {
+      if (!esHora(alumno.horaInicio) || !esHora(alumno.horaFin)) return null
+      return ocupados.some((ocupado) => seSuperponen(alumno, ocupado))
         ? `'alumnosTurno[${indice}].codAlumno': El alumno ${alumno.codAlumno} tiene un horario que se cruza con otro turno de la aeronave.`
-        : null,
-    )
+        : null
+    })
     .filter((mensaje): mensaje is string => mensaje !== null)
 }
 
@@ -145,9 +149,7 @@ function validarGuardado(cuerpo: CuerpoTurno, idSubfase: number | null, idPropio
     const aeronave = datos().aeronaves.find((candidata) => candidata.id === Number(cuerpo.aeronave?.id))
     if (!aeronave) return errorResponse(404, 'Recurso no encontrado', 'No existe información de aeronave.')
     if (aeronave.estado !== 'Disponible') return errorResponse(400, 'Error al validar el modelo', 'Asignar aeronave disponible.')
-    if (errores.length === 0) {
-      errores.push(...erroresDeSolape(aAlumnos(cuerpo), texto(cuerpo.fechaEval), aeronave.id, idPropio))
-    }
+    errores.push(...erroresDeSolape(aAlumnos(cuerpo), texto(cuerpo.fechaEval), aeronave.id, idPropio))
   }
   return errores.length > 0 ? HttpResponse.json(errores, { status: 400 }) : null
 }
