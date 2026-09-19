@@ -23,3 +23,25 @@ Consume dos backends: `../sigeda-back` (Spring Boot, `:8080`) para instrucción,
 - Diseño: `docs/superpowers/specs/2026-09-19-sigeda-web-design.md`
 - Planes: `docs/superpowers/plans/`
 - Contrato de la API teórica: `docs/contrato-api-teoria.md`
+
+## Modo demostración sin backends
+
+```bash
+pnpm dev:mock
+```
+
+MSW responde en el navegador a `/auth/*` y `/api/usuarios/*` con los usuarios sembrados de `sigeda-back`. Contraseña de todos: `123`.
+
+| Usuario | Rol |
+|---|---|
+| `admin.sistema` | Administrador Web |
+| `comandante.aguirre` | Comandante de Escuadrón |
+| `jefe.operaciones` | Jefe de Operaciones |
+| `instructor.perez` | Instructor |
+| `alumno.lopez` | Alumno |
+
+## Con los backends reales
+
+1. `sigeda-back` en `:8080` (ver `../sigeda-back/SETUP_DEV.md`).
+2. `sigeda_chat_status` en `:3000` (solo para Aprendizaje).
+3. Copie `.env.example` a `.env.local` si los puertos cambian, y ejecute `pnpm dev`.
