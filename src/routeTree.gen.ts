@@ -13,6 +13,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppCuentaRouteImport } from './routes/_app/cuenta'
+import { Route as AppGuiaRouteImport } from './routes/_app/guia'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -33,15 +34,22 @@ const AppCuentaRoute = AppCuentaRouteImport.update({
   path: '/cuenta',
   getParentRoute: () => AppRoute,
 } as any)
+const AppGuiaRoute = AppGuiaRouteImport.update({
+  id: '/guia',
+  path: '/guia',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/cuenta': typeof AppCuentaRoute
+  '/guia': typeof AppGuiaRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/cuenta': typeof AppCuentaRoute
+  '/guia': typeof AppGuiaRoute
   '/': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -49,14 +57,15 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/cuenta': typeof AppCuentaRoute
+  '/_app/guia': typeof AppGuiaRoute
   '/_app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/cuenta'
+  fullPaths: '/' | '/login' | '/cuenta' | '/guia'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/cuenta' | '/'
-  id: '__root__' | '/_app' | '/login' | '/_app/cuenta' | '/_app/'
+  to: '/login' | '/cuenta' | '/guia' | '/'
+  id: '__root__' | '/_app' | '/login' | '/_app/cuenta' | '/_app/guia' | '/_app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -94,16 +103,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCuentaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/guia': {
+      id: '/_app/guia'
+      path: '/guia'
+      fullPath: '/guia'
+      preLoaderRoute: typeof AppGuiaRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppCuentaRoute: typeof AppCuentaRoute
+  AppGuiaRoute: typeof AppGuiaRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppCuentaRoute: AppCuentaRoute,
+  AppGuiaRoute: AppGuiaRoute,
   AppIndexRoute: AppIndexRoute,
 }
 

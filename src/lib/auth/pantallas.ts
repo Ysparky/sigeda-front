@@ -1,4 +1,4 @@
-import { House, KeyRound, type LucideIcon } from 'lucide-react'
+import { House, KeyRound, Palette, type LucideIcon } from 'lucide-react'
 import type { FileRouteTypes } from '@/routeTree.gen'
 import { puede, type Permiso } from './permisos'
 
@@ -53,6 +53,15 @@ export const PANTALLAS = {
     icono: KeyRound,
     permiso: 'Update',
     enMenu: false,
+  },
+  guia: {
+    ruta: '/guia',
+    titulo: 'Guía de estilo',
+    descripcion: 'Referencia visual de componentes y estados del dominio.',
+    grupo: 'General',
+    icono: Palette,
+    enMenu: true,
+    soloDesarrollo: true,
   },
 } satisfies Record<string, Pantalla>
 
