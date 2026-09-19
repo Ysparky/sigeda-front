@@ -8,9 +8,10 @@ import { crearRouter } from './router'
 import './theme.css'
 
 async function prepararMocks() {
-  if (!config.mockApi) return
-  const { worker } = await import('./mocks/browser')
-  await worker.start({ onUnhandledRequest: 'bypass', quiet: true })
+  if (import.meta.env.DEV && config.mockApi) {
+    const { worker } = await import('./mocks/browser')
+    await worker.start({ onUnhandledRequest: 'bypass', quiet: true })
+  }
 }
 
 async function iniciar() {
