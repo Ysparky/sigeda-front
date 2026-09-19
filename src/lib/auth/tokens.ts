@@ -39,7 +39,12 @@ async function pedirRenovacion(): Promise<ResultadoRenovacion> {
   }
   if (respuesta.status === 401 || respuesta.status === 403) return { estado: 'rechazado' }
   if (!respuesta.ok) return { estado: 'no-disponible' }
-  const datos = (await respuesta.json()) as { accessToken?: unknown }
+  let datos: { accessToken?: unknown }
+  try {
+    datos = (await respuesta.json()) as { accessToken?: unknown }
+  } catch {
+    return { estado: 'no-disponible' }
+  }
   if (typeof datos.accessToken !== 'string') return { estado: 'rechazado' }
   tokenDeAcceso = datos.accessToken
   return { estado: 'renovado', token: tokenDeAcceso }

@@ -72,3 +72,12 @@ describe('tokens', () => {
     await expect(tokens.renovar()).resolves.toEqual({ estado: 'rechazado' })
   })
 })
+
+describe('tokens ante respuestas inesperadas de /auth/refresh', () => {
+  it('CA-SES-02 una respuesta 200 que no es JSON cuenta como no disponible y conserva el refresh token', async () => {
+    server.use(http.post(`${config.sigedaApiUrl}/auth/refresh`, () => HttpResponse.text('<html>proxy</html>')))
+    tokens.guardar('viejo', 'refresh-1')
+    await expect(tokens.renovar()).resolves.toEqual({ estado: 'no-disponible' })
+    expect(localStorage.getItem(CLAVE_REFRESH)).toBe('refresh-1')
+  })
+})

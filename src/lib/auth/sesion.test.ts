@@ -91,4 +91,31 @@ describe('sesion', () => {
     desuscribir()
     expect(oyente).toHaveBeenCalledTimes(2)
   })
+
+  it('CA-SES-02 conserva el refresh token si el perfil no carga por una falla del servidor o de red', async () => {
+    await sesion.iniciar('comandante.aguirre', '123')
+    const refresh = tokens.refresh()
+    sesion.expirar()
+    localStorage.setItem(CLAVE_REFRESH, refresh ?? '')
+    server.use(http.get(`${config.sigedaApiUrl}/api/usuarios/nombre/:nombre`, () => new HttpResponse(null, { status: 503 })))
+    await expect(sesion.restaurar()).resolves.toBeNull()
+    expect(localStorage.getItem(CLAVE_REFRESH)).toBe(refresh)
+    server.use(http.get(`${config.sigedaApiUrl}/api/usuarios/nombre/:nombre`, () => HttpResponse.error()))
+    await expect(sesion.restaurar()).resolves.toBeNull()
+    expect(localStorage.getItem(CLAVE_REFRESH)).toBe(refresh)
+  })
+
+  it('borra el refresh token si el perfil responde 404', async () => {
+    await sesion.iniciar('comandante.aguirre', '123')
+    const refresh = tokens.refresh()
+    sesion.expirar()
+    localStorage.setItem(CLAVE_REFRESH, refresh ?? '')
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/usuarios/nombre/:nombre`, () =>
+        HttpResponse.text('Usuario especificada no existe.', { status: 404 }),
+      ),
+    )
+    await expect(sesion.restaurar()).resolves.toBeNull()
+    expect(localStorage.getItem(CLAVE_REFRESH)).toBeNull()
+  })
 })

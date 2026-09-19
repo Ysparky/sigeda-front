@@ -79,3 +79,10 @@ describe('destinoSeguro', () => {
     expect(destinoSeguro('javascript:alert(1)')).toBe('/')
   })
 })
+
+describe('destinoSeguro con rutas que se normalizan a otro origen', () => {
+  it('descarta una ruta cuyo pathname resuelto empieza con //', () => {
+    expect(destinoSeguro('/x/..//evil.com')).toBe('/')
+    expect(destinoSeguro('/turnos/../..//evil.com/a')).toBe('/')
+  })
+})

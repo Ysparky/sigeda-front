@@ -24,6 +24,7 @@ export function destinoSeguro(destino: string | undefined): string {
     return '/'
   }
   if (url.origin !== window.location.origin) return '/'
+  if (url.pathname.startsWith('//')) return '/'
   if (url.pathname.startsWith('/login')) return '/'
   return url.pathname + url.search + url.hash
 }

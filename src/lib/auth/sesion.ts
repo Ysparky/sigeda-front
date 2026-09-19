@@ -13,6 +13,8 @@ export type Sesion = {
 
 export const MENSAJE_CREDENCIALES = 'Usuario o contraseña incorrectos.'
 
+const CUENTA_INVALIDA = new Set([401, 403, 404])
+
 const esquemaUsuario = z.object({
   id: z.number(),
   username: z.string(),
@@ -88,8 +90,8 @@ export const sesion = {
       const restaurada = await cargar(username)
       fijar(restaurada)
       return restaurada
-    } catch {
-      tokens.limpiar()
+    } catch (error) {
+      if (error instanceof ApiError && CUENTA_INVALIDA.has(error.status)) tokens.limpiar()
       return null
     }
   },
