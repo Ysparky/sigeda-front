@@ -26,7 +26,7 @@ Dentro de un endpoint, cada regla que no existe lleva **[Nuevo — dependencia N
 - **403.** Falta de permiso → siempre §B `{"error":"Acceso denegado","message":"No tienes permisos para realizar esta acción"}`. Regla de negocio → §A **texto plano** (p. ej. al eliminar una persona). El frontend distingue por la forma del cuerpo (M2-4).
 - **Lista vacía.** §A → `404` texto plano `"No existen <lista> disponibles."`; §B → `404` `ErrorResponse{error:"Recurso no encontrado", message:"No existen <lista> disponibles."}`. En un **endpoint de lista** el frontend lo trata como lista vacía. Excepción: `GET /api/subfases/assign` responde `200 []`.
 - **Varios mensajes por campo.** `ConstraintErrors.formatErrors` no ordena, así que un campo puede traer más de un mensaje, en cualquier orden. El frontend muestra el primero de cada campo; los mocks emiten solo el primer mensaje aplicable de cada campo, en el orden de las tablas de este documento.
-- **Descripción en blanco.** En un update de Fase, SubFase, Maniobra o Estándar, una `descripcion` vacía **conserva** la anterior (sin cambios; dependencia 38).
+- **Descripción vacía o `null`.** En un update de Fase, SubFase, Maniobra o Estándar, una `descripcion` vacía, solo con espacios o `null` **conserva** la anterior (sin cambios; dependencia 38). Al crear, se guarda tal como llega.
 - **Página.** Spring `Page` serializado directo, como en `contrato-api-turnos.md`: `{"content":[…],"pageable":{…},"totalElements":N,"totalPages":N,"last":b,"size":N,"number":N,"sort":{…},"numberOfElements":N,"first":b,"empty":b}`. El frontend lee `content`, `totalElements`, `totalPages`, `size` y `number`; los mocks emiten además `first`, `last`, `numberOfElements` y `empty` (sin `pageable` ni `sort`).
 
 ### Paginación: dos utilidades distintas
@@ -56,7 +56,7 @@ Mapeo rol→permiso de `security/entities/Role.java:8-37` (el frontend lo replic
 | `Manage Groups` | Administrador Web, Jefe de Operaciones | CRUD `/api/grupos`, `GET /api/personas/alumno/{tipo}` |
 | `Read` | todos | GET de fases, subfases, maniobras y materias |
 | `Manage Phases` | Administrador Web, Comandante de Escuadrón | `POST/PUT/DELETE /api/fases` |
-| `Manage Subphases` | Administrador Web, Comandante de Escuadrón | `GET /api/subfases/assign` |
+| `Manage Subphases` | Administrador Web, Comandante de Escuadrón | `GET /api/subfases/assign` (no usado en M2) |
 | `Manage Maneuvers` | Administrador Web, Comandante de Escuadrón | `POST/PUT/DELETE /api/maniobras` |
 | `Manage Standards` | Administrador Web, Jefe de Operaciones | `PUT /api/maniobras/{id}/estandar` |
 | `Manage Subjects` (nuevo, dependencia 5) | Administrador Web, Comandante de Escuadrón | `POST/PUT/DELETE /api/materias` |
@@ -76,11 +76,13 @@ Mapeo rol→permiso de `security/entities/Role.java:8-37` (el frontend lo replic
 
 ### Compatibilidad tipo–rol — [Nuevo — dependencias 23 y 28]
 
-| `tipo` de la persona | Roles permitidos para su cuenta |
+| `tipo` de la persona | Roles permitidos para su cuenta (id de rol) |
 |---|---|
-| `Alumno` | Alumno |
-| `Instructor PDI` · `Instructor PDE` | Instructor, Jefe de Operaciones, Comandante de Escuadrón |
-| `null` | Jefe de Operaciones, Comandante de Escuadrón, Administrador Web |
+| `Alumno` | Alumno (1) |
+| `Instructor PDI` · `Instructor PDE` | Instructor (4), Jefe de Operaciones (3), Comandante de Escuadrón (5) |
+| `null` | Jefe de Operaciones (3), Comandante de Escuadrón (5), Administrador Web (2) |
+
+El backend compara por **id de rol**, no por nombre, para que el mojibake del seed (dependencia 19) no rompa la regla. El frontend usa la misma tabla por nombre, como `permisos.ts`.
 
 Motivo: `tipo` alimenta los selectores (`/personas/alumno/Alumno` para grupos, `/personas/instructor/{tipo}` para turnos). Una cuenta Alumno con tipo de instructor aparecería como instructor, y una cuenta Instructor sin tipo nunca podría asignarse a un turno. Se comprueba al crear la persona (§1.3), al cambiar su tipo (§1.4) y al asignar el rol (§2.2).
 
@@ -178,6 +180,12 @@ Request:
 
 `aMaterno`, `rango` y `tipo` pueden venir `null`. Las claves `username` y `password` son las que `Usuario` ya usa en `/auth/login` y `PUT /api/usuarios/{id}`.
 
+Precisiones de la tabla de abajo:
+- **Obligatorio** = `@NotBlank` (o `@NotNull` en `usuario` e `idRol`): `null`, `""` y un texto solo de espacios se rechazan. El backend no recorta los textos; los guarda tal como llegan. El frontend los envía recortados.
+- **`tipo`**: solo `null` significa "sin tipo". `""` o cualquier otro texto se rechaza con `Ingresar tipo de persona válido.`
+- **`usuario.idRol`**: `null`, `0` o negativo → `El rol es requerido.` (`@NotNull` y `@Positive` con el mismo mensaje).
+- **Compatibilidad tipo–rol**: se comprueba solo si `tipo` es válido y el rol existe. Si no, se informan únicamente los errores de `tipo` o de `idRol`.
+
 **[Nuevo — dependencia 23]** Validación → 400 §A arreglo (todos los errores juntos):
 
 | Campo (clave del mensaje) | Regla | Mensaje exacto |
@@ -240,7 +248,7 @@ Body — **siempre los dos campos**: el handler asigna ambos y el que falte qued
 
 Reglas, en orden:
 1. Persona no existe → 404 §A `"Persona especificada no existe."` (sin cambios).
-2. **[Nuevo — dependencia 28]** Validación → 400 §A arreglo: `'tipo'` con `"Ingresar tipo de persona válido."` o, si el tipo no es compatible con el rol actual de la cuenta, `"El tipo no corresponde al rol de la cuenta."`; `'rango'` con `"El rango no puede superar los 30 caracteres."`.
+2. **[Nuevo — dependencia 28]** Validación → 400 §A arreglo: `'tipo'` con `"Ingresar tipo de persona válido."` o, si el tipo no es compatible con el rol actual de la cuenta, `"El tipo no corresponde al rol de la cuenta."`; `'rango'` con `"El rango no puede superar los 30 caracteres."`. Una persona sin cuenta, o con `rol` null, no pasa por la comprobación de compatibilidad.
 3. Éxito → **201** (sí, 201 también al modificar: `Response.wasSaved`) `{"mensaje":"Persona guardada con éxito.","persona":{…entidad…}}`.
 
 ### 1.5 `DELETE /api/personas/{cod}` — **Corrección**
@@ -289,7 +297,7 @@ Desde M2 el frontend arma la sesión **solo** con este endpoint (M2-10) y deja d
 }
 ```
 
-`usuario.nombre` es el nombre de usuario. `usuario.rol` puede ser `null` (cuenta sin rol). 404 §A `"Persona especificada no existe."` si el usuario no existe o no tiene persona.
+`usuario.nombre` es el nombre de usuario. `usuario.rol` puede ser `null` (cuenta sin rol); el frontend lo trata como cuenta inválida: borra los tokens y vuelve al inicio de sesión con un aviso (spec M2-10). 404 §A `"Persona especificada no existe."` si el usuario no existe o no tiene persona.
 
 **[Corrección — dependencia 25]** Solo el propio usuario o quien tenga `Manage Users`, p. ej. `@PreAuthorize("#nom == authentication.name or hasRole('Manage Users')")`. En otro caso → 403 §B "Acceso denegado". Hoy cualquier usuario autenticado lee nombre, grupo, correo y rol de cualquier otro.
 
@@ -333,7 +341,7 @@ Reglas, en orden:
 2. Usuario no existe → 404 §A `"Usuario especificada no existe."` (sin cambios).
 3. **[Nuevo — dependencia 28]** Rol inexistente → 404 §A `"Rol especificada no existe."`; hoy es un 500 por FK.
 4. **[Nuevo — dependencia 28]** Rol incompatible con el `tipo` de la persona → 400 §A texto `"El rol no corresponde al tipo de persona."`.
-5. Éxito → **201** `{"mensaje":"Usuario guardada con éxito.","usuario":{…}}`. **[Corrección — dependencia 24]** `usuario` sin `password`: `{"id":1,"username":"jefe.operaciones","correo":"jefeoperaciones@sigeda.com","codPersona":"333333","rol":{"id":3,"nombre":"Jefe de Operaciones","descripcion":"…"}}`. El frontend usa solo `mensaje` y vuelve a leer §1.2.
+5. Éxito → **201** `{"mensaje":"Usuario guardada con éxito.","usuario":{…}}`. Hoy `usuario.rol` repite el `rol` del request, con `nombre` y `descripcion` en `null`, y `usuario.password` trae la contraseña guardada: el hash, o el texto plano de una cuenta creada hoy por §1.3. Es inofensivo para el frontend, que lee solo `mensaje` (spec M2-3). **[Corrección — dependencia 24]** `usuario` sin `password`: `{"id":1,"username":"jefe.operaciones","correo":"jefeoperaciones@sigeda.com","codPersona":"333333","rol":{"id":3,"nombre":"Jefe de Operaciones","descripcion":"…"}}`. El frontend usa solo `mensaje` y vuelve a leer §1.2.
 
 ### 2.3 `PUT /api/usuarios/{id}` — **Corrección** (restablecer contraseña)
 
@@ -341,16 +349,27 @@ Reglas, en orden:
 PUT /api/usuarios/{id}   Update
 ```
 
-Body — **siempre los dos**: el handler sobrescribe el nombre con lo que llega y cifra `password`.
+Body — **siempre `username` y `password`**: el handler sobrescribe el nombre con lo que llega y cifra `password`.
 ```json
 { "username": "alumno.lopez", "password": "NuevaClave2026" }
 ```
 
+Sobre la propia cuenta (Cambiar contraseña, M0) el body lleva además la contraseña actual:
+```json
+{ "username": "alumno.lopez", "password": "NuevaClave2026", "passwordActual": "123" }
+```
+Hoy `passwordActual` se ignora (no existe en `Usuario`).
+
 Reglas, en orden:
-1. Usuario no existe → 404 §A `"Usuario especificada no existe."` (sin cambios).
-2. **[Nuevo — dependencia 29]** Validación → 400 §A arreglo. `'username'` con las reglas y mensajes de §1.3; la unicidad excluye al propio usuario. `'password'` con `"La contraseña es obligatoria."` o `"La contraseña debe tener al menos 8 caracteres."`. Hoy, sin `password`, responde 400 §B `"rawPassword cannot be null"`; sin `username`, deja la cuenta sin nombre.
-3. La dependencia 3 (M0) limita este endpoint a la propia cuenta o a `Manage Users`. El restablecimiento del administrador no pide la contraseña actual.
-4. Éxito → **201** `{"mensaje":"Usuario guardada con éxito.","usuario":{…}}`, **sin `password`** (dependencia 24).
+1. **[Nuevo — dependencia 3, enmendada en M2]** `@PreAuthorize`: solo la propia cuenta o `Manage Users`. En otro caso → 403 §B, antes de buscar el usuario o validar: `{"timestamp":"…","status":403,"error":"Acceso denegado","message":"No tienes permisos para realizar esta acción","messages":null}`. Hoy basta `Update`, que tienen todos los roles.
+2. Usuario no existe → 404 §A `"Usuario especificada no existe."` (sin cambios).
+3. **[Nuevo — dependencias 3 y 29]** Validación → 400 §A arreglo:
+   - `'username'`: las reglas y mensajes de §1.3; la unicidad excluye al propio usuario.
+   - `'password'`: `"La contraseña es obligatoria."` o `"La contraseña debe tener al menos 8 caracteres."`.
+   - `'passwordActual'`, **solo sobre la propia cuenta** (aunque se tenga `Manage Users`): `"La contraseña actual es obligatoria."` si falta, o `"La contraseña actual no es correcta."` si no coincide con el hash guardado. Con `Manage Users` sobre otra cuenta no se pide y se ignora.
+
+   Hoy, sin `password`, responde 400 §B `"rawPassword cannot be null"`; sin `username`, deja la cuenta sin nombre.
+4. Éxito → **201** `{"mensaje":"Usuario guardada con éxito.","usuario":{…}}`, **sin `password`** (dependencia 24). Hoy trae `password`; el frontend lee solo `mensaje` (spec M2-3).
 
 ### 2.4 `GET /api/usuarios/{id}`, `/api/usuarios/nombre/{nombre}`, `/api/usuarios/persona/{cod}` — **Corrección**
 
@@ -407,7 +426,7 @@ GET /api/grupos/{id}   Manage Groups
 ```
 El frontend usa `id`, `nombre`, `descripcion`, `programa` y de cada persona `codigo`, `nombre`, `aPaterno`, `aMaterno` y `estado`.
 
-**[Corrección — dependencia 18]** Un grupo inexistente hoy responde **200 con cuerpo `null`**: a `response.isNull` le falta el `return`. Debe responder 404 §A `"Grupo especificada no existe."`. El frontend trata ambos casos como no encontrado.
+**[Corrección — dependencia 18]** Un grupo inexistente hoy responde **200 sin cuerpo (vacío)**: a `response.isNull` le falta el `return` y el handler sigue hasta `ResponseEntity.ok(null)`, que no escribe cuerpo (`src/lib/api/http.ts` lo lee como `null`). Debe responder 404 §A `"Grupo especificada no existe."`. El frontend trata ambos casos como no encontrado.
 
 ### 3.3 `POST /api/grupos` — **Corrección**
 
@@ -519,7 +538,7 @@ GET /api/fases/{id}   Read
   ]
 }
 ```
-En el seed, las fases 2 y 3 responden `"subfases": []`. 404 §B `"No existe información de fase."`. Un id no numérico → 400 §B `error:"Error en parámetros"`, `message:"El parámetro 'id' debe ser de tipo int"`.
+`subfases` va ordenada por `id` (hoy el orden no está garantizado: falta `@OrderBy("id")`, dependencia 38). En el seed, las fases 2 y 3 responden `"subfases": []`. 404 §B `"No existe información de fase."`. Un id no numérico → 400 §B `error:"Error en parámetros"`, `message:"El parámetro 'id' debe ser de tipo int"`.
 
 ### 4.3 `POST /api/fases` — **Sin cambios**
 
@@ -581,7 +600,7 @@ Request: igual que §4.3, pero cada subfase lleva `id`:
 }
 ```
 
-- `id > 0` actualiza esa subfase; si pertenecía a otra fase, la mueve a esta (sin cambios; el frontend nunca envía ids ajenos). `id` `0` crea una nueva.
+- `id > 0` actualiza esa subfase; si pertenecía a otra fase, la mueve a esta (sin cambios; el frontend nunca envía ids ajenos). Un `id > 0` que no existe **crea** una subfase nueva, igual que `id` `0` (`FaseService.java:64-66`, `SubfaseSave.java:21-22`).
 - Una subfase guardada que **no** viene en la lista **se elimina** (orphan removal), sin ninguna comprobación. `turnos`, `evaluaciones_practicas` y `maniobras_subfase` no tienen FK hacia `subfases`, así que esas filas quedan apuntando a una subfase inexistente.
 - **[Nuevo — dependencia 37]** Si una subfase omitida tiene maniobras, turnos o evaluaciones → 410 §B (`ActionExpiredException`, mismo código que las demás negativas de borrado del módulo, §5.6) con `"La subfase <nombre> no se puede quitar, tiene maniobras, turnos o evaluaciones."`, sin guardar nada. El frontend no permite quitar subfases guardadas (M2-6).
 - Una `descripcion` vacía conserva la anterior, en la fase y en cada subfase (sin cambios; dependencia 38).
@@ -594,7 +613,7 @@ Validación: la de §4.3. 404 §B `"No existe información de fase."`. Éxito �
 DELETE /api/fases/{id}   Manage Phases
 ```
 
-Hoy el servicio primero ejecuta `deleteByManiobrasSubfaseIsNull()`, que borra **todas las subfases sin maniobras de todas las fases**. Con el seed, borrar cualquier fase elimina Contacto y Formación, que usan los turnos sembrados 1–3 y 7. Después borra la fase y, en cascada, sus subfases. Un id inexistente responde 204, porque Spring Data JPA 3 lo ignora.
+Hoy el servicio primero ejecuta `deleteByManiobrasSubfaseIsNull()`, que borra **todas las subfases sin maniobras de todas las fases**. Con el seed, borrar cualquier fase elimina Contacto y Formación, que usan los turnos sembrados 1–3 y 7. Después borra la fase y, en cascada, sus subfases. La limpieza global corre **siempre**, también para un id inexistente, que luego responde 204 porque Spring Data JPA 3 lo ignora.
 
 **[Corrección — dependencia 37]**
 1. Fase inexistente → 404 §B `"No existe información de fase."`.
@@ -622,15 +641,15 @@ GET /api/subfases/{id}   Read
   ]
 }
 ```
-En el seed, las subfases 1 (Contacto) y 5 (Formación) responden `"maniobrasSubfase": []`. 404 §B `"No existe información de subfase."`. El detalle de fase la usa para mostrar las maniobras de cada subfase.
+`maniobrasSubfase` va ordenada por el `id` de la maniobra (hoy sin garantía; dependencia 38). En el seed, las subfases 1 (Contacto) y 5 (Formación) responden `"maniobrasSubfase": []`. 404 §B `"No existe información de subfase."`. El detalle de fase la usa para mostrar las maniobras de cada subfase.
 
-### 4.7 `GET /api/subfases/assign` — **Sin cambios**
+### 4.7 `GET /api/subfases/assign` — **Sin cambios** (no usado en M2)
 
 ```
 GET /api/subfases/assign   Manage Subphases
 ```
 
-Subfases sin fase: 200 `[{ "id", "nombre", "descripcion" }]`, o **`200 []`** si no hay ninguna (no 404). En el seed responde `[]`.
+Subfases sin fase: 200 `[{ "id", "nombre", "descripcion" }]`, o **`200 []`** si no hay ninguna (no 404). En el seed responde `[]`. M2 no lo consume: nada en el backend desvincula una subfase de su fase y borrar una fase borra sus subfases, así que la lista no puede tener elementos creados desde la aplicación.
 
 ---
 
@@ -667,10 +686,10 @@ GET /api/maniobras/{id}   Read
 ```
 
 - **[Corrección — dependencia 33]** `subfases` es nuevo: `List<IdAndName>` de las subfases enlazadas en `maniobras_subfase`, ordenadas por `id`. Hoy el detalle solo trae `estandares`, y no hay otra forma directa de saber las subfases de una maniobra.
-- En el seed, los estándares no tienen descripción (`null`), y las maniobras 6, 7 y 8 responden `"estandares": []`.
+- `estandares` va ordenada por `id` (hoy sin garantía; dependencia 38). En el seed, los estándares no tienen descripción (`null`), y las maniobras 6, 7 y 8 responden `"estandares": []`.
 - 404 §B `"No existe información de maniobra"` (sin punto; sin cambios).
 
-Tolerancia del frontend mientras falte `subfases`: las deduce de §4.6, recorriendo las subfases del catálogo de fases.
+Mientras falte `subfases` (backend actual), el frontend no las deduce: el detalle indica que no están disponibles, y Modificar maniobra queda deshabilitada hasta las dependencias 32 y 33. La fase de cada subfase la toma el frontend del catálogo de fases (§4.1, §4.2).
 
 ### 5.3 `POST /api/maniobras` — **Corrección**
 
@@ -724,7 +743,7 @@ Request — `ManiobraDetail`, con la lista completa de estándares:
 }
 ```
 
-- `id > 0` actualiza ese estándar; si pertenece a otra maniobra, lo mueve a esta (el frontend nunca envía ids ajenos). `id` `0` crea uno nuevo.
+- `id > 0` actualiza ese estándar; si pertenece a otra maniobra, lo mueve a esta (el frontend nunca envía ids ajenos). Un `id > 0` que no existe **crea** un estándar nuevo, igual que `id` `0` (`ManiobraService.java:86-88`, `EstandarSave.java:15-16`).
 - Un estándar guardado que **no** viene en la lista **no se elimina ni se desvincula**: sigue apuntando a la maniobra y reaparece en §5.2 (`Maniobra.estandares` no tiene orphan removal). El frontend no ofrece quitar estándares guardados. **[Opcional — dependencia 36]** Activar orphan removal para que un omitido se elimine.
 - Validación → 400 §B: `'estandares'` con `"La asignación de estandares es requerida"` (sin punto ni tilde; al menos uno); `'estandares[i].nombre'` y `'estandares[i].descripcion'` como en §4.3.
 - 404 §B `"No existe información de maniobra."` (con punto). Éxito → **200** `{id, nombre, descripcion}`. Una `descripcion` vacía conserva la anterior.
@@ -756,7 +775,7 @@ Rutas, permisos, forma y semilla: `contrato-api-teoria.md` §1 (no se repiten aq
 
 - Convención §A: `GET /api/materias` responde un arreglo **no paginado**, ordenado por `parte` (en el orden del enum) y luego por `nombre`. Si no hay materias → 404 texto `"No existen materias disponibles."`, que el frontend trata como lista vacía.
 - `GET /api/materias/{id}` → 200 materia; 404 texto `"Materia especificada no existe."`.
-- `POST /api/materias` (body sin `id`) y `PUT /api/materias/{id}` → **201** `{"mensaje":"Materia guardada con éxito.","materia":{"id":12,"nombre":"…","notaMinima":16,"coeficiente":0.05,"parte":"SEGUNDA_PARTE"}}`. `PUT` de una materia inexistente → 404 texto `"Materia especificada no existe."`.
+- `POST /api/materias` y `PUT /api/materias/{id}` usan el mismo body `{nombre, notaMinima, coeficiente, parte}`; un `id` en el body se ignora (en `PUT` manda el de la ruta). Ambos → **201** `{"mensaje":"Materia guardada con éxito.","materia":{"id":12,"nombre":"…","notaMinima":16,"coeficiente":0.05,"parte":"SEGUNDA_PARTE"}}`. `PUT` de una materia inexistente → 404 texto `"Materia especificada no existe."`.
 - `DELETE /api/materias/{id}` → 200 texto `"Materia eliminado con éxito."` (texto literal de `Response.wasDeleted`); 404 como arriba. Si tiene preguntas o turnos teóricos → **409** texto `"La materia no se puede eliminar, tiene preguntas o turnos teóricos."`.
 - `coeficiente` es un número JSON con hasta 2 decimales (`0.22`); `notaMinima` es un entero.
 
@@ -764,25 +783,45 @@ Validación → 400 §A arreglo:
 
 | Campo | Regla | Mensaje exacto |
 |---|---|---|
-| `nombre` | obligatorio | `El nombre es obligatorio` (sin punto, igual que `NombreDescripcionDto`) |
+| `nombre` | obligatorio (`null`, `""` o solo espacios) | `El nombre es obligatorio` (sin punto, igual que `NombreDescripcionDto`) |
 | | 3 a 60 caracteres | `El nombre debe tener entre 3 y 60 caracteres.` |
 | | único (sin distinguir mayúsculas; en `PUT` excluye a la propia materia) | `Ya existe una materia con ese nombre.` |
-| `notaMinima` | entero de 0 a 20 | `La nota mínima debe ser un entero entre 0 y 20.` |
-| `coeficiente` | de 0 a 1, hasta 2 decimales | `El coeficiente debe estar entre 0 y 1, con hasta 2 decimales.` |
-| `parte` | uno de los tres valores | `Ingresar parte del curso válida.` |
+| `notaMinima` | obligatorio (`null` o ausente) | `La nota mínima es obligatoria.` |
+| | entero de 0 a 20; un valor con decimales se rechaza, no se trunca | `La nota mínima debe ser un entero entre 0 y 20.` |
+| `coeficiente` | obligatorio (`null` o ausente) | `El coeficiente es obligatorio.` |
+| | de 0 a 1, hasta 2 decimales | `El coeficiente debe estar entre 0 y 1, con hasta 2 decimales.` |
+| `parte` | obligatorio y uno de los tres valores | `Ingresar parte del curso válida.` (un solo mensaje: con `READ_UNKNOWN_ENUM_VALUES_AS_NULL` un valor inválido llega como `null`, así que ausente e inválido no se distinguen) |
 
 Semilla (ids 1–11, todas `PRIMERA_PARTE`, en el orden de `contrato-api-teoria.md` §1): Aerodinámica Aplicada a Helicópteros 16/0.13 · Ingeniería del Helicóptero 16/0.16 · Adoctrinamiento de Vuelo 18/0.22 · Límites de Operación 20/0.10 · Procedimientos Normales 16/0.10 · Procedimientos de Emergencias 20/0.10 · Meteorología 16/0.04 · Prevención de Accidentes 16/0.04 · Normatividad FAP 16/0.04 · Regulaciones Aeronáuticas del Perú 16/0.04 · Fraseología Aeronáutica en Inglés 16/0.03.
 
 ---
 
-## 7. Dependencias
+## 7. Datos de los mocks
+
+Los mocks parten del seed (`data_prod.sql`) y de los datos de M1 (`docs/decisiones.md` › Datos de prueba). Para los criterios de M2 agregan o fijan lo siguiente:
+
+| Dato | Para | Detalle |
+|---|---|---|
+| Cuentas del seed | §1.2, CA-PER-06 | Las 10 cuentas del seed (ids 1–10) con su rol, más `comandante.aguirre` (id 11, persona 222444 Jorge Aguirre Salas, DNI `22244411`, rango `Mayor`, tipo `null`, rol 5), que solo existe en los mocks. Contraseña `123`. |
+| Persona sin cuenta | CA-PER-06 (T9), CA-GRU-03, CA-PER-10 | `654321` Lucía Mendoza Ríos, DNI `76543210`, rango `Cadete`, tipo `Alumno`, sin grupo, sin usuario. Es el único alumno sin grupo, así que §1.6 no responde 404, y se puede eliminar (mensaje B3). |
+| Cuenta sin rol | CA-PER-06 (T8), CA-PER-07 | `765432` Raúl Paredes Soto, DNI `75432109`, rango `Teniente`, tipo `null` (para no aparecer en los selectores de instructores de M1), sin grupo, usuario id 12 `raul.paredes` (`raul.paredes@sigeda.com`), `rol: null`. `/auth/login` responde 401 para esta cuenta, como el backend real; CA-SES-08 se prueba reemplazando la respuesta de §1.7 en el test. |
+| Personas que no se pueden eliminar | CA-PER-10 | `555555` (tiene `codEvalRealizada`) → B4; `222222` (alumno del turno 2, sin evaluación) → B5; `444444` (instructor de los turnos 1–4) → B6. |
+| Propia cuenta | CA-PER-12 | `admin.sistema` ↔ persona `000001`. |
+| Materia con preguntas | CA-MAT-04 | La materia 3 (Adoctrinamiento de Vuelo) se marca con preguntas: su `DELETE` responde 409. |
+| Ids siguientes | todos | Como las secuencias del seed: usuarios 13, grupos 7, fases 4, subfases 6, maniobras 11, estándares 13, materias 12. |
+
+---
+
+## 8. Dependencias
 
 Numeración de la spec (§10, §13.4 y §14.5).
+
+El frontend habilita cuatro acciones solo cuando su dependencia figura en la variable `VITE_DEPENDENCIAS_RESUELTAS` (spec M2-14): Registrar persona (22), Eliminar persona (30), Modificar maniobra (32 y 33) y Eliminar fase (37). Al desplegar una de estas correcciones, avisar para agregar su número.
 
 | # | Cambio | Sección |
 |---|---|---|
 | 2 (M0) | Dejar de serializar el hash en `/api/usuarios/nombre/{nombre}`; la amplía la 24 | §2.4 |
-| 3 (M0) | `PUT /api/usuarios/{id}` solo para la propia cuenta o `Manage Users` | §2.3 |
+| 3 (M0, enmendada en M2) | `PUT /api/usuarios/{id}` solo para la propia cuenta o `Manage Users`; sobre la propia cuenta, `passwordActual` obligatoria; `Manage Users` restablece otra cuenta sin ella | §2.3 |
 | 4 | `Manage Groups` solo para Administrador Web: sigue abierta, pero no bloquea M2 (el frontend replica el backend) | Permisos |
 | 5 | Catálogo de materias, CRUD y `Manage Subjects` | §6 |
 | 18 | `GrupoController.detail` sin `return` (200 con `null`) | §3.2 |

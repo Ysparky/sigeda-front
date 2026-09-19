@@ -156,6 +156,11 @@ types), `schemas.ts` (zod) and `components/`. Route files stay thin.
 · `VITE_MOCK_TEORIA=true` while the theory API does not exist. The dev server
 runs on `:5173`, the origin `sigeda-back` already allows in CORS.
 
+M0 replaced `VITE_MOCK_TEORIA` with `VITE_MOCK_API` (`src/lib/config.ts`): `true` serves the
+`sigeda-back` API from MSW (development only). `VITE_DEPENDENCIAS_RESUELTAS` (M2-14, default empty) lists, comma-separated,
+the backend dependency numbers already fixed in the live `sigeda-back` (e.g. `22,30,32,33,37`);
+actions that wait for an unlisted dependency stay disabled. Mock mode treats every dependency as resolved.
+
 Node runs from nvm at `/Volumes/ORICO/sdks/nvm` (v25.1.0), which non-interactive
 shells do not load; scripts put its `bin` on `PATH` explicitly.
 
@@ -175,6 +180,8 @@ preset; `src/components/ui` is vendored CLI output, excluded from lint.
    backend dependency 11 lands. The response also carries the password hash,
    which the session parser drops.
    Session = `{ usuario: { id, username, correo }, codPersona, rol, permisos }`.
+   *Superseded by M2-10: from M2 this step reads `GET /api/personas/{username}`,
+   which carries the persona and no hash (§14.2).*
 3. Access token (24 h) in memory; refresh token (7 d) in `localStorage`. On
    boot: `POST /auth/refresh { refreshToken }` → `{ accessToken }`, then step 2.
 4. Any 401: refresh once and retry; if refresh fails, clear the session and go
@@ -397,8 +404,8 @@ A checklist for `sigeda-back` (Victor) and `sigeda_chat_status`.
 | # | Change | Repo | Needed by |
 |---|---|---|---|
 | 1 | `GET /api/aeronaves` (id, nombre, estado) | back | M1 — blocks Registrar turno |
-| 2 | Stop serializing the password hash in `/api/usuarios/nombre/{nombre}` | back | M0 — security |
-| 3 | `PUT /api/usuarios/{id}` accepts any id from any user with `Update` and does not ask for the current password: restrict to the user themself or Administrador, require the current password | back | M0 — security |
+| 2 | Stop serializing the password hash in `/api/usuarios/nombre/{nombre}` (widened by 24, §14.5) | back | M0 — security |
+| 3 | `PUT /api/usuarios/{id}` accepts any id from any user with `Update` and does not ask for the current password: restrict to the user themself or `Manage Users`. *Amended in M2:* on one's own account the body carries `passwordActual` (required, checked against the stored hash, even with `Manage Users`); `Manage Users` resets another account without it (contract `contrato-api-matricula.md` §2.3) | back | M0 — security |
 | 4 | `Manage Groups` for Administrador only | back | M2 |
 | 5 | Materia catalog + CRUD + `Manage Subjects` (Comandante) | back | M2 |
 | 6 | Theory API (§11) + `Manage Questions`, `Manage Exams` (Instructor), `Take Exams` (Alumno) | back | M4 |
@@ -406,7 +413,7 @@ A checklist for `sigeda-back` (Victor) and `sigeda_chat_status`.
 | 8 | NIT / NIA / NFPI and orden de mérito | back | M5 |
 | 9 | Accept `sigeda-back`'s JWT (shared secret) so documents are per user; prediction over real evaluaciones | chat_status | M3 / M5 |
 | 10 | Evaluation list across alumnos with the same filters | back | M1 nice-to-have |
-| 11 | Include persona (nombre, apellidos, tipo, idGrupo) in `/api/usuarios/nombre/{nombre}` | back | M1 — header and "mine" screens |
+| 11 | Include persona (nombre, apellidos, tipo, idGrupo) in `/api/usuarios/nombre/{nombre}` — *superseded by M2-10 and dependency 25 (§14)* | back | M1 — header and "mine" screens |
 
 ## 11. Theory API contract
 
@@ -431,7 +438,7 @@ for implementation in `sigeda-back`. Summary:
 |---|---|---|
 | M0 Foundation | Scaffold, tokens, shell, session, route registry, API clients, errors, Inicio, Cambiar contraseña, design review | — |
 | M1 Práctico | P3 + P4 | Dependency 1 for Registrar turno |
-| M2 Matrícula + Programa | P1 + P2 | 5 for Materias to go real; 22, 32, 37 before running against the live backend (§14.5) |
+| M2 Matrícula + Programa | P1 + P2 | 5 for Materias to go real; 22, 30, 32 (+33), 37 before the gated actions run against the live backend (M2-14, §14.5) |
 | M3 Aprendizaje | P7 | — (9 recommended) |
 | M4 Teoría + Banco | P5, contract-first | 6, 7 to go real |
 | M5 Seguimiento | P6 | 7, 8 |
@@ -499,7 +506,7 @@ Read from `sigeda-back` source (branch `main`, commit `ec2b0dd`); the backend an
 
 ## 14. Addendum M2 — Matrícula y programa
 
-**Date:** 2026-09-19 · **Status:** controller rulings M2-1..M2-11 (`.superpowers/notas/investigacion/m2-decisiones.md`), refined and extended after re-reading `sigeda-back`; every decision below is a ruling the user can reverse. Contract for Victor: `docs/contrato-api-matricula.md`.
+**Date:** 2026-09-19 · **Status:** controller rulings M2-1..M2-11 (`.superpowers/notas/investigacion/m2-decisiones.md`), refined and extended after re-reading `sigeda-back`, then revised after review (`.superpowers/notas/m2/revision-addendum.md`, A1–F3); every decision below is a ruling the user can reverse. Contract for Victor: `docs/contrato-api-matricula.md`.
 
 ### 14.1 Backend state
 
@@ -521,20 +528,25 @@ Read from `sigeda-back` source (branch `main`, commit `ec2b0dd`, Spring Boot 3.4
 
 **Grupos**
 - `POST /api/grupos` assigns every listed `personas[].codigo` (`grupo/controllers/GrupoController.java:197-203`). `PUT` assigns or removes by `checked` (`:228-234`) and ignores `programa` (`:224-225`). An unknown `codigo` NPEs (500) after the grupo is saved (`:199-200`). An invalid `programa` is stored as null (`application.properties:35`, `READ_UNKNOWN_ENUM_VALUES_AS_NULL`). No field is validated.
-- `GET /api/grupos/{id}` answers **200 with a `null` body** for a missing grupo (missing `return`, `GrupoController.java:99-100`, dependency 18). `DELETE` detaches the members first (`:253-258`).
+- `GET /api/grupos/{id}` answers **200 with an empty body** for a missing grupo: the missing `return` (`GrupoController.java:99-100`, dependency 18) falls through to `ResponseEntity.ok(null)` (`:102`), which writes no body; `src/lib/api/http.ts:28-29` reads it as `null`. `DELETE` detaches the members first (`:253-258`).
 
 **Programa**
 - `PUT /api/fases/{id}` replaces the subfase list with orphan removal (`maniobra/entities/Fase.java:28`, `maniobra/services/FaseService.java:69-70`), so an omitted subfase is **deleted** with no check. `turnos.id_sub_fase`, `evaluaciones_practicas.id_sub_fase` and `maniobras_subfase` have no FK to `subfases` (`schema_prod.sql:164,278,128-132`).
-- `DELETE /api/fases/{id}` first runs `deleteByManiobrasSubfaseIsNull()` (`FaseService.java:78`), which deletes **every subfase without maniobras in every fase**. With the seed, deleting any fase removes Contacto and Formación, which seeded turnos 1–3 and 7 use (`data_prod.sql:122-129`). A missing id answers 204, because Spring Data JPA 3 ignores it (*corrects the note*, which predicted a 500).
+- `DELETE /api/fases/{id}` first runs `deleteByManiobrasSubfaseIsNull()` (`FaseService.java:78`), which deletes **every subfase without maniobras in every fase**. With the seed, deleting any fase removes Contacto and Formación, which seeded turnos 1–3 and 7 use (`data_prod.sql:122-129`). A missing id answers 204, because Spring Data JPA 3 ignores it (*corrects the note*, which predicted a 500), and the global cleanup has already run by then.
 - `GET /api/maniobras/{id}` returns `estandares` but **no `subfases`** (`maniobra/projections/DetalleManiobra.java`). Create and update return only `{id, nombre, descripcion}` (`maniobra/entities/Maniobra.java:31-39`, `@JsonIgnore`).
 - `PUT /api/maniobras/{id}` looks up each link with `findByIdSubfase(idSubfase)` over the whole table (`maniobra/services/ManiobraService.java:113`, `maniobra/dao/IManiobra_SubfaseDao.java:15`). That is a **500** whenever the subfase has two or more maniobras (seed subfases 2, 3 and 4), and it takes over another maniobra's link when exactly one exists. Its not-found message says "fase" (`ManiobraService.java:100`). *Not in the note.*
 - An unknown `idSubfase` is stored silently. The only FK on the link table targets a misspelled `maniobras_subfases` (`schema_prod.sql:328-331`); *corrects the note*, which predicted a 500.
 - `DELETE /api/maniobras/{id}` refuses with a 410 when the maniobra has estándares, but the message blames a turno (`ManiobraService.java:128-129`). A maniobra without estándares that is used in `maniobras_turno` or `calificaciones` hits their FKs (`schema_prod.sql:303-306,333-336`) and fails with a 500.
+- In `PUT /api/fases/{id}` and `PUT /api/maniobras/{id}/estandar`, an `id > 0` that does not exist creates a new row (`FaseService.java:64-66` with `maniobra/dtos/SubfaseSave.java:21-22`; `ManiobraService.java:86-88` with `maniobra/dtos/EstandarSave.java:15-16`).
 - `PUT /api/maniobras/{id}/estandar` updates (`id > 0`) or creates. An omitted estándar is neither deleted nor detached: it keeps its FK and **reappears** in the detail (`Maniobra.java:36`, no orphan removal; *corrects the note*, which said "unreachable").
 - Blank `descripcion` never clears the stored one (`maniobra/dtos/FaseSave.java:37-38`, and likewise in `SubfaseSave`, `ManiobraSave` and `EstandarSave`). No standalone subfase or estándar CRUD exists.
 - **No materia code exists** in `sigeda-back`.
 
-**Frontend gap.** `normalizarError` maps every 403 to "No tiene permisos para esta acción" (`src/lib/api/errors.ts:82`), which hides the persona-delete rules.
+**Frontend notes.**
+- `normalizarError` maps every 403 to "No tiene permisos para esta acción" (`src/lib/api/errors.ts:82`), which hides the persona-delete rules (M2-4).
+- `rutaDeCampo` (`src/lib/formularios.ts:4-10`) already turns the backend's nested keys into react-hook-form paths (`'subfases[0].nombre'` → `subfases.0.nombre`, `'usuario.username'` stays nested), so the field arrays and the account block need no new mapping.
+- `sesion.ts:18-24` requires `rol`; a `rol: null` session throws a `ZodError`, which `restaurar` does not treat as an invalid account (M2-10).
+- M0's Cambiar contraseña types the `PUT /api/usuarios/{id}` response as `{mensaje}` without parsing it (`cambiar-contrasena-page.tsx:40`), so the echoed `password` sits in memory (M2-3).
 
 **Messages the criteria show** (the CAs cite these IDs):
 
@@ -559,19 +571,21 @@ New messages (persona and account validation, materias) are fixed in the contrac
 
 | # | Decision | Why | Cost if wrong |
 |---|---|---|---|
-| M2-1 | **Personas: follow the backend for list, edit and delete; contract-first for creation.** *(changed: key `password`, explicit `idRol` instead of a rol derived from tipo, nullable tipo)* `POST /api/personas` also carries `usuario {username, correo, password, idRol}`. The backend validates, BCrypts the password and sets the rol in one transaction, and answers `201 {mensaje, persona, usuario {id, username, correo, rol}}` (contract §1.3). Client rules match the contract: codigo 6 alphanumerics, dni 8 digits, nombre and aPaterno required, `tipo` ∈ {Alumno, Instructor PDI, Instructor PDE, *sin tipo* = null}, username `^[a-z0-9._]{4,30}$`, correo, password ≥ 8 typed twice, rol per M2-13. Against today's backend the account arrives unusable; the detail flags it (CA-PER-06) and Restablecer contraseña plus Asignar rol repair it. The frontend makes no compensating calls. | Today's flow yields accounts that cannot log in. The key is `password` (not `contraseña`) because that is what `Usuario` already uses in `/auth/login` and `PUT /api/usuarios/{id}`. An explicit rol (not derived from tipo) and a null tipo are needed because staff (Comandante, Jefe de Operaciones, Administrador) have `tipo = NULL` in the seed (333333, 000001). | Adapter rework if Victor picks another shape. |
-| M2-2 | **Persona edit follows the backend:** only `rango` and `tipo`, both always sent (`PUT` nulls whichever is missing). The other fields are shown read-only with the reason. It is a dialog in the detail. *(refined: both fields always sent; dialog)* | `PUT /api/personas/{cod}` ignores the rest. | Wording. |
-| M2-3 | **No separate "Usuarios" screen;** the account lives in `/personas/$cod`, read from `GET /api/personas/{cod}/usuario`. The contract adds `usuario.id`, `estado` and `grupo` (dependency 26). Until then the adapter takes `usuario.id` from `GET /api/personas/{usuario.nombre}`, which carries no hash. **Asignar rol** calls `PUT /api/usuarios/{id}/rol {rol: {id}}` (`Manage Roles`, options from `GET /api/roles`, M2-13). **Restablecer contraseña** calls `PUT /api/usuarios/{id} {username, password}`, always both. No GET under `/api/usuarios/**` is ever called. *(refined: the usuario id is missing from the detail)* | `DetalleUsuario` has no usuario id, and the `/api/usuarios` GETs expose the hash. | One extra GET until dependency 26. |
-| M2-4 | **Delete persona shows the backend's reasons** (B4–B6). *(refined)* `normalizarError` learns that a **403 with a text body** is a business rule (`Response.isForbidden`) and shows its text, while a 403 `ErrorResponse` or an empty body keeps "No tiene permisos para esta acción". | Backend rules; today every 403 is masked. | None. |
-| M2-5 | **Grupos:** list; create with alumnos (`personas: [{codigo}]`); edit sending every current member and every newly picked alumno as `{codigo, checked}`; delete. Available alumnos = `GET /api/personas/alumno/Alumno` plus the grupo's members. `programa` is read-only on edit. A 200 with a null body is treated as not found. `Manage Groups` keeps the backend's two roles; dependency 4 stays open but no longer blocks. *(refined: programa read-only, full member list on PUT)* | Backend shape (`PUT` ignores `programa`). | None. |
-| M2-6 | **Fases y subfases:** list; detail with each subfase's maniobras (`GET /api/subfases/{id}`); create and edit with a subfase field array (`id > 0` updates, `0` creates). **A saved subfase cannot be removed** (only unsaved rows can), and **Eliminar fase is offered only for a fase without subfases.** "Subfases sin fase" (`GET /api/subfases/assign`, `Manage Subphases`) is informational. The form says that a blank descripción keeps the previous one. No standalone subfase CRUD. *(refined: removal and delete limits)* | The backend deletes omitted subfases unchecked, and fase delete wipes unrelated subfases (dependency 37), with no FK to catch it. | The Comandante cannot drop a subfase until dependency 37. Against today's backend any fase delete still triggers the global cleanup. |
-| M2-7 | **Maniobras:** list, detail, create and edit with a subfase multi-select grouped by fase (`GET /api/fases` + `GET /api/fases/{id}`), delete. **Contract-first for the detail** (`subfases [{id, nombre}]`, dependency 33) **and for update** (`PUT` 500s on any subfase with two or more maniobras, dependency 32). Eliminar is disabled while the maniobra has estándares, with the reason; any other 410 is shown verbatim. *(refined: update contract-first; delete gate)* | Detail lacks subfases; update is broken. | Adapter rework. |
-| M2-8 | **Estándares per maniobra** (`Manage Standards`: Jefe de Operaciones, Administrador Web): a page edits the full list with `PUT /api/maniobras/{id}/estandar` (`id > 0` updates, `0` creates, at least one). Removal is not offered: an omitted estándar stays linked and reappears (dependency 36). *(refined: corrected effect of omission)* | Backend shape. | Feature gap until dependency 36. |
+| M2-1 | **Personas: follow the backend for list, edit and delete; contract-first for creation.** *(changed: key `password`, explicit `idRol` instead of a rol derived from tipo, nullable tipo)* `POST /api/personas` also carries `usuario {username, correo, password, idRol}`. The backend validates, BCrypts the password and sets the rol in one transaction, and answers `201 {mensaje, persona, usuario {id, username, correo, rol}}` (contract §1.3). Client rules match the contract: codigo 6 alphanumerics, dni 8 digits, nombre and aPaterno required, `tipo` ∈ {Alumno, Instructor PDI, Instructor PDE, *sin tipo* = null}, username `^[a-z0-9._]{4,30}$`, correo, password ≥ 8 typed twice, rol per M2-13. Text fields are sent trimmed. In live mode the action waits for dependency 22 (M2-14). | Today's flow yields accounts that cannot log in. The key is `password` (not `contraseña`) because that is what `Usuario` already uses in `/auth/login` and `PUT /api/usuarios/{id}`. An explicit rol and a null tipo are needed because staff personas carry `tipo = NULL`: in the real seed the Jefe de Operaciones (333333) and the Administrador (000001), and in the mocks also the Comandante (222444, mock only; the real seed has no Comandante account). A derived rol could not create those accounts. | Adapter rework if Victor picks another shape. |
+| M2-2 | **Persona edit follows the backend:** only `rango` and `tipo`, both always sent (`PUT` nulls whichever is missing). The other fields are shown read-only with text T1. It is a dialog in the detail. *(refined)* | `PUT /api/personas/{cod}` ignores the rest. | Wording. |
+| M2-3 | **No separate "Usuarios" screen;** the account lives in `/personas/$cod`, read from `GET /api/personas/{cod}/usuario`. *(changed: response parsing)* The contract adds `usuario.id`, `estado` and `grupo` (dependency 26). Until then the adapter takes `usuario.id` from `GET /api/personas/{usuario.nombre}`, which carries no hash. **Asignar rol** calls `PUT /api/usuarios/{id}/rol {rol: {id}}` (`Manage Roles`, options from `GET /api/roles`, M2-13). **Restablecer contraseña** calls `PUT /api/usuarios/{id} {username, password}`, always both. No GET under `/api/usuarios/**` is ever called. **Every `/api/usuarios` mutation adapter** (Asignar rol, Restablecer contraseña, and M0's Cambiar contraseña, which today types the response without parsing it, `cambiar-contrasena-page.tsx:40`) parses the 201 body with a zod schema that keeps only `{mensaje}`. The `usuario.password` the backend echoes (the hash, or the plaintext password of an account created today) therefore never reaches app state or logs. A unit test feeds a fixture that includes `password`. | `DetalleUsuario` has no usuario id; the `/api/usuarios` GETs and both PUT bodies expose the password until dependency 24. | One extra GET until dependency 26. |
+| M2-4 | **Delete persona shows the backend's reasons** (B4–B6). `normalizarError` learns that a **403 with a text body** is a business rule (`Response.isForbidden`) and shows its text, while a 403 `ErrorResponse` or an empty body keeps "No tiene permisos para esta acción". | Backend rules; today every 403 is masked. | None. |
+| M2-5 | **Grupos:** list; create with optional alumnos (`personas: [{codigo}]`); edit sending every current member and every newly picked alumno as `{codigo, checked}`; delete. Available alumnos = `GET /api/personas/alumno/Alumno` plus the grupo's members. `programa` is read-only on edit (text T2). A 200 with an empty body (the missing `return`; `http.ts` reads it as `null`) is treated as not found. `Manage Groups` keeps the backend's two roles; dependency 4 stays open but no longer blocks. *(refined)* | Backend shape (`PUT` ignores `programa`). | None. |
+| M2-6 | **Fases y subfases:** list; detail with each subfase's maniobras (`GET /api/subfases/{id}`); create and edit with a subfase field array (`id > 0` updates, `0` creates). **A saved subfase cannot be removed** (text T3; only unsaved rows can), and **Eliminar fase is offered only for a fase without subfases** (T4), and in live mode only after dependency 37 (M2-14). No "Subfases sin fase" panel: nothing in the backend detaches a subfase from its fase and fase delete cascades, so the state is unreachable; `GET /api/subfases/assign` is not used. The edit form shows T7 under every descripción of a saved item. Success toasts T14–T16. No standalone subfase CRUD. *(changed: panel dropped, fixed texts)* | The backend deletes omitted subfases unchecked, and fase delete wipes unrelated subfases (dependency 37), with no FK to catch it. | The Comandante cannot drop a subfase until dependency 37. |
+| M2-7 | **Maniobras:** list, detail, create and edit with a subfase multi-select grouped by fase (`GET /api/fases` + `GET /api/fases/{id}`), delete. **Contract-first for the detail** (`subfases [{id, nombre}]`, dependency 33) **and for update** (`PUT` 500s on any subfase with two or more maniobras, dependency 32). The detail shows each subfase with its fase, taken from that fases catalog, which the screen already loads (dependency 33 stays `{id, nombre}`). Without `subfases` in the response (live, dependency 33 pending) the detail shows T12 instead of deducing them. Modificar maniobra waits for dependencies 32 and 33 in live mode (M2-14). Eliminar is disabled while the maniobra has estándares (T5); any other 410 is shown verbatim. The form shows T7 on edit. Success toasts T17–T19. *(changed: fase from the catalog, no deduction fallback, fixed texts)* | Detail lacks subfases; update is broken. Deducing subfases would cost 1 + F + S requests. | Adapter rework. |
+| M2-8 | **Estándares per maniobra** (`Manage Standards`: Jefe de Operaciones, Administrador Web): a page edits the full list with `PUT /api/maniobras/{id}/estandar` (`id > 0` updates, `0` creates, at least one). Removal is not offered (T6): an omitted estándar stays linked and reappears (dependency 36). The form shows T7 on saved rows; success toast T20. *(refined)* | Backend shape. | Feature gap until dependency 36. |
 | M2-9 | **Materias** contract-first per `contrato-api-teoria.md` §1, with the exact messages and statuses in `contrato-api-matricula.md` §6. `permisos.ts` gains contract permissions, kept apart and recorded in `docs/decisiones.md`: `Manage Subjects` (Comandante de Escuadrón, Administrador Web), `Manage Questions` and `Manage Exams` (Instructor, Administrador Web), `Take Exams` (Alumno). | Spec §6/§11. | None until the backend implements it. |
-| M2-10 | **The session is built from `GET /api/personas/{username}` alone**, replacing §5.1 step 2. Its `DetalleSesion` gives `usuario {id, nombre → username, correo, rol}`, `codigo → codPersona`, and the persona (`nombre`, `aPaterno`, `aMaterno`, `idGrupo`); it has no password. Header and Inicio show "Nombre ApellidoPaterno". Failures are handled as today (401/403/404 → invalid account). Dependency 11 is no longer needed; dependency 25 limits the endpoint to the caller's own username. *(changed: replaces the `/api/usuarios/nombre` call rather than adding a second one; no username fallback)* | It holds everything the session needs and stops the frontend from downloading the hash. | An account without persona cannot enter (none exists: every usuario is created with its persona). |
-| M2-11 | **Backend dependencies 22–38** (§14.5). *(corrected)* `GET /api/personas/{nom}` leaks personal data, not the hash; the hash leaks through the `/api/usuarios` GETs and the `PUT /api/usuarios/{id}[/rol]` bodies. Added: `PUT /api/maniobras/{id}` broken, fase delete wiping subfases, persona delete and grupo save partial writes, missing link FK. | Findings. | None. |
-| M2-12 | **Programa screens are readable by all staff** (`Read` plus the staff roles, like the M1 lists); writes are gated per action with `<Can>`: `Manage Phases`, `Manage Maneuvers`, `Manage Standards`, `Manage Subjects`. This replaces §6's per-screen `Manage …` permissions. *(new)* | The backend GETs are `Read`. The Jefe de Operaciones must reach a maniobra to assign estándares without `Manage Maneuvers`, and the registry holds one permission per route. | None; staff see the programa read-only. |
-| M2-13 | **Tipo–rol compatibility**, applied when creating, editing and assigning a rol: Alumno → {Alumno}; Instructor PDI or PDE → {Instructor, Jefe de Operaciones, Comandante de Escuadrón}; *sin tipo* → {Jefe de Operaciones, Comandante de Escuadrón, Administrador Web}. The default rol is Alumno or Instructor by tipo, and there is none for *sin tipo*. Backend: dependencies 23 and 28. *(new)* | `tipo` feeds the pickers (`/personas/alumno/Alumno` for grupos, `/personas/instructor/{tipo}` for turnos), so a mismatched account is offered in the wrong place. Keyed by `rol.nombre`, like `permisos.ts`. | Table change. Against the real seed, Comandante stays unmatched until dependency 19. |
+| M2-10 | **The session is built from `GET /api/personas/{username}` alone**, replacing §5.1 step 2. Its `DetalleSesion` gives `usuario {id, nombre → username, correo, rol}`, `codigo → codPersona`, and the persona (`nombre`, `aPaterno`, `aMaterno`, `idGrupo`); it has no password. Header and Inicio show "Nombre ApellidoPaterno". 401/403/404 are handled as today (invalid account). **`usuario.rol: null` is an invalid account too.** On login and on restore the session clears both tokens and opens the login page with text T13, instead of letting the parser throw. Today `sesion.ts:23` requires `rol`, so the `ZodError` leaves the tokens in place on restore. Dependency 11 is no longer needed; dependency 25 limits the endpoint to the caller's own username. *(changed: rol null)* | It holds everything the session needs and stops the frontend from downloading the hash. | An account without persona cannot enter (none exists: every usuario is created with its persona). |
+| M2-11 | **Backend dependencies 22–38** (§14.5). `GET /api/personas/{nom}` leaks personal data, not the hash; the hash leaks through the `/api/usuarios` GETs and the `PUT /api/usuarios/{id}[/rol]` bodies. | Findings. | None. |
+| M2-12 | **Programa screens are readable by all staff** (`Read` plus the staff roles, like the M1 lists); writes are gated per action with `<Can>`: `Manage Phases`, `Manage Maneuvers`, `Manage Standards`, `Manage Subjects`. This replaces §6's per-screen `Manage …` permissions. | The backend GETs are `Read`. The Jefe de Operaciones must reach a maniobra to assign estándares without `Manage Maneuvers`, and the registry holds one permission per route. | None; staff see the programa read-only. |
+| M2-13 | **Tipo–rol compatibility**, applied when creating, editing and assigning a rol: Alumno → {Alumno}; Instructor PDI or PDE → {Instructor, Jefe de Operaciones, Comandante de Escuadrón}; *sin tipo* → {Jefe de Operaciones, Comandante de Escuadrón, Administrador Web}. The default rol is Alumno or Instructor by tipo, and there is none for *sin tipo*. A persona without account, or with `rol: null`, accepts any tipo. The frontend keys the table by `rol.nombre`, like `permisos.ts`. **The backend (dependencies 23 and 28) keys it by rol id** (1 Alumno, 2 Administrador Web, 3 Jefe de Operaciones, 4 Instructor, 5 Comandante de Escuadrón), so the seed mojibake (dependency 19) cannot break the check. *(changed: backend keyed by id)* | `tipo` feeds the pickers (`/personas/alumno/Alumno` for grupos, `/personas/instructor/{tipo}` for turnos), so a mismatched account is offered in the wrong place. | Table change. Against the real seed, the frontend cannot match Comandante by name until dependency 19. |
+| M2-14 | **Actions with a pending dependency.** *(new)* A small capability module (`src/lib/dependencias.ts`) reads `VITE_DEPENDENCIAS_RESUELTAS`: comma-separated dependency numbers (`22,30,32,33,37`), with spaces allowed and any token that is not a positive integer ignored; the default is empty. In mock mode (`config.mockApi`) every dependency counts as resolved. These actions need their dependencies resolved: **Registrar persona (22), Eliminar persona (30), Modificar maniobra (32 and 33), Eliminar fase (37)**. Until then the action is shown disabled with text T11 beneath it, and opening its route by URL shows T11 instead of the form. `.env.example` lists the variable, empty. | `.env.example` defaults `VITE_MOCK_API=false`, so a plain `pnpm dev` hits the live backend. There these actions ignore the account data (22), leave an account without persona or rol (30), take over another maniobra's links (32), or wipe subfases system-wide even for an empty fase (37). | One env var to maintain; Victor adds a number when he ships the fix. |
+| M2-15 | **Nothing destructive on one's own account.** *(new)* When the persona in `/personas/$cod` is the session's own `codPersona`, Eliminar persona, Asignar rol and Restablecer contraseña are not offered, and the account section shows T10. Cambiar contraseña (M0) remains the way to change one's own password. | The only Administrador Web could delete himself or drop his own `Manage Users`/`Manage Roles` and lock everyone out. Once dependency 3 lands, an own-account reset also needs the current password, which Restablecer does not ask for. | None. |
 
 ### 14.3 Screens
 
@@ -580,7 +594,7 @@ This replaces the §6 M2 table. Staff = Administrador Web, Comandante de Escuadr
 | Screen | Route | Permission | Roles | Data | Breadcrumb parent |
 |---|---|---|---|---|---|
 | Personas | `/personas` | `Manage Users` | Administrador Web | Real (+ `tipo`, dep. 27) | — |
-| Registrar persona | `/personas/nueva` | `Manage Users` | Administrador Web | Contract (§1.3) | `/personas` |
+| Registrar persona | `/personas/nueva` | `Manage Users` | Administrador Web | Contract (§1.3); live needs dep. 22 | `/personas` |
 | Detalle de persona y cuenta | `/personas/$cod` | `Manage Users` (Asignar rol: `Manage Roles`) | Administrador Web | Real + Contract (dep. 26) | `/personas` |
 | Grupos | `/grupos` | `Manage Groups` | Administrador Web, Jefe de Operaciones | Real | — |
 | Registrar grupo | `/grupos/nuevo` | `Manage Groups` | same | Real | `/grupos` |
@@ -593,7 +607,7 @@ This replaces the §6 M2 table. Staff = Administrador Web, Comandante de Escuadr
 | Maniobras | `/programa/maniobras` | `Read` + staff | staff | Real | — |
 | Registrar maniobra | `/programa/maniobras/nueva` | `Manage Maneuvers` | Administrador Web, Comandante | Real (dep. 34) | `/programa/maniobras` |
 | Detalle de maniobra | `/programa/maniobras/$id` | `Read` + staff | staff | Contract (dep. 33) | `/programa/maniobras` |
-| Modificar maniobra | `/programa/maniobras/$id/editar` | `Manage Maneuvers` | Administrador Web, Comandante | Contract (dep. 32) | `/programa/maniobras/$id` |
+| Modificar maniobra | `/programa/maniobras/$id/editar` | `Manage Maneuvers` | Administrador Web, Comandante | Contract; live needs deps. 32, 33 | `/programa/maniobras/$id` |
 | Estándares de la maniobra | `/programa/maniobras/$id/estandares` | `Manage Standards` | Administrador Web, Jefe de Operaciones | Real | `/programa/maniobras/$id` |
 | Materias | `/programa/materias` | `Read` + staff (writes: `Manage Subjects`) | staff | Contract (dep. 5) | — |
 
@@ -605,14 +619,37 @@ Who sees what (`Role.java:8-37`, mirrored by `permisos.ts`; `Manage Subjects` fr
 |---|---|---|---|---|---|
 | `Manage Users` · `Manage Roles` | ✓ | | | | |
 | `Manage Groups` | ✓ | | ✓ | | |
-| `Manage Phases` · `Manage Subphases` · `Manage Maneuvers` | ✓ | ✓ | | | |
+| `Manage Phases` · `Manage Maneuvers` | ✓ | ✓ | | | |
 | `Manage Standards` | ✓ | | ✓ | | |
 | `Manage Subjects` (contract) | ✓ | ✓ | | | |
 | Programa read-only (`Read` + staff) | ✓ | ✓ | ✓ | ✓ | |
 
-`Manage Subphases` only shows the "Subfases sin fase" panel.
+`Manage Subphases` (Administrador Web, Comandante) gates nothing in M2.
+
+**Fixed interface texts** (the CAs cite these IDs). Persona, grupo, usuario and materia saves toast the backend's `mensaje`. Fase, maniobra and estándar saves return 200/204 without one, so the frontend owns those toasts (T14–T20).
+
+| ID | Where | Text |
+|---|---|---|
+| T1 | Modificar persona, under the read-only fields | El código, el DNI y los nombres no se pueden modificar; solo el rango y el tipo. |
+| T2 | Modificar grupo, under Programa | El programa de un grupo no se puede cambiar después de registrarlo. |
+| T3 | Modificar fase, on a saved subfase row | Una subfase guardada no se puede quitar porque puede tener maniobras, turnos o evaluaciones. |
+| T4 | Detalle de fase, instead of Eliminar, when it has subfases | Solo se puede eliminar una fase sin subfases. |
+| T5 | Detalle de maniobra, next to the disabled Eliminar | La maniobra tiene estándares asignados y no se puede eliminar. |
+| T6 | Estándares, on a saved row | Un estándar guardado no se puede quitar; puede cambiar su nombre y su descripción. |
+| T7 | Under the descripción of a saved fase, subfase, maniobra or estándar | Si deja la descripción vacía, se conserva la anterior. |
+| T8 | Account section, rol null | Sin rol: esta cuenta no puede iniciar sesión. |
+| T9 | Account section, no account | Sin cuenta |
+| T10 | Account section, own account | Es su propia cuenta: no puede eliminarla ni cambiar su rol; para cambiar su contraseña use Cambiar contraseña. |
+| T11 | Under an action waiting for a dependency (M2-14), or instead of its form | No disponible: el servidor aún no realiza esta acción de forma segura. |
+| T12 | Detalle de maniobra, subfases missing from the response | Subfases no disponibles: el servidor aún no las informa. |
+| T13 | Login page, session with `rol: null` | Su cuenta no tiene un rol asignado. Comuníquese con el administrador. |
+| T14 · T15 · T16 | Toasts: registrar · modificar · eliminar fase | Fase registrada. · Fase modificada. · Fase eliminada. |
+| T17 · T18 · T19 | Toasts: registrar · modificar · eliminar maniobra | Maniobra registrada. · Maniobra modificada. · Maniobra eliminada. |
+| T20 | Toast: guardar estándares | Estándares guardados. |
 
 ### 14.4 Acceptance criteria
+
+CA-FAS-07 ("Subfases sin fase") was dropped (review F1); no other ID changed. The mock fixtures these criteria need beyond the seed (a persona without account, an account with `rol: null`, a materia with preguntas) are fixed in contract §7.
 
 #### CUS Gestionar Persona (M2, Administrador Web)
 
@@ -620,20 +657,22 @@ Who sees what (`Role.java:8-37`, mirrored by `permisos.ts`; `Manage Subjects` fr
 - **CA-PER-02** Registrar persona pide código (6 caracteres alfanuméricos), DNI (8 dígitos), nombre y apellido paterno obligatorios, apellido materno y rango opcionales, y tipo (Alumno, Instructor PDI, Instructor PDE o sin tipo); y para la cuenta: usuario (4 a 30 caracteres entre minúsculas, dígitos, punto y guion bajo), correo válido, contraseña de al menos 8 caracteres escrita dos veces e igual, y rol.
 - **CA-PER-03** El rol se propone según el tipo (Alumno → Alumno; Instructor PDI o PDE → Instructor) y solo se ofrecen los roles compatibles con el tipo (M2-13); cambiar el tipo descarta un rol incompatible.
 - **CA-PER-04** Un código ya registrado muestra el mensaje B1; un usuario en uso y los demás errores de validación del backend aparecen bajo su campo, incluidos los de la cuenta.
-- **CA-PER-05** Al registrar se muestra el mensaje B2 y se abre el detalle de la persona; la contraseña no vuelve a mostrarse en ninguna pantalla.
-- **CA-PER-06** El detalle muestra código, DNI, nombres, rango, tipo, estado y grupo, y la sección Cuenta con usuario, correo y rol; una cuenta sin rol se marca como que no puede iniciar sesión; una persona sin cuenta muestra «Sin cuenta» y no ofrece acciones de cuenta.
-- **CA-PER-07** Modificar persona cambia solo rango y tipo, con los tipos compatibles con el rol de la cuenta; los demás datos no se editan y se explica el motivo; al guardar se muestra el mensaje B2.
+- **CA-PER-05** Al registrar se muestra el mensaje B2 y se abre el detalle de la persona; el formulario se limpia, y ni la respuesta ni el detalle muestran la contraseña.
+- **CA-PER-06** El detalle muestra código, DNI, nombres, rango, tipo, estado y grupo, y la sección Cuenta con usuario, correo y rol; una cuenta con rol null muestra T8; una persona sin cuenta muestra T9 y no ofrece acciones de cuenta.
+- **CA-PER-07** Modificar persona cambia solo rango y tipo; se ofrecen los tipos compatibles con el rol de la cuenta, o todos si no tiene cuenta o su rol es null; los demás datos no se editan y se muestra T1; al guardar se muestra el mensaje B2.
 - **CA-PER-08** Asignar rol (Manage Roles) ofrece los roles del backend compatibles con el tipo; al guardar se muestra el mensaje B7 y el detalle refleja el nuevo rol.
 - **CA-PER-09** Restablecer contraseña pide la nueva dos veces e iguales, de al menos 8 caracteres, conserva el usuario y muestra el mensaje B7.
 - **CA-PER-10** Eliminar pide confirmación; si el backend lo impide (B4, B5 o B6) se muestra ese motivo y la persona sigue en la lista; si no, se muestra B3 y se vuelve a la lista.
 - **CA-PER-11** Personas solo aparece en el menú y por URL con Manage Users; Asignar rol además exige Manage Roles.
+- **CA-PER-12** En el detalle de la propia persona de la sesión no se ofrecen Eliminar, Asignar rol ni Restablecer contraseña, y la sección Cuenta muestra T10.
+- **CA-PER-13** Las respuestas de Asignar rol, Restablecer contraseña y Cambiar contraseña se leen solo por su `mensaje`: la contraseña que el backend devuelve no llega al estado de la aplicación ni a la consola.
 
 #### CUS Gestionar Grupo (M2, Administrador Web · Jefe de Operaciones)
 
 - **CA-GRU-01** La lista muestra nombre, descripción y programa; se ordena por nombre o programa; la página y el orden persisten en la URL; solo la ven quienes tienen Manage Groups.
-- **CA-GRU-02** Registrar pide nombre (3 a 35 caracteres), descripción opcional (máximo 255), programa (PDI o PDE) y los alumnos; al guardar muestra el mensaje B8 y abre el detalle.
+- **CA-GRU-02** Registrar pide nombre (3 a 35 caracteres), descripción opcional (máximo 255), programa (PDI o PDE) y, opcionalmente, alumnos; al guardar muestra el mensaje B8 y abre el detalle.
 - **CA-GRU-03** Los alumnos ofrecidos son los que no tienen grupo; al modificar, también los del propio grupo, ya marcados; ningún alumno aparece dos veces.
-- **CA-GRU-04** Al modificar, el programa es de solo lectura y se explica el motivo.
+- **CA-GRU-04** Al modificar, el programa es de solo lectura y se muestra T2.
 - **CA-GRU-05** Desmarcar un alumno y guardar lo deja sin grupo, y vuelve a ofrecerse para otros grupos.
 - **CA-GRU-06** El detalle muestra nombre, descripción, programa y alumnos con código, nombre completo y estado.
 - **CA-GRU-07** Eliminar pide confirmación advirtiendo que sus alumnos quedarán sin grupo; al eliminar muestra el mensaje B9 y vuelve a la lista.
@@ -642,61 +681,68 @@ Who sees what (`Role.java:8-37`, mirrored by `permisos.ts`; `Manage Subjects` fr
 #### CUS Gestionar Fase (M2, Comandante de Escuadrón)
 
 - **CA-FAS-01** La lista muestra nombre y descripción; se ordena por nombre; la página y el orden persisten en la URL; la ve todo el personal y solo con Manage Phases se ofrece registrar, modificar y eliminar.
-- **CA-FAS-02** Registrar pide nombre (3 a 35 caracteres), descripción opcional (máximo 255) y al menos una subfase con los mismos límites.
+- **CA-FAS-02** Registrar pide nombre (3 a 35 caracteres), descripción opcional (máximo 255) y al menos una subfase con los mismos límites; al guardar muestra T14 y abre el detalle.
 - **CA-FAS-03** El detalle muestra la fase, sus subfases y las maniobras de cada subfase.
-- **CA-FAS-04** Modificar edita la fase y sus subfases y agrega subfases nuevas; una subfase ya guardada no se puede quitar y se explica el motivo; una fila nueva sin guardar sí.
-- **CA-FAS-05** Eliminar solo está disponible para una fase sin subfases (si no, se explica el motivo) y pide confirmación.
+- **CA-FAS-04** Modificar edita la fase y sus subfases y agrega subfases nuevas; una subfase ya guardada no se puede quitar y muestra T3; una fila nueva sin guardar sí se quita; bajo cada descripción ya guardada se muestra T7; al guardar muestra T15.
+- **CA-FAS-05** Eliminar solo se ofrece para una fase sin subfases (si tiene, se muestra T4) y pide confirmación; al eliminar muestra T16 y vuelve a la lista.
 - **CA-FAS-06** Los errores de validación del backend (B10, B11) aparecen bajo su campo, también en cada fila de subfase.
-- **CA-FAS-07** Con Manage Subphases, si existen subfases sin fase, la lista de fases las muestra aparte.
 
 #### CUS Gestionar Maniobra (M2, Comandante de Escuadrón)
 
 - **CA-MAN-01** La lista muestra nombre y descripción; se ordena por nombre; la página y el orden persisten en la URL; la ve todo el personal y solo con Manage Maneuvers se ofrece registrar, modificar y eliminar.
-- **CA-MAN-02** Registrar pide nombre (3 a 35 caracteres), descripción opcional (máximo 255) y al menos una subfase, elegidas de una lista agrupada por fase.
-- **CA-MAN-03** El detalle muestra la maniobra, sus subfases con su fase y sus estándares.
-- **CA-MAN-04** Modificar precarga las subfases actuales y aplica las mismas validaciones que registrar.
-- **CA-MAN-05** Eliminar pide confirmación; si la maniobra tiene estándares la acción no está disponible y se explica el motivo; si el backend la rechaza (B12) se muestra su mensaje.
+- **CA-MAN-02** Registrar pide nombre (3 a 35 caracteres), descripción opcional (máximo 255) y al menos una subfase, elegidas de una lista agrupada por fase; al guardar muestra T17 y abre el detalle.
+- **CA-MAN-03** El detalle muestra la maniobra, sus estándares y sus subfases con la fase a la que pertenecen (tomada del catálogo de fases); si la respuesta no trae subfases se muestra T12.
+- **CA-MAN-04** Modificar precarga las subfases actuales, aplica las mismas validaciones que registrar y muestra T7 bajo la descripción; al guardar muestra T18.
+- **CA-MAN-05** Eliminar pide confirmación; si la maniobra tiene estándares la acción está deshabilitada y se muestra T5; si el backend la rechaza (B12) se muestra su mensaje; al eliminar muestra T19 y vuelve a la lista.
 - **CA-MAN-06** Los errores de validación del backend (B10, B11) aparecen bajo su campo; los de subfase, bajo el selector de subfases.
 
 #### CUS Asignar Estándares (M2, Jefe de Operaciones)
 
 - **CA-EST-01** Con Manage Standards, el detalle de la maniobra ofrece editar sus estándares; sin ese permiso (Comandante) los estándares solo se ven, y quien solo tiene Manage Standards (Jefe de Operaciones) no ve registrar, modificar ni eliminar maniobra.
 - **CA-EST-02** Cada estándar tiene nombre (3 a 35 caracteres) y descripción opcional (máximo 255); se agregan filas nuevas y se exige al menos un estándar.
-- **CA-EST-03** Un estándar guardado no se puede quitar y se explica el motivo; una fila nueva sin guardar sí.
-- **CA-EST-04** Al guardar se vuelve al detalle con los estándares actualizados; los errores del backend (B10, B11) aparecen bajo el campo de su fila.
+- **CA-EST-03** Un estándar guardado no se puede quitar y muestra T6, además de T7 bajo su descripción; una fila nueva sin guardar sí se quita.
+- **CA-EST-04** Al guardar se muestra T20 y se vuelve al detalle con los estándares actualizados; el error de lista vacía (B11) aparece sobre la lista y los errores de cada estándar (B10), bajo el campo de su fila.
 
 #### CUS Gestionar Materia (M2, Comandante de Escuadrón · contrato)
 
 - **CA-MAT-01** La lista muestra nombre, nota mínima, coeficiente con 2 decimales y parte del curso; la ve todo el personal y solo con Manage Subjects se ofrece registrar, modificar y eliminar.
-- **CA-MAT-02** Registrar y modificar piden nombre (3 a 60 caracteres), nota mínima entera de 0 a 20, coeficiente entre 0 y 1 con hasta 2 decimales y parte del curso.
+- **CA-MAT-02** Registrar y modificar piden nombre (3 a 60 caracteres), nota mínima entera de 0 a 20, coeficiente entre 0 y 1 con hasta 2 decimales y parte del curso, todos obligatorios.
 - **CA-MAT-03** Un nombre repetido y los demás errores del backend aparecen bajo su campo; al guardar se muestra el mensaje del backend.
 - **CA-MAT-04** Eliminar pide confirmación; si la materia tiene preguntas o turnos teóricos se muestra el motivo que da el backend.
+
+#### Acciones con dependencia pendiente (M2-14)
+
+- **CA-DEP-01** Sin su dependencia resuelta, Registrar persona (22), Eliminar persona (30), Modificar maniobra (32 y 33) y Eliminar fase (37) se muestran deshabilitadas con T11; abrir la ruta de Registrar persona o de Modificar maniobra por URL muestra T11 en lugar del formulario.
+- **CA-DEP-02** En modo mock las cuatro acciones están disponibles; fuera de él, cada una se habilita cuando `VITE_DEPENDENCIAS_RESUELTAS` incluye todos sus números, y los valores que no son números se ignoran.
 
 #### CUS Iniciar sesión (M2 additions)
 
 - **CA-SES-06** Tras iniciar sesión o recargar, el encabezado y el saludo de Inicio muestran el nombre y el apellido paterno de la persona.
 - **CA-SES-07** Para armar la sesión no se consulta ningún endpoint que devuelva la contraseña del usuario.
+- **CA-SES-08** Si la persona de la sesión tiene la cuenta sin rol, al iniciar sesión o al recargar se borran los tokens y la página de inicio de sesión muestra T13.
 
 ### 14.5 Backend dependencies added
+
+**Live blockers** (M2 must not run these actions against the live backend before the fix; M2-14 gates them): 22, 30, 32, 37 (and 33 for Modificar maniobra).
 
 | # | Change | Needed by |
 |---|---|---|
 | 22 | **Security:** `POST /api/personas` stores the generated password in plaintext and no rol, so the account never logs in; take `usuario {username, correo, password, idRol}`, BCrypt it and save persona and usuario in one transaction | M2 live — blocks Registrar persona |
-| 23 | Validate `POST /api/personas` (persona fields, tipo, unique username, correo, password ≥ 8, rol exists and matches tipo per M2-13); 400 field array | M2 |
+| 23 | Validate `POST /api/personas` (persona fields, tipo, unique username, correo, password ≥ 8, rol exists and matches tipo per M2-13, keyed by rol id); 400 field array | M2 |
 | 24 | **Security:** stop serializing `Usuario.contraseña` (`GET /api/usuarios/{id}`, `/nombre/{nombre}`, `/persona/{cod}` and the 201 bodies of `PUT /api/usuarios/{id}[/rol]`); guard the GETs (own account or `Manage Users`). Widens 2 | M2 — security |
 | 25 | **Security:** `GET /api/personas/{nom}` has no `@PreAuthorize`; allow only the caller's own username or `Manage Users`. The session uses it from M2 (M2-10); supersedes 11 | M2 — security |
-| 26 | `DetalleUsuario`: add `usuario.id`, `estado`, `grupo {id, nombre}`; `usuario: null` instead of a 500 NPE for a persona without account | M2 live |
+| 26 | `DetalleUsuario`: add `usuario.id`, `estado`, `grupo {id, nombre}`; `usuario: null` instead of a 500 NPE for a persona without account (the frontend tolerates its absence with one extra GET) | M2 |
 | 27 | `IndexPersona`: add `tipo` | M2 |
-| 28 | Tipo–rol compatibility on `PUT /api/personas/{cod}` and `PUT /api/usuarios/{id}/rol`; 404 for an unknown rol id (today a 500 FK error) | M2 |
-| 29 | `PUT /api/usuarios/{id}`: validate `username` and `password` as field errors (a missing password is today "rawPassword cannot be null"; a missing username blanks the account) | M0 / M2 |
-| 30 | `DELETE /api/personas/{cod}`: 500 NPE without usuario; 500 FK error when the usuario has a refresh token, after already detaching it (not transactional) | M2 |
+| 28 | Tipo–rol compatibility, keyed by rol id, on `PUT /api/personas/{cod}` and `PUT /api/usuarios/{id}/rol`; 404 for an unknown rol id (today a 500 FK error) | M2 |
+| 29 | `PUT /api/usuarios/{id}`: validate `username`, `password` and, per dependency 3, `passwordActual` as field errors (a missing password is today "rawPassword cannot be null"; a missing username blanks the account) | M0 / M2 |
+| 30 | `DELETE /api/personas/{cod}`: 500 NPE without usuario; 500 FK error when the usuario has a refresh token, after already detaching it from persona and rol (not transactional) | M2 live — blocks Eliminar persona |
 | 31 | Grupos: validate nombre, descripción and programa (invalid programa saved as null); unknown `codigo` → 404 instead of a 500 NPE after the grupo is saved; one transaction | M2 |
 | 32 | `PUT /api/maniobras/{id}`: links looked up by `idSubfase` alone (500 whenever a subfase has two or more maniobras, or another maniobra's link is taken); replace this maniobra's links; not-found message says "fase" | M2 live — blocks Modificar maniobra |
-| 33 | `GET /api/maniobras/{id}`: add `subfases [{id, nombre}]` | M2 |
+| 33 | `GET /api/maniobras/{id}`: add `subfases [{id, nombre}]` ordered by id | M2 live — Modificar maniobra preloads them |
 | 34 | Unknown `idSubfase` stored silently: validate it (404) and fix the link-table FK that targets `maniobras_subfases` | M2 |
 | 35 | `DELETE /api/maniobras/{id}`: two guards with their own messages (estándares; use in turnos or calificaciones, today a 500 FK error) | M2 |
 | 36 | Allow removing an estándar (orphan removal on `Maniobra.estandares`); an omitted one reappears today | M2 nice-to-have |
-| 37 | **Data loss:** fase delete deletes every subfase without maniobras system-wide; `PUT /api/fases/{id}` deletes omitted subfases unchecked; turnos, evaluaciones and links have no FK to `subfases`. Scope the cleanup, guard both with 410, add the FKs | M2 live — blocks Eliminar/Modificar fase |
-| 38 | Minor: blank `descripcion` never clears (fase, subfase, maniobra, estándar); `StringToProgramaConverter` turns any programa into PDI; no unique constraint on `usuarios.nombre` (a duplicate breaks login for both) | M2 |
+| 37 | **Data loss:** fase delete deletes every subfase without maniobras system-wide, even for a nonexistent or empty fase; `PUT /api/fases/{id}` deletes omitted subfases unchecked, so a Modificar fase saved from a stale form deletes a subfase another user added meanwhile; turnos, evaluaciones and links have no FK to `subfases`. Scope the cleanup, guard both with 410, add the FKs | M2 live — blocks Eliminar fase |
+| 38 | Minor: blank or null `descripcion` never clears (fase, subfase, maniobra, estándar); `StringToProgramaConverter` turns any programa into PDI; no unique constraint on `usuarios.nombre` (a duplicate breaks login for both); nested lists (`DetalleFase.subfases`, `DetalleSubfase.maniobrasSubfase`, `DetalleManiobra.estandares`) have no `@OrderBy("id")` | M2 |
 
-Dependency 4 stays open but no longer blocks M2 (M2-5); 5 is the Materias backend (contract §6); 11 is superseded by M2-10 and 25.
+Dependency 3 is amended (§10). Dependency 4 stays open but no longer blocks M2 (M2-5). Dependency 5 is the Materias backend (contract §6). Dependency 11 is superseded by M2-10 and 25; dependency 2 is widened by 24.
