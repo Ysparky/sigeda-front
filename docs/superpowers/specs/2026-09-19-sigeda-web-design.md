@@ -436,3 +436,60 @@ for implementation in `sigeda-back`. Summary:
 | M5 Seguimiento | P6 | 7, 8 |
 
 Each milestone has its own implementation plan in `docs/superpowers/plans/`.
+
+## 13. Addendum M1 — Turno y evaluación práctica
+
+**Date:** 2026-09-19 · **Status:** decided autonomously overnight (user asleep, standing instruction to chain milestones); every decision below is a ruling the user can reverse.
+
+### 13.1 Backend state
+
+Read from `sigeda-back` source (branch `main`, commit `ec2b0dd`); the backend and its database were not running, so nothing was verified live. The full read-only contract, with file:line evidence, is `docs/contratos/sigeda-back-m1.md`. What matters for M1:
+
+- `GET /api/turnos` and `GET /api/turnos/alumno` project `TurnoRealizado.cantGrupo`, which no longer exists on `Turno` (it has `cantAlumno`).
+- `GET /api/turnos/{id}` projects `DetalleTurno.gruposTurno`, a relation `Turno` no longer has (it now has a flat `codInstructor` and `alumnosTurno` with times). The detail endpoint cannot return its declared shape.
+- There is no endpoint that lists aeronaves.
+- `POST`/`PUT /api/turnos` return 200 with the raw entity (not `201 {mensaje, turno}`); `alumnosTurno`/`maniobrasTurno` are `@JsonIgnore`, so the response never shows what was saved.
+- `Alumno_TurnoSave` has no default constructor and its constructor parameters are `inicio`/`fin`; whether the JSON keys are `horaInicio`/`horaFin` or `inicio`/`fin` is undetermined.
+- Turno validation errors come from `GlobalExceptionHandler` as `ErrorResponse {timestamp, status, error, message, messages[]}`; evaluation rule errors come as `{mensaje}` (400/403) and, for invalid grades, `{"mensaje:": [...]}` (typo'd key). Turno edit/delete of a past turno returns **410**.
+- No schedule-overlap validation exists server-side.
+- The backend does not require causa/observación/recomendación for a below-standard grade, and does not check that the caller is the turno's instructor.
+
+### 13.2 Decisions
+
+| # | Decision | Why | Cost if wrong |
+|---|---|---|---|
+| M1-1 | **Contract-first for turnos, as for theory.** `docs/contrato-api-turnos.md` (Spanish, for Victor) fixes the shapes the frontend consumes: `GET /api/aeronaves`; list rows with `cantAlumno`; detail with `codInstructor`, `instructor`, `aeronave {id, nombre, estado}`, `alumnosTurno[{codAlumno, alumno, horaInicio, horaFin}]`, `maniobrasTurno[{nota_min, maniobra}]`; create/update `201 {mensaje, turno}`. MSW implements it; the frontend tolerates today's `200` raw entity too. | The backend's turno surface is mid-refactor (commits today); building against its current projections would encode known bugs. | Rework of the turno API adapters if Victor chooses other shapes; screens are unaffected. |
+| M1-2 | **Error normaliser learns the other two shapes.** `ErrorResponse`: `messages[]` → field errors, `message` → message. `{mensaje: string}` → message. `{"mensaje:": string[]}` → messages joined. 410 → the backend message. | Without it, every turno validation error and every evaluation rule error shows the generic message. | None; strictly additive. |
+| M1-3 | **Categoría has two spellings.** Requests send the enum names `Ponderada`, `Chequeo`, `chequeoSubFase`, `Complementacion`; responses carry `Ponderada`, `Chequeo`, `Chequeo Sub Fase`, `Complementación`. One mapping module owns both. Suggested categories come from `GET /api/personas/{cod}/status`. | Backend reality (Categoria.java). | Low. |
+| M1-4 | **DIRBE options per nota mínima** follow `Dirbe.calificacionNoValida`: D→[D]; I→[I, R]; R→[I, R, B]; B→[I, R, B, E]; E→[I, R, B, E]. **Below standard** = `RI`, `BI`, `BR` (`Dirbe.calificacionBajoEstandar`). | Backend is the source of truth; a wrongly encoded grade breaks the whole calculation. | If the PDI's broader "below standard" (e.g. `EB`) is wanted, backend and frontend change together. |
+| M1-5 | **Causa, observación and recomendación are required client-side** for below-standard grades (CA-EVA-05); the backend gap is dependency 13. | Spec requirement; backend does not enforce it. | None. |
+| M1-6 | **"Registrar evaluación" is offered only to the turno's `codInstructor`** (session `codPersona`) for Ponderada and Chequeo Sub Fase; Chequeo and Complementación ask for an evaluator code (defaults to the current user). The backend does not enforce the first rule (dependency 14). | Spec CA-EVA-02; the backend requires `codEvaluador` for non-programmed categories. | UI gate only until the backend enforces it. |
+| M1-7 | **Turno edit/delete is disabled once `fechaEval` is today or earlier**, with the explanation "El turno ya no se puede modificar porque su fecha pasó." | The backend's rule is date-based (`permiteCambios`), not "has evaluations" (its message says otherwise). | Wording only. |
+| M1-8 | **Only the alumno's latest evaluation can be modified or deleted**; other rows show why. | Backend rule (`codEvalRealizada`). | None. |
+| M1-9 | **Alumno pickers by role**: Comandante/Admin `GET /api/grupos/programa/{p}`; Instructor `GET /api/grupos/instructor/{cod}/programa/{p}`; Jefe de Operaciones `GET /api/alumnos/programa/{p}` (also the turno form's source). Contract-first shapes (the instructor projection has a cardinality bug). | Permissions differ per role in `sigeda-back`. | Adapter rework only. |
+| M1-10 | **Aircraft overlap is a client-side warning** from `GET /api/turnos/{fecha}/aeronave/{id}` (contract fixes its path-variable binding); saving is still allowed. | No server-side check exists. | A double booking can still be saved until the backend validates. |
+| M1-11 | **Playwright moves to the first milestone that runs against a live, fixed `sigeda-back`.** M1 relies on component tests over the contract mocks. | The backend is not running and its turno endpoints are broken. | Integration evidence for the thesis arrives later. |
+| M1-12 | **Breadcrumbs arrive in M1** with the first nested screens. | Deferred from M0. | None. |
+
+### 13.3 Acceptance-criteria amendments
+
+- **CA-TUR-01** — list columns: nombre, subfase, programa, fecha de evaluación, cantidad de alumnos, cantidad de maniobras.
+- **CA-TUR-11** — replaced: "Modificar y eliminar solo están disponibles mientras la fecha del turno sea posterior a hoy; si no, se explica el motivo. Eliminar pide confirmación."
+- **CA-EVA-02** — "Solo el instructor asignado al turno ve la acción de registrar la evaluación ponderada o de chequeo de sub fase de sus alumnos, una vez por alumno y turno."
+- **CA-EVA-04** — options per nota mínima exactly as M1-4.
+- **CA-EVA-11** (new) — "La categoría se elige entre las sugeridas por el estado del alumno; en Chequeo y Complementación se indica el código del evaluador."
+- **CA-EVA-12** (new) — "Solo la última evaluación del alumno puede modificarse o eliminarse; en las demás se explica el motivo."
+- **CA-EVA-13** (new) — "Los errores de reglas del backend (alumno no apto, evaluación ya registrada, notas incorrectas) se muestran con su mensaje."
+
+### 13.4 Backend dependencies added
+
+| # | Change | Needed by |
+|---|---|---|
+| 12 | Fix `TurnoRealizado` (`cantAlumno`) and `DetalleTurno` (codInstructor, instructor, aeronave, alumnosTurno with hours) | M1 live |
+| 13 | Require causa/observación/recomendación for below-standard grades | M1 |
+| 14 | Only the turno's instructor may register its Ponderada/Chequeo Sub Fase evaluations | M1 |
+| 15 | Server-side aircraft/alumno schedule overlap check (`HorasInicioFin` is never called) | M1 |
+| 16 | `Alumno_TurnoSave`: default constructor, JSON keys `horaInicio`/`horaFin` | M1 live |
+| 17 | `@PreAuthorize` on 4 `DesaprobadoController` endpoints and `GET /subfases/assigned` | M5 |
+| 18 | Response-key typo `"mensaje:"`, NPE risks in `EvaluacionController.update`, `contD` never incremented, `GrupoController.detail` missing `return` | M1 |
+| 19 | Seed mojibake in `roles` (breaks `Comandante de Escuadrón` permissions) | M1 live |
