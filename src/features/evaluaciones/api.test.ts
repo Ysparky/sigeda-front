@@ -154,4 +154,20 @@ describe('api de evaluaciones', () => {
     await expect(eliminarEvaluacion('555555-3')).resolves.toBe('Evaluación eliminado con éxito.')
     await expect(obtenerUltimaEvaluacion('555555', 'PDI')).resolves.toBe('555555-2')
   })
+
+  it('codifica cada segmento de la ruta', async () => {
+    await iniciarComo('comandante.aguirre')
+    const rutas: string[] = []
+    const registrar = ({ request }: { request: Request }) => {
+      rutas.push(new URL(request.url).pathname)
+    }
+    server.events.on('request:start', registrar)
+    try {
+      await expect(obtenerEvaluacion('../../turnos/8')).rejects.toMatchObject({ status: 404 })
+      await expect(listarEvaluacionesDelTurno('../111111', 1)).resolves.toEqual([])
+    } finally {
+      server.events.removeListener('request:start', registrar)
+    }
+    expect(rutas).toEqual(['/api/evaluaciones/..%2F..%2Fturnos%2F8', '/api/evaluaciones/persona/..%2F111111'])
+  })
 })

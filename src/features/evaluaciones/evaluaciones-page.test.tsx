@@ -120,6 +120,28 @@ describe('Evaluaciones', () => {
     const tabla = await tablaCargada()
     expect(codigos(tabla)).toEqual(['555555-1', '555555-2', '555555-3'])
   })
+
+  it('CA-EVA-12 si falla la recarga de la última evaluación conserva la acción de modificar', async () => {
+    await iniciarComo('comandante.aguirre')
+    const { queryClient } = renderApp('/evaluaciones?alumno=%22555555%22')
+    const tabla = await tablaCargada()
+    await tabla.findByRole('link', { name: 'Modificar' })
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/evaluaciones/filter/persona/:cod`, ({ request }) => {
+        if (new URL(request.url).searchParams.get('size') === '500') {
+          return HttpResponse.text('No se pudo calcular la última evaluación.', { status: 400 })
+        }
+        return undefined
+      }),
+    )
+    await queryClient.invalidateQueries()
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0))
+    expect(screen.queryByText('No se pudo identificar la última evaluación')).not.toBeInTheDocument()
+    expect((await tablaCargada()).getByRole('link', { name: 'Modificar' })).toHaveAttribute(
+      'href',
+      '/evaluaciones/555555-3/editar',
+    )
+  })
 })
 
 describe('Mis evaluaciones', () => {
@@ -129,5 +151,16 @@ describe('Mis evaluaciones', () => {
     const tabla = await tablaCargada()
     expect(codigos(tabla)).toEqual(['111111-1'])
     expect(tabla.queryByRole('columnheader', { name: 'Alumno' })).not.toBeInTheDocument()
+  })
+
+  it('si no cargan las sub fases lo indica bajo el filtro y conserva la lista', async () => {
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/subfases`, () => HttpResponse.text('No disponible.', { status: 400 })),
+    )
+    await iniciarComo('alumno.lopez')
+    renderApp('/mis-evaluaciones')
+    expect(await screen.findByText('No se pudieron cargar las sub fases.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Sub fase')).toBeInTheDocument()
+    expect(codigos(await tablaCargada())).toEqual(['111111-1'])
   })
 })

@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
+import { AvisoDeError } from '@/components/aviso-de-error'
 import { DataTable } from '@/components/data-table'
 import { EmptyState } from '@/components/empty-state'
 import { PageHeader } from '@/components/page-header'
 import { useSesion } from '@/lib/auth/use-sesion'
+import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasTurnos } from './api'
 import { COLUMNAS_MIS_TURNOS } from './columnas'
 
@@ -14,12 +16,15 @@ export function MisTurnosPage() {
   const navegar = ruta.useNavigate()
   const codPersona = useSesion()?.codPersona ?? ''
   const turnos = useQuery({ ...consultasTurnos.delAlumno(codPersona, busqueda), enabled: codPersona !== '' })
+  const errorDeTurnos = errorDePrimeraCarga(turnos)
 
   return (
     <>
       <PageHeader titulo="Mis turnos" descripcion="Sus turnos de vuelo programados." />
       {codPersona === '' ? (
         <EmptyState titulo="Su usuario no tiene una persona asociada" descripcion="Consulte con el administrador." />
+      ) : errorDeTurnos !== null ? (
+        <AvisoDeError error={errorDeTurnos} alReintentar={() => void turnos.refetch()} />
       ) : (
         <DataTable
           etiqueta="Mis turnos"

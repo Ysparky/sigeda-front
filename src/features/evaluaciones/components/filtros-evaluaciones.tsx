@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { Field, FieldLabel } from '@/components/ui/field'
+import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { consultasCatalogos, PROGRAMAS } from '@/features/catalogos/api'
+import { errorDePrimeraCarga } from '@/lib/query'
 import { CLASIFICACIONES_FILTRO, type FiltrosDeEvaluacion } from '../schemas'
 
 type Props = {
@@ -48,6 +49,7 @@ export function FiltrosEvaluaciones({ filtros, alCambiar, children }: Props) {
             </NativeSelectOption>
           ))}
         </NativeSelect>
+        {errorDePrimeraCarga(subfases) !== null && <FieldError>No se pudieron cargar las sub fases.</FieldError>}
       </Field>
       <Field>
         <FieldLabel htmlFor="filtro-clasificacion">Clasificación</FieldLabel>

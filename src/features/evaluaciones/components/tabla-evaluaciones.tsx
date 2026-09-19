@@ -1,16 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useMemo } from 'react'
+import { AvisoDeError } from '@/components/aviso-de-error'
 import { ayudanteDeColumnas } from '@/components/columnas-tabla'
 import { DataTable } from '@/components/data-table'
 import { EmptyState } from '@/components/empty-state'
 import { Enlace } from '@/components/enlace'
 import { StatusBadge } from '@/components/status-badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import type { ParametrosPagina } from '@/lib/api/pagina'
 import { formatearFecha, formatearNota } from '@/lib/formato'
+import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasEvaluaciones, type EvaluacionResumen } from '../api'
 import type { FiltrosDeEvaluacion } from '../schemas'
 
@@ -27,6 +27,7 @@ type Props = {
 
 export function TablaEvaluaciones({ codPersona, filtros, alCambiar, conAlumno, ultima = null, puedeModificar = false }: Props) {
   const evaluaciones = useQuery(consultasEvaluaciones.lista(codPersona, filtros))
+  const error = errorDePrimeraCarga(evaluaciones)
   const columnas = useMemo(
     () =>
       ayudante.columns([
@@ -81,15 +82,7 @@ export function TablaEvaluaciones({ codPersona, filtros, alCambiar, conAlumno, u
     [conAlumno, puedeModificar, ultima],
   )
 
-  if (evaluaciones.isError) {
-    return (
-      <Alert variant="destructive">
-        <AlertDescription>
-          {evaluaciones.error instanceof ApiError ? evaluaciones.error.message : MENSAJE_GENERICO}
-        </AlertDescription>
-      </Alert>
-    )
-  }
+  if (error !== null) return <AvisoDeError error={error} alReintentar={() => void evaluaciones.refetch()} />
 
   return (
     <DataTable

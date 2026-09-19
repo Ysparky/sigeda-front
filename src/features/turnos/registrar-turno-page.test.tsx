@@ -160,6 +160,45 @@ describe('Registrar turno', () => {
     ).toBeInTheDocument()
   })
 
+  it('si no carga un catálogo lo indica bajo su campo y conserva el formulario', async () => {
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/personas/instructor/:tipo`, () =>
+        HttpResponse.text('No disponible.', { status: 400 }),
+      ),
+      http.get(`${config.sigedaApiUrl}/api/maniobras/subfase/:id`, () =>
+        HttpResponse.text('No disponible.', { status: 400 }),
+      ),
+      http.get(`${config.sigedaApiUrl}/api/alumnos/programa/:nombre`, () =>
+        HttpResponse.text('No disponible.', { status: 400 }),
+      ),
+    )
+    const { usuario } = await abrirFormulario()
+    await usuario.type(screen.getByLabelText('Nombre'), 'Navegación Diurna')
+    const instructor = screen.getByLabelText('Instructor').closest('[data-slot="field"]') as HTMLElement
+    expect(await within(instructor).findByText('No se pudieron cargar los instructores.')).toBeInTheDocument()
+    expect(await screen.findByText('No se pudieron cargar los alumnos.')).toBeInTheDocument()
+    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Navegación')
+    expect(await screen.findByText('No se pudieron cargar las maniobras.')).toBeInTheDocument()
+    expect(screen.queryByText('No se pudieron cargar las aeronaves.')).not.toBeInTheDocument()
+    expect(screen.queryByText('No se pudieron cargar las sub fases.')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Nombre')).toHaveValue('Navegación Diurna')
+    expect(screen.getByRole('button', { name: 'Guardar turno' })).toBeInTheDocument()
+  })
+
+  it('si no cargan las aeronaves ni las sub fases lo indica bajo cada campo', async () => {
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/aeronaves`, () => HttpResponse.text('No disponible.', { status: 400 })),
+      http.get(`${config.sigedaApiUrl}/api/subfases`, () => HttpResponse.text('No disponible.', { status: 400 })),
+    )
+    await iniciarComo('jefe.operaciones')
+    renderApp('/turnos/nuevo')
+    const aeronave = (await screen.findByLabelText('Aeronave')).closest('[data-slot="field"]') as HTMLElement
+    const subfase = screen.getByLabelText('Sub fase').closest('[data-slot="field"]') as HTMLElement
+    expect(await within(aeronave).findByText('No se pudieron cargar las aeronaves.')).toBeInTheDocument()
+    expect(await within(subfase).findByText('No se pudieron cargar las sub fases.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Nombre')).toBeInTheDocument()
+  })
+
   it('CA-TUR-13 muestra bajo cada campo los errores de validación del backend', async () => {
     server.use(
       http.post(`${config.sigedaApiUrl}/api/turnos`, () =>

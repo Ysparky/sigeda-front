@@ -93,4 +93,39 @@ describe('Detalle de evaluación', () => {
     expect(await screen.findByText('No se pudo identificar la última evaluación')).toBeInTheDocument()
     expect(screen.getByText('Resultado')).toBeInTheDocument()
   })
+
+  it('CA-EVA-12 si falla la recarga de la última evaluación conserva las acciones y no muestra el aviso', async () => {
+    const { queryClient } = await abrirEvaluacion('comandante.aguirre', '555555-3')
+    expect(await screen.findByRole('link', { name: 'Modificar' })).toHaveAttribute('href', '/evaluaciones/555555-3/editar')
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/evaluaciones/filter/persona/:cod`, ({ request }) => {
+        if (new URL(request.url).searchParams.get('size') === '500') {
+          return HttpResponse.text('No se pudo calcular la última evaluación.', { status: 400 })
+        }
+        return undefined
+      }),
+    )
+    await queryClient.invalidateQueries()
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0))
+    expect(screen.queryByText('No se pudo identificar la última evaluación')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Modificar' })).toHaveAttribute('href', '/evaluaciones/555555-3/editar')
+    expect(screen.getByRole('button', { name: 'Eliminar' })).toBeEnabled()
+  })
+
+  it('un código con separadores de ruta muestra la página no encontrada sin salir de las evaluaciones', async () => {
+    await iniciarComo('comandante.aguirre')
+    const rutas: string[] = []
+    const registrar = ({ request }: { request: Request }) => {
+      rutas.push(new URL(request.url).pathname)
+    }
+    server.events.on('request:start', registrar)
+    try {
+      renderApp('/evaluaciones/..%2F..%2Fturnos%2F8')
+      expect(await screen.findByText('Página no encontrada')).toBeInTheDocument()
+      expect(rutas.filter((ruta) => ruta.startsWith('/api/') && !ruta.startsWith('/api/evaluaciones/'))).toEqual([])
+      expect(rutas.filter((ruta) => !ruta.startsWith('/api/'))).toEqual([])
+    } finally {
+      server.events.removeListener('request:start', registrar)
+    }
+  })
 })

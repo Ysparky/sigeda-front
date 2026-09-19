@@ -1,15 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
-import { CircleAlert, UserSearch } from 'lucide-react'
+import { UserSearch } from 'lucide-react'
+import { AvisoDeError } from '@/components/aviso-de-error'
 import { EmptyState } from '@/components/empty-state'
 import { PageHeader } from '@/components/page-header'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { NativeSelect, NativeSelectOptGroup, NativeSelectOption } from '@/components/ui/native-select'
 import { agruparPorGrupo, consultasCatalogos, fuenteDeAlumnos } from '@/features/catalogos/api'
-import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { usePuede, useSesion } from '@/lib/auth/use-sesion'
 import { MOTIVO_NO_ES_ULTIMA } from '@/lib/dominio/evaluacion'
+import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasEvaluaciones } from './api'
 import { FiltrosEvaluaciones } from './components/filtros-evaluaciones'
 import { TablaEvaluaciones } from './components/tabla-evaluaciones'
@@ -31,6 +31,8 @@ export function EvaluacionesPage() {
     ...consultasEvaluaciones.ultima(busqueda.alumno ?? '', busqueda.programa),
     enabled: puedeModificar && busqueda.alumno !== undefined,
   })
+  const errorDeAlumnos = errorDePrimeraCarga(alumnos)
+  const errorDeUltima = errorDePrimeraCarga(ultima)
 
   function cambiar(cambios: Partial<BusquedaEvaluaciones>) {
     void navegar({ search: (previa) => ({ ...previa, page: 0, ...cambios }) })
@@ -61,14 +63,12 @@ export function EvaluacionesPage() {
           </NativeSelect>
         </Field>
       </FiltrosEvaluaciones>
-      {alumnos.isError && (
-        <Alert variant="destructive">
-          <CircleAlert />
-          <AlertTitle>No se pudieron cargar los alumnos</AlertTitle>
-          <AlertDescription>
-            {alumnos.error instanceof ApiError ? alumnos.error.message : MENSAJE_GENERICO}
-          </AlertDescription>
-        </Alert>
+      {errorDeAlumnos !== null && (
+        <AvisoDeError
+          titulo="No se pudieron cargar los alumnos"
+          error={errorDeAlumnos}
+          alReintentar={() => void alumnos.refetch()}
+        />
       )}
       {busqueda.alumno === undefined ? (
         <EmptyState
@@ -79,14 +79,12 @@ export function EvaluacionesPage() {
       ) : (
         <>
           {puedeModificar &&
-            (ultima.isError ? (
-              <Alert variant="destructive">
-                <CircleAlert />
-                <AlertTitle>No se pudo identificar la última evaluación</AlertTitle>
-                <AlertDescription>
-                  {ultima.error instanceof ApiError ? ultima.error.message : MENSAJE_GENERICO}
-                </AlertDescription>
-              </Alert>
+            (errorDeUltima !== null ? (
+              <AvisoDeError
+                titulo="No se pudo identificar la última evaluación"
+                error={errorDeUltima}
+                alReintentar={() => void ultima.refetch()}
+              />
             ) : (
               <p className="text-sm text-muted-foreground">{MOTIVO_NO_ES_ULTIMA}</p>
             ))}

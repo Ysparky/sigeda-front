@@ -1,17 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { CalendarPlus, PlaneTakeoff } from 'lucide-react'
+import { AvisoDeError } from '@/components/aviso-de-error'
 import { DataTable } from '@/components/data-table'
 import { EmptyState } from '@/components/empty-state'
 import { PageHeader } from '@/components/page-header'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Field, FieldLabel } from '@/components/ui/field'
+import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { consultasCatalogos, PROGRAMAS } from '@/features/catalogos/api'
-import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { usePuede } from '@/lib/auth/use-sesion'
+import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasTurnos } from './api'
 import { COLUMNAS_TURNOS } from './columnas'
 import type { BusquedaTurnos } from './schemas'
@@ -24,6 +24,7 @@ export function TurnosPage() {
   const puedeProgramar = usePuede('Manage Shifts')
   const subfases = useQuery(consultasCatalogos.subfases())
   const turnos = useQuery(consultasTurnos.lista(busqueda))
+  const errorDeTurnos = errorDePrimeraCarga(turnos)
 
   function cambiar(cambios: Partial<BusquedaTurnos>) {
     void navegar({ search: (previa) => ({ ...previa, page: 0, ...cambios }) })
@@ -88,6 +89,7 @@ export function TurnosPage() {
               </NativeSelectOption>
             ))}
           </NativeSelect>
+          {errorDePrimeraCarga(subfases) !== null && <FieldError>No se pudieron cargar las sub fases.</FieldError>}
         </Field>
         <Field>
           <FieldLabel htmlFor="filtro-desde">Desde</FieldLabel>
@@ -118,10 +120,8 @@ export function TurnosPage() {
       {(busqueda.desde === undefined) !== (busqueda.hasta === undefined) && (
         <p className="text-sm text-muted-foreground">Indique ambas fechas para filtrar por rango.</p>
       )}
-      {turnos.isError ? (
-        <Alert variant="destructive">
-          <AlertDescription>{turnos.error instanceof ApiError ? turnos.error.message : MENSAJE_GENERICO}</AlertDescription>
-        </Alert>
+      {errorDeTurnos !== null ? (
+        <AvisoDeError error={errorDeTurnos} alReintentar={() => void turnos.refetch()} />
       ) : (
         <DataTable
           etiqueta="Turnos programados"

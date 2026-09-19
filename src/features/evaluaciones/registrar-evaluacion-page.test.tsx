@@ -122,6 +122,19 @@ describe('Registrar evaluación', () => {
     expect(await screen.findAllByText('Califique la maniobra.')).toHaveLength(6)
   })
 
+  it('CA-EVA-06 al guardar enfoca la primera maniobra sin calificar y la marca como inválida', async () => {
+    const { usuario } = await abrirFormulario()
+    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Contacto Medio')
+    await usuario.selectOptions(screen.getByLabelText('Categoría'), 'Ponderada')
+    await calificar(usuario, 'Maniobra 1', 'B')
+    await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
+    const grupo = screen.getByRole('radiogroup', { name: 'Calificación de Maniobra 2' })
+    await waitFor(() => expect(grupo).toContainElement(document.activeElement as HTMLElement))
+    expect(grupo).toHaveAttribute('aria-invalid', 'true')
+    expect(grupo).toHaveAccessibleDescription('Califique la maniobra.')
+    expect(screen.getByRole('radiogroup', { name: 'Calificación de Maniobra 1' })).toHaveAttribute('aria-invalid', 'false')
+  })
+
   it('CA-EVA-05 una calificación bajo el estándar exige observación, causa y recomendación', async () => {
     const { usuario } = await abrirFormulario()
     await calificar(usuario, 'Maniobra 1', 'R')

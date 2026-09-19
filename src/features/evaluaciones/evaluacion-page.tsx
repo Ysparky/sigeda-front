@@ -1,13 +1,13 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { CircleAlert, Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { toast } from 'sonner'
+import { AvisoDeError } from '@/components/aviso-de-error'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Enlace, EnlaceExterno } from '@/components/enlace'
 import { PageHeader } from '@/components/page-header'
 import { StatusBadge } from '@/components/status-badge'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -18,6 +18,7 @@ import { esBajoEstandar } from '@/lib/dominio/dirbe'
 import { MOTIVO_NO_ES_ULTIMA } from '@/lib/dominio/evaluacion'
 import { CLASES_ETIQUETA_DEBRIEFING } from '@/lib/dominio/tonos'
 import { formatearFecha, formatearNota } from '@/lib/formato'
+import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasEvaluaciones, useEliminarEvaluacion } from './api'
 
 function Dato({ etiqueta, children }: { etiqueta: string; children: ReactNode }) {
@@ -39,6 +40,7 @@ export function EvaluacionPage({ codigo }: { codigo: string }) {
     enabled: puedeModificar,
   })
   const esUltima = ultima.data === evaluacion.codigo
+  const errorDeUltima = errorDePrimeraCarga(ultima)
 
   function confirmarEliminacion() {
     eliminar.mutate(evaluacion.codigo, {
@@ -88,16 +90,14 @@ export function EvaluacionPage({ codigo }: { codigo: string }) {
           )
         }
       />
-      {puedeModificar && ultima.isError && (
-        <Alert variant="destructive">
-          <CircleAlert />
-          <AlertTitle>No se pudo identificar la última evaluación</AlertTitle>
-          <AlertDescription>
-            {ultima.error instanceof ApiError ? ultima.error.message : MENSAJE_GENERICO}
-          </AlertDescription>
-        </Alert>
+      {puedeModificar && errorDeUltima !== null && (
+        <AvisoDeError
+          titulo="No se pudo identificar la última evaluación"
+          error={errorDeUltima}
+          alReintentar={() => void ultima.refetch()}
+        />
       )}
-      {puedeModificar && ultima.isSuccess && !esUltima && (
+      {puedeModificar && ultima.data !== undefined && !esUltima && (
         <p className="text-sm text-muted-foreground">{MOTIVO_NO_ES_ULTIMA}</p>
       )}
       <Card>

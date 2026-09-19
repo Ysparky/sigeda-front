@@ -129,6 +129,44 @@ describe('Detalle de turno', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Contacto Básico' })).toBeInTheDocument()
   })
 
+  it('CA-TUR-14 en un turno compartido el alumno ve solo su propio vuelo', async () => {
+    const consultados: string[] = []
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/evaluaciones/persona/:cod`, ({ params }) => {
+        consultados.push(String(params.cod))
+        return undefined
+      }),
+    )
+    const { queryClient } = await abrirTurno('alumno.lopez', 8)
+    expect(screen.getByRole('region', { name: 'Oscar Lopez' })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Ana Torres' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Ana Torres')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Hoja de briefing' })).toHaveLength(1)
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0))
+    expect(consultados).toEqual(['111111'])
+  })
+
+  it('si no carga la evaluación de un alumno lo indica en vez de darla por pendiente', async () => {
+    let fallas = 1
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/evaluaciones/persona/:cod`, () => {
+        if (fallas-- > 0) return HttpResponse.text('No se pudo consultar la evaluación.', { status: 400 })
+        return undefined
+      }),
+    )
+    const { usuario } = await abrirTurno('instructor.perez', 2)
+    const tarjeta = within(screen.getByRole('region', { name: 'Juan Falconi' }))
+    expect(await tarjeta.findByText('No se pudo cargar la evaluación de este alumno')).toBeInTheDocument()
+    expect(tarjeta.getByText('No se pudo consultar la evaluación.')).toBeInTheDocument()
+    expect(tarjeta.queryByText('Evaluación pendiente')).not.toBeInTheDocument()
+    expect(tarjeta.queryByText('Pendiente')).not.toBeInTheDocument()
+    expect(tarjeta.getByRole('link', { name: 'Hoja de briefing' })).toBeInTheDocument()
+    await usuario.click(tarjeta.getByRole('button', { name: 'Reintentar' }))
+    expect(await tarjeta.findByRole('link', { name: 'Registrar evaluación' })).toHaveAttribute('href', '/turnos/2/evaluar/222222')
+    expect(tarjeta.getByText('Evaluación pendiente')).toBeInTheDocument()
+    expect(tarjeta.queryByText('No se pudo cargar la evaluación de este alumno')).not.toBeInTheDocument()
+  })
+
   it('un turno inexistente muestra la página no encontrada', async () => {
     await iniciarComo('jefe.operaciones')
     renderApp('/turnos/999')

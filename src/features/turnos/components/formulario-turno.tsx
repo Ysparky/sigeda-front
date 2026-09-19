@@ -28,6 +28,7 @@ import { NOTAS_DIRBE } from '@/lib/dominio/dirbe'
 import { conflictosDeAeronave } from '@/lib/dominio/turno'
 import { termino } from '@/lib/dominio/vocabulario'
 import { aplicarErroresDeCampo } from '@/lib/formularios'
+import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasTurnos, useGuardarTurno } from '../api'
 import { aCuerpoTurno, crearEsquemaTurno, type ValoresTurno } from '../schemas'
 
@@ -190,6 +191,7 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
                   </NativeSelect>
                 )}
               />
+              {errorDePrimeraCarga(subfases) !== null && <FieldError>No se pudieron cargar las sub fases.</FieldError>}
               <FieldError errors={[errors.idSubfase]} />
             </Field>
             <Field data-invalid={Boolean(errors.codInstructor)}>
@@ -207,6 +209,9 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
                   </NativeSelectOption>
                 ))}
               </NativeSelect>
+              {errorDePrimeraCarga(instructores) !== null && (
+                <FieldError>No se pudieron cargar los instructores.</FieldError>
+              )}
               <FieldError errors={[errors.codInstructor]} />
             </Field>
             <Field data-invalid={Boolean(errors.idAeronave)}>
@@ -227,6 +232,7 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
                 ))}
               </NativeSelect>
               <FieldDescription>Solo se pueden elegir aeronaves disponibles.</FieldDescription>
+              {errorDePrimeraCarga(aeronaves) !== null && <FieldError>No se pudieron cargar las aeronaves.</FieldError>}
               <FieldError errors={[errors.idAeronave]} />
             </Field>
           </FieldGroup>
@@ -252,6 +258,7 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
           {alumnos.fields.length === 0 && (
             <p className="text-sm text-muted-foreground">Agregue a los alumnos que vuelan en este turno.</p>
           )}
+          {errorDePrimeraCarga(opcionesAlumnos) !== null && <FieldError>No se pudieron cargar los alumnos.</FieldError>}
           {alumnos.fields.map((fila, indice) => {
             const error = errors.alumnosTurno?.[indice]
             const numero = indice + 1
@@ -354,6 +361,9 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
             opcionesManiobras.data?.length === 0 && (
               <p className="text-sm text-muted-foreground">La sub fase no tiene maniobras asignadas.</p>
             )
+          )}
+          {errorDePrimeraCarga(opcionesManiobras) !== null && (
+            <FieldError>No se pudieron cargar las maniobras.</FieldError>
           )}
           {maniobras.fields.map((fila, indice) => {
             const error = errors.maniobrasTurno?.[indice]

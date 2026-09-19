@@ -192,44 +192,45 @@ export async function listarEvaluaciones(
   codPersona: string,
   filtros: FiltrosEvaluaciones,
 ): Promise<Pagina<EvaluacionResumen>> {
-  const pagina = await sigeda.pagina<EvaluacionResumenApi>(`/api/evaluaciones/filter/persona/${codPersona}`, {
-    idSubfase: filtros.idSubfase,
-    nombre: filtros.programa,
-    clasificacion: filtros.clasificacion,
-    page: filtros.page,
-    size: filtros.size,
-    property: filtros.property,
-    direction: filtros.direction,
-  })
+  const pagina = await sigeda.pagina<EvaluacionResumenApi>(
+    `/api/evaluaciones/filter/persona/${encodeURIComponent(codPersona)}`,
+    {
+      idSubfase: filtros.idSubfase,
+      nombre: filtros.programa,
+      clasificacion: filtros.clasificacion,
+      page: filtros.page,
+      size: filtros.size,
+      property: filtros.property,
+      direction: filtros.direction,
+    },
+  )
   return { ...pagina, items: pagina.items.map(aEvaluacionResumen) }
 }
 
 export async function listarEvaluacionesDelTurno(codPersona: string, idTurno: number): Promise<EvaluacionResumen[]> {
-  const pagina = await sigeda.pagina<EvaluacionResumenApi>(`/api/evaluaciones/persona/${codPersona}`, {
-    idTurno,
-    page: 0,
-    size: 50,
-  })
+  const pagina = await sigeda.pagina<EvaluacionResumenApi>(
+    `/api/evaluaciones/persona/${encodeURIComponent(codPersona)}`,
+    { idTurno, page: 0, size: 50 },
+  )
   return pagina.items
     .filter((evaluacion) => perteneceAlTurno(evaluacion.codigo, codPersona, idTurno))
     .map(aEvaluacionResumen)
 }
 
 export async function obtenerUltimaEvaluacion(codPersona: string, programa: string): Promise<string | null> {
-  const pagina = await sigeda.pagina<EvaluacionResumenApi>(`/api/evaluaciones/filter/persona/${codPersona}`, {
-    nombre: programa,
-    page: 0,
-    size: 500,
-  })
+  const pagina = await sigeda.pagina<EvaluacionResumenApi>(
+    `/api/evaluaciones/filter/persona/${encodeURIComponent(codPersona)}`,
+    { nombre: programa, page: 0, size: 500 },
+  )
   return ultimaEvaluacion(pagina.items)
 }
 
 export async function obtenerEvaluacion(codigo: string): Promise<EvaluacionDetalle> {
-  return aEvaluacionDetalle(await sigeda.get<EvaluacionApi>(`/api/evaluaciones/${codigo}`))
+  return aEvaluacionDetalle(await sigeda.get<EvaluacionApi>(`/api/evaluaciones/${encodeURIComponent(codigo)}`))
 }
 
 export async function sugerirCategorias(codPersona: string): Promise<Categoria[]> {
-  const sugeridas = await sigeda.lista<string>(`/api/personas/${codPersona}/status`)
+  const sugeridas = await sigeda.lista<string>(`/api/personas/${encodeURIComponent(codPersona)}/status`)
   return sugeridas.filter(esCategoria)
 }
 
@@ -238,15 +239,16 @@ export async function registrarEvaluacion(
   codPersona: string,
   cuerpo: CuerpoEvaluacion,
 ): Promise<EvaluacionGuardada> {
-  return aEvaluacionGuardada(await sigeda.post<unknown>(`/api/evaluaciones/turno/${idTurno}/persona/${codPersona}`, cuerpo))
+  const ruta = `/api/evaluaciones/turno/${encodeURIComponent(idTurno)}/persona/${encodeURIComponent(codPersona)}`
+  return aEvaluacionGuardada(await sigeda.post<unknown>(ruta, cuerpo))
 }
 
 export async function modificarEvaluacion(codigo: string, cuerpo: CuerpoEvaluacion): Promise<EvaluacionGuardada> {
-  return aEvaluacionGuardada(await sigeda.put<unknown>(`/api/evaluaciones/${codigo}`, cuerpo))
+  return aEvaluacionGuardada(await sigeda.put<unknown>(`/api/evaluaciones/${encodeURIComponent(codigo)}`, cuerpo))
 }
 
 export async function eliminarEvaluacion(codigo: string): Promise<string> {
-  const respuesta = await sigeda.eliminar<unknown>(`/api/evaluaciones/${codigo}`)
+  const respuesta = await sigeda.eliminar<unknown>(`/api/evaluaciones/${encodeURIComponent(codigo)}`)
   return typeof respuesta === 'string' && respuesta.trim() !== '' ? respuesta : MENSAJE_EVALUACION_ELIMINADA
 }
 

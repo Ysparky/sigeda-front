@@ -2,6 +2,7 @@ import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { CircleAlert } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { AvisoDeError } from '@/components/aviso-de-error'
 import { Enlace } from '@/components/enlace'
 import { PageHeader } from '@/components/page-header'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -9,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { consultasTurnos } from '@/features/turnos/api'
 import { useSesion } from '@/lib/auth/use-sesion'
-import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
+import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasEvaluaciones, useRegistrarEvaluacion } from './api'
 import { FormularioEvaluacion } from './components/formulario-evaluacion'
 import { valoresDeEvaluacion } from './schemas'
@@ -40,6 +41,12 @@ export function RegistrarEvaluacionPage({ id, codAlumno }: { id: number; codAlum
     </Link>
   )
 
+  function reintentar() {
+    for (const consulta of [existentes, categorias]) {
+      if (consulta.isError) void consulta.refetch()
+    }
+  }
+
   function contenido() {
     if (!esSuInstructor) return <Aviso titulo="No disponible">{MENSAJE_SOLO_INSTRUCTOR}</Aviso>
     if (existentes.isPending || categorias.isPending) return <Skeleton className="h-64 w-full" />
@@ -55,14 +62,14 @@ export function RegistrarEvaluacionPage({ id, codAlumno }: { id: number; codAlum
         </Aviso>
       )
     }
-    const fallo = (existentes.data === undefined ? existentes.error : null) ?? (categorias.data === undefined ? categorias.error : null)
-    if (fallo) {
+    const fallo = errorDePrimeraCarga(existentes, categorias)
+    if (fallo !== null) {
       return (
-        <Alert variant="destructive">
-          <CircleAlert />
-          <AlertTitle>No se pudieron cargar los datos de la evaluación</AlertTitle>
-          <AlertDescription>{fallo instanceof ApiError ? fallo.message : MENSAJE_GENERICO}</AlertDescription>
-        </Alert>
+        <AvisoDeError
+          titulo="No se pudieron cargar los datos de la evaluación"
+          error={fallo}
+          alReintentar={reintentar}
+        />
       )
     }
     const sugeridas = categorias.data ?? []

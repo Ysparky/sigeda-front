@@ -1,12 +1,13 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { CircleAlert } from 'lucide-react'
+import { AvisoDeError } from '@/components/aviso-de-error'
 import { PageHeader } from '@/components/page-header'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { MOTIVO_NO_ES_ULTIMA } from '@/lib/dominio/evaluacion'
+import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasEvaluaciones, useModificarEvaluacion } from './api'
 import { FormularioEvaluacion } from './components/formulario-evaluacion'
 import { valoresDeEvaluacion } from './schemas'
@@ -25,15 +26,14 @@ export function ModificarEvaluacionPage({ codigo }: { codigo: string }) {
 
   function contenido() {
     if (ultima.isPending) return <Skeleton className="h-64 w-full" />
-    if (ultima.isError && ultima.data === undefined) {
+    const fallo = errorDePrimeraCarga(ultima)
+    if (fallo !== null) {
       return (
-        <Alert variant="destructive">
-          <CircleAlert />
-          <AlertTitle>No se pudo identificar la última evaluación</AlertTitle>
-          <AlertDescription>
-            {ultima.error instanceof ApiError ? ultima.error.message : MENSAJE_GENERICO}
-          </AlertDescription>
-        </Alert>
+        <AvisoDeError
+          titulo="No se pudo identificar la última evaluación"
+          error={fallo}
+          alReintentar={() => void ultima.refetch()}
+        />
       )
     }
     if (ultima.data !== evaluacion.codigo || evaluacion.categoria === null) {

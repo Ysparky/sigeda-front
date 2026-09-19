@@ -83,4 +83,35 @@ describe('Modificar turno', () => {
     expect(screen.getByText('Catálogo no disponible.')).toBeInTheDocument()
     expect(screen.queryByLabelText('Nombre')).not.toBeInTheDocument()
   })
+
+  it('conserva el formulario si falla la recarga de un catálogo', async () => {
+    const { usuario, queryClient } = await abrirEdicion()
+    await usuario.clear(await screen.findByLabelText('Nombre'))
+    await usuario.type(screen.getByLabelText('Nombre'), 'Navegación Nocturna II')
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/aeronaves`, () =>
+        HttpResponse.text('Catálogo no disponible.', { status: 400 }),
+      ),
+    )
+    await queryClient.invalidateQueries()
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0))
+    expect(screen.getByLabelText('Nombre')).toHaveValue('Navegación Nocturna II')
+    expect(screen.getByLabelText('Aeronave')).toHaveValue('1')
+    expect(screen.queryByText('No se pudieron cargar los datos del formulario')).not.toBeInTheDocument()
+    expect(screen.queryByText('No se pudieron cargar las aeronaves.')).not.toBeInTheDocument()
+  })
+
+  it('si no cargan los catálogos permite reintentar', async () => {
+    let fallas = 1
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/aeronaves`, () => {
+        if (fallas-- > 0) return HttpResponse.text('Catálogo no disponible.', { status: 400 })
+        return undefined
+      }),
+    )
+    const { usuario } = await abrirEdicion()
+    await screen.findByText('No se pudieron cargar los datos del formulario')
+    await usuario.click(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByLabelText('Nombre')).toHaveValue('Navegación Nocturna')
+  })
 })

@@ -493,3 +493,5 @@ Read from `sigeda-back` source (branch `main`, commit `ec2b0dd`); the backend an
 | 17 | `@PreAuthorize` on 4 `DesaprobadoController` endpoints and `GET /subfases/assigned` | M5 |
 | 18 | Response-key typo `"mensaje:"`, NPE risks in `EvaluacionController.update`, `contD` never incremented, `GrupoController.detail` missing `return` | M1 |
 | 19 | Seed mojibake in `roles` (breaks `Comandante de Escuadrón` permissions) | M1 live |
+| 20 | Enforce alumno ownership server-side: `GET /api/turnos/{id}`, `/api/turnos/alumno?codAlumno=` and `/api/evaluaciones/**` are `Read` for any role; the frontend check is UI-only | M1 |
+| 21 | Add `idSubfase` to `DetalleTurno` (Modificar turno recovers it by name today) | M1 live |

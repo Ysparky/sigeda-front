@@ -35,6 +35,7 @@ export function GrillaCalificaciones({ control, register, errores }: Props) {
         const error = errores?.[indice]
         const permitidas = esNotaDirbe(calificacion.notaMin) ? opcionesDeNota(calificacion.notaMin) : []
         const bajo = esBajoEstandar(calificacion.notaMin, calificacion.nota)
+        const idErrorNota = `calificacion-${indice}-nota-error`
         return (
           <FieldSet key={calificacion.idManiobra} className="rounded-lg border p-4">
             <FieldLegend className="flex flex-wrap items-center gap-2">
@@ -52,6 +53,8 @@ export function GrillaCalificaciones({ control, register, errores }: Props) {
                     variant="outline"
                     spacing={0}
                     aria-label={`Calificación de ${calificacion.maniobra}`}
+                    aria-invalid={Boolean(error?.nota)}
+                    aria-describedby={error?.nota ? idErrorNota : undefined}
                     value={field.value}
                     onValueChange={(valor) => {
                       if (valor) field.onChange(valor)
@@ -60,6 +63,7 @@ export function GrillaCalificaciones({ control, register, errores }: Props) {
                     {NOTAS_DIRBE.map((nota) => (
                       <ToggleGroupItem
                         key={nota}
+                        ref={nota === permitidas[0] ? field.ref : undefined}
                         value={nota}
                         disabled={!permitidas.includes(nota)}
                         aria-label={`${nota} (${CALIFICATIVOS[nota].descripcion})`}
@@ -71,7 +75,7 @@ export function GrillaCalificaciones({ control, register, errores }: Props) {
                   </ToggleGroup>
                 )}
               />
-              <FieldError errors={[error?.nota]} />
+              <FieldError id={idErrorNota} errors={[error?.nota]} />
             </Field>
             {bajo && (
               <div className="grid gap-3 md:grid-cols-3">

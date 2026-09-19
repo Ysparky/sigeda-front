@@ -49,7 +49,7 @@ export async function listarSubfases(): Promise<Subfase[]> {
 }
 
 export function listarManiobrasDeSubfase(idSubfase: number): Promise<Maniobra[]> {
-  return sigeda.lista<Maniobra>(`/api/maniobras/subfase/${idSubfase}`)
+  return sigeda.lista<Maniobra>(`/api/maniobras/subfase/${encodeURIComponent(idSubfase)}`)
 }
 
 export async function listarAeronaves(): Promise<Aeronave[]> {
@@ -89,14 +89,14 @@ export async function listarAlumnos(
   codPersona: string | null,
 ): Promise<OpcionAlumno[]> {
   if (fuente === 'programacion') {
-    const grupos = await sigeda.lista<GrupoByPrograma>(`/api/alumnos/programa/${programa}`)
+    const grupos = await sigeda.lista<GrupoByPrograma>(`/api/alumnos/programa/${encodeURIComponent(programa)}`)
     return sinRepetidos(grupos.flatMap((grupo) => grupo.personas.map((persona) => aOpcion(persona, grupo.nombre))))
   }
   if (fuente === 'todos') {
-    const pagina = await sigeda.pagina<{ personas: AlumnoConGrupo[] }>(`/api/grupos/programa/${programa}`, {
-      page: 0,
-      size: 100,
-    })
+    const pagina = await sigeda.pagina<{ personas: AlumnoConGrupo[] }>(
+      `/api/grupos/programa/${encodeURIComponent(programa)}`,
+      { page: 0, size: 100 },
+    )
     return sinRepetidos(
       pagina.items.flatMap((grupo) =>
         grupo.personas.map((persona) => aOpcion(persona, persona.idGrupo === null ? null : `Grupo ${persona.idGrupo}`)),
@@ -105,7 +105,7 @@ export async function listarAlumnos(
   }
   if (!codPersona) return []
   const pagina = await sigeda.pagina<{ persona: AlumnoConGrupo[] | AlumnoConGrupo }>(
-    `/api/grupos/instructor/${codPersona}/programa/${programa}`,
+    `/api/grupos/instructor/${encodeURIComponent(codPersona)}/programa/${encodeURIComponent(programa)}`,
     { page: 0, size: 100 },
   )
   return sinRepetidos(

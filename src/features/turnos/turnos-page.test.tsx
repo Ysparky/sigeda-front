@@ -1,5 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { config } from '@/lib/config'
+import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
 
 async function tablaDeTurnos() {
@@ -84,6 +87,30 @@ describe('Programación de turnos', () => {
     await tablaDeTurnos()
     expect(screen.queryByRole('link', { name: 'Registrar turno' })).not.toBeInTheDocument()
   })
+
+  it('si no cargan las sub fases lo indica bajo el filtro y conserva la lista', async () => {
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/subfases`, () => HttpResponse.text('No disponible.', { status: 400 })),
+    )
+    await iniciarComo('jefe.operaciones')
+    renderApp('/turnos')
+    expect(await screen.findByText('No se pudieron cargar las sub fases.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Sub fase')).toBeInTheDocument()
+    expect(nombresEnTabla(await tablaDeTurnos())).toContain('Navegación Nocturna')
+  })
+
+  it('conserva la lista si falla una recarga en segundo plano', async () => {
+    await iniciarComo('jefe.operaciones')
+    const { queryClient } = renderApp('/turnos')
+    await tablaDeTurnos()
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/turnos`, () => HttpResponse.text('No se pudo recargar.', { status: 400 })),
+    )
+    await queryClient.invalidateQueries()
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0))
+    expect(screen.queryByText('No se pudo recargar.')).not.toBeInTheDocument()
+    expect(nombresEnTabla(await tablaDeTurnos())).toContain('Navegación Nocturna')
+  })
 })
 
 describe('Mis turnos', () => {
@@ -93,5 +120,25 @@ describe('Mis turnos', () => {
     await screen.findByText(/^Página \d+ de \d+/)
     const tabla = within(screen.getByRole('table', { name: 'Mis turnos' }))
     expect(nombresEnTabla(tabla)).toEqual(['Contacto Básico', 'Navegación Nocturna'])
+  })
+
+  it('si no cargan sus turnos lo indica y permite reintentar', async () => {
+    let fallas = 1
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/turnos/alumno`, () => {
+        if (fallas-- > 0) return HttpResponse.text('No se pudo listar sus turnos.', { status: 400 })
+        return undefined
+      }),
+    )
+    await iniciarComo('alumno.lopez')
+    const { usuario } = renderApp('/mis-turnos')
+    expect(await screen.findByText('No se pudo listar sus turnos.')).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Mis turnos' })).not.toBeInTheDocument()
+    await usuario.click(screen.getByRole('button', { name: 'Reintentar' }))
+    await screen.findByText(/^Página \d+ de \d+/)
+    expect(nombresEnTabla(within(screen.getByRole('table', { name: 'Mis turnos' })))).toEqual([
+      'Contacto Básico',
+      'Navegación Nocturna',
+    ])
   })
 })

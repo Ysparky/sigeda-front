@@ -16,3 +16,7 @@ export function crearQueryClient() {
     },
   })
 }
+
+export function errorDePrimeraCarga(...consultas: Array<{ error: unknown; data: unknown }>): unknown {
+  return consultas.find((consulta) => consulta.data === undefined && consulta.error)?.error ?? null
+}

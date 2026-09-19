@@ -166,11 +166,13 @@ export async function listarTurnosDelAlumno(
 }
 
 export async function obtenerTurno(id: number): Promise<TurnoDetalle> {
-  return aTurnoDetalle(await sigeda.get<DetalleTurnoApi>(`/api/turnos/${id}`))
+  return aTurnoDetalle(await sigeda.get<DetalleTurnoApi>(`/api/turnos/${encodeURIComponent(id)}`))
 }
 
 export async function listarOcupacionAeronave(fecha: string, idAeronave: number): Promise<OcupacionAeronave[]> {
-  const ocupaciones = await sigeda.lista<OcupacionApi>(`/api/turnos/${fecha}/aeronave/${idAeronave}`)
+  const ocupaciones = await sigeda.lista<OcupacionApi>(
+    `/api/turnos/${encodeURIComponent(fecha)}/aeronave/${encodeURIComponent(idAeronave)}`,
+  )
   return ocupaciones.flatMap((ocupacion) =>
     ocupacion.horaInicio && ocupacion.horaFin
       ? [{ idTurno: ocupacion.id, nombre: ocupacion.nombre, horaInicio: ocupacion.horaInicio, horaFin: ocupacion.horaFin }]
@@ -195,7 +197,7 @@ export async function crearTurno(cuerpo: CuerpoTurno): Promise<TurnoGuardado> {
 export async function modificarTurno(id: number, cuerpo: CuerpoTurno): Promise<TurnoGuardado> {
   const { nombre, fechaEval, codInstructor, aeronave, alumnosTurno, maniobrasTurno } = cuerpo
   return aTurnoGuardado(
-    await sigeda.put<unknown>(`/api/turnos/${id}`, {
+    await sigeda.put<unknown>(`/api/turnos/${encodeURIComponent(id)}`, {
       nombre,
       fechaEval,
       codInstructor,
@@ -207,7 +209,7 @@ export async function modificarTurno(id: number, cuerpo: CuerpoTurno): Promise<T
 }
 
 export async function eliminarTurno(id: number): Promise<string> {
-  const respuesta = await sigeda.eliminar<unknown>(`/api/turnos/${id}`)
+  const respuesta = await sigeda.eliminar<unknown>(`/api/turnos/${encodeURIComponent(id)}`)
   return typeof respuesta === 'string' && respuesta.trim() !== '' ? respuesta : MENSAJE_TURNO_ELIMINADO
 }
 

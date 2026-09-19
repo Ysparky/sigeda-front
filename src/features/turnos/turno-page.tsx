@@ -3,6 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { ClipboardPen, FileText, Pencil, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { toast } from 'sonner'
+import { AvisoDeError } from '@/components/aviso-de-error'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { PageHeader } from '@/components/page-header'
 import { StatusBadge } from '@/components/status-badge'
@@ -11,10 +12,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { consultasEvaluaciones } from '@/features/evaluaciones/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
+import { veSoloLoPropio } from '@/lib/auth/pantallas'
 import { usePuede, useSesion } from '@/lib/auth/use-sesion'
 import { etapasDeMision } from '@/lib/dominio/briefing'
 import { MOTIVO_TURNO_VENCIDO, permiteCambios } from '@/lib/dominio/turno'
 import { formatearFecha } from '@/lib/formato'
+import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasTurnos, useEliminarTurno, type AlumnoDelTurno, type TurnoDetalle } from './api'
 import { LineaDeTiempo } from './components/linea-de-tiempo'
 
@@ -31,10 +34,12 @@ type PropsAlumno = {
   turno: TurnoDetalle
   alumno: AlumnoDelTurno
   evaluaciones: { codigo: string }[] | undefined
+  error: unknown
+  alReintentar: () => void
   puedeEvaluar: boolean
 }
 
-function TarjetaAlumno({ turno, alumno, evaluaciones, puedeEvaluar }: PropsAlumno) {
+function TarjetaAlumno({ turno, alumno, evaluaciones, error, alReintentar, puedeEvaluar }: PropsAlumno) {
   const evaluada = (evaluaciones?.length ?? 0) > 0
   const idTitulo = `alumno-${alumno.codAlumno}`
   const params = { id: String(turno.id), alumno: alumno.codAlumno }
@@ -75,7 +80,15 @@ function TarjetaAlumno({ turno, alumno, evaluaciones, puedeEvaluar }: PropsAlumn
         </div>
       </CardHeader>
       <CardContent>
-        <LineaDeTiempo etapas={etapasDeMision({ fechaEval: turno.fechaEval, ...alumno }, evaluada)} />
+        {error === null ? (
+          <LineaDeTiempo etapas={etapasDeMision({ fechaEval: turno.fechaEval, ...alumno }, evaluada)} />
+        ) : (
+          <AvisoDeError
+            titulo="No se pudo cargar la evaluación de este alumno"
+            error={error}
+            alReintentar={alReintentar}
+          />
+        )}
       </CardContent>
     </Card>
   )
@@ -88,8 +101,12 @@ export function TurnoPage({ id }: { id: number }) {
   const puedeEscribir = usePuede('Write')
   const navegar = useNavigate()
   const eliminar = useEliminarTurno()
+  const alumnos =
+    actual && veSoloLoPropio(actual)
+      ? turno.alumnos.filter((alumno) => alumno.codAlumno === actual.codPersona)
+      : turno.alumnos
   const evaluaciones = useQueries({
-    queries: turno.alumnos.map((alumno) => consultasEvaluaciones.delTurno(alumno.codAlumno, turno.id)),
+    queries: alumnos.map((alumno) => consultasEvaluaciones.delTurno(alumno.codAlumno, turno.id)),
   })
   const modificable = permiteCambios(turno.fechaEval)
   const esSuInstructor = puedeEscribir && actual?.codPersona != null && actual.codPersona === turno.codInstructor
@@ -204,15 +221,20 @@ export function TurnoPage({ id }: { id: number }) {
         <h2 id="titulo-alumnos" className="text-lg font-semibold tracking-tight">
           Alumnos y ciclo de la misión
         </h2>
-        {turno.alumnos.map((alumno, indice) => (
-          <TarjetaAlumno
-            key={alumno.codAlumno}
-            turno={turno}
-            alumno={alumno}
-            evaluaciones={evaluaciones[indice]?.data}
-            puedeEvaluar={esSuInstructor}
-          />
-        ))}
+        {alumnos.map((alumno, indice) => {
+          const consulta = evaluaciones[indice]
+          return (
+            <TarjetaAlumno
+              key={alumno.codAlumno}
+              turno={turno}
+              alumno={alumno}
+              evaluaciones={consulta?.data}
+              error={consulta ? errorDePrimeraCarga(consulta) : null}
+              alReintentar={() => void consulta?.refetch()}
+              puedeEvaluar={esSuInstructor}
+            />
+          )
+        })}
       </section>
     </>
   )

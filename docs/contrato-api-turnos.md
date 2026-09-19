@@ -201,6 +201,7 @@ GET /api/turnos/{id}   Read
 {
   "id": 1,
   "nombre": "Contacto Básico",
+  "idSubfase": 1,
   "subfase": "Contacto",
   "fechaEval": "2024-03-01",
   "programa": "PDI",
@@ -220,6 +221,7 @@ GET /api/turnos/{id}   Read
 - `instructor` = `nombre + " " + apellido paterno` (mismo criterio ya usado hoy por `TurnoController.detail()` para construir este campo: `getNombre() + " " + getaPaterno()`). Se aplica el mismo criterio a `alumno` dentro de `alumnosTurno` por uniformidad.
 - `aeronave` reutiliza el mismo objeto ya usado en la respuesta de create/update (§1.5), pero agregando `estado` (no solo `id`/`nombre`).
 - `maniobrasTurno` y `fase` ya son correctos hoy (propiedades reales de `Turno`); no cambian.
+- `idSubfase` es **nuevo** (dependencia 21): el id de la sub fase del turno, junto a su nombre `subfase`. Hoy el detalle solo trae el nombre y Modificar turno recupera el id buscándolo por nombre en `GET /api/subfases`; con este campo deja de depender de que los nombres de sub fase sean únicos.
 
 ⚠ Dato de seed: los 7 turnos sembrados tienen `cod_instructor` **NULL** (columna omitida en el INSERT) y tampoco tienen aeronave asignada — ambos solo se completan al hacer `POST`/`PUT /api/turnos`. El ejemplo de arriba asume que a este turno ya se le asignó el instructor `444444` (Juan Torres Perez) y la aeronave `1` (Robinson R22).
 

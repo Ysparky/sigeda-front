@@ -1,25 +1,26 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, PlaneTakeoff } from 'lucide-react'
+import { AvisoDeError } from '@/components/aviso-de-error'
 import { EmptyState } from '@/components/empty-state'
 import { Enlace } from '@/components/enlace'
 import { PageHeader } from '@/components/page-header'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { esFechaIso, sumarDias } from '@/lib/dominio/calendario'
 import { formatearFecha } from '@/lib/formato'
+import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasTurnos } from './api'
 import { horaDelBriefingDiario, ordenDeVuelo } from './orden-de-vuelo'
 
 export function OrdenDeVueloPage({ fecha }: { fecha: string }) {
   const navegar = useNavigate()
   const turnos = useQuery(consultasTurnos.dia(fecha))
+  const errorDeTurnos = errorDePrimeraCarga(turnos)
   const grupos = ordenDeVuelo(turnos.data ?? [])
   const briefing = horaDelBriefingDiario(grupos)
 
@@ -58,11 +59,7 @@ export function OrdenDeVueloPage({ fecha }: { fecha: string }) {
           </div>
         }
       />
-      {turnos.isError && (
-        <Alert variant="destructive">
-          <AlertDescription>{turnos.error instanceof ApiError ? turnos.error.message : MENSAJE_GENERICO}</AlertDescription>
-        </Alert>
-      )}
+      {errorDeTurnos !== null && <AvisoDeError error={errorDeTurnos} alReintentar={() => void turnos.refetch()} />}
       {turnos.isPending && <Skeleton className="h-40 w-full" />}
       {turnos.isSuccess && grupos.length === 0 && (
         <EmptyState icono={PlaneTakeoff} titulo="No hay vuelos programados para este día." />
