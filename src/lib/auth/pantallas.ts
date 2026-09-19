@@ -1,4 +1,4 @@
-import { House, type LucideIcon } from 'lucide-react'
+import { House, KeyRound, type LucideIcon } from 'lucide-react'
 import type { FileRouteTypes } from '@/routeTree.gen'
 import { puede, type Permiso } from './permisos'
 
@@ -44,6 +44,15 @@ export const PANTALLAS = {
     grupo: 'General',
     icono: House,
     enMenu: true,
+  },
+  cuenta: {
+    ruta: '/cuenta',
+    titulo: 'Cambiar contraseña',
+    descripcion: 'Actualice la contraseña con la que ingresa a SIGEDA.',
+    grupo: 'General',
+    icono: KeyRound,
+    permiso: 'Update',
+    enMenu: false,
   },
 } satisfies Record<string, Pantalla>
 

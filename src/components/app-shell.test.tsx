@@ -9,7 +9,7 @@ describe('estructura de la aplicación', () => {
     await iniciarComo('instructor.perez')
     renderApp('/')
     expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /SIGEDA/ })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: /^SIGEDA/ })).toHaveAttribute('href', '/')
     expect(screen.getByRole('link', { name: 'Inicio' })).toHaveAttribute('href', '/')
     expect(screen.getByRole('button', { name: 'Cuenta de instructor.perez' })).toHaveTextContent('Instructor')
   })
