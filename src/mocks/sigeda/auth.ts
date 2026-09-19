@@ -11,7 +11,9 @@ const refreshRevocados = new Set<string>()
 let secuencia = 0
 
 function base64Url(texto: string) {
-  return btoa(texto).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_')
+  const bytes = new TextEncoder().encode(texto)
+  const binario = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('')
+  return btoa(binario).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_')
 }
 
 export function jwtDePrueba(username: string) {
