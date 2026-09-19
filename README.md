@@ -23,6 +23,7 @@ Consume dos backends: `../sigeda-back` (Spring Boot, `:8080`) para instrucción,
 - Diseño: `docs/superpowers/specs/2026-09-19-sigeda-web-design.md`
 - Planes: `docs/superpowers/plans/`
 - Contrato de la API teórica: `docs/contrato-api-teoria.md`
+- Contrato de turnos y evaluaciones: `docs/contrato-api-turnos.md`
 
 ## Modo demostración sin backends
 
@@ -30,7 +31,7 @@ Consume dos backends: `../sigeda-back` (Spring Boot, `:8080`) para instrucción,
 pnpm dev:mock
 ```
 
-MSW responde en el navegador a `/auth/*` y `/api/usuarios/*` con los usuarios sembrados de `sigeda-back`. Contraseña de todos: `123`.
+MSW responde en el navegador a `/auth/*`, `/api/usuarios/*` y a los turnos, evaluaciones y catálogos de `docs/contrato-api-turnos.md`, con datos basados en el seed de `sigeda-back` (los datos vuelven al estado inicial al recargar). Contraseña de todos: `123`.
 
 | Usuario | Rol |
 |---|---|
@@ -38,6 +39,7 @@ MSW responde en el navegador a `/auth/*` y `/api/usuarios/*` con los usuarios se
 | `comandante.aguirre` | Comandante de Escuadrón |
 | `jefe.operaciones` | Jefe de Operaciones |
 | `instructor.perez` | Instructor |
+| `instructor.mendoza` | Instructor |
 | `alumno.lopez` | Alumno |
 
 ## Con los backends reales
