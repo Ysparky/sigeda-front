@@ -445,7 +445,8 @@ Ya declara `BindingResult` → los fallos de `@Valid` devuelven 400 arreglo (`Re
    - `"'calificaciones[i].recomendacion': La recomendación es requerida para calificaciones bajo el estándar."`
 
    (`i` es el índice 0-based dentro de `calificaciones`.) Si hay más de una calificación bajo estándar con campos faltantes, todos los mensajes van en el mismo arreglo 400.
-10. Resto de la lógica (contador `contEval`, resolución de `codEvaluador` para Chequeo/Complementación, construcción de `EvaluacionPractica`, clasificación Malo/Bueno, `calcularResultado` para Ponderada/ChequeoSubFase, encadenado de `codEvalPrevia`) — **sin cambios**, salvo la corrección de `contD` (§3).
+10. Resto de la lógica (contador `contEval`, resolución de `codEvaluador` para Chequeo/Complementación, construcción de `EvaluacionPractica`, clasificación Malo/Bueno, `calcularResultado` para Ponderada/ChequeoSubFase, encadenado de `codEvalPrevia`) — **sin cambios**, salvo la corrección de `contD` (§3) y:
+    - **Corrección**: si el evaluador no existe (`personaService.findByCod(...)` devuelve `null`, ya sea el `codEvaluador` de Chequeo/Complementación o el `codInstructor` del turno), devolver 404 texto plano `"Evaluador especificada no existe."` en vez de dejar que NPEe a un 500 — mismo criterio que `PUT` (§2.7, paso 10).
 11. Éxito → **201** (sin cambios en la forma, incluida la tilde en la clave):
 ```json
 { "mensaje": "Evaluación guardada con éxito.", "evaluación": { /* EvaluacionPractica, ver §2.5 */ } }
@@ -584,7 +585,7 @@ Mapeo de cada ítem **Corrección**/**Nuevo** de este contrato al número de dep
 | 15 | Validación server-side de solape de horario (aeronave/alumno) | §1.3 (advertencia), §1.5 (paso 4), §1.6 (paso 4) |
 | 16 | `Alumno_TurnoSave`: constructor por defecto, claves JSON `horaInicio`/`horaFin` | §1.5, §1.6 |
 | 17 | `@PreAuthorize` en `DesaprobadoController` (4 endpoints) y `GET /subfases/assigned` | Fuera de alcance de este contrato (M5; no hay endpoints de Desaprobados aquí) |
-| 18 | Typo `"mensaje:"` → `"mensaje"`; NPEs en `EvaluacionController.update`; `contD` nunca se acumula; `GrupoController.detail` sin `return` | §2.6 (paso 8), §2.7 (pasos 2, 8, 10); §3; §4.8 |
+| 18 | Typo `"mensaje:"` → `"mensaje"`; NPEs en `EvaluacionController.create` y `update` (evaluador inexistente); `contD` nunca se acumula; `GrupoController.detail` sin `return` | §2.6 (pasos 8, 10), §2.7 (pasos 2, 8, 10); §3; §4.8 |
 | 19 | Mojibake del seed en `roles` (rompe el nombre/descr. de "Comandante de Escuadrón") | Convenciones/Permisos (nota); sin endpoint propio — es una corrección de dato de seed, no de código de ruta |
 | 1 (paraguas) | `GET /api/aeronaves` (nuevo catálogo) | §1.8 |
 | 10 (paraguas) | Lista de evaluaciones a través de los alumnos de un turno | §1.4 (para saber, por cada alumno de `alumnosTurno`, si ya tiene Ponderada/Chequeo Sub Fase registrada en este turno) + §2.4 (`GET /api/evaluaciones/persona/{cod}?idTurno={id}`, sin cambios, iterado una vez por alumno del turno — no hay un endpoint batch nuevo, se resuelve con el ya existente) |
