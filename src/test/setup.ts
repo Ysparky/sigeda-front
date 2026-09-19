@@ -30,12 +30,17 @@ Object.defineProperty(Element.prototype, 'hasPointerCapture', { writable: true, 
 Object.defineProperty(Element.prototype, 'releasePointerCapture', { writable: true, value: () => {} })
 Object.defineProperty(Element.prototype, 'scrollIntoView', { writable: true, value: () => {} })
 
+const ancla = document.createElement('button')
+ancla.tabIndex = -1
+document.body.append(ancla)
+
 beforeAll(() => {
   server.listen({ onUnhandledRequest: 'error' })
 })
 
 afterEach(() => {
   cleanup()
+  ancla.focus()
   server.resetHandlers()
   reiniciarAuthMock()
   sesion.expirar()

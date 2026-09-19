@@ -24,11 +24,6 @@ function iniciales(username: string) {
     .join('')
 }
 
-function cerrarSesion() {
-  if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
-  void sesion.cerrar()
-}
-
 export function MenuUsuario() {
   const actual = useSesion()
   const { theme, setTheme } = useTheme()
@@ -71,7 +66,7 @@ export function MenuUsuario() {
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={cerrarSesion}>
+        <DropdownMenuItem onSelect={() => void sesion.cerrar()}>
           <LogOut aria-hidden />
           Cerrar sesión
         </DropdownMenuItem>
