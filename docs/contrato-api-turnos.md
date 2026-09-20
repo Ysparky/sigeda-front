@@ -5,7 +5,7 @@
 **Consume:** `sigeda-web` (mientras no exista contra un backend corriendo, el frontend usa mocks MSW con exactamente estas formas)
 **Para:** Victor — implementación/corrección en `sigeda-back`
 
-Fuentes: auditoría de solo lectura del código con evidencia archivo:línea (`m1-contrato-backend.md`) y las decisiones de `m1-addendum.md` §13 (M1-1 a M1-12, dependencias de backend 12–19).
+Fuentes: auditoría de solo lectura del código con evidencia archivo:línea (`m1-contrato-backend.md`) y las decisiones de `m1-addendum.md` §13 (M1-1 a M1-12, dependencias de backend 12–21).
 
 Cada sección lleva una etiqueta:
 - **Sin cambios** — el backend ya se comporta así; no tocar.
@@ -577,7 +577,7 @@ GET /api/grupos/{id}   Manage Groups
 
 ## 5. Dependencias
 
-Mapeo de cada ítem **Corrección**/**Nuevo** de este contrato al número de dependencia de backend de `m1-addendum.md` §13.4 (12–19), y a los números de la especificación paraguas indicados por la tarea (**1** = `GET /api/aeronaves`, **10** = lista de evaluaciones a través de los alumnos de un turno).
+Mapeo de cada ítem **Corrección**/**Nuevo** de este contrato al número de dependencia de backend de `m1-addendum.md` §13.4 (12–21), y a los números de la especificación paraguas indicados por la tarea (**1** = `GET /api/aeronaves`, **10** = lista de evaluaciones a través de los alumnos de un turno).
 
 | # | Cambio | Sección de este contrato |
 |---|---|---|
@@ -589,6 +589,8 @@ Mapeo de cada ítem **Corrección**/**Nuevo** de este contrato al número de dep
 | 17 | `@PreAuthorize` en `DesaprobadoController` (4 endpoints) y `GET /subfases/assigned` | Fuera de alcance de este contrato (M5; no hay endpoints de Desaprobados aquí) |
 | 18 | Typo `"mensaje:"` → `"mensaje"`; NPEs en `EvaluacionController.create` y `update` (evaluador inexistente); `contD` nunca se acumula; `GrupoController.detail` sin `return` | §2.6 (pasos 8, 10), §2.7 (pasos 2, 8, 10); §3; §4.8 |
 | 19 | Mojibake del seed en `roles` (rompe el nombre/descr. de "Comandante de Escuadrón") | Convenciones/Permisos (nota); sin endpoint propio — es una corrección de dato de seed, no de código de ruta |
+| 20 | Verificar en el servidor que el alumno solo acceda a lo propio: `GET /api/turnos/{id}`, `GET /api/turnos/alumno?codAlumno=` y `/api/evaluaciones/**` solo piden `Read`; la comprobación del frontend es únicamente de interfaz | §1.2, §1.4, §2.3, §2.4, §2.5 |
+| 21 | `idSubfase` en `DetalleTurno` | §1.4 |
 | 1 (paraguas) | `GET /api/aeronaves` (nuevo catálogo) | §1.8 |
 | 10 (paraguas) | Lista de evaluaciones a través de los alumnos de un turno | §1.4 (para saber, por cada alumno de `alumnosTurno`, si ya tiene Ponderada/Chequeo Sub Fase registrada en este turno) + §2.4 (`GET /api/evaluaciones/persona/{cod}?idTurno={id}`, sin cambios, iterado una vez por alumno del turno — no hay un endpoint batch nuevo, se resuelve con el ya existente) |
 

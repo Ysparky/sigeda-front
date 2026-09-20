@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/page-header'
 import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { consultasEvaluaciones } from '@/features/evaluaciones/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
@@ -80,14 +81,16 @@ function TarjetaAlumno({ turno, alumno, evaluaciones, error, alReintentar, puede
         </div>
       </CardHeader>
       <CardContent>
-        {error === null ? (
-          <LineaDeTiempo etapas={etapasDeMision({ fechaEval: turno.fechaEval, ...alumno }, evaluada)} />
-        ) : (
+        {error !== null && (
           <AvisoDeError
             titulo="No se pudo cargar la evaluación de este alumno"
             error={error}
             alReintentar={alReintentar}
           />
+        )}
+        {error === null && evaluaciones === undefined && <Skeleton className="h-16 w-full" aria-busy="true" />}
+        {error === null && evaluaciones !== undefined && (
+          <LineaDeTiempo etapas={etapasDeMision({ fechaEval: turno.fechaEval, ...alumno }, evaluada)} />
         )}
       </CardContent>
     </Card>

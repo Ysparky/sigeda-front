@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { config } from '@/lib/config'
-import { hoyIso } from '@/lib/dominio/calendario'
+import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
 
@@ -27,6 +27,29 @@ describe('Modificar turno', () => {
     expect(screen.getByLabelText('Alumno 2')).toHaveValue('666666')
     expect(screen.getByLabelText('Maniobra 3')).toHaveValue('3')
     expect(screen.getByLabelText('Nota mínima 3')).toHaveValue('E')
+  })
+
+  it('recupera la sub fase por su nombre si el detalle no trae el idSubfase', async () => {
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/turnos/8`, () =>
+        HttpResponse.json({
+          id: 8,
+          nombre: 'Navegación Nocturna',
+          subfase: 'Navegación',
+          fechaEval: sumarDias(hoyIso(), 7),
+          programa: 'PDI',
+          fase: 'Adaptación',
+          codInstructor: '444444',
+          instructor: 'Juan Torres',
+          aeronave: { id: 1, nombre: 'Robinson R22', estado: 'Disponible' },
+          alumnosTurno: [{ codAlumno: '111111', alumno: 'Oscar Lopez', horaInicio: '09:00', horaFin: '10:30' }],
+          maniobrasTurno: [{ nota_min: 'R', maniobra: { id: 1, nombre: 'Maniobra 1', descripcion: '' } }],
+        }),
+      ),
+    )
+    await abrirEdicion()
+    expect(await screen.findByLabelText('Sub fase')).toHaveValue('2')
+    expect(screen.getByLabelText('Maniobra 1')).toHaveValue('1')
   })
 
   it('CA-TUR-12 aplica las mismas validaciones que registrar', async () => {

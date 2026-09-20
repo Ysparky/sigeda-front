@@ -65,7 +65,20 @@ export function DataTable<TDatos extends RowData>({
     },
   })
 
-  if (pagina && pagina.items.length === 0) return <>{vacio}</>
+  if (pagina && pagina.items.length === 0) {
+    return (
+      <div className="grid gap-3">
+        {vacio}
+        {parametros.page > 0 && (
+          <div className="flex justify-center">
+            <Button variant="outline" size="sm" onClick={() => alCambiar({ page: 0 })}>
+              Volver a la primera página
+            </Button>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="grid gap-3">

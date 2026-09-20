@@ -43,6 +43,7 @@ export function detalleTurno(turno: TurnoMock) {
   return {
     id: turno.id,
     nombre: turno.nombre,
+    idSubfase: turno.idSubfase,
     subfase: turno.subfase,
     fechaEval: turno.fechaEval,
     programa: turno.programa,

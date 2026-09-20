@@ -90,6 +90,15 @@ describe('api de turnos', () => {
     ])
   })
 
+  it('dependencia 21 lee el idSubfase del detalle y lo deja indefinido si el backend no lo envía', async () => {
+    await iniciarComo('jefe.operaciones')
+    expect((await obtenerTurno(8)).idSubfase).toBe(2)
+    expect(
+      aTurnoDetalle({ id: 1, nombre: 'Contacto Básico', subfase: 'Contacto', fechaEval: '2024-03-01', programa: 'PDI' })
+        .idSubfase,
+    ).toBeUndefined()
+  })
+
   it('tolera la forma actual del backend en la lista y en el detalle', () => {
     expect(
       aTurnoResumen({ id: 1, nombre: 'Contacto Básico', subfase: 'Contacto', fechaEval: '2024-03-01', programa: 'PDI', cantGrupo: 2, cantManiobra: 6 })

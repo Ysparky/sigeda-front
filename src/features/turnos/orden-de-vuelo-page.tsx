@@ -61,7 +61,7 @@ export function OrdenDeVueloPage({ fecha }: { fecha: string }) {
       />
       {errorDeTurnos !== null && <AvisoDeError error={errorDeTurnos} alReintentar={() => void turnos.refetch()} />}
       {turnos.isPending && <Skeleton className="h-40 w-full" />}
-      {turnos.isSuccess && grupos.length === 0 && (
+      {turnos.data !== undefined && grupos.length === 0 && (
         <EmptyState icono={PlaneTakeoff} titulo="No hay vuelos programados para este día." />
       )}
       {briefing && (

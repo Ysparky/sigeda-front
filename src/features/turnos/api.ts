@@ -26,6 +26,7 @@ export type TurnoDetalle = {
   id: number
   nombre: string
   subfase: string
+  idSubfase?: number
   fase: string
   fechaEval: string
   programa: string
@@ -59,6 +60,7 @@ type DetalleTurnoApi = {
   id: number
   nombre: string
   subfase: string
+  idSubfase?: number | null
   fechaEval: string
   programa: string
   fase?: string | null
@@ -95,6 +97,7 @@ export function aTurnoDetalle(turno: DetalleTurnoApi): TurnoDetalle {
     id: turno.id,
     nombre: turno.nombre,
     subfase: turno.subfase,
+    idSubfase: turno.idSubfase ?? undefined,
     fase: turno.fase ?? '',
     fechaEval: turno.fechaEval,
     programa: turno.programa,

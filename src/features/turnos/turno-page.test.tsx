@@ -1,5 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react'
-import { http, HttpResponse } from 'msw'
+import { delay, http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { config } from '@/lib/config'
 import { server } from '@/mocks/server'
@@ -38,12 +38,14 @@ describe('Detalle de turno', () => {
 
   it('CA-TUR-10 muestra la línea de tiempo de la misión por alumno', async () => {
     await abrirTurno('jefe.operaciones', 8)
-    expect(etapas('Ana Torres')).toEqual([
-      'Briefing diarioT−2 h · 09:00Pendiente',
-      'Briefing de detalleT−1 h · 10:00Pendiente',
-      'Vuelo11:00 – 12:30Pendiente',
-      'DebriefingEvaluación pendientePendiente',
-    ])
+    await waitFor(() =>
+      expect(etapas('Ana Torres')).toEqual([
+        'Briefing diarioT−2 h · 09:00Pendiente',
+        'Briefing de detalleT−1 h · 10:00Pendiente',
+        'Vuelo11:00 – 12:30Pendiente',
+        'DebriefingEvaluación pendientePendiente',
+      ]),
+    )
   })
 
   it('CA-TUR-10 el debriefing figura como hecho cuando la evaluación existe', async () => {
@@ -165,6 +167,26 @@ describe('Detalle de turno', () => {
     expect(await tarjeta.findByRole('link', { name: 'Registrar evaluación' })).toHaveAttribute('href', '/turnos/2/evaluar/222222')
     expect(tarjeta.getByText('Evaluación pendiente')).toBeInTheDocument()
     expect(tarjeta.queryByText('No se pudo cargar la evaluación de este alumno')).not.toBeInTheDocument()
+  })
+
+  it('al reintentar no muestra el ciclo de la misión mientras la evaluación vuelve a cargar', async () => {
+    let intentos = 0
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/evaluaciones/persona/:cod`, async () => {
+        intentos += 1
+        if (intentos > 1) await delay('infinite')
+        return HttpResponse.text('No se pudo consultar la evaluación.', { status: 400 })
+      }),
+    )
+    const { usuario } = await abrirTurno('instructor.perez', 2)
+    const tarjeta = within(screen.getByRole('region', { name: 'Juan Falconi' }))
+    expect(await tarjeta.findByText('No se pudo cargar la evaluación de este alumno')).toBeInTheDocument()
+    await usuario.click(tarjeta.getByRole('button', { name: 'Reintentar' }))
+    await waitFor(() =>
+      expect(tarjeta.queryByText('No se pudo cargar la evaluación de este alumno')).not.toBeInTheDocument(),
+    )
+    expect(tarjeta.queryByRole('list', { name: 'Ciclo de la misión' })).not.toBeInTheDocument()
+    expect(tarjeta.queryByText('Evaluación pendiente')).not.toBeInTheDocument()
   })
 
   it('un turno inexistente muestra la página no encontrada', async () => {

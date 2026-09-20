@@ -25,8 +25,16 @@ const PAGINA: Pagina<Fila> = {
   totalPages: 2,
 }
 
-function Prueba({ alCambiar, pagina = PAGINA }: { alCambiar: (cambios: Partial<ParametrosPagina>) => void; pagina?: Pagina<Fila> }) {
-  const [parametros, setParametros] = useState<ParametrosPagina>({ page: 0, size: 2, direction: 'ASC' })
+function Prueba({
+  alCambiar,
+  pagina = PAGINA,
+  page = 0,
+}: {
+  alCambiar: (cambios: Partial<ParametrosPagina>) => void
+  pagina?: Pagina<Fila>
+  page?: number
+}) {
+  const [parametros, setParametros] = useState<ParametrosPagina>({ page, size: 2, direction: 'ASC' })
   return (
     <DataTable
       etiqueta="Turnos"
@@ -75,5 +83,14 @@ describe('DataTable', () => {
     render(<Prueba alCambiar={vi.fn()} pagina={{ items: [], page: 0, size: 2, total: 0, totalPages: 0 }} />)
     expect(screen.getByText('Sin turnos')).toBeInTheDocument()
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Volver a la primera página' })).not.toBeInTheDocument()
+  })
+
+  it('ofrece volver a la primera página cuando la página pedida quedó fuera de rango', async () => {
+    const alCambiar = vi.fn()
+    render(<Prueba alCambiar={alCambiar} page={2} pagina={{ items: [], page: 2, size: 2, total: 3, totalPages: 2 }} />)
+    expect(screen.getByText('Sin turnos')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Volver a la primera página' }))
+    expect(alCambiar).toHaveBeenCalledWith({ page: 0 })
   })
 })

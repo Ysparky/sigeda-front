@@ -17,7 +17,7 @@ export function ModificarTurnoPage({ id }: { id: number }) {
   const { data: turno } = useSuspenseQuery(consultasTurnos.detalle(id))
   const programa: Programa = turno.programa === 'PDE' ? 'PDE' : 'PDI'
   const subfases = useQuery(consultasCatalogos.subfases())
-  const idSubfase = subfases.data?.find((subfase) => subfase.nombre === turno.subfase)?.id
+  const idSubfase = turno.idSubfase ?? subfases.data?.find((subfase) => subfase.nombre === turno.subfase)?.id
   const catalogos = useQueries({
     queries: [
       consultasCatalogos.aeronaves(),
