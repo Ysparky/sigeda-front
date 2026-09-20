@@ -1,4 +1,6 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
+import { z } from 'zod'
+import { soloMensaje } from '@/features/cuentas/api'
 import type { Pagina, ParametrosPagina } from '@/lib/api/pagina'
 import { sigeda } from '@/lib/api/sigeda'
 
@@ -11,6 +13,26 @@ export type PersonaFila = {
   tipo: string | null
 }
 
+export type CuentaDePersona = {
+  id: number
+  username: string
+  correo: string | null
+  rol: { id: number; nombre: string } | null
+}
+
+export type PersonaDetalle = {
+  codigo: string
+  nombre: string
+  aPaterno: string
+  aMaterno: string
+  dni: string | null
+  rango: string | null
+  tipo: string | null
+  estado: string | null
+  grupo: { id: number; nombre: string } | null
+  cuenta: CuentaDePersona | null
+}
+
 type IndexPersonaApi = {
   codigo: string
   nombre: string
@@ -20,9 +42,38 @@ type IndexPersonaApi = {
   tipo?: string | null
 }
 
+export const MENSAJE_PERSONA_GUARDADA = 'Persona guardada con éxito.'
+export const MENSAJE_PERSONA_ELIMINADA = 'Persona eliminado con éxito.'
+
+const esquemaDetalle = z.object({
+  codigo: z.string(),
+  nombre: z.string(),
+  aPaterno: z.string().nullish(),
+  aMaterno: z.string().nullish(),
+  dni: z.string().nullish(),
+  rango: z.string().nullish(),
+  tipo: z.string().nullish(),
+  estado: z.string().nullish(),
+  grupo: z.object({ id: z.number(), nombre: z.string() }).nullish(),
+  usuario: z
+    .object({
+      id: z.number().nullish(),
+      nombre: z.string(),
+      correo: z.string().nullish(),
+      rol: z.object({ id: z.number(), nombre: z.string() }).nullish(),
+    })
+    .nullish(),
+})
+
+const esquemaIdDeUsuario = z.object({ usuario: z.object({ id: z.number() }) })
+
 export function apellidosYNombres(persona: Pick<PersonaFila, 'nombre' | 'aPaterno' | 'aMaterno'>): string {
   const apellidos = [persona.aPaterno, persona.aMaterno].filter(Boolean).join(' ')
   return apellidos === '' ? persona.nombre : `${apellidos}, ${persona.nombre}`
+}
+
+export function nombreCompletoDePersona(persona: Pick<PersonaFila, 'nombre' | 'aPaterno' | 'aMaterno'>): string {
+  return [persona.nombre, persona.aPaterno, persona.aMaterno].filter(Boolean).join(' ')
 }
 
 export function aPersonaFila(persona: IndexPersonaApi): PersonaFila {
@@ -47,6 +98,39 @@ export async function listarPersonas(parametros: ParametrosPagina): Promise<Pagi
   return { ...pagina, items: pagina.items.map(aPersonaFila) }
 }
 
+export async function obtenerPersona(codigo: string): Promise<PersonaDetalle> {
+  const datos = esquemaDetalle.parse(await sigeda.get(`/api/personas/${encodeURIComponent(codigo)}/usuario`))
+  const usuario = datos.usuario ?? null
+  let idUsuario = usuario?.id ?? null
+  if (usuario && idUsuario === null) {
+    const sesion = esquemaIdDeUsuario.parse(await sigeda.get(`/api/personas/${encodeURIComponent(usuario.nombre)}`))
+    idUsuario = sesion.usuario.id
+  }
+  return {
+    codigo: datos.codigo,
+    nombre: datos.nombre,
+    aPaterno: datos.aPaterno ?? '',
+    aMaterno: datos.aMaterno ?? '',
+    dni: datos.dni ?? null,
+    rango: datos.rango ?? null,
+    tipo: datos.tipo ?? null,
+    estado: datos.estado ?? null,
+    grupo: datos.grupo ?? null,
+    cuenta:
+      usuario && idUsuario !== null
+        ? { id: idUsuario, username: usuario.nombre, correo: usuario.correo ?? null, rol: usuario.rol ?? null }
+        : null,
+  }
+}
+
+export async function modificarPersona(
+  codigo: string,
+  cuerpo: { rango: string | null; tipo: string | null },
+): Promise<string> {
+  const respuesta = await sigeda.put<unknown>(`/api/personas/${encodeURIComponent(codigo)}`, cuerpo)
+  return soloMensaje(respuesta, MENSAJE_PERSONA_GUARDADA)
+}
+
 export const consultasPersonas = {
   lista: (parametros: ParametrosPagina) =>
     queryOptions({
@@ -54,4 +138,6 @@ export const consultasPersonas = {
       queryFn: () => listarPersonas(parametros),
       placeholderData: keepPreviousData,
     }),
+  detalle: (codigo: string) =>
+    queryOptions({ queryKey: clavesPersonas.detalle(codigo), queryFn: () => obtenerPersona(codigo) }),
 }

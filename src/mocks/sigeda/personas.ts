@@ -1,7 +1,15 @@
 import { http, HttpResponse } from 'msw'
 import { noAutorizado, usuarioAutenticado } from './auth'
-import { API, autorizar, paginar, textoNoEncontrado } from './comun'
-import { buscarPersona, buscarUsuarioPorNombre, datos, rolPorId, type PersonaMock } from './datos'
+import { esTipoPersona, rolCompatible } from '@/lib/dominio/personas'
+import { API, autorizar, erroresDeCampo, guardado, paginar, textoNoEncontrado } from './comun'
+import {
+  buscarPersona,
+  buscarUsuarioPorNombre,
+  datos,
+  rolPorId,
+  usuarioDePersona,
+  type PersonaMock,
+} from './datos'
 
 function indexPersona(persona: PersonaMock) {
   return {
@@ -14,6 +22,48 @@ function indexPersona(persona: PersonaMock) {
   }
 }
 
+function entidadPersona(persona: PersonaMock) {
+  return {
+    codigo: persona.codigo,
+    rango: persona.rango,
+    dni: persona.dni,
+    nombre: persona.nombre,
+    aPaterno: persona.aPaterno,
+    aMaterno: persona.aMaterno,
+    estado: persona.estado,
+    tipo: persona.tipo,
+    codEvalRealizada: persona.codEvalRealizada,
+    codEvalDesaprobada: null,
+    contChequeo: 0,
+    contEval: persona.contEval,
+    contMalo: 0,
+    contRegular: 0,
+    checked: false,
+    idGrupo: persona.idGrupo,
+    desaprobados: null,
+  }
+}
+
+function detalleUsuario(persona: PersonaMock) {
+  const usuario = usuarioDePersona(persona.codigo)
+  const grupo = datos().grupos.find((candidato) => candidato.id === persona.idGrupo)
+  const rol = usuario ? rolPorId(usuario.idRol) : null
+  return {
+    codigo: persona.codigo,
+    nombre: persona.nombre,
+    aPaterno: persona.aPaterno,
+    aMaterno: persona.aMaterno,
+    dni: persona.dni,
+    rango: persona.rango,
+    tipo: persona.tipo,
+    estado: persona.estado,
+    grupo: grupo ? { id: grupo.id, nombre: grupo.nombre } : null,
+    usuario: usuario
+      ? { id: usuario.id, nombre: usuario.username, correo: usuario.correo, rol: rol && { ...rol } }
+      : null,
+  }
+}
+
 export const handlersPersonas = [
   http.get(`${API}/api/personas`, ({ request }) => {
     const permitido = autorizar(request, 'Manage Users')
@@ -23,6 +73,35 @@ export const handlersPersonas = [
       propiedadPorDefecto: 'codigo',
       proyectar: indexPersona,
     })
+  }),
+  http.get(`${API}/api/personas/:cod/usuario`, ({ request, params }) => {
+    const permitido = autorizar(request, 'Manage Users')
+    if (permitido instanceof Response) return permitido
+    const persona = buscarPersona(String(params.cod))
+    if (!persona) return textoNoEncontrado('Persona especificada no existe.')
+    return HttpResponse.json(detalleUsuario(persona))
+  }),
+  http.put(`${API}/api/personas/:cod`, async ({ request, params }) => {
+    const permitido = autorizar(request, 'Manage Users')
+    if (permitido instanceof Response) return permitido
+    const persona = buscarPersona(String(params.cod))
+    if (!persona) return textoNoEncontrado('Persona especificada no existe.')
+    const cuerpo = (await request.json()) as { rango?: unknown; tipo?: unknown }
+    const errores: string[] = []
+    const tipo = cuerpo.tipo ?? null
+    if (tipo !== null && !esTipoPersona(tipo)) errores.push("'tipo': Ingresar tipo de persona válido.")
+    else {
+      const rol = rolPorId(usuarioDePersona(persona.codigo)?.idRol ?? null)
+      if (rol && !rolCompatible(tipo, rol.nombre)) errores.push("'tipo': El tipo no corresponde al rol de la cuenta.")
+    }
+    const rango = cuerpo.rango ?? null
+    if (typeof rango === 'string' && rango.length > 30) {
+      errores.push("'rango': El rango no puede superar los 30 caracteres.")
+    }
+    if (errores.length > 0) return erroresDeCampo(errores)
+    persona.rango = typeof rango === 'string' ? rango : null
+    persona.tipo = esTipoPersona(tipo) ? tipo : null
+    return guardado('Persona', 'persona', entidadPersona(persona))
   }),
   http.get(`${API}/api/personas/:nom`, ({ request, params }) => {
     if (!usuarioAutenticado(request)) return noAutorizado()
