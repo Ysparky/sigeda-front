@@ -24,6 +24,7 @@ Consume dos backends: `../sigeda-back` (Spring Boot, `:8080`) para instrucción,
 - Planes: `docs/superpowers/plans/`
 - Contrato de la API teórica: `docs/contrato-api-teoria.md`
 - Contrato de turnos y evaluaciones: `docs/contrato-api-turnos.md`
+- Contrato de matrícula y programa: `docs/contrato-api-matricula.md`
 
 ## Modo demostración sin backends
 
@@ -31,7 +32,7 @@ Consume dos backends: `../sigeda-back` (Spring Boot, `:8080`) para instrucción,
 pnpm dev:mock
 ```
 
-MSW responde en el navegador a `/auth/*`, `/api/usuarios/*` y a los turnos, evaluaciones y catálogos de `docs/contrato-api-turnos.md`, con datos basados en el seed de `sigeda-back` (los datos vuelven al estado inicial al recargar). Contraseña de todos: `123`.
+MSW responde en el navegador a `/auth/*`, a los turnos, evaluaciones y catálogos de `docs/contrato-api-turnos.md` y a las personas, cuentas, grupos, fases, maniobras y materias de `docs/contrato-api-matricula.md`, con datos basados en el seed de `sigeda-back` (los datos vuelven al estado inicial al recargar). Contraseña de todos: `123`.
 
 | Usuario | Rol |
 |---|---|
@@ -41,9 +42,12 @@ MSW responde en el navegador a `/auth/*`, `/api/usuarios/*` y a los turnos, eval
 | `instructor.perez` | Instructor |
 | `instructor.mendoza` | Instructor |
 | `alumno.lopez` | Alumno |
+| `raul.paredes` | Sin rol (no puede iniciar sesión) |
 
 ## Con los backends reales
 
 1. `sigeda-back` en `:8080` (ver `../sigeda-back/SETUP_DEV.md`).
 2. `sigeda_chat_status` en `:3000` (solo para Aprendizaje).
 3. Copie `.env.example` a `.env.local` si los puertos cambian, y ejecute `pnpm dev`.
+
+`VITE_DEPENDENCIAS_RESUELTAS` lista, separados por coma, los números de dependencia de backend ya corregidos en el `sigeda-back` en uso (por ejemplo `22,30,32,33,37`). Mientras falte el número, la aplicación deshabilita la acción que lo necesita: Registrar persona (22), Eliminar persona (30), Modificar maniobra (32 y 33) y Eliminar fase (37). En modo demostración todas están disponibles.

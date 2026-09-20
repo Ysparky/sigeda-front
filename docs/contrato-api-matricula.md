@@ -38,7 +38,7 @@ Dentro de un endpoint, cada regla que no existe lleva **[Nuevo — dependencia N
 | `size` | sin máximo | 1 a 10 |
 | Orden válido | cualquier atributo de la entidad | solo `id` y `nombre` |
 | `direction` | `asc`/`desc`, sin distinguir mayúsculas | igual |
-| Errores | 400 §A `{"error":"Argumento incorrecto","mensaje":…}` con `"Indice de paginado no debe ser menor a cero."`, `"Tamaño de paginado no debe ser menor a uno."` (size < 0), `"Page size must not be less than one"` (size = 0, de Spring), `"Dirección debe ser 'desc' o 'asc'."`, `"No se encontró atributo '<property>' para ordenar <lista>."` | 400 §B `error:"Atributo o configuración erronea"` con `message`: `"Indice de paginado no debe ser menor a cero."`, `"Tamaño de paginado no debe ser menor a uno."`, `"Tamaño de página demasiado grande, máximo permitido es 10."`, `"Propiedad inválida: <p>"`, `"Especificar una propiedad para ordenar."`, `"Dirección debe ser 'desc' o 'asc'."` |
+| Errores | 400 §A `{"error":"Argumento incorrecto","mensaje":…}` con `"Indice de paginado no debe ser menor a cero."`, `"Tamaño de paginado no debe ser menor a uno."` (size < 0), `"Page size must not be less than one"` (size = 0, de Spring), `"Dirección debe ser 'desc' o 'asc'."`, `"No se encontró atributo '<property>' para ordenar <lista>."` | 400 §B `error:"Atributo o configuración erronea"` con `message`: `"Indice de paginado no debe ser menor a cero."`, `"Tamaño de paginado no debe ser menor a uno."`, `"Tamaño de página demasiado grande, máximo permitido es 10."`, `"Propiedad inválida: <p>"`, `"Especificar una propiedad para ordenar."` (no alcanzable: `@RequestParam(defaultValue = "id")` siempre envía al menos `["id"]`), `"Dirección debe ser 'desc' o 'asc'."` |
 
 El frontend pide `size=10` en ambas.
 
@@ -808,7 +808,7 @@ Los mocks parten del seed (`data_prod.sql`) y de los datos de M1 (`docs/decision
 | Personas que no se pueden eliminar | CA-PER-10 | `555555` (tiene `codEvalRealizada`) → B4; `222222` (alumno del turno 2, sin evaluación) → B5; `444444` (instructor de los turnos 1–4) → B6. |
 | Propia cuenta | CA-PER-12 | `admin.sistema` ↔ persona `000001`. |
 | Materia con preguntas | CA-MAT-04 | La materia 3 (Adoctrinamiento de Vuelo) se marca con preguntas: su `DELETE` responde 409. |
-| Ids siguientes | todos | Como las secuencias del seed: usuarios 13, grupos 7, fases 4, subfases 6, maniobras 11, estándares 13, materias 12. |
+| Ids siguientes | todos | Como las secuencias del seed: usuarios 13, grupos 7, fases 4, subfases 6, maniobras 12, estándares 13, materias 12. |
 
 ---
 
