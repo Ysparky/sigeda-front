@@ -19,7 +19,7 @@ function filas() {
 describe('Materias', () => {
   it('CA-MAT-01 muestra nombre, nota mínima, coeficiente con 2 decimales y parte del curso', async () => {
     await abrirMaterias()
-    expect(filas()[0]).toEqual(['Adoctrinamiento de Vuelo', '18', '0.22', 'Primera parte'])
+    expect(filas()[0]).toEqual(['Adoctrinamiento de Vuelo', '18.00', '0.22', 'Primera parte'])
     expect(filas()).toHaveLength(11)
   })
 
@@ -39,7 +39,7 @@ describe('Materias', () => {
     await usuario.selectOptions(dialogo.getByLabelText('Parte del curso'), 'Segunda parte')
     await usuario.click(dialogo.getByRole('button', { name: 'Guardar materia' }))
     expect(await screen.findByText('Materia guardada con éxito.')).toBeInTheDocument()
-    await waitFor(() => expect(filas().at(-1)).toEqual(['Navegación Aérea', '16', '0.05', 'Segunda parte']))
+    await waitFor(() => expect(filas().at(-1)).toEqual(['Navegación Aérea', '16.00', '0.05', 'Segunda parte']))
   })
 
   it('CA-MAT-02 valida la nota mínima, el coeficiente y el nombre', async () => {
@@ -76,7 +76,7 @@ describe('Materias', () => {
     await usuario.click(dialogo.getByRole('button', { name: 'Guardar materia' }))
     expect(await screen.findByText('Materia guardada con éxito.')).toBeInTheDocument()
     await waitFor(() =>
-      expect(filas().find((fila) => fila[0] === 'Meteorología')).toEqual(['Meteorología', '18', '0.04', 'Primera parte']),
+      expect(filas().find((fila) => fila[0] === 'Meteorología')).toEqual(['Meteorología', '18.00', '0.04', 'Primera parte']),
     )
   })
 

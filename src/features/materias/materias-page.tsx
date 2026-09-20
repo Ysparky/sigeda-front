@@ -74,7 +74,7 @@ export function MateriasPage() {
               {materias.data.map((materia) => (
                 <TableRow key={materia.id}>
                   <TableCell>{materia.nombre}</TableCell>
-                  <TableCell className="tabular-nums">{materia.notaMinima}</TableCell>
+                  <TableCell className="tabular-nums">{formatearNota(materia.notaMinima)}</TableCell>
                   <TableCell className="tabular-nums">{formatearNota(materia.coeficiente)}</TableCell>
                   <TableCell>{etiquetaDeParte(materia.parte)}</TableCell>
                   {puedeGestionar && (
