@@ -2,8 +2,10 @@ import { screen } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { config } from '@/lib/config'
+import { MENSAJE_SIN_ROL, sesion } from '@/lib/auth/sesion'
+import { CLAVE_REFRESH, tokens } from '@/lib/auth/tokens'
 import { server } from '@/mocks/server'
-import { renderApp } from '@/test/render'
+import { iniciarComo, renderApp } from '@/test/render'
 
 async function abrirLogin() {
   const vista = renderApp('/login')
@@ -34,6 +36,29 @@ describe('Iniciar sesión', () => {
     await usuario.click(screen.getByRole('button', { name: 'Ingresar' }))
     expect(await screen.findByText('Ingrese su usuario.')).toBeInTheDocument()
     expect(screen.getByText('Ingrese su contraseña.')).toBeInTheDocument()
+  })
+
+  it('CA-SES-08 una cuenta sin rol vuelve al inicio de sesión con el aviso', async () => {
+    await iniciarComo('instructor.perez')
+    const refresh = tokens.refresh()
+    sesion.expirar()
+    localStorage.setItem(CLAVE_REFRESH, refresh ?? '')
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/personas/:nom`, () =>
+        HttpResponse.json({
+          codigo: '765432',
+          nombre: 'Raúl',
+          aPaterno: 'Paredes',
+          aMaterno: 'Soto',
+          idGrupo: null,
+          usuario: { nombre: 'raul.paredes', correo: 'raul.paredes@sigeda.com', id: 12, rol: null },
+        }),
+      ),
+    )
+    await sesion.restaurar()
+    renderApp('/')
+    expect(await screen.findByRole('heading', { name: 'Iniciar sesión' })).toBeInTheDocument()
+    expect(screen.getByText(MENSAJE_SIN_ROL)).toBeInTheDocument()
   })
 
   it('informa cuando no hay conexión con el servidor', async () => {

@@ -13,11 +13,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { sesion } from '@/lib/auth/sesion'
+import { nombreDeSesion, sesion } from '@/lib/auth/sesion'
 import { useSesion } from '@/lib/auth/use-sesion'
 
-function iniciales(username: string) {
-  return username
+function iniciales(nombre: string) {
+  return nombre
     .split(/[._\s-]+/)
     .filter(Boolean)
     .slice(0, 2)
@@ -29,17 +29,17 @@ export function MenuUsuario() {
   const actual = useSesion()
   const { theme, setTheme } = useTheme()
   if (!actual) return null
-  const { username } = actual.usuario
+  const nombre = nombreDeSesion(actual.persona)
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-10 gap-2 px-2" aria-label={`Cuenta de ${username}`}>
+        <Button variant="ghost" className="h-10 gap-2 px-2" aria-label={`Cuenta de ${nombre}`}>
           <Avatar className="size-7">
-            <AvatarFallback className="text-xs">{iniciales(username)}</AvatarFallback>
+            <AvatarFallback className="text-xs">{iniciales(nombre)}</AvatarFallback>
           </Avatar>
           <span className="hidden text-left leading-tight sm:grid">
-            <span className="text-sm font-medium">{username}</span>
+            <span className="text-sm font-medium">{nombre}</span>
             <span className="text-xs text-muted-foreground">{actual.rol.nombre}</span>
           </span>
           <ChevronsUpDown className="size-4 text-muted-foreground" aria-hidden />
@@ -47,7 +47,8 @@ export function MenuUsuario() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuLabel className="grid">
-          <span>{username}</span>
+          <span>{nombre}</span>
+          <span className="text-xs font-normal text-muted-foreground">{actual.usuario.username}</span>
           <span className="text-xs font-normal text-muted-foreground">{actual.rol.nombre}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { API, autorizar, errorResponse, numero, paginar, textoNoEncontrado } from './comun'
-import { buscarPersona, datos, type PersonaMock, type ProgramaMock } from './datos'
+import { buscarPersona, datos, maniobrasDeSubfase, type PersonaMock, type ProgramaMock } from './datos'
 
 function programaDeRuta(valor: unknown): ProgramaMock {
   return String(valor).toUpperCase() === 'PDE' ? 'PDE' : 'PDI'
@@ -49,9 +49,9 @@ export const handlersCatalogos = [
   http.get(`${API}/api/maniobras/subfase/:id`, ({ request, params }) => {
     const permitido = autorizar(request, 'Manage Shifts')
     if (permitido instanceof Response) return permitido
-    const ids = datos().maniobrasPorSubfase[Number(params.id)] ?? []
-    if (ids.length === 0) return errorResponse(404, 'Recurso no encontrado', 'No existen maniobras disponibles.')
-    return HttpResponse.json(datos().maniobras.filter((maniobra) => ids.includes(maniobra.id)))
+    const maniobras = maniobrasDeSubfase(Number(params.id))
+    if (maniobras.length === 0) return errorResponse(404, 'Recurso no encontrado', 'No existen maniobras disponibles.')
+    return HttpResponse.json(maniobras.map(({ id, nombre, descripcion }) => ({ id, nombre, descripcion })))
   }),
   http.get(`${API}/api/aeronaves`, ({ request }) => {
     const permitido = autorizar(request, 'Read')

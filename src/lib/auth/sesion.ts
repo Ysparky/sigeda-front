@@ -4,42 +4,72 @@ import { sigeda } from '@/lib/api/sigeda'
 import { permisosDeRol, type Permiso } from './permisos'
 import { tokens, usernameDelToken } from './tokens'
 
+export type PersonaDeSesion = { nombre: string; aPaterno: string; aMaterno: string; idGrupo: number | null }
+
 export type Sesion = {
   usuario: { id: number; username: string; correo: string | null }
   codPersona: string | null
+  persona: PersonaDeSesion
   rol: { id: number; nombre: string }
   permisos: ReadonlySet<Permiso>
 }
 
 export const MENSAJE_CREDENCIALES = 'Usuario o contraseña incorrectos.'
+export const MENSAJE_SIN_ROL = 'Su cuenta no tiene un rol asignado. Comuníquese con el administrador.'
+
+export class CuentaSinRolError extends ApiError {
+  constructor() {
+    super(403, MENSAJE_SIN_ROL)
+    this.name = 'CuentaSinRolError'
+  }
+}
 
 const CUENTA_INVALIDA = new Set([401, 403, 404])
 
-const esquemaUsuario = z.object({
-  id: z.number(),
-  username: z.string(),
-  correo: z.string().nullish(),
-  codPersona: z.string().nullish(),
-  rol: z.object({ id: z.number(), nombre: z.string() }),
+const esquemaPersona = z.object({
+  codigo: z.string().nullish(),
+  nombre: z.string(),
+  aPaterno: z.string().nullish(),
+  aMaterno: z.string().nullish(),
+  idGrupo: z.number().nullish(),
+  usuario: z.object({
+    id: z.number(),
+    nombre: z.string(),
+    correo: z.string().nullish(),
+    rol: z.object({ id: z.number(), nombre: z.string() }).nullish(),
+  }),
 })
 
 type RespuestaLogin = { token: string; refresh_token: string; username: string }
 
 let actual: Sesion | null = null
+let aviso: string | null = null
 const oyentes = new Set<() => void>()
+
+export function nombreDeSesion(persona: PersonaDeSesion): string {
+  return [persona.nombre, persona.aPaterno].filter(Boolean).join(' ')
+}
 
 function fijar(nueva: Sesion | null) {
   actual = nueva
+  if (nueva) aviso = null
   oyentes.forEach((oyente) => oyente())
 }
 
 async function cargar(username: string): Promise<Sesion> {
-  const datos = esquemaUsuario.parse(await sigeda.get(`/api/usuarios/nombre/${encodeURIComponent(username)}`))
+  const datos = esquemaPersona.parse(await sigeda.get(`/api/personas/${encodeURIComponent(username)}`))
+  if (!datos.usuario.rol) throw new CuentaSinRolError()
   return {
-    usuario: { id: datos.id, username: datos.username, correo: datos.correo ?? null },
-    codPersona: datos.codPersona ?? null,
-    rol: { id: datos.rol.id, nombre: datos.rol.nombre },
-    permisos: permisosDeRol(datos.rol.nombre),
+    usuario: { id: datos.usuario.id, username: datos.usuario.nombre, correo: datos.usuario.correo ?? null },
+    codPersona: datos.codigo ?? null,
+    persona: {
+      nombre: datos.nombre,
+      aPaterno: datos.aPaterno ?? '',
+      aMaterno: datos.aMaterno ?? '',
+      idGrupo: datos.idGrupo ?? null,
+    },
+    rol: { id: datos.usuario.rol.id, nombre: datos.usuario.rol.nombre },
+    permisos: permisosDeRol(datos.usuario.rol.nombre),
   }
 }
 
@@ -47,6 +77,7 @@ tokens.alExpirar(() => fijar(null))
 
 export const sesion = {
   actual: (): Sesion | null => actual,
+  aviso: (): string | null => aviso,
   suscribir(oyente: () => void) {
     oyentes.add(oyente)
     return () => {
@@ -91,6 +122,11 @@ export const sesion = {
       fijar(restaurada)
       return restaurada
     } catch (error) {
+      if (error instanceof CuentaSinRolError) {
+        tokens.limpiar()
+        aviso = MENSAJE_SIN_ROL
+        return null
+      }
       if (error instanceof ApiError && CUENTA_INVALIDA.has(error.status)) tokens.limpiar()
       return null
     }
@@ -99,10 +135,12 @@ export const sesion = {
     const refresh = tokens.refresh()
     if (refresh) await sigeda.post('/auth/logout', { refreshToken: refresh }).catch(() => undefined)
     tokens.limpiar()
+    aviso = null
     fijar(null)
   },
   expirar() {
     tokens.limpiar()
+    aviso = null
     fijar(null)
   },
 }

@@ -1,4 +1,5 @@
 import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
+import { crearUsuarios, ROLES_MOCK, type RolMock, type UsuarioMock } from './usuarios'
 
 export type ProgramaMock = 'PDI' | 'PDE'
 
@@ -7,6 +8,8 @@ export type PersonaMock = {
   nombre: string
   aPaterno: string
   aMaterno: string
+  dni: string
+  rango: string | null
   tipo: string | null
   estado: string
   idGrupo: number | null
@@ -14,11 +17,28 @@ export type PersonaMock = {
   codEvalRealizada: string | null
 }
 
-export type GrupoMock = { id: number; nombre: string; programa: ProgramaMock }
+export type GrupoMock = { id: number; nombre: string; descripcion: string; programa: ProgramaMock }
 
-export type SubfaseMock = { id: number; nombre: string; descripcion: string; fase: string }
+export type FaseMock = { id: number; nombre: string; descripcion: string | null }
 
-export type ManiobraMock = { id: number; nombre: string; descripcion: string }
+export type SubfaseMock = { id: number; nombre: string; descripcion: string | null; idFase: number }
+
+export type ManiobraMock = { id: number; nombre: string; descripcion: string | null }
+
+export type EnlaceManiobraSubfase = { idSubfase: number; idManiobra: number }
+
+export type EstandarMock = { id: number; nombre: string; descripcion: string | null; idManiobra: number }
+
+export type ParteMock = 'PRIMERA_PARTE' | 'SEGUNDA_PARTE' | 'CULTURA_AERONAUTICA'
+
+export type MateriaMock = {
+  id: number
+  nombre: string
+  notaMinima: number
+  coeficiente: number
+  parte: ParteMock
+  conPreguntas: boolean
+}
 
 export type AeronaveMock = { id: number; nombre: string; descripcion: string; imagen: string | null; estado: string }
 
@@ -48,7 +68,7 @@ export type CalificacionMock = {
   causa: string | null
   observacion: string | null
   recomendacion: string | null
-  maniobra: ManiobraMock
+  maniobra: { id: number; nombre: string; descripcion: string | null }
 }
 
 export type EvaluacionMock = {
@@ -73,16 +93,31 @@ export type EvaluacionMock = {
   calificaciones: CalificacionMock[]
 }
 
+export type Secuencias = {
+  turno: number
+  usuario: number
+  grupo: number
+  fase: number
+  subfase: number
+  maniobra: number
+  estandar: number
+  materia: number
+}
+
 export type DatosMock = {
   personas: PersonaMock[]
+  usuarios: UsuarioMock[]
   grupos: GrupoMock[]
+  fases: FaseMock[]
   subfases: SubfaseMock[]
   maniobras: ManiobraMock[]
-  maniobrasPorSubfase: Record<number, number[]>
+  maniobrasSubfase: EnlaceManiobraSubfase[]
+  estandares: EstandarMock[]
+  materias: MateriaMock[]
   aeronaves: AeronaveMock[]
   turnos: TurnoMock[]
   evaluaciones: EvaluacionMock[]
-  siguienteIdTurno: number
+  secuencias: Secuencias
 }
 
 function persona(
@@ -90,18 +125,52 @@ function persona(
   nombre: string,
   aPaterno: string,
   aMaterno: string,
+  dni: string,
+  rango: string | null,
   tipo: string | null,
   idGrupo: number | null,
   estado = 'Apto',
 ): PersonaMock {
-  return { codigo, nombre, aPaterno, aMaterno, tipo, estado, idGrupo, contEval: 0, codEvalRealizada: null }
+  return { codigo, nombre, aPaterno, aMaterno, dni, rango, tipo, estado, idGrupo, contEval: 0, codEvalRealizada: null }
 }
 
-const MANIOBRAS: ManiobraMock[] = Array.from({ length: 10 }, (_, indice) => ({
-  id: indice + 1,
-  nombre: `Maniobra ${indice + 1}`,
-  descripcion: `Descripcion de Maniobra ${indice + 1}`,
-}))
+const MANIOBRAS: ManiobraMock[] = [
+  ...Array.from({ length: 10 }, (_, indice) => ({
+    id: indice + 1,
+    nombre: `Maniobra ${indice + 1}`,
+    descripcion: `Descripcion de Maniobra ${indice + 1}`,
+  })),
+  { id: 11, nombre: 'Autorrotación', descripcion: 'Aterrizaje sin potencia' },
+]
+
+const ESTANDARES: [number, string, number][] = [
+  [1, 'Estandar 11', 1],
+  [2, 'Estandar 22', 2],
+  [3, 'Estandar 23', 2],
+  [4, 'Estandar 34', 3],
+  [5, 'Estandar 45', 4],
+  [6, 'Estandar 46', 4],
+  [7, 'Estandar 47', 4],
+  [8, 'Estandar 48', 4],
+  [9, 'Estandar 59', 5],
+  [10, 'Estandar 60', 9],
+  [11, 'Estandar 61', 9],
+  [12, 'Estandar 62', 10],
+]
+
+const MATERIAS: [string, number, number][] = [
+  ['Aerodinámica Aplicada a Helicópteros', 16, 0.13],
+  ['Ingeniería del Helicóptero', 16, 0.16],
+  ['Adoctrinamiento de Vuelo', 18, 0.22],
+  ['Límites de Operación', 20, 0.1],
+  ['Procedimientos Normales', 16, 0.1],
+  ['Procedimientos de Emergencias', 20, 0.1],
+  ['Meteorología', 16, 0.04],
+  ['Prevención de Accidentes', 16, 0.04],
+  ['Normatividad FAP', 16, 0.04],
+  ['Regulaciones Aeronáuticas del Perú', 16, 0.04],
+  ['Fraseología Aeronáutica en Inglés', 16, 0.03],
+]
 
 function maniobra(id: number): ManiobraMock {
   const encontrada = MANIOBRAS.find((candidata) => candidata.id === id)
@@ -151,17 +220,19 @@ function turnoSemilla(
 export function crearDatos(hoy: string = hoyIso()): DatosMock {
   const enUnaSemana = sumarDias(hoy, 7)
   const personas = [
-    persona('111111', 'Oscar', 'Lopez', 'Chaparro', 'Alumno', 1),
-    persona('222222', 'Juan', 'Falconi', 'Fernandez', 'Alumno', 2),
-    persona('333333', 'Carlos', 'Vargas', 'Rodriguez', null, null),
-    persona('444444', 'Juan', 'Torres', 'Perez', 'Instructor PDI', null),
-    persona('555555', 'Pedro', 'Rodriguez', 'Garcia', 'Alumno', 3),
-    persona('666666', 'Ana', 'Torres', 'Martinez', 'Alumno', 3),
-    persona('777777', 'Carlos', 'Ramirez', 'Sanchez', 'Alumno', 4, 'En Chequeo'),
-    persona('888888', 'Maria', 'Flores', 'Mendoza', 'Instructor PDI', null),
-    persona('999999', 'Luis', 'Diaz', 'Castro', 'Alumno', 6),
-    persona('000001', 'Admin', 'Sistema', 'Web', null, null),
-    persona('222444', 'Jorge', 'Aguirre', 'Salas', null, null),
+    persona('111111', 'Oscar', 'Lopez', 'Chaparro', '12345678', 'Cadete', 'Alumno', 1),
+    persona('222222', 'Juan', 'Falconi', 'Fernandez', '23456789', 'Alférez', 'Alumno', 2),
+    persona('333333', 'Carlos', 'Vargas', 'Rodriguez', '34567890', 'Mayor', null, null),
+    persona('444444', 'Juan', 'Torres', 'Perez', '45678901', 'Capitán', 'Instructor PDI', null),
+    persona('555555', 'Pedro', 'Rodriguez', 'Garcia', '56789012', 'Teniente', 'Alumno', 3),
+    persona('666666', 'Ana', 'Torres', 'Martinez', '67890123', 'Capitán', 'Alumno', 3),
+    persona('777777', 'Carlos', 'Ramirez', 'Sanchez', '78901234', 'Mayor', 'Alumno', 4, 'En Chequeo'),
+    persona('888888', 'Maria', 'Flores', 'Mendoza', '89012345', 'Teniente', 'Instructor PDI', null),
+    persona('999999', 'Luis', 'Diaz', 'Castro', '90123456', 'Alférez', 'Alumno', 6),
+    persona('000001', 'Admin', 'Sistema', 'Web', '01234567', 'Admin', null, null),
+    persona('222444', 'Jorge', 'Aguirre', 'Salas', '22244411', 'Mayor', null, null),
+    persona('654321', 'Lucía', 'Mendoza', 'Ríos', '76543210', 'Cadete', 'Alumno', null),
+    persona('765432', 'Raúl', 'Paredes', 'Soto', '75432109', 'Teniente', null, null),
   ]
   const alumno111 = personas.find((candidata) => candidata.codigo === '111111')
   const alumno555 = personas.find((candidata) => candidata.codigo === '555555')
@@ -170,23 +241,42 @@ export function crearDatos(hoy: string = hoyIso()): DatosMock {
 
   return {
     personas,
+    usuarios: crearUsuarios(),
     grupos: [
-      { id: 1, nombre: 'Grupo 1', programa: 'PDI' },
-      { id: 2, nombre: 'Grupo 2', programa: 'PDI' },
-      { id: 3, nombre: 'Grupo 3', programa: 'PDI' },
-      { id: 4, nombre: 'Grupo 4', programa: 'PDI' },
-      { id: 5, nombre: 'Grupo 5', programa: 'PDI' },
-      { id: 6, nombre: 'Grupo 6', programa: 'PDI' },
+      { id: 1, nombre: 'Grupo 1', descripcion: 'Instrucción básica - Nuevos ingresantes', programa: 'PDI' },
+      { id: 2, nombre: 'Grupo 2', descripcion: 'Instrucción avanzada - Fase final', programa: 'PDI' },
+      { id: 3, nombre: 'Grupo 3', descripcion: 'Entrenamiento especializado - Nivel 1', programa: 'PDI' },
+      { id: 4, nombre: 'Grupo 4', descripcion: 'Entrenamiento avanzado - Nivel 2', programa: 'PDI' },
+      { id: 5, nombre: 'Grupo 5', descripcion: 'Instrucción intermedia - Fase media', programa: 'PDI' },
+      { id: 6, nombre: 'Grupo 6', descripcion: 'Entrenamiento especializado - Nivel 2', programa: 'PDI' },
+    ],
+    fases: [
+      { id: 1, nombre: 'Adaptación', descripcion: 'Fase inicial de familiarización con procedimientos básicos' },
+      { id: 2, nombre: 'Operaciones HeliTransportadas', descripcion: 'Entrenamiento en operaciones con helicópteros' },
+      { id: 3, nombre: 'Operaciones AeroTácticas', descripcion: 'Operaciones avanzadas y tácticas especiales' },
     ],
     subfases: [
-      { id: 1, nombre: 'Contacto', descripcion: 'Familiarización con controles y procedimientos básicos', fase: 'Adaptación' },
-      { id: 2, nombre: 'Navegación', descripcion: 'Técnicas de navegación y orientación', fase: 'Adaptación' },
-      { id: 3, nombre: 'Instrumentos', descripcion: 'Manejo de instrumentos de vuelo', fase: 'Adaptación' },
-      { id: 4, nombre: 'Campos Extraños', descripcion: 'Operaciones en terrenos no preparados', fase: 'Adaptación' },
-      { id: 5, nombre: 'Formación', descripcion: 'Vuelo en formación y coordinación', fase: 'Adaptación' },
+      { id: 1, nombre: 'Contacto', descripcion: 'Familiarización con controles y procedimientos básicos', idFase: 1 },
+      { id: 2, nombre: 'Navegación', descripcion: 'Técnicas de navegación y orientación', idFase: 1 },
+      { id: 3, nombre: 'Instrumentos', descripcion: 'Manejo de instrumentos de vuelo', idFase: 1 },
+      { id: 4, nombre: 'Campos Extraños', descripcion: 'Operaciones en terrenos no preparados', idFase: 1 },
+      { id: 5, nombre: 'Formación', descripcion: 'Vuelo en formación y coordinación', idFase: 1 },
     ],
     maniobras: MANIOBRAS.map((item) => ({ ...item })),
-    maniobrasPorSubfase: { 1: [], 2: [1, 2, 3, 4, 5, 6], 3: [9, 10], 4: [7, 8], 5: [] },
+    maniobrasSubfase: [
+      ...[1, 2, 3, 4, 5, 6].map((idManiobra) => ({ idSubfase: 2, idManiobra })),
+      ...[9, 10].map((idManiobra) => ({ idSubfase: 3, idManiobra })),
+      ...[7, 8].map((idManiobra) => ({ idSubfase: 4, idManiobra })),
+    ],
+    estandares: ESTANDARES.map(([id, nombre, idManiobra]) => ({ id, nombre, descripcion: null, idManiobra })),
+    materias: MATERIAS.map(([nombre, notaMinima, coeficiente], indice) => ({
+      id: indice + 1,
+      nombre,
+      notaMinima,
+      coeficiente,
+      parte: 'PRIMERA_PARTE' as ParteMock,
+      conPreguntas: indice + 1 === 3,
+    })),
     aeronaves: [
       { id: 1, nombre: 'Robinson R22', descripcion: 'Helicóptero de entrenamiento básico', imagen: null, estado: 'Disponible' },
       { id: 2, nombre: 'Enstrom 280FX', descripcion: 'Helicóptero de instrucción intermedia', imagen: null, estado: 'En_Mantenimiento' },
@@ -352,7 +442,7 @@ export function crearDatos(hoy: string = hoyIso()): DatosMock {
         ]),
       },
     ],
-    siguienteIdTurno: 10,
+    secuencias: { turno: 10, usuario: 13, grupo: 7, fase: 4, subfase: 6, maniobra: 12, estandar: 13, materia: 12 },
   }
 }
 
@@ -366,10 +456,62 @@ export function reiniciarDatosMock() {
   datosActuales = crearDatos()
 }
 
+export function siguienteId(clave: keyof Secuencias): number {
+  const valor = datosActuales.secuencias[clave]
+  datosActuales.secuencias[clave] += 1
+  return valor
+}
+
 export function buscarPersona(codigo: string): PersonaMock | undefined {
   return datosActuales.personas.find((persona) => persona.codigo === codigo)
 }
 
+export function buscarUsuarioPorNombre(username: string): UsuarioMock | undefined {
+  return datosActuales.usuarios.find((usuario) => usuario.username === username)
+}
+
+export function buscarUsuarioPorId(id: number): UsuarioMock | undefined {
+  return datosActuales.usuarios.find((usuario) => usuario.id === id)
+}
+
+export function usuarioDePersona(codigo: string): UsuarioMock | undefined {
+  return datosActuales.usuarios.find((usuario) => usuario.codPersona === codigo)
+}
+
+export function rolPorId(idRol: number | null): RolMock | null {
+  return ROLES_MOCK.find((rol) => rol.id === idRol) ?? null
+}
+
 export function nombreCorto(persona: PersonaMock): string {
   return `${persona.nombre} ${persona.aPaterno}`
+}
+
+export function nombreCompleto(persona: PersonaMock): string {
+  return [persona.nombre, persona.aPaterno, persona.aMaterno].filter(Boolean).join(' ')
+}
+
+export function buscarSubfase(id: number): SubfaseMock | undefined {
+  return datosActuales.subfases.find((subfase) => subfase.id === id)
+}
+
+export function nombreDeFase(idFase: number): string {
+  return datosActuales.fases.find((fase) => fase.id === idFase)?.nombre ?? ''
+}
+
+export function maniobrasDeSubfase(idSubfase: number): ManiobraMock[] {
+  const ids = datosActuales.maniobrasSubfase
+    .filter((enlace) => enlace.idSubfase === idSubfase)
+    .map((enlace) => enlace.idManiobra)
+  return datosActuales.maniobras.filter((maniobra) => ids.includes(maniobra.id))
+}
+
+export function subfasesDeManiobra(idManiobra: number): SubfaseMock[] {
+  const ids = datosActuales.maniobrasSubfase
+    .filter((enlace) => enlace.idManiobra === idManiobra)
+    .map((enlace) => enlace.idSubfase)
+  return datosActuales.subfases.filter((subfase) => ids.includes(subfase.id))
+}
+
+export function estandaresDeManiobra(idManiobra: number): EstandarMock[] {
+  return datosActuales.estandares.filter((estandar) => estandar.idManiobra === idManiobra)
 }

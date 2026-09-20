@@ -2,6 +2,7 @@ import { HttpResponse } from 'msw'
 import { permisosDeRol, type Permiso } from '@/lib/auth/permisos'
 import { config } from '@/lib/config'
 import { usuarioAutenticado } from './auth'
+import { rolPorId } from './datos'
 import type { UsuarioMock } from './usuarios'
 
 export const API = config.sigedaApiUrl
@@ -18,7 +19,7 @@ export function autorizar(request: Request, permiso: Permiso): UsuarioMock | Res
   if (!usuario) {
     return HttpResponse.json({ status: 401, error: 'Unauthorized', message: 'Token is not valid' }, { status: 401 })
   }
-  if (!permisosDeRol(usuario.rol.nombre).has(permiso)) {
+  if (!permisosDeRol(rolPorId(usuario.idRol)?.nombre ?? '').has(permiso)) {
     return errorResponse(403, 'Acceso denegado', 'No tienes permisos para realizar esta acción')
   }
   return usuario

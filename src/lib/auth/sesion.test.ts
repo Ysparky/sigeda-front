@@ -4,7 +4,18 @@ import { sigeda } from '@/lib/api/sigeda'
 import { config } from '@/lib/config'
 import { server } from '@/mocks/server'
 import { CLAVE_REFRESH, tokens } from './tokens'
-import { MENSAJE_CREDENCIALES, sesion } from './sesion'
+import { MENSAJE_CREDENCIALES, MENSAJE_SIN_ROL, sesion } from './sesion'
+
+function personaSinRol() {
+  return HttpResponse.json({
+    codigo: '765432',
+    nombre: 'Raúl',
+    aPaterno: 'Paredes',
+    aMaterno: 'Soto',
+    idGrupo: null,
+    usuario: { nombre: 'raul.paredes', correo: 'raul.paredes@sigeda.com', id: 12, rol: null },
+  })
+}
 
 describe('sesion', () => {
   it('CA-SES-01 con credenciales válidas crea la sesión con los permisos del rol', async () => {
@@ -14,6 +25,41 @@ describe('sesion', () => {
     expect(creada.rol).toEqual({ id: 4, nombre: 'Instructor' })
     expect(creada.permisos.has('Write')).toBe(true)
     expect(sesion.actual()).toBe(creada)
+  })
+
+  it('M2-10 la sesión trae la persona del usuario', async () => {
+    const creada = await sesion.iniciar('instructor.perez', '123')
+    expect(creada.persona).toEqual({ nombre: 'Juan', aPaterno: 'Torres', aMaterno: 'Perez', idGrupo: null })
+  })
+
+  it('CA-SES-07 arma la sesión sin consultar endpoints que devuelven la contraseña', async () => {
+    const rutas: string[] = []
+    const escucha = ({ request }: { request: Request }) => rutas.push(new URL(request.url).pathname)
+    server.events.on('request:start', escucha)
+    try {
+      await sesion.iniciar('instructor.perez', '123')
+    } finally {
+      server.events.removeListener('request:start', escucha)
+    }
+    expect(rutas).toEqual(['/auth/login', '/api/personas/instructor.perez'])
+  })
+
+  it('CA-SES-08 una cuenta sin rol no inicia sesión y borra los tokens', async () => {
+    server.use(http.get(`${config.sigedaApiUrl}/api/personas/:nom`, personaSinRol))
+    await expect(sesion.iniciar('instructor.perez', '123')).rejects.toMatchObject({ message: MENSAJE_SIN_ROL })
+    expect(sesion.actual()).toBeNull()
+    expect(tokens.refresh()).toBeNull()
+  })
+
+  it('CA-SES-08 al restaurar, una cuenta sin rol borra los tokens y deja el aviso', async () => {
+    await sesion.iniciar('instructor.perez', '123')
+    const refresh = tokens.refresh()
+    sesion.expirar()
+    localStorage.setItem(CLAVE_REFRESH, refresh ?? '')
+    server.use(http.get(`${config.sigedaApiUrl}/api/personas/:nom`, personaSinRol))
+    await expect(sesion.restaurar()).resolves.toBeNull()
+    expect(localStorage.getItem(CLAVE_REFRESH)).toBeNull()
+    expect(sesion.aviso()).toBe(MENSAJE_SIN_ROL)
   })
 
   it('nunca conserva el hash de la contraseña que envía el backend', async () => {
@@ -97,10 +143,10 @@ describe('sesion', () => {
     const refresh = tokens.refresh()
     sesion.expirar()
     localStorage.setItem(CLAVE_REFRESH, refresh ?? '')
-    server.use(http.get(`${config.sigedaApiUrl}/api/usuarios/nombre/:nombre`, () => new HttpResponse(null, { status: 503 })))
+    server.use(http.get(`${config.sigedaApiUrl}/api/personas/:nom`, () => new HttpResponse(null, { status: 503 })))
     await expect(sesion.restaurar()).resolves.toBeNull()
     expect(localStorage.getItem(CLAVE_REFRESH)).toBe(refresh)
-    server.use(http.get(`${config.sigedaApiUrl}/api/usuarios/nombre/:nombre`, () => HttpResponse.error()))
+    server.use(http.get(`${config.sigedaApiUrl}/api/personas/:nom`, () => HttpResponse.error()))
     await expect(sesion.restaurar()).resolves.toBeNull()
     expect(localStorage.getItem(CLAVE_REFRESH)).toBe(refresh)
   })
@@ -111,8 +157,8 @@ describe('sesion', () => {
     sesion.expirar()
     localStorage.setItem(CLAVE_REFRESH, refresh ?? '')
     server.use(
-      http.get(`${config.sigedaApiUrl}/api/usuarios/nombre/:nombre`, () =>
-        HttpResponse.text('Usuario especificada no existe.', { status: 404 }),
+      http.get(`${config.sigedaApiUrl}/api/personas/:nom`, () =>
+        HttpResponse.text('Persona especificada no existe.', { status: 404 }),
       ),
     )
     await expect(sesion.restaurar()).resolves.toBeNull()

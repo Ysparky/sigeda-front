@@ -2,7 +2,17 @@ import { http, HttpResponse } from 'msw'
 import { esFechaIso, esHora, esPosteriorAHoy } from '@/lib/dominio/calendario'
 import { permiteCambios, seSuperponen } from '@/lib/dominio/turno'
 import { API, autorizar, errorResponse, paginar, textoNoEncontrado } from './comun'
-import { buscarPersona, datos, nombreCorto, type AlumnoTurnoMock, type ProgramaMock, type TurnoMock } from './datos'
+import {
+  buscarPersona,
+  buscarSubfase,
+  datos,
+  nombreCorto,
+  nombreDeFase,
+  siguienteId,
+  type AlumnoTurnoMock,
+  type ProgramaMock,
+  type TurnoMock,
+} from './datos'
 
 type CuerpoTurno = {
   nombre?: unknown
@@ -223,22 +233,21 @@ export const handlersTurnos = [
     const idSubfase = Number(cuerpo.idSubfase)
     const rechazo = validarGuardado(cuerpo, idSubfase, null)
     if (rechazo) return rechazo
-    const subfase = datos().subfases.find((candidata) => candidata.id === idSubfase)
+    const subfase = buscarSubfase(idSubfase)
     const turno: TurnoMock = {
-      id: datos().siguienteIdTurno,
+      id: siguienteId('turno'),
       nombre: '',
       fechaEval: '',
       programa: cuerpo.programa === 'PDE' ? 'PDE' : 'PDI',
       idSubfase,
       subfase: subfase?.nombre ?? '',
-      fase: subfase?.fase ?? '',
+      fase: subfase ? nombreDeFase(subfase.idFase) : '',
       codInstructor: null,
       idAeronave: null,
       alumnos: [],
       maniobras: [],
     }
     aplicar(turno, cuerpo)
-    datos().siguienteIdTurno += 1
     datos().turnos.push(turno)
     return guardado(turno)
   }),

@@ -3,6 +3,7 @@ import { PageHeader } from '@/components/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { accesosPara } from '@/lib/auth/pantallas'
+import { nombreDeSesion } from '@/lib/auth/sesion'
 import { useSesion } from '@/lib/auth/use-sesion'
 
 export function InicioPage() {
@@ -14,7 +15,7 @@ export function InicioPage() {
     <>
       <PageHeader
         titulo="Inicio"
-        descripcion={`Hola, ${actual.usuario.username}.`}
+        descripcion={`Hola, ${nombreDeSesion(actual.persona)}.`}
         acciones={<Badge variant="secondary">{actual.rol.nombre}</Badge>}
       />
       <section aria-labelledby="titulo-accesos" className="grid gap-3">

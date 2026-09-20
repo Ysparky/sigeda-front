@@ -1,7 +1,8 @@
 import { http, HttpResponse } from 'msw'
 import { usernameDelToken } from '@/lib/auth/tokens'
 import { config } from '@/lib/config'
-import { CONTRASENA_SEED, USUARIOS_MOCK } from './usuarios'
+import { buscarUsuarioPorId, buscarUsuarioPorNombre, rolPorId } from './datos'
+import type { UsuarioMock } from './usuarios'
 
 const API = config.sigedaApiUrl
 const HASH_DE_PRUEBA = '$2a$10$hashDePruebaQueNuncaDebeLlegarALaSesion'
@@ -25,27 +26,31 @@ export function reiniciarAuthMock() {
   secuencia = 0
 }
 
+function puedeIniciarSesion(usuario: UsuarioMock | undefined): usuario is UsuarioMock {
+  return usuario !== undefined && usuario.idRol !== null
+}
+
 function usernameDelRefresh(refresh: string | undefined) {
   if (!refresh || !refresh.startsWith(PREFIJO_REFRESH) || refreshRevocados.has(refresh)) return null
   const username = refresh.slice(PREFIJO_REFRESH.length).split(':')[0]
-  return username && USUARIOS_MOCK[username] ? username : null
+  return username && buscarUsuarioPorNombre(username) ? username : null
 }
 
 export function usuarioAutenticado(request: Request) {
   const cabecera = request.headers.get('Authorization') ?? ''
   const username = cabecera.startsWith('Bearer ') ? usernameDelToken(cabecera.slice(7)) : null
-  return username ? (USUARIOS_MOCK[username] ?? null) : null
+  return username ? (buscarUsuarioPorNombre(username) ?? null) : null
 }
 
-function noAutorizado() {
+export function noAutorizado() {
   return HttpResponse.json({ status: 401, error: 'Unauthorized', message: 'Token is not valid' }, { status: 401 })
 }
 
 export const handlersAuth = [
   http.post(`${API}/auth/login`, async ({ request }) => {
     const { username, password } = (await request.json()) as { username?: string; password?: string }
-    const usuario = username ? USUARIOS_MOCK[username] : undefined
-    if (!usuario || password !== CONTRASENA_SEED) return new HttpResponse(null, { status: 401 })
+    const usuario = username ? buscarUsuarioPorNombre(username) : undefined
+    if (!puedeIniciarSesion(usuario) || password !== usuario.password) return new HttpResponse(null, { status: 401 })
     secuencia += 1
     return HttpResponse.json({
       token: jwtDePrueba(usuario.username),
@@ -66,14 +71,21 @@ export const handlersAuth = [
   }),
   http.get(`${API}/api/usuarios/nombre/:nombre`, ({ request, params }) => {
     if (!usuarioAutenticado(request)) return noAutorizado()
-    const usuario = USUARIOS_MOCK[String(params.nombre)]
+    const usuario = buscarUsuarioPorNombre(String(params.nombre))
     if (!usuario) return HttpResponse.text('Usuario especificada no existe.', { status: 404 })
-    return HttpResponse.json({ ...usuario, password: HASH_DE_PRUEBA })
+    return HttpResponse.json({
+      id: usuario.id,
+      username: usuario.username,
+      correo: usuario.correo,
+      codPersona: usuario.codPersona,
+      rol: rolPorId(usuario.idRol),
+      password: HASH_DE_PRUEBA,
+    })
   }),
   http.put(`${API}/api/usuarios/:id`, async ({ request, params }) => {
     if (!usuarioAutenticado(request)) return noAutorizado()
     const cuerpo = (await request.json()) as { username?: string }
-    const usuario = Object.values(USUARIOS_MOCK).find((candidato) => candidato.id === Number(params.id))
+    const usuario = buscarUsuarioPorId(Number(params.id))
     if (!usuario) return HttpResponse.text('Usuario especificada no existe.', { status: 404 })
     return HttpResponse.json(
       {

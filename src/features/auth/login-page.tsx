@@ -19,7 +19,7 @@ const esquema = z.object({
 type Credenciales = z.infer<typeof esquema>
 
 export function LoginPage() {
-  const [errorGeneral, setErrorGeneral] = useState<string | null>(null)
+  const [errorGeneral, setErrorGeneral] = useState<string | null>(() => sesion.aviso())
   const formulario = useForm<Credenciales>({
     resolver: zodResolver(esquema),
     defaultValues: { username: '', password: '' },

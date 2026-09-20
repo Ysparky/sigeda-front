@@ -22,6 +22,7 @@ function sesionDe(rol: string): Sesion {
   return {
     usuario: { id: 1, username: 'prueba', correo: null },
     codPersona: null,
+    persona: { nombre: 'Prueba', aPaterno: 'Apellido', aMaterno: '', idGrupo: null },
     rol: { id: 1, nombre: rol },
     permisos: permisosDeRol(rol),
   }
