@@ -283,11 +283,15 @@ Adjusted by the M2 addendum: usuarios and roles live in the persona detail (M2-3
 
 ### M3 — Aprendizaje (all roles)
 
-| Screen | Route | Data |
-|---|---|---|
-| Documentos | `/aprendizaje` | Real |
-| Cuestionario de práctica | `/aprendizaje/cuestionario` | Real |
-| Consultas (RAG, `[n]` citations) | `/aprendizaje/consultas` | Real |
+| Screen | Route | Permission | Data |
+|---|---|---|---|
+| Documentos | `/aprendizaje` | `Read` | Real + Contract |
+| Cuestionario de práctica | `/aprendizaje/cuestionario` | `Read` | Real |
+| Consultas (RAG, `[n]` citations) | `/aprendizaje/consultas` | `Read` | Real + Contract |
+
+`Read` is the only permission every role holds, so it gates all three (M3-12). Live use is
+blocked by dependencies 39 (the AI backend has no authentication) and 45 (its chat session
+endpoints 500 on serialization). Search params, breadcrumbs and fixed texts: §15.3.
 
 ### M4 — Teoría y banco
 
@@ -411,7 +415,7 @@ A checklist for `sigeda-back` (Victor) and `sigeda_chat_status`.
 | 6 | Theory API (§11) + `Manage Questions`, `Manage Exams` (Instructor), `Take Exams` (Alumno) | back | M4 |
 | 7 | `GET /api/personas/{cod}/estado-teorico` | back | M4; feeds the M1 subsanación block |
 | 8 | NIT / NIA / NFPI and orden de mérito | back | M5 |
-| 9 | Accept `sigeda-back`'s JWT (shared secret) so documents are per user; prediction over real evaluaciones | chat_status | M3 / M5 |
+| 9 | Accept `sigeda-back`'s JWT (shared secret) so documents are per user; prediction over real evaluaciones — *its M3 half is refined by dependency 39 (§15.5)* | chat_status | M3 / M5 |
 | 10 | Evaluation list across alumnos with the same filters | back | M1 nice-to-have |
 | 11 | Include persona (nombre, apellidos, tipo, idGrupo) in `/api/usuarios/nombre/{nombre}` — *superseded by M2-10 and dependency 25 (§14)* | back | M1 — header and "mine" screens |
 
@@ -439,7 +443,7 @@ for implementation in `sigeda-back`. Summary:
 | M0 Foundation | Scaffold, tokens, shell, session, route registry, API clients, errors, Inicio, Cambiar contraseña, design review | — |
 | M1 Práctico | P3 + P4 | Dependency 1 for Registrar turno |
 | M2 Matrícula + Programa | P1 + P2 | 5 for Materias to go real; 22, 30, 32 (+33), 37 before the gated actions run against the live backend (M2-14, §14.5) |
-| M3 Aprendizaje | P7 | — (9 recommended) |
+| M3 Aprendizaje | P7 | 39 before uploads and deletes run against the live AI backend, 45 before Consultas does (M3-1, M3-9, §15.5); 40 and 41 only if the practice attempt must persist |
 | M4 Teoría + Banco | P5, contract-first | 6, 7 to go real |
 | M5 Seguimiento | P6 | 7, 8 |
 
@@ -746,3 +750,177 @@ CA-FAS-07 ("Subfases sin fase") was dropped (review F1); no other ID changed. Th
 | 38 | Minor: blank or null `descripcion` never clears (fase, subfase, maniobra, estándar); `StringToProgramaConverter` turns any programa into PDI; no unique constraint on `usuarios.nombre` (a duplicate breaks login for both); nested lists (`DetalleFase.subfases`, `DetalleSubfase.maniobrasSubfase`, `DetalleManiobra.estandares`) have no `@OrderBy("id")` | M2 |
 
 Dependency 3 is amended (§10). Dependency 4 stays open but no longer blocks M2 (M2-5). Dependency 5 is the Materias backend (contract §6). Dependency 11 is superseded by M2-10 and 25; dependency 2 is widened by 24.
+
+## 15. Addendum M3 — Aprendizaje
+
+**Date:** 2026-09-20 · **Status:** decided autonomously, like M1 and M2; every decision below is a ruling the user can reverse. Contract for the AI backend: `docs/contrato-api-aprendizaje.md`.
+
+### 15.1 Backend state
+
+Read from `sigeda_chat_status` source (branch `feat/migracion-sigeda-back`, commit `15b4e86`); nothing was run and no file was touched. Paths are relative to that repo's root. The research note `.superpowers/notas/investigacion/m3-contrato-ia.md` was re-verified line by line against this commit: every fact it states still holds, and its gap numbering (1–12) is the one used here.
+
+**Shape of the API.** No global prefix (`src/main.ts:6-19`), so every route sits at the process root (`http://localhost:3000/documents`). Global `ValidationPipe` with `whitelist`, `transform` and `forbidNonWhitelisted` (`main.ts:8-13`): an unexpected body property is a 400. CORS reflects any origin with credentials (`main.ts:16`); port 3000 (`main.ts:18`). No `ExceptionFilter` exists, so every error is Nest's default `{statusCode, message, error}`, and for DTO failures `message` is an array of **English** class-validator strings. Ids are UUID v4 and the DTOs reject anything else (`@IsUUID('4')`).
+
+**What works.** Documents: upload (multipart field `file`, MIME allow-list PDF/DOCX/TXT in `src/documents/dto/document.dto.ts:13-17`, checked in `src/documents/documents.controller.ts:31-35`), list, detail and delete. All four answer through `toDocumentResponse` (`src/documents/documents.mapper.ts:9-31`), which converts `sizeBytes` (`BigInt`) to a number and drops `extractedText` and `storageKey`. Processing is queued on BullMQ (`documents.service.ts:43`) and the worker sets `ready` with tags and RAG chunks, or `error` with a message (`src/documents/document-processing.processor.ts:62-84`); tagging and indexing failures are non-blocking (`:46-60`). Quiz generation validates its DTO, checks ownership and readiness, calls the LLM and persists in one transaction (`src/quiz/quiz.service.ts:16-99`). Chat retrieval works (pgvector cosine, `TOP_K = 6`, `SIMILARITY_THRESHOLD = 0.5`, `src/chat/retrieval.service.ts:13,16,38-68`) and `POST /chat/messages` returns the assistant message plus resolved `sources[]` (`src/chat/chat.service.ts:112-115,132-140`), numbered `[1]…[n]` exactly as the system prompt instructs the model to cite (`src/chat/chat-prompt.ts:13-21,28-36`).
+
+**What is broken or missing.**
+
+- **No quiz-attempt route exists** (gap 1). `QuizAttempt` and `QuizAttemptAnswer` are fully modelled (`prisma/schema.prisma:207-241`) but a repo-wide grep for `Attempt` outside the schema returns nothing in `src/`. `QuizController` has only `POST /quizzes/generate` and `GET /quizzes/:id` (`src/quiz/quiz.controller.ts:13-21`), and the detail returns `correctAnswer` and `explanation` for every question unconditionally (`quiz.service.ts:101-108`).
+- **Chat session responses 500** (gap 2). `POST /chat/sessions` (`chat.service.ts:44`) and `GET /chat/sessions/:id` (`chat.service.ts:123`) `include: { documents: { include: { document: true } } }` instead of mapping through `toDocumentResponse`. `Document.sizeBytes` is `BigInt` (`prisma/schema.prisma:87`), which `JSON.stringify` cannot serialize — the exact failure the mapper's own docstring says was found and fixed for `/documents/*` (`documents.mapper.ts:3-8`). Every session has at least one document (`@ArrayMinSize(1)`, `src/chat/dto/chat.dto.ts:6`), so **both endpoints fail for every session**, and if they did not they would leak `extractedText` and `storageKey`.
+- **No session list** (gap 3). `ChatController` has three routes and none of them lists sessions (`src/chat/chat.controller.ts:9-27`).
+- **Citations do not survive a reload** (gap 4). A stored `ChatMessage` carries only `citedChunkIds: string[]` (`prisma/schema.prisma:279`); `formatSources` runs only inside `POST /chat/messages` (`chat.service.ts:132-140`) and no endpoint resolves a chunk id back to its document or content.
+- **No upload size limit** (gap 5). `FileInterceptor('file')` is registered with no `limits` (`documents.controller.ts:26`) and Multer's default in-memory storage buffers the whole file; `MAX_UPLOAD_SIZE_MB=25` is documented in `.env.example:36` and never read in `src/`.
+- **No ownership check** on `GET /documents/:id`, `DELETE /documents/:id` (`documents.service.ts:68,74`) or `GET /quizzes/:id` (`quiz.service.ts:102`) — an IDOR the moment real auth lands (gap 6). Chat does check (`chat.service.ts:57,126`).
+- **No authentication at all** (gap 7). `DevAuthMiddleware` is applied to every route (`src/app.module.ts:23-25`) and sets `req.user = { id: '564984ee-448a-424f-b689-57a03b3ea108' }` unconditionally, ignoring the `Authorization` header (`src/common/dev-auth.middleware.ts:5-8`). There is no JWT library in `package.json`, no guard, and `User` has no `username` column (`prisma/schema.prisma:56-74`) — only `email` and `fullName`. `sigeda-back` signs HS256 with `sub` = username, plus `iat` and `exp`, and nothing else (`sigeda-back` `security/config/JwtUtils.java:31-38`), so mapping a token to a `User.id` needs a new column and pre-provisioned rows.
+- **Quiz generation is synchronous** (gap 8): up to three LLM attempts (`src/quiz/quiz-generation.service.ts:6,33-56`) over up to 300 000 characters (`:12`) inside the HTTP request, with no queue and no documented timeout.
+- **`DocumentStatus.uploading` is unreachable** (gap 9): the row is created already at `processing` (`documents.service.ts:37`), after the synchronous S3 upload. The reachable machine is `processing → ready | error`.
+- **The prediction routes have no scoping** (gap 10): `instructorId` is an unvalidated query string and neither route reads `req.user` (`src/prediction/prediction.controller.ts:10-20`). M5, not M3.
+- **No quiz history** (gap 11): there is no `GET /quizzes`, and `sourceDocumentId` is always `null` because per-question attribution is not implemented (`quiz.service.ts:87-90`).
+- **Error text leaks internals** (gap 12): a failed document's `errorMessage` is the raw caught `.message` (`document-processing.processor.ts:77-82`), and a failed generation returns the raw parse/schema error inside its 400 (`quiz-generation.service.ts:58-60`).
+
+**What the frontend therefore cannot rely on:** per-user isolation of documents, quizzes and sessions; any persisted quiz attempt or score; a list of past conversations; citations after a reload; a server-enforced upload limit; sanitised error text; an `uploading` state; per-question source attribution; and, today, `GET /chat/sessions/:id` returning at all.
+
+**Messages the criteria show** (verbatim; the CAs cite these IDs):
+
+| ID | Where | Text (verbatim) | Source |
+|---|---|---|---|
+| C1 | 400 upload | No se recibió ningún archivo. | `documents.controller.ts:29` |
+| C2 | 400 upload | Tipo de archivo no soportado: `{mimeType}`. Solo se aceptan PDF, DOCX y TXT. | `documents.controller.ts:32-34` |
+| C3 | 404 | Documento no encontrado. | `documents.service.ts:69,75` |
+| C4 | `errorMessage` | No se pudo extraer contenido legible del documento (posiblemente escaneado sin OCR). | `document-processing.processor.ts:41-43` |
+| C5 | 404 generate / create session | Uno o más documentos no existen o no te pertenecen. | `quiz.service.ts:22` · `chat.service.ts:26` |
+| C6 | 400 generate / create session | Los siguientes documentos aún no están listos: `{archivos}` | `quiz.service.ts:27-29` · `chat.service.ts:31-33` |
+| C7 | 400 generate | No se pudo generar el cuestionario tras 3 intentos: `{detalle técnico}` | `quiz-generation.service.ts:58-60` |
+| C8 | 404 | Cuestionario no encontrado. | `quiz.service.ts:106` |
+| C9 | 404 | Sesión de chat no encontrada. | `chat.service.ts:58,127` |
+| C10 | 201, as the answer's content | No se pudo generar una respuesta. Intenta reformular tu pregunta. | `chat.service.ts:99` |
+| C11 | 404 (M5) | Alumno no encontrado. | `prediction.service.ts:73` |
+| C12 | 400 (M5) | El alumno no tiene evaluaciones registradas. | `prediction.service.ts:82` |
+
+C7 is never shown as it arrives (M3-5); C4 is shown verbatim because it is the only document error the backend produces deliberately.
+
+### 15.2 Decisions
+
+| # | Decision | Why | Cost if wrong |
+|---|---|---|---|
+| M3-1 | **Authentication: the frontend changes nothing; the backend must.** `lib/api/ia.ts` already attaches `Authorization: Bearer <access token>` from `tokens.acceso()`, i.e. the same HS256 token `sigeda-back` issues, whose only claim is `sub` = username. Dependency 39 asks `sigeda_chat_status` to replace `DevAuthMiddleware` with a guard that verifies that token with the shared secret, resolves `sub` against a new `User.username @unique` and rejects with 401 `{statusCode:401,…}`; users must be provisioned there because the token carries no email or full name. Until 39 is listed in `VITE_DEPENDENCIAS_RESUELTAS`, and outside mock mode, **Subir documento and Eliminar documento are disabled with T11** (`dependencias.ts` gains `subirDocumento: [39]`, `eliminarDocumento: [39]`) and the Aprendizaje screens show A1. | Every request today is the same hardcoded user, so one person's uploads are in everyone's list. Writing new material into a shared account is the part that cannot be undone; reading the seeded material is not. | The screens are read-only against the live backend until 39 lands. Mock mode is unaffected. |
+| M3-2 | **The practice quiz is scored in the browser.** The frontend keeps the generated quiz in memory, collects the answers, and on Entregar compares each one with the `correctAnswer` the response already carries: multiple choice and true/false by exact value, fill-in-the-blank after normalising (trim, lowercase, strip accents, collapse inner spaces). `correctAnswer` and `explanation` are not rendered before Entregar. Nothing is persisted. The contract still specifies attempt endpoints (dependency 40) and an answer-free quiz view (dependency 41) so a later milestone can persist attempts; **M3 does not call them and the mocks do not implement them.** | No attempt endpoint exists, and `GET /quizzes/:id` returns the key unconditionally, so hiding it client-side buys nothing until 41 lands. The cuestionario de práctica carries no academic weight — the graded exam is M4 in `sigeda-back` — so a local score is the honest scope. | If attempts must be persisted for the thesis evidence, the screen gains two calls; the scoring rule moves to the server (contract §2.3). |
+| M3-3 | **The quiz lives in the URL, the answers do not.** The generated quiz id goes to `/aprendizaje/cuestionario?cuestionario=<uuid>` (zod-validated search param, like every other screen). A reload re-fetches it with `GET /quizzes/:id` and restarts it with A2. Answers are never written to `localStorage` or `sessionStorage`. | The URL is the project's existing state channel; persisting answers locally would fake a durable attempt that the backend does not have. | The user retypes a quiz they reloaded mid-way. |
+| M3-4 | **Generation blocks with an explained wait and a 120 s client deadline.** The Generar button enters a busy state with A3, the form is disabled, the mutation does not retry (`query.ts` already sets `mutations: { retry: false }`), and an `AbortController` cancels at 120 s, showing A4 with Reintentar. Dependency 42 asks for a queued variant (`202 { quizId }` + poll) like documents. | Generation is synchronous, up to three LLM attempts over up to 300 000 characters, with no server timeout. Without a deadline the tab hangs on a dead request. | A slow but successful generation is cancelled; the user retries with fewer questions. |
+| M3-5 | **Only the contract's messages are shown; everything else is replaced.** An allow-list holds C1–C6, C8, C9 and C10; any other message from the AI backend — C7's technical detail, an `errorMessage` that is not C4, a class-validator array, an unhandled 500 — becomes A5 (generation), A12 (document) or the existing `MENSAJE_GENERICO`, and the raw text is neither rendered, stored nor logged. `extractedText` and `storageKey` never reach the client anyway, and the frontend never requests them. | Gap 12: `errorMessage` and the 400 of `/quizzes/generate` carry `pdf-parse`, `mammoth` and Zod text. | A genuinely useful backend message is hidden until it is added to the allow-list (and to the contract). |
+| M3-6 | **Multipart upload with the checks the server lacks.** `lib/api/http.ts` gains `subirArchivo(ruta, archivo)`: `FormData` with the field `file`, no `Content-Type` header (the browser sets the boundary), same Authorization and 401-refresh path. Before sending, the frontend rejects anything whose extension is not `.pdf`, `.docx` or `.txt` or whose size exceeds 25 MB, with A11, and does not issue the request. Dependency 43 asks for the server-side limit (413) and for falling back to the extension when the browser reports no or a generic MIME type. | Multer buffers the whole file in memory before any check runs; a 500 MB drop would be uploaded in full and then rejected. 25 MB mirrors the `MAX_UPLOAD_SIZE_MB` the repo already documents. | A valid file with an unusual extension is refused client-side; the limit is one constant. |
+| M3-7 | **Polling: 3 s while anything is processing, terminal states stop it, 2 min gives up.** The documents list query sets `refetchInterval` to 3 000 ms while any row is `processing` and to `false` otherwise; after 40 consecutive polls it stops and shows A6 with a manual Actualizar. Only three states are rendered — Procesando, Listo, Error — and an `uploading` row, unreachable today, is rendered as Procesando. | There is no webhook, SSE or websocket; `uploading` is dead (gap 9). A ceiling keeps a stuck worker from polling forever. | A document that takes longer than two minutes needs one click. |
+| M3-8 | **The conversation is created with the first message and identified by the URL.** The screen starts as a document picker; sending the first question calls `POST /chat/sessions` and then `POST /chat/messages`, and puts the id in `/aprendizaje/consultas?sesion=<uuid>`. There is **no list of past conversations** and none is cached locally; Nueva consulta clears the param. Dependency 44 adds `GET /chat/sessions` for a later milestone. | Gap 3: nothing lists sessions, and a locally cached list would drift from a server the frontend cannot query. | Conversations are reachable only by their URL until 44 lands. |
+| M3-9 | **Restoring a conversation tolerates today's 500.** `GET /chat/sessions/:id` answering 500 (or any unparsable body) shows A7 inside the screen with Nueva consulta, instead of the generic error page; a 404 shows C9. The contract fixes the response (dependency 45: documents mapped through `toDocumentResponse`), and the mocks implement the fixed shape only — tolerating the current one is impossible, since it never serializes. | Gap 2 breaks the endpoint for every session that has documents, which is all of them. | A one-branch special case that becomes dead code once 45 lands. |
+| M3-10 | **Citations are chips when the server resolves them and plain text when it does not.** In a live answer, each `[n]` with `1 ≤ n ≤ sources.length` becomes a chip opening the source (filename, excerpt, similarity as a percentage); out-of-range markers stay as text, because nothing server-side checks that the model's markers match `sources` (`chat.service.ts:108` stores ids, `chat-prompt.ts:13-21` only asks). After a reload, messages arriving without `sources` render their markers as inert text and the conversation shows A8. Dependency 46 adds resolved `sources[]` per message to `GET /chat/sessions/:id`, with `similarity: null` because it is not stored; the frontend prefers `sources` whenever present. | Gap 4. The UI must not claim a source it cannot show, nor link a marker that may point nowhere. | Past answers lose their sources until 46 lands. |
+| M3-11 | **A failed answer is the backend's own text; a failed request keeps the question.** C10 arrives as a normal 201 with no sources and is rendered as an ordinary assistant message. A network failure or a 500 leaves nothing persisted — retrieval runs before the user message is saved (`chat.service.ts:64,67`) — so the question stays in the input with Reintentar and the conversation shows no half-written turn. | The LLM error is swallowed server-side (`chat.service.ts:98-99`); only retrieval (embeddings) can fail the request. | If the backend later persists before retrieving, a retry could duplicate the question. |
+| M3-12 | **The three screens use `Read` and no role restriction.** `Read` is held by all five roles in `permisos.ts:29-78` (Administrador Web, Comandante de Escuadrón, Instructor, Jefe de Operaciones and Alumno), it is the permission the other read-only screens already use, and leaving `roles` unset is what makes the group visible to everyone. `Update` would also work but means "change my own account" elsewhere in the app. | Spec §6 requires all roles to reach Aprendizaje, and the route registry holds one permission per route. | None; if a role must be excluded later, `roles` is one line. |
+| M3-13 | **Sidebar group Aprendizaje, Documentos as the breadcrumb parent.** The `GrupoMenu` value and its place last in `ORDEN_GRUPOS` already exist (`pantallas.ts:33,43`). All three screens are `enMenu: true`; Cuestionario and Consultas declare `padre: '/aprendizaje'`, so their breadcrumb reads "Documentos › …". | Documents are the prerequisite of both tools: every quiz and every conversation starts from a document. | Wording of one breadcrumb. |
+| M3-14 | **Only `ready` documents can be chosen**, in both tools; the picker hides the rest and explains it, and with none available shows an empty state linking to Documentos. The backend's C6 is still shown verbatim if the state changes between the two requests. | Both endpoints reject non-ready documents with C6 (`quiz.service.ts:25-30`, `chat.service.ts:29-33`). | None. |
+| M3-15 | **No "Mis cuestionarios" and no per-question source in M3.** There is no `GET /quizzes` (gap 11) and `sourceDocumentId` is always `null` (`quiz.service.ts:87-90`), so the results view shows `sourceExcerpt` when the model supplied one and never names a document. Dependency 48. | Nothing to call, and naming a document from a heuristic would be a guess. | A history screen arrives with 48. |
+| M3-16 | **IA mocks live in `src/mocks/ia/` under the same `VITE_MOCK_API` flag**, registered in `src/mocks/handlers.ts` beside the `sigeda/` ones; they implement `docs/contrato-api-aprendizaje.md` exactly. Ownership (dependency 47) and the unscoped prediction routes (dependency 49) stay backend dependencies: the frontend only ever opens ids that came from its own lists and never relies on the server hiding someone else's. | One flag already means "serve the backends from MSW"; splitting it would double the configuration. The two security gaps cannot be closed from the client. | None. |
+
+### 15.3 Screens
+
+Every role reaches all three (M3-12). Sidebar group **Aprendizaje**; the group is already declared in `pantallas.ts`.
+
+| Screen | Route | Permission | Roles | Data | Sidebar group | Breadcrumb parent |
+|---|---|---|---|---|---|---|
+| Documentos | `/aprendizaje` | `Read` | all | Real + Contract (deps. 43, 47) | Aprendizaje | — |
+| Cuestionario de práctica | `/aprendizaje/cuestionario` | `Read` | all | Real | Aprendizaje | `/aprendizaje` |
+| Consultas | `/aprendizaje/consultas` | `Read` | all | Real + Contract (deps. 45, 46) | Aprendizaje | `/aprendizaje` |
+
+Search params: `/aprendizaje/cuestionario?cuestionario=<uuid>` (M3-3) and `/aprendizaje/consultas?sesion=<uuid>` (M3-8), both optional and zod-validated. Documentos has no search param: the list is short and unpaginated by design (§15.1).
+
+Who sees what — `Read` in `permisos.ts`:
+
+| Permission | Administrador Web | Comandante de Escuadrón | Jefe de Operaciones | Instructor | Alumno |
+|---|---|---|---|---|---|
+| `Read` (the three Aprendizaje screens) | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+**Fixed interface texts** (the CAs cite these IDs):
+
+| ID | Where | Text |
+|---|---|---|
+| A1 | Header of the three screens, live mode with dependency 39 pending | Los documentos son compartidos: el servidor de Aprendizaje todavía no identifica a cada usuario. |
+| A2 | Cuestionario, after a reload | El cuestionario se reinició: las respuestas no se guardan al recargar la página. |
+| A3 | Cuestionario, while generating | Generando el cuestionario. Puede tardar hasta dos minutos; no cierre esta página. |
+| A4 | Cuestionario, after 120 s | La generación tardó demasiado. Intente de nuevo con menos preguntas o menos documentos. |
+| A5 | Cuestionario, generation rejected | No se pudo generar el cuestionario con los documentos elegidos. Intente de nuevo o elija otro documento. |
+| A6 | Documentos, after two minutes processing | El documento sigue procesándose. Actualice para ver su estado. |
+| A7 | Consultas, session could not be read | No se pudo recuperar la conversación. Inicie una nueva consulta. |
+| A8 | Consultas, restored conversation | Las fuentes de las respuestas anteriores no están disponibles después de recargar. |
+| A9 | Consultas, answer with no sources | No se encontraron fragmentos relevantes en los documentos seleccionados para esta pregunta. |
+| A10 | Cuestionario, results header | El cuestionario de práctica no se registra: su nota es solo para estudiar. |
+| A11 | Documentos, file rejected in the browser | Solo se aceptan archivos PDF, DOCX o TXT de hasta 25 MB. |
+| A12 | Documentos, document in error with an unrecognised message | No se pudo procesar el documento. Elimínelo y vuelva a subirlo. |
+
+### 15.4 Acceptance criteria
+
+Every criterion is testable against the MSW mocks of `docs/contrato-api-aprendizaje.md` (§7 of that document fixes the fixtures).
+
+#### CUS Gestionar documentos de estudio (M3, todos los roles)
+
+- **CA-DOC-01** La lista muestra nombre, tipo, tamaño, estado (Procesando, Listo o Error), etiquetas y fecha de subida, de la más reciente a la más antigua; sin documentos muestra el estado vacío con la acción Subir documento.
+- **CA-DOC-02** Subir acepta un archivo PDF, DOCX o TXT de hasta 25 MB; cualquier otro se rechaza en el navegador con A11 y no se envía al servidor.
+- **CA-DOC-03** Si el servidor rechaza el archivo, se muestra su mensaje (C1 o C2) y el formulario conserva la selección para reintentar.
+- **CA-DOC-04** Tras subir, el documento aparece como Procesando y la lista se actualiza sola cada 3 segundos hasta que queda Listo o Error, sin recargar la página.
+- **CA-DOC-05** Un documento en Error muestra el motivo del servidor solo si es C4; cualquier otro motivo se muestra como A12, y en ningún caso se muestra texto de librerías.
+- **CA-DOC-06** Si un documento sigue Procesando después de dos minutos, la actualización automática se detiene y se muestra A6 con la acción Actualizar.
+- **CA-DOC-07** Eliminar pide confirmación advirtiendo que los cuestionarios y las consultas que usan el documento se quedan sin esa fuente; al eliminar, el documento desaparece de la lista.
+- **CA-DOC-08** La pantalla nunca muestra el texto extraído del documento ni su ruta de almacenamiento.
+- **CA-DOC-09** Una caída de red al subir muestra "No se pudo conectar con el servidor." y conserva el archivo elegido.
+- **CA-DOC-10** Fuera del modo mock y sin la dependencia 39 resuelta, Subir y Eliminar están deshabilitados con T11 y las tres pantallas muestran A1; en modo mock ambas acciones están disponibles y A1 no aparece.
+- **CA-DOC-11** Aprendizaje aparece en el menú, en su propio grupo, para los cinco roles, y las tres rutas se abren con cualquiera de ellos.
+
+#### CUS Resolver cuestionario de práctica (M3, todos los roles)
+
+- **CA-CUE-01** El formulario pide al menos un documento, al menos un tipo de pregunta (opción múltiple, verdadero o falso, completar) y una cantidad entera de 2 a 20; incumplir cualquiera de las tres reglas impide enviar y se explica bajo el campo.
+- **CA-CUE-02** Solo se ofrecen documentos en estado Listo; si no hay ninguno, se muestra el estado vacío con un enlace a Documentos.
+- **CA-CUE-03** Al generar, el formulario se deshabilita, se muestra A3 y no se puede enviar dos veces.
+- **CA-CUE-04** Si el servidor responde C5 o C6, se muestra ese mensaje con los nombres de archivo y el formulario queda listo para reintentar.
+- **CA-CUE-05** Si la generación falla (C7), se muestra A5 sin ningún detalle técnico.
+- **CA-CUE-06** Si pasan 120 segundos sin respuesta, la petición se cancela y se muestra A4 con la acción Reintentar.
+- **CA-CUE-07** Cada pregunta muestra su enunciado y, según su tipo, cuatro opciones, verdadero/falso o un campo de texto; antes de entregar no se muestra ninguna respuesta correcta ni explicación.
+- **CA-CUE-08** No se puede entregar con preguntas sin responder, y entregar pide confirmación.
+- **CA-CUE-09** Al entregar se muestran los aciertos sobre el total y el porcentaje, y por cada pregunta la respuesta dada, la correcta y su explicación, junto con A10.
+- **CA-CUE-10** En las preguntas de completar, la respuesta se compara sin distinguir mayúsculas, tildes ni espacios sobrantes.
+- **CA-CUE-11** Recargar la página vuelve a abrir el mismo cuestionario desde la URL, con las preguntas en el mismo orden y sin respuestas, y muestra A2.
+- **CA-CUE-12** Un identificador de cuestionario inexistente muestra C8 con la acción de volver al formulario.
+
+#### CUS Consultar los documentos con IA (M3, todos los roles)
+
+- **CA-CON-01** Antes de la primera pregunta la pantalla pide elegir uno o más documentos en estado Listo; sin documentos listos muestra el estado vacío con un enlace a Documentos.
+- **CA-CON-02** Al enviar la primera pregunta se crea la conversación y su identificador queda en la URL; los documentos elegidos se muestran junto a la conversación.
+- **CA-CON-03** Si el servidor responde C5 o C6 al crear la conversación, se muestra ese mensaje y la selección de documentos se conserva.
+- **CA-CON-04** Mientras se espera la respuesta, la pregunta ya aparece en la conversación y el cuadro de texto queda deshabilitado con un indicador de espera.
+- **CA-CON-05** La respuesta muestra cada cita `[n]` como un enlace que abre su fuente con el nombre del documento, el fragmento y la similitud en porcentaje; un `[n]` que no corresponde a ninguna fuente se muestra como texto.
+- **CA-CON-06** Una respuesta sin fuentes se muestra igual y añade A9.
+- **CA-CON-07** Si el modelo falla, el servidor responde C10 y se muestra como una respuesta normal, sin fuentes.
+- **CA-CON-08** Si la petición falla por red o por error del servidor, la pregunta vuelve al cuadro de texto con la acción Reintentar y la conversación no queda con un turno a medias.
+- **CA-CON-09** Al recargar, la conversación se recupera por su identificador con sus mensajes y sus documentos; las respuestas anteriores muestran sus `[n]` como texto y la conversación muestra A8, salvo que el servidor devuelva sus fuentes.
+- **CA-CON-10** Si el servidor responde con un error al recuperar la conversación, se muestra A7 con la acción Nueva consulta dentro de la pantalla, no la página de error.
+- **CA-CON-11** Una conversación inexistente o de otro usuario muestra C9.
+- **CA-CON-12** Nueva consulta limpia el identificador de la URL y vuelve a la elección de documentos.
+- **CA-CON-13** La conversación nunca muestra el texto extraído de los documentos ni su ruta de almacenamiento.
+
+### 15.5 Backend dependencies added
+
+All of them are for `sigeda_chat_status`. **Live blockers**: 39 (uploads and deletes are gated on it, M3-1) and 45 (Consultas cannot be restored without it).
+
+| # | Change | Needed by |
+|---|---|---|
+| 39 | **Security:** replace `DevAuthMiddleware` with a guard that verifies `sigeda-back`'s HS256 token with the shared secret, adds `User.username @unique` and resolves `sub` against it; provision the users, since the token carries only `sub`, `iat` and `exp`. Refines dependency 9 | M3 live — blocks Subir and Eliminar documento |
+| 40 | Quiz attempts: `POST /quizzes/{id}/attempts`, `PUT /attempts/{id}/answers`, `POST /attempts/{id}/submit`, `GET /attempts/{id}`; the tables already exist and no route touches them | M3 contract (consumed later) |
+| 41 | `GET /quizzes/{id}?includeAnswers=false` without `correctAnswer` or `explanation`, for when attempts are graded server-side | M3 contract |
+| 42 | Queue quiz generation like documents (`202 {quizId}` + poll), or document a time budget; today it is a synchronous call of up to three LLM attempts over 300 000 characters | M3 nice-to-have |
+| 43 | Enforce `MAX_UPLOAD_SIZE_MB` in `FileInterceptor` (`limits.fileSize`) with a 413 and a Spanish message; fall back to the extension when the browser sends no or a generic MIME type | M3 |
+| 44 | `GET /chat/sessions` — list the caller's conversations | M3 nice-to-have |
+| 45 | **Bug and leak:** `POST /chat/sessions` and `GET /chat/sessions/:id` must map documents through `toDocumentResponse`; today the raw `Document` makes `JSON.stringify` fail on `sizeBytes` (`BigInt`) — an unhandled 500 for every session — and would leak `extractedText` and `storageKey` | M3 live — blocks Consultas |
+| 46 | `GET /chat/sessions/:id` resolves `citedChunkIds` into `sources[]` per message (`referenceNumber`, `documentId`, `documentFilename`, `excerpt`, `similarity: null`), so citations survive a reload | M3 |
+| 47 | **Security:** ownership filter on `GET /documents/:id`, `DELETE /documents/:id` and `GET /quizzes/:id`; today any id is readable by any caller, which becomes an IDOR as soon as 39 lands | M3 — security |
+| 48 | `GET /quizzes` (history) and per-question `sourceDocumentId`; pagination for `GET /documents` and `GET /quizzes` | M3 nice-to-have |
+| 49 | **Security:** scope `/prediction/students` and `/prediction/students/:id` to the caller, validate `instructorId` as a UUID and paginate the list; today any caller can enumerate every student's risk data | M5 — security |
+| 50 | Sanitise error text: `Document.errorMessage` stores the raw library message, and `POST /quizzes/generate` returns the raw Zod/JSON parse error inside its 400; both must be fixed Spanish messages, with the detail only in the server log. Spanish messages for the DTO validation failures too | M3 |
+
+Dependency 9 (§10) is refined by 39 for the M3 half; its M5 half (prediction over real evaluaciones) stays open.
