@@ -123,6 +123,11 @@ export async function obtenerPersona(codigo: string): Promise<PersonaDetalle> {
   }
 }
 
+export async function eliminarPersona(codigo: string): Promise<string> {
+  const respuesta = await sigeda.eliminar<unknown>(`/api/personas/${encodeURIComponent(codigo)}`)
+  return typeof respuesta === 'string' && respuesta.trim() !== '' ? respuesta : MENSAJE_PERSONA_ELIMINADA
+}
+
 export async function modificarPersona(
   codigo: string,
   cuerpo: { rango: string | null; tipo: string | null },

@@ -1,7 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { config } from '@/lib/config'
+import { MENSAJE_DEPENDENCIA_PENDIENTE } from '@/lib/dependencias'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
 import { TEXTO_SOLO_RANGO_Y_TIPO } from './components/dialogo-modificar-persona'
@@ -169,6 +170,50 @@ describe('Detalle de persona', () => {
     const dialogo = within(await screen.findByRole('dialog'))
     expect(await dialogo.findByText('No se pudo conectar con el servidor.')).toBeInTheDocument()
     expect(dialogo.queryByLabelText('Rol')).not.toBeInTheDocument()
+  })
+
+  it('CA-PER-10 eliminar pide confirmación, avisa y vuelve a la lista', async () => {
+    const { usuario, router } = await abrirPersona('654321')
+    await usuario.click(screen.getByRole('button', { name: 'Eliminar' }))
+    const dialogo = await screen.findByRole('alertdialog')
+    expect(dialogo).toHaveTextContent('Se eliminará a Lucía Mendoza Ríos')
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Eliminar' }))
+    expect(await screen.findByText('Persona eliminado con éxito.')).toBeInTheDocument()
+    await waitFor(() => expect(router.state.location.pathname).toBe('/personas'))
+    expect(await screen.findByRole('table', { name: 'Personas registradas' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '654321' })).not.toBeInTheDocument()
+  })
+
+  it('CA-PER-10 y M2-4 muestra el motivo del backend cuando no se puede eliminar', async () => {
+    const { usuario, router } = await abrirPersona('555555')
+    await usuario.click(screen.getByRole('button', { name: 'Eliminar' }))
+    await usuario.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Eliminar' }))
+    expect(await screen.findByText('No se puede eliminar alumno, ya realizó una evaluación.')).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/personas/555555')
+  })
+
+  it('CA-PER-10 explica que el alumno o el instructor están en un turno', async () => {
+    const primera = await abrirPersona('222222')
+    await primera.usuario.click(screen.getByRole('button', { name: 'Eliminar' }))
+    await primera.usuario.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Eliminar' }))
+    expect(await screen.findByText('El alumno no se pudo eliminar, está presente en un turno.')).toBeInTheDocument()
+    primera.unmount()
+    const segunda = await abrirPersona('444444')
+    await segunda.usuario.click(screen.getByRole('button', { name: 'Eliminar' }))
+    await segunda.usuario.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Eliminar' }))
+    expect(await screen.findByText('El instructor no se pudo eliminar, está presente en un turno.')).toBeInTheDocument()
+  })
+
+  it('CA-PER-12 la propia persona no se puede eliminar', async () => {
+    await abrirPersona('000001')
+    expect(screen.queryByRole('button', { name: 'Eliminar' })).not.toBeInTheDocument()
+  })
+
+  it('CA-DEP-01 sin la dependencia 30 resuelta, Eliminar está deshabilitada', async () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    await abrirPersona('654321')
+    expect(screen.getByRole('button', { name: 'Eliminar' })).toBeDisabled()
+    expect(screen.getByText(MENSAJE_DEPENDENCIA_PENDIENTE)).toBeInTheDocument()
   })
 
   it('una persona inexistente muestra la página no encontrada', async () => {

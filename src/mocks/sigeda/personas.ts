@@ -1,7 +1,16 @@
 import { http, HttpResponse } from 'msw'
 import { noAutorizado, usuarioAutenticado } from './auth'
 import { esTipoPersona, rolCompatible } from '@/lib/dominio/personas'
-import { API, autorizar, erroresDeCampo, guardado, paginar, textoNoEncontrado } from './comun'
+import {
+  API,
+  autorizar,
+  erroresDeCampo,
+  guardado,
+  paginar,
+  textoEliminado,
+  textoNoEncontrado,
+  textoProhibido,
+} from './comun'
 import {
   buscarPersona,
   buscarUsuarioPorNombre,
@@ -102,6 +111,21 @@ export const handlersPersonas = [
     persona.rango = typeof rango === 'string' ? rango : null
     persona.tipo = esTipoPersona(tipo) ? tipo : null
     return guardado('Persona', 'persona', entidadPersona(persona))
+  }),
+  http.delete(`${API}/api/personas/:cod`, ({ request, params }) => {
+    const permitido = autorizar(request, 'Manage Users')
+    if (permitido instanceof Response) return permitido
+    const codigo = String(params.cod)
+    const persona = buscarPersona(codigo)
+    if (!persona) return textoNoEncontrado('Persona especificada no existe.')
+    if (persona.codEvalRealizada) return textoProhibido('No se puede eliminar alumno, ya realizó una evaluación.')
+    const enTurno = datos().turnos.some((turno) => turno.alumnos.some((alumno) => alumno.codAlumno === codigo))
+    if (enTurno) return textoProhibido('El alumno no se pudo eliminar, está presente en un turno.')
+    const esInstructor = datos().turnos.some((turno) => turno.codInstructor === codigo)
+    if (esInstructor) return textoProhibido('El instructor no se pudo eliminar, está presente en un turno.')
+    datos().usuarios = datos().usuarios.filter((usuario) => usuario.codPersona !== codigo)
+    datos().personas = datos().personas.filter((candidata) => candidata.codigo !== codigo)
+    return textoEliminado('Persona')
   }),
   http.get(`${API}/api/personas/:nom`, ({ request, params }) => {
     if (!usuarioAutenticado(request)) return noAutorizado()

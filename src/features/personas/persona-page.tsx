@@ -7,6 +7,7 @@ import { etiquetaDeTipo } from '@/lib/dominio/personas'
 import { consultasPersonas, nombreCompletoDePersona } from './api'
 import { Dato } from './components/dato'
 import { DialogoModificarPersona } from './components/dialogo-modificar-persona'
+import { EliminarPersona } from './components/eliminar-persona'
 import { SeccionCuenta } from './components/seccion-cuenta'
 
 export function PersonaPage({ cod }: { cod: string }) {
@@ -19,7 +20,12 @@ export function PersonaPage({ cod }: { cod: string }) {
       <PageHeader
         titulo={nombreCompletoDePersona(persona)}
         descripcion={`${persona.codigo} · ${etiquetaDeTipo(persona.tipo)}`}
-        acciones={<DialogoModificarPersona persona={persona} />}
+        acciones={
+          <>
+            <DialogoModificarPersona persona={persona} />
+            {!esPropia && <EliminarPersona persona={persona} />}
+          </>
+        }
       />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
