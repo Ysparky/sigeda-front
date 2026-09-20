@@ -102,6 +102,8 @@ describe('Detalle de persona', () => {
     await usuario.selectOptions(dialogo.getByLabelText('Tipo'), 'Instructor PDI')
     await usuario.click(dialogo.getByRole('button', { name: 'Guardar persona' }))
     expect((await screen.findAllByText('Persona guardada con éxito.')).length).toBeGreaterThan(0)
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Instructor PDI')).toBeInTheDocument())
   })
 
   it('CA-PER-08 asigna un rol compatible con el tipo y refleja el cambio', async () => {
