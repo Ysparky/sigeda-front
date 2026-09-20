@@ -3,6 +3,7 @@ import { handlersAuth } from './sigeda/auth'
 import { handlersCatalogos } from './sigeda/catalogos'
 import { handlersCuentas } from './sigeda/cuentas'
 import { handlersEvaluaciones } from './sigeda/evaluaciones'
+import { handlersGrupos } from './sigeda/grupos'
 import { handlersPersonas } from './sigeda/personas'
 import { handlersTurnos } from './sigeda/turnos'
 
@@ -11,6 +12,7 @@ export const handlers: RequestHandler[] = [
   ...handlersCatalogos,
   ...handlersCuentas,
   ...handlersPersonas,
+  ...handlersGrupos,
   ...handlersTurnos,
   ...handlersEvaluaciones,
 ]
