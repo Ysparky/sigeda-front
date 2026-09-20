@@ -9,6 +9,8 @@ export default mergeConfig(
       setupFiles: ['./src/test/setup.ts'],
       include: ['src/**/*.test.{ts,tsx}'],
       restoreMocks: true,
+      unstubEnvs: true,
+      env: { VITE_MOCK_API: 'true' },
     },
   }),
 )

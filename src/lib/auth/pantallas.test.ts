@@ -72,11 +72,39 @@ describe('menuPara', () => {
   it('el personal ve la programación de turnos, la orden de vuelo y las evaluaciones', () => {
     expect(titulosDelMenu('Instructor')).toEqual([
       'Inicio',
+      'Fases y subfases',
+      'Maniobras',
+      'Materias',
       'Programación de turnos',
       'Orden de vuelo del día',
       'Evaluaciones',
     ])
     expect(titulosDelMenu('Jefe de Operaciones')).toContain('Programación de turnos')
+  })
+
+  it('CA-PER-11 y CA-GRU-01 Matrícula se reparte entre el administrador y el jefe de operaciones', () => {
+    expect(titulosDelMenu('Administrador Web')).toContain('Personas')
+    expect(titulosDelMenu('Administrador Web')).toContain('Grupos')
+    expect(titulosDelMenu('Jefe de Operaciones')).toContain('Grupos')
+    expect(titulosDelMenu('Jefe de Operaciones')).not.toContain('Personas')
+    expect(titulosDelMenu('Comandante de Escuadrón')).not.toContain('Grupos')
+    expect(titulosDelMenu('Alumno')).not.toContain('Fases y subfases')
+  })
+
+  it('M2-12 el menú agrupa las pantallas de M2 en Matrícula y Programa', () => {
+    const secciones = menuPara(perfilDe('Administrador Web'), false)
+    expect(secciones.map((seccion) => seccion.grupo)).toEqual([
+      'General',
+      'Matrícula',
+      'Programa',
+      'Operaciones de vuelo',
+      'Evaluaciones',
+    ])
+    expect(secciones[2]?.pantallas.map((pantalla) => pantalla.titulo)).toEqual([
+      'Fases y subfases',
+      'Maniobras',
+      'Materias',
+    ])
   })
 })
 
@@ -103,6 +131,18 @@ describe('migasPara', () => {
 
   it('M1-12 omite las secciones que el rol no puede abrir', () => {
     expect(migasPara('/turnos/$id', perfilDe('Alumno'), false)).toEqual([PANTALLAS.turno])
+  })
+
+  it('M2-12 arma las migas de las pantallas de matrícula y programa', () => {
+    expect(migasPara('/personas/$cod', perfilDe('Administrador Web'), false)).toEqual([
+      PANTALLAS.personas,
+      PANTALLAS.persona,
+    ])
+    expect(migasPara('/programa/maniobras/$id/estandares', perfilDe('Jefe de Operaciones'), false)).toEqual([
+      PANTALLAS.maniobras,
+      PANTALLAS.maniobra,
+      PANTALLAS.estandares,
+    ])
   })
 
   it('no agrega migas en Inicio ni en rutas desconocidas', () => {

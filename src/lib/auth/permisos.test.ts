@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { permisosDeRol, puede } from './permisos'
+import { PERMISOS_CONTRATO, permisosDeRol, puede } from './permisos'
 
 describe('permisosDeRol replica Role.java', () => {
-  it('Alumno solo lee y actualiza su usuario', () => {
-    expect([...permisosDeRol('Alumno')]).toEqual(['Read', 'Update'])
+  it('Alumno solo lee, actualiza su usuario y rinde exámenes', () => {
+    expect([...permisosDeRol('Alumno')]).toEqual(['Read', 'Update', 'Take Exams'])
   })
 
   it('Jefe de Operaciones programa turnos y asigna estándares, pero no crea maniobras', () => {
@@ -26,8 +26,17 @@ describe('permisosDeRol replica Role.java', () => {
     expect(permisos.has('Modify Evaluations')).toBe(false)
   })
 
-  it('Administrador Web tiene los 17 permisos que usa el backend', () => {
-    expect(permisosDeRol('Administrador Web').size).toBe(17)
+  it('Administrador Web tiene los 17 permisos del backend y los 4 del contrato', () => {
+    expect(permisosDeRol('Administrador Web').size).toBe(21)
+  })
+
+  it('M2-9 los permisos del contrato de teoría se reparten según su documento', () => {
+    expect([...PERMISOS_CONTRATO]).toEqual(['Manage Subjects', 'Manage Questions', 'Manage Exams', 'Take Exams'])
+    expect(permisosDeRol('Comandante de Escuadrón').has('Manage Subjects')).toBe(true)
+    expect(permisosDeRol('Jefe de Operaciones').has('Manage Subjects')).toBe(false)
+    expect(permisosDeRol('Instructor').has('Manage Questions')).toBe(true)
+    expect(permisosDeRol('Instructor').has('Manage Subjects')).toBe(false)
+    expect(permisosDeRol('Alumno').has('Take Exams')).toBe(true)
   })
 
   it('un rol desconocido no tiene permisos', () => {

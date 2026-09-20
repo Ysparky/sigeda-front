@@ -1,4 +1,4 @@
-export const PERMISOS = [
+export const PERMISOS_BACKEND = [
   'Read',
   'Write',
   'Update',
@@ -18,6 +18,10 @@ export const PERMISOS = [
   'Manage Users',
   'Manage Roles',
 ] as const
+
+export const PERMISOS_CONTRATO = ['Manage Subjects', 'Manage Questions', 'Manage Exams', 'Take Exams'] as const
+
+export const PERMISOS = [...PERMISOS_BACKEND, ...PERMISOS_CONTRATO] as const
 
 export type Permiso = (typeof PERMISOS)[number]
 
@@ -40,6 +44,10 @@ const PERMISOS_POR_ROL: Record<string, readonly Permiso[]> = {
     'Manage Maneuvers',
     'Manage Users',
     'Manage Roles',
+    'Manage Subjects',
+    'Manage Questions',
+    'Manage Exams',
+    'Take Exams',
   ],
   'Comandante de Escuadrón': [
     'Read',
@@ -53,10 +61,20 @@ const PERMISOS_POR_ROL: Record<string, readonly Permiso[]> = {
     'Manage Phases',
     'Manage Subphases',
     'Manage Maneuvers',
+    'Manage Subjects',
   ],
-  Instructor: ['Read', 'Write', 'Update', 'Create Reports', 'View Disapproved', 'View My Group'],
+  Instructor: [
+    'Read',
+    'Write',
+    'Update',
+    'Create Reports',
+    'View Disapproved',
+    'View My Group',
+    'Manage Questions',
+    'Manage Exams',
+  ],
   'Jefe de Operaciones': ['Read', 'Write', 'Update', 'View My Group', 'Manage Shifts', 'Manage Groups', 'Manage Standards'],
-  Alumno: ['Read', 'Update'],
+  Alumno: ['Read', 'Update', 'Take Exams'],
 }
 
 export function permisosDeRol(nombreRol: string): ReadonlySet<Permiso> {
