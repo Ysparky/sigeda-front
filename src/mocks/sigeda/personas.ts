@@ -1,9 +1,29 @@
 import { http, HttpResponse } from 'msw'
 import { noAutorizado, usuarioAutenticado } from './auth'
-import { API, textoNoEncontrado } from './comun'
-import { buscarPersona, buscarUsuarioPorNombre, rolPorId } from './datos'
+import { API, autorizar, paginar, textoNoEncontrado } from './comun'
+import { buscarPersona, buscarUsuarioPorNombre, datos, rolPorId, type PersonaMock } from './datos'
+
+function indexPersona(persona: PersonaMock) {
+  return {
+    codigo: persona.codigo,
+    nombre: persona.nombre,
+    aPaterno: persona.aPaterno,
+    aMaterno: persona.aMaterno,
+    rango: persona.rango,
+    tipo: persona.tipo,
+  }
+}
 
 export const handlersPersonas = [
+  http.get(`${API}/api/personas`, ({ request }) => {
+    const permitido = autorizar(request, 'Manage Users')
+    if (permitido instanceof Response) return permitido
+    return paginar(datos().personas, new URL(request.url), {
+      nombreLista: 'personas',
+      propiedadPorDefecto: 'codigo',
+      proyectar: indexPersona,
+    })
+  }),
   http.get(`${API}/api/personas/:nom`, ({ request, params }) => {
     if (!usuarioAutenticado(request)) return noAutorizado()
     const usuario = buscarUsuarioPorNombre(String(params.nom))
