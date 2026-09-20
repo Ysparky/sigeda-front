@@ -27,10 +27,13 @@ const esquemaSubfase = esquemaFila.extend({
     .nullish(),
 })
 
+export type FaseConSubfases = { fase: FaseFila; subfases: SubfaseDeFase[] }
+
 export const clavesFases = {
   todo: ['fases'] as const,
   lista: (parametros: ParametrosPagina) => [...clavesFases.todo, 'lista', parametros] as const,
   catalogo: () => [...clavesFases.todo, 'catalogo'] as const,
+  conSubfases: () => [...clavesFases.todo, 'con-subfases'] as const,
   detalle: (id: number) => [...clavesFases.todo, 'detalle', id] as const,
   subfase: (id: number) => [...clavesFases.todo, 'subfase', id] as const,
 }
@@ -72,6 +75,11 @@ export async function obtenerSubfase(id: number): Promise<SubfaseDetalle> {
   }
 }
 
+export async function listarFasesConSubfases(): Promise<FaseConSubfases[]> {
+  const fases = await listarTodasLasFases()
+  return Promise.all(fases.map(async (fase) => ({ fase, subfases: (await obtenerFase(fase.id)).subfases })))
+}
+
 export async function crearFase(cuerpo: CuerpoFase): Promise<number> {
   const fase = esquemaFila.parse(await sigeda.post('/api/fases', cuerpo))
   return fase.id
@@ -94,6 +102,8 @@ export const consultasFases = {
       placeholderData: keepPreviousData,
     }),
   catalogo: () => queryOptions({ queryKey: clavesFases.catalogo(), queryFn: listarTodasLasFases, staleTime: 300_000 }),
+  conSubfases: () =>
+    queryOptions({ queryKey: clavesFases.conSubfases(), queryFn: listarFasesConSubfases, staleTime: 300_000 }),
   detalle: (id: number) => queryOptions({ queryKey: clavesFases.detalle(id), queryFn: () => obtenerFase(id) }),
   subfase: (id: number) => queryOptions({ queryKey: clavesFases.subfase(id), queryFn: () => obtenerSubfase(id) }),
 }
