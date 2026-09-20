@@ -9,12 +9,16 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { cambiarContrasenaPropia } from '@/features/cuentas/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
-import { sigeda } from '@/lib/api/sigeda'
 import { useSesion } from '@/lib/auth/use-sesion'
+import { aplicarErroresDeCampo } from '@/lib/formularios'
+
+const RENOMBRAR = { password: 'nueva', passwordActual: 'actual' }
 
 const esquema = z
   .object({
+    actual: z.string().min(1, 'Ingrese su contraseña actual.'),
     nueva: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres.'),
     confirmacion: z.string().min(1, 'Repita la contraseña nueva.'),
   })
@@ -24,27 +28,26 @@ const esquema = z
   })
 
 type Formulario = z.infer<typeof esquema>
-type RespuestaGuardado = { mensaje: string }
 
 export function CambiarContrasenaPage() {
   const actual = useSesion()
   const formulario = useForm<Formulario>({
     resolver: zodResolver(esquema),
-    defaultValues: { nueva: '', confirmacion: '' },
+    defaultValues: { actual: '', nueva: '', confirmacion: '' },
   })
   const { errors } = formulario.formState
 
   const cambio = useMutation({
     mutationFn: (datos: Formulario) => {
       if (!actual) throw new ApiError(401, MENSAJE_GENERICO)
-      return sigeda.put<RespuestaGuardado>(`/api/usuarios/${actual.usuario.id}`, {
-        username: actual.usuario.username,
-        password: datos.nueva,
-      })
+      return cambiarContrasenaPropia(actual.usuario.id, actual.usuario.username, datos.nueva, datos.actual)
     },
-    onSuccess: (respuesta) => {
-      toast.success(respuesta.mensaje)
+    onSuccess: (mensaje) => {
+      toast.success(mensaje)
       formulario.reset()
+    },
+    onError: (error) => {
+      if (error instanceof ApiError) aplicarErroresDeCampo(error, formulario.setError, RENOMBRAR)
     },
   })
 
@@ -62,6 +65,17 @@ export function CambiarContrasenaPage() {
                   </AlertDescription>
                 </Alert>
               )}
+              <Field data-invalid={Boolean(errors.actual)}>
+                <FieldLabel htmlFor="actual">Contraseña actual</FieldLabel>
+                <Input
+                  id="actual"
+                  type="password"
+                  autoComplete="current-password"
+                  aria-invalid={Boolean(errors.actual)}
+                  {...formulario.register('actual')}
+                />
+                <FieldError errors={[errors.actual]} />
+              </Field>
               <Field data-invalid={Boolean(errors.nueva)}>
                 <FieldLabel htmlFor="nueva">Contraseña nueva</FieldLabel>
                 <Input

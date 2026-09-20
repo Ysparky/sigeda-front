@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { usernameDelToken } from '@/lib/auth/tokens'
 import { config } from '@/lib/config'
-import { buscarUsuarioPorId, buscarUsuarioPorNombre, rolPorId } from './datos'
+import { buscarUsuarioPorNombre, rolPorId } from './datos'
 import type { UsuarioMock } from './usuarios'
 
 const API = config.sigedaApiUrl
@@ -81,18 +81,5 @@ export const handlersAuth = [
       rol: rolPorId(usuario.idRol),
       password: HASH_DE_PRUEBA,
     })
-  }),
-  http.put(`${API}/api/usuarios/:id`, async ({ request, params }) => {
-    if (!usuarioAutenticado(request)) return noAutorizado()
-    const cuerpo = (await request.json()) as { username?: string }
-    const usuario = buscarUsuarioPorId(Number(params.id))
-    if (!usuario) return HttpResponse.text('Usuario especificada no existe.', { status: 404 })
-    return HttpResponse.json(
-      {
-        mensaje: 'Usuario guardada con éxito.',
-        usuario: { ...usuario, username: cuerpo.username ?? usuario.username, password: HASH_DE_PRUEBA },
-      },
-      { status: 201 },
-    )
   }),
 ]

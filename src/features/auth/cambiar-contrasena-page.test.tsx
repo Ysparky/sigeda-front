@@ -15,6 +15,7 @@ async function abrirCuenta() {
 describe('CA-CTA-01 Cambiar contraseña', () => {
   it('CA-CTA-01 exige repetir la contraseña nueva exactamente', async () => {
     const { usuario } = await abrirCuenta()
+    await usuario.type(screen.getByLabelText('Contraseña actual'), '123')
     await usuario.type(screen.getByLabelText('Contraseña nueva'), 'clave-segura-1')
     await usuario.type(screen.getByLabelText('Repetir contraseña nueva'), 'clave-segura-2')
     await usuario.click(screen.getByRole('button', { name: 'Guardar contraseña' }))
@@ -23,26 +24,48 @@ describe('CA-CTA-01 Cambiar contraseña', () => {
 
   it('CA-CTA-01 exige al menos 8 caracteres', async () => {
     const { usuario } = await abrirCuenta()
+    await usuario.type(screen.getByLabelText('Contraseña actual'), '123')
     await usuario.type(screen.getByLabelText('Contraseña nueva'), 'corta')
     await usuario.type(screen.getByLabelText('Repetir contraseña nueva'), 'corta')
     await usuario.click(screen.getByRole('button', { name: 'Guardar contraseña' }))
     expect(await screen.findByText('La contraseña debe tener al menos 8 caracteres.')).toBeInTheDocument()
   })
 
-  it('CA-CTA-01 guarda enviando el usuario actual y muestra el mensaje del backend', async () => {
+  it('CA-CTA-01 guarda enviando el usuario y la contraseña actual, y muestra el mensaje del backend', async () => {
     let recibido: unknown = null
     server.use(
       http.put(`${config.sigedaApiUrl}/api/usuarios/:id`, async ({ request, params }) => {
         recibido = { id: params.id, ...((await request.json()) as object) }
-        return HttpResponse.json({ mensaje: 'Usuario guardada con éxito.' }, { status: 201 })
+        return HttpResponse.json(
+          {
+            mensaje: 'Usuario guardada con éxito.',
+            usuario: { id: 2, username: 'instructor.perez', password: '$2a$10$hashQueNoDebeLlegar' },
+          },
+          { status: 201 },
+        )
       }),
     )
     const { usuario } = await abrirCuenta()
+    await usuario.type(screen.getByLabelText('Contraseña actual'), '123')
     await usuario.type(screen.getByLabelText('Contraseña nueva'), 'clave-segura-1')
     await usuario.type(screen.getByLabelText('Repetir contraseña nueva'), 'clave-segura-1')
     await usuario.click(screen.getByRole('button', { name: 'Guardar contraseña' }))
     expect(await screen.findByText('Usuario guardada con éxito.')).toBeInTheDocument()
-    expect(recibido).toEqual({ id: '2', username: 'instructor.perez', password: 'clave-segura-1' })
+    expect(recibido).toEqual({
+      id: '2',
+      username: 'instructor.perez',
+      password: 'clave-segura-1',
+      passwordActual: '123',
+    })
+  })
+
+  it('CA-CTA-01 avisa bajo el campo cuando la contraseña actual no es correcta', async () => {
+    const { usuario } = await abrirCuenta()
+    await usuario.type(screen.getByLabelText('Contraseña actual'), 'equivocada')
+    await usuario.type(screen.getByLabelText('Contraseña nueva'), 'clave-segura-1')
+    await usuario.type(screen.getByLabelText('Repetir contraseña nueva'), 'clave-segura-1')
+    await usuario.click(screen.getByRole('button', { name: 'Guardar contraseña' }))
+    expect(await screen.findByText('La contraseña actual no es correcta.')).toBeInTheDocument()
   })
 
   it('muestra el error del backend sin detalles internos', async () => {
@@ -53,6 +76,7 @@ describe('CA-CTA-01 Cambiar contraseña', () => {
       ),
     )
     const { usuario } = await abrirCuenta()
+    await usuario.type(screen.getByLabelText('Contraseña actual'), '123')
     await usuario.type(screen.getByLabelText('Contraseña nueva'), 'clave-segura-1')
     await usuario.type(screen.getByLabelText('Repetir contraseña nueva'), 'clave-segura-1')
     await usuario.click(screen.getByRole('button', { name: 'Guardar contraseña' }))

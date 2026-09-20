@@ -29,6 +29,26 @@ export function textoNoEncontrado(mensaje: string) {
   return HttpResponse.text(mensaje, { status: 404 })
 }
 
+export function textoMalaPeticion(mensaje: string) {
+  return HttpResponse.text(mensaje, { status: 400 })
+}
+
+export function textoProhibido(mensaje: string) {
+  return HttpResponse.text(mensaje, { status: 403 })
+}
+
+export function erroresDeCampo(errores: readonly string[]) {
+  return HttpResponse.json(errores, { status: 400 })
+}
+
+export function guardado(entidad: string, clave: string, cuerpo: unknown) {
+  return HttpResponse.json({ mensaje: `${entidad} guardada con éxito.`, [clave]: cuerpo }, { status: 201 })
+}
+
+export function textoEliminado(entidad: string) {
+  return HttpResponse.text(`${entidad} eliminado con éxito.`)
+}
+
 export function numero(url: URL, clave: string, porDefecto: number): number {
   const valor = Number(url.searchParams.get(clave) ?? porDefecto)
   return Number.isFinite(valor) ? valor : porDefecto

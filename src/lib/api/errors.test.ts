@@ -60,6 +60,24 @@ describe('normalizarError', () => {
     expect(normalizarError(403, { error: 'Forbidden' }).message).toBe(MENSAJE_SIN_PERMISO)
   })
 
+  it('M2-4 un 403 con texto plano es una regla de negocio y muestra su mensaje', () => {
+    expect(normalizarError(403, 'No se puede eliminar alumno, ya realizó una evaluación.').message).toBe(
+      'No se puede eliminar alumno, ya realizó una evaluación.',
+    )
+  })
+
+  it('M2-4 un 403 sin cuerpo o con forma ErrorResponse sigue siendo falta de permisos', () => {
+    expect(normalizarError(403, null).message).toBe(MENSAJE_SIN_PERMISO)
+    expect(
+      normalizarError(403, {
+        timestamp: '2026-09-19T10:00:00',
+        status: 403,
+        error: 'Acceso denegado',
+        message: 'No tienes permisos para realizar esta acción',
+      }).message,
+    ).toBe(MENSAJE_SIN_PERMISO)
+  })
+
   it('usa un mensaje genérico cuando el cuerpo no se entiende', () => {
     expect(normalizarError(500, null).message).toBe(MENSAJE_GENERICO)
   })

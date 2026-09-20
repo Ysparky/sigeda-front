@@ -79,7 +79,7 @@ export function normalizarError(status: number, cuerpo: unknown): ApiError {
     const regla = mensajeDeRegla(cuerpo)
     if (regla) return new ApiError(status, regla)
   }
-  if (status === 403) return new ApiError(status, MENSAJE_SIN_PERMISO)
+  if (status === 403) return new ApiError(status, esTexto(cuerpo) ? cuerpo.trim() : MENSAJE_SIN_PERMISO)
   if (esListaDeTextos(cuerpo)) return desdeLineas(status, cuerpo)
   if (esTexto(cuerpo)) return new ApiError(status, cuerpo.trim())
   if (esRegistro(cuerpo)) {
