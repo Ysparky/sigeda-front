@@ -24,7 +24,7 @@ La §6 resume dónde el backend de hoy difiere de este contrato y qué hace el f
 - **Autenticación.** `Authorization: Bearer <access token>` en todas las peticiones (el frontend ya lo envía, `src/lib/api/ia.ts`). Ver §0.
 - **CORS.** `origin: true, credentials: true` (`main.ts:16`). El origen `http://localhost:5173` ya queda permitido; el frontend no envía cookies.
 - **Cuerpos.** JSON `application/json`, salvo la subida de archivos (multipart, §1.1). `ValidationPipe` global con `whitelist`, `transform` y `forbidNonWhitelisted` (`main.ts:8-13`): **una propiedad no declarada en el DTO devuelve 400**. El frontend envía exactamente los campos de este documento.
-- **Ids.** UUID **v4** en todos los recursos; los DTO validan la versión (`@IsUUID('4')`), así que un UUID v1 o un id inventado devuelve 400. Los mocks usan ids v4 válidos (§7).
+- **Ids.** UUID **v4** en todos los recursos. La validación de versión (`@IsUUID('4')`) solo existe en los **cuerpos** de los DTO: ahí un UUID v1 o un texto cualquiera devuelve 400. **En los parámetros de ruta no hay ninguna validación** — ningún `ParseUUIDPipe` en `documents.controller.ts:52,57`, `quiz.controller.ts:19` ni `chat.controller.ts:19` —, así que un id mal formado llega a Prisma contra una columna `@db.Uuid` y **devuelve 500**, no 400 ni 404. Cada endpoint con parámetro de ruta lo repite abajo. **[Corrección — dependencia 47]** Agregar `ParseUUIDPipe` en los cuatro: id mal formado → 400. Los mocks usan ids v4 válidos (§7).
 - **Fechas.** ISO-8601 UTC con milisegundos: `"2026-09-18T14:02:11.000Z"`.
 - **Envoltura de error.** No existe ningún `ExceptionFilter` (confirmado por grep), así que todo error sale con la forma por defecto de Nest:
   ```json
@@ -52,6 +52,8 @@ La §6 resume dónde el backend de hoy difiere de este contrato y qué hace el f
 1. Reemplazar `DevAuthMiddleware` por un guard que verifique el token con la **misma clave** (variable de entorno nueva, p. ej. `SIGEDA_JWT_SECRET`, con el mismo valor base64 que usa `sigeda-back`) y rechace con `401 {"statusCode":401,"message":"No autorizado.","error":"Unauthorized"}` si falta, está vencido o la firma no coincide.
 2. Agregar `username String @unique` a `User` y resolver `sub → User.id`. El token **no trae correo ni nombre**, así que no se puede aprovisionar al vuelo: los usuarios de `sigeda-back` (`usuarios.nombre`) deben existir aquí, sembrados o sincronizados. Un `sub` sin fila → `401` (no 404: para el cliente es un token que no sirve).
 3. `req.user.id` se sigue usando como FK de `Document.ownerId`, `Quiz.ownerId` y `ChatSession.userId`; no cambia nada más.
+
+Mientras el guard no exista, el frontend **igual envía el token** (es el mismo cliente HTTP de toda la aplicación), y este servicio lo recibe sin usarlo: queda en sus logs de acceso, en los de cualquier proxy intermedio y en el historial de `docker logs`. Es un token de 24 h válido contra `sigeda-back`, así que conviene implementar la 39 pronto y, mientras tanto, no publicar esos logs.
 
 Hasta que esto exista, el frontend deshabilita **Subir documento** y **Eliminar documento** fuera del modo mock y muestra un aviso de que los documentos son compartidos (spec M3-1).
 
@@ -81,7 +83,7 @@ Controlador `src/documents/documents.controller.ts`. Todas las respuestas usan `
 |---|---|---|---|
 | `id` | string (uuid v4) | no | |
 | `filename` | string | no | Nombre original del archivo, con extensión |
-| `mimeType` | string | no | Uno de los tres de §1.1 |
+| `mimeType` | string | no | Uno de los tres de §1.1. La interfaz lo muestra como etiqueta corta: `application/pdf` → **PDF**, `application/vnd.openxmlformats-officedocument.wordprocessingml.document` → **DOCX**, `text/plain` → **TXT**; cualquier otro valor se muestra como "—" |
 | `sizeBytes` | number | no | Entero. En la base es `BigInt`; el mapper lo convierte (`documents.mapper.ts:24`) |
 | `status` | `"processing" \| "ready" \| "error"` | no | Ver §1.5 |
 | `errorMessage` | string | **sí** | Solo con `status: "error"` |
@@ -89,7 +91,7 @@ Controlador `src/documents/documents.controller.ts`. Todas las respuestas usan `
 | `createdAt` | string ISO | no | |
 | `processedAt` | string ISO | **sí** | `null` hasta que el documento queda `ready` o `error` |
 
-`extractedText`, `extractedCharCount`, `storageKey`, `storageUrl`, `ownerId` y `updatedAt` **no** salen y no deben agregarse.
+`extractedText`, `extractedCharCount`, `storageKey`, `storageUrl`, `ownerId` y `updatedAt` **no** salen y no deben agregarse. La misma regla vale para cualquier otra respuesta de este contrato: el frontend nunca muestra texto extraído, claves de almacenamiento ni identificadores de dueño.
 
 ### 1.1 `POST /documents/upload` — **Sin cambios** (+ límite nuevo)
 
@@ -113,7 +115,7 @@ POST /documents/upload      Content-Type: multipart/form-data
   ```json
   { "statusCode": 413, "message": "El archivo supera el tamaño máximo de 25 MB.", "error": "Payload Too Large" }
   ```
-  Hoy no hay ningún límite y Multer guarda el archivo completo en memoria antes de cualquier verificación.
+  Hoy no hay ningún límite y Multer guarda el archivo completo en memoria antes de cualquier verificación. Ojo: al superar `limits.fileSize`, Nest traduce el error de Multer a un `PayloadTooLargeException` cuyo `message` por defecto está **en inglés** (`"File too large"`); hay que reemplazarlo por el texto de arriba, porque el frontend solo muestra literalmente los mensajes de la §5.
 - **[Nuevo — dependencia 43]** Si el navegador envía `mimetype` vacío o `application/octet-stream`, deducir el tipo por la extensión antes de rechazar.
 
 El frontend verifica extensión y tamaño antes de enviar (M3-6), así que en la práctica el 413 y el segundo 400 solo aparecen por un `mimeType` inesperado.
@@ -134,7 +136,7 @@ Es el endpoint que el frontend consulta en bucle mientras algún documento esté
 GET /documents/{id}
 ```
 
-**200** `DocumentResponseDto`. **404** `"Documento no encontrado."` (`documents.service.ts:69`).
+**200** `DocumentResponseDto`. **404** `"Documento no encontrado."` (`documents.service.ts:69`). Un `{id}` que no es un UUID devuelve hoy **500** (`documents.controller.ts:52`, sin `ParseUUIDPipe`); con la dependencia 47 debe ser 400.
 
 **[Corrección — dependencia 47]** Hoy es `findUnique({ where: { id } })` sin filtrar por `ownerId` (`documents.service.ts:68`): cualquiera puede leer cualquier documento por su UUID. Agregar el filtro por dueño y responder el mismo **404** (no 403) cuando el documento es de otra persona, para no revelar su existencia.
 
@@ -144,7 +146,9 @@ GET /documents/{id}
 DELETE /documents/{id}
 ```
 
-**200** `{"deleted": true}` — no es 204 y tiene cuerpo (`documents.controller.ts:59`). El contrato lo conserva. **404** `"Documento no encontrado."`.
+**200** `{"deleted": true}` — no es 204 y tiene cuerpo (`documents.controller.ts:59`). El contrato lo conserva. **404** `"Documento no encontrado."`. Un `{id}` mal formado devuelve hoy **500** (`documents.controller.ts:57`); con la dependencia 47, 400.
+
+El borrado no es transaccional: primero se elimina el objeto del almacenamiento y después la fila (`documents.service.ts:76-77`). Si el almacenamiento falla, la excepción sale como **500** y **la fila queda**, con su archivo posiblemente ya borrado; el frontend deja el documento en la lista y muestra su mensaje genérico. Conviene invertir el orden o tolerar el "no existe" del almacenamiento.
 
 Borra el objeto del almacenamiento y luego la fila; la base propaga en cascada a `DocumentChunk`, `QuizDocument` y `ChatSessionDocument`, y pone `Question.sourceDocumentId` en `null`. **Consecuencias que el frontend advierte antes de confirmar:** una conversación que se queda sin documentos deja de recuperar fragmentos (la búsqueda devuelve `[]` con la lista vacía, `src/chat/retrieval.service.ts:30`) y las citas anteriores ya no se pueden resolver (§3.3); un cuestionario ya generado no se ve afectado, porque sus preguntas se guardaron.
 
@@ -153,7 +157,7 @@ Borra el objeto del almacenamiento y luego la fila; la base propaga en cascada a
 ### 1.5 Estados, procesamiento y consulta periódica — **Sin cambios**
 
 - El enum tiene cuatro valores (`prisma/schema.prisma:21-26`) pero **`uploading` es inalcanzable**: la fila se crea ya en `processing` (`documents.service.ts:37`), después de subir el archivo dentro de la misma petición HTTP. Los estados reales son **`processing → ready`** o **`processing → error`**. El frontend dibuja solo tres y trata un eventual `uploading` como `processing`.
-- El trabajo lo hace una cola BullMQ (`document-processing`, job `process-document`). El worker descarga el archivo, extrae el texto, genera etiquetas con el LLM y lo indexa para RAG; **el etiquetado y la indexación no son bloqueantes**: si fallan, el documento igual queda `ready` con `tags: []` y sin fragmentos para el chat (`src/documents/document-processing.processor.ts:46-60`).
+- El trabajo lo hace una cola BullMQ (`document-processing`, job `process-document`). El worker descarga el archivo, extrae el texto, genera etiquetas con el LLM y lo indexa para RAG; **el etiquetado y la indexación no son bloqueantes**: si fallan, el documento igual queda `ready` con `tags: []` y sin fragmentos para el chat (`src/documents/document-processing.processor.ts:46-60`). Con un matiz: la indexación está envuelta en su propio `try` en el procesador (`:54-60`), pero **el etiquetado no** — aguanta solo porque `src/documents/document-tagging.service.ts:31-36` atrapa su propia excepción y devuelve `[]`. Si esa captura se quitara, un fallo del LLM dejaría el documento en `error`.
 - Si el texto extraído tiene menos de 20 caracteres, el documento queda en `error` con `errorMessage` = `"No se pudo extraer contenido legible del documento (posiblemente escaneado sin OCR)."` (`document-processing.processor.ts:40-44`).
 - Cualquier otro fallo queda en `error` con el mensaje crudo de la excepción (`:76-83`). **[Corrección — dependencia 50]** Guardar un texto fijo en español y dejar el detalle solo en el log. El frontend ya reemplaza por un texto propio todo `errorMessage` que no sea el del punto anterior.
 - **El worker nunca relanza la excepción**, así que BullMQ da el trabajo por exitoso: un `error` es **terminal**, no se reintenta solo. Volver a intentar = subir el archivo otra vez.
@@ -227,6 +231,7 @@ Ninguna otra propiedad: `forbidNonWhitelisted` la rechaza con 400. El frontend a
 | Campo | Tipo | Nulo | Notas |
 |---|---|---|---|
 | `title` | string | no | Siempre `"Cuestionario sin título"` (valor por defecto de la columna); el frontend titula la pantalla con los documentos elegidos |
+| `ownerId` | string (uuid) | no | Viene porque la respuesta es la fila cruda de Prisma. **El frontend lo ignora y nunca lo muestra**, como `storageKey` o `extractedText` en §1; si el backend prefiere quitarlo, el frontend no se entera |
 | `modelName` | string | no | Depende de `LLM_PROVIDER` (`claude-opus-5`, `gemini-2.0-flash`, `qwen3:14b`…). **El frontend no asume ningún valor** y no lo muestra |
 | `questions[].options` | arreglo de `{id, text}` \| `null` | **sí** | Exactamente 4 opciones con `id` `"a"`–`"d"` en `multiple_choice`; `null` en los otros dos tipos |
 | `questions[].correctAnswer` | string | no | `"a"`–`"d"` en `multiple_choice`; `"true"` o `"false"` (**texto**, no booleano) en `true_false`; texto libre de 1 a 200 caracteres en `fill_blank` |
@@ -251,7 +256,7 @@ Errores:
 GET /quizzes/{id}
 ```
 
-**200** — misma forma que §2.1. **404** `"Cuestionario no encontrado."` (`quiz.service.ts:106`).
+**200** — misma forma que §2.1. **404** `"Cuestionario no encontrado."` (`quiz.service.ts:106`). Un `{id}` que no es un UUID devuelve hoy **500** (`quiz.controller.ts:19`, sin `ParseUUIDPipe`); con la dependencia 47, 400.
 
 - **[Corrección — dependencia 47]** Hoy no filtra por dueño (`quiz.service.ts:102`): agregar `ownerId` y responder 404 para el cuestionario de otra persona.
 - **[Nuevo — dependencia 41]** Aceptar `?includeAnswers=false` y omitir `correctAnswer` y `explanation` de cada pregunta. Hoy ambos vienen **siempre**, así que no existe una vista "para rendir".
@@ -312,7 +317,7 @@ Cuerpo (`src/chat/dto/chat.dto.ts:3-12`):
 | Campo | Tipo | Regla |
 |---|---|---|
 | `documentIds` | string[] | al menos 1, UUID v4, propios y en `ready` |
-| `title` | string | opcional; por defecto `` `Consulta sobre ${nombres de archivo}` `` (`chat.service.ts:39`) |
+| `title` | string | opcional. **El frontend nunca lo envía**: deja que se aplique el valor por defecto `` `Consulta sobre ${nombres de archivo}` `` (`chat.service.ts:39`) y muestra ese título. Por eso `title` en la respuesta **no es nulo** |
 
 **201** — forma del contrato:
 
@@ -331,6 +336,8 @@ Cuerpo (`src/chat/dto/chat.dto.ts:3-12`):
 2. filtra `extractedText` (puede pesar megabytes) y `storageKey`.
 
 Corrección: aplanar a `documents: DocumentResponseDto[]` pasando cada documento por `toDocumentResponse`. `userId` no se devuelve (el cliente ya sabe quién es). Los mocks implementan **solo** esta forma: la actual no llega a serializarse nunca, así que no hay nada que tolerar.
+
+**Efecto secundario que conviene atender junto con la corrección:** el `create` ya escribió la sesión y sus filas puente cuando la serialización falla (`chat.service.ts:36-45`), así que cada intento contra el servidor real **deja una sesión huérfana** — sin mensajes y sin forma de recuperarla, porque §3.3 falla igual — en la cuenta compartida. Al implementar la 45 conviene limpiar las sesiones sin mensajes que hayan quedado.
 
 Errores: **404** `"Uno o más documentos no existen o no te pertenecen."` (`chat.service.ts:26`); **400** `` `Los siguientes documentos aún no están listos: ${nombres}` `` (`:31-33`).
 
@@ -380,7 +387,7 @@ Detalles que el frontend da por ciertos:
 - **El mensaje del usuario no vuelve en la respuesta**; se guarda en el servidor (`chat.service.ts:67-69`) y el cliente ya lo tiene. El historial que se envía al modelo son los últimos 8 turnos **anteriores** a la pregunta actual (`chat.service.ts:10,72-75`).
 - **Nadie verifica que los `[n]` del texto correspondan a `sources`**: es una convención del prompt (`chat-prompt.ts:13-21`). El frontend solo convierte en enlace los marcadores con `1 ≤ n ≤ sources.length` y deja el resto como texto.
 - **Un fallo del modelo no es un error HTTP**: se responde 201 con `content` = `"No se pudo generar una respuesta. Intenta reformular tu pregunta."` y `sources` con lo que se hubiera recuperado (`chat.service.ts:98-99`).
-- Lo único que puede fallar la petición es la recuperación (embeddings), y ocurre **antes** de guardar la pregunta (`chat.service.ts:64,67`), así que **un 500 no deja nada escrito** y reintentar es seguro. Si algún día se invierte el orden, avisar: el frontend reenvía la misma pregunta.
+- **Un fallo de la recuperación (embeddings) no deja nada escrito**: ocurre en `chat.service.ts:64`, antes de guardar la pregunta en `:67`, y hoy es el único paso que puede fallar la petición — el error del modelo está atrapado (`:98-99`) y la respuesta se escribe al final (`:103`). Por eso el frontend reenvía la misma pregunta tras un error. **Un fallo entre `:67` y `:103` sí dejaría la pregunta guardada** y el reintento la duplicaría; si se agrega algún paso ahí (o se invierte el orden), avisar, porque el cliente no puede distinguir los dos casos.
 
 ### 3.3 `GET /chat/sessions/{id}` — **Corrección** (dependencias 45 y 46)
 
@@ -404,7 +411,7 @@ GET /chat/sessions/{id}
 }
 ```
 
-Mensajes ordenados por `createdAt` ascendente. **404** `"Sesión de chat no encontrada."` tanto si no existe como si es de otro usuario (ya verificado, `chat.service.ts:126-128`).
+Mensajes ordenados por `createdAt` ascendente. **404** `"Sesión de chat no encontrada."` tanto si no existe como si es de otro usuario (ya verificado, `chat.service.ts:126-128`). Un `{id}` que no es un UUID devuelve hoy **500** (`chat.controller.ts:19`, sin `ParseUUIDPipe`); con la dependencia 47, 400. Hasta la dependencia 45, **cualquier** id válido de una sesión existente también devuelve 500.
 
 - **[Corrección — dependencia 45]** Mismo aplanado de `documents` que §3.1: hoy `chat.service.ts:123` devuelve la fila cruda y el endpoint responde **500** para cualquier sesión con documentos, es decir para todas.
 - **[Nuevo — dependencia 46]** Resolver `citedChunkIds` a `sources` en cada mensaje: `JOIN document_chunks` con `documents.filename`, conservando el orden del arreglo, `referenceNumber` desde 1 y `excerpt` con los primeros 300 caracteres. **`similarity` es `null`**: la similitud dependía de la pregunta y no se guarda. Un fragmento ya borrado (porque se eliminó su documento) conserva su lugar con `documentId: null`, `documentFilename: null` y `excerpt: null`, para que la numeración de los `[n]` siga cuadrando.
@@ -443,6 +450,9 @@ Cualquier otro texto del servidor se reemplaza por uno fijo del frontend y no se
 | C8 | 404 | Cuestionario no encontrado. | `quiz.service.ts:106` |
 | C9 | 404 | Sesión de chat no encontrada. | `chat.service.ts:58,127` |
 | C10 | 201 (como contenido de la respuesta) | No se pudo generar una respuesta. Intenta reformular tu pregunta. | `chat.service.ts:99` |
+| C13 | 413 | El archivo supera el tamaño máximo de 25 MB. | **[Nuevo — dependencia 43]**; hoy no existe |
+
+C2, C6 y C13 llevan datos variables o se comparan por prefijo; el frontend las reconoce por su comienzo fijo (`Tipo de archivo no soportado:`, `Los siguientes documentos aún no están listos:`, `El archivo supera el tamaño máximo`) y el resto por igualdad exacta. La comparación se hace sobre el mensaje ya normalizado por `src/lib/api/errors.ts`, no sobre el cuerpo crudo.
 
 C7 (`No se pudo generar el cuestionario tras 3 intentos: …`, `quiz-generation.service.ts:58-60`) **no** está en la lista: lleva el error técnico adentro. Al corregirse con la dependencia 50 pasa a mostrarse. Si se agregan o cambian mensajes, avisar: el frontend los tiene en una lista cerrada.
 
@@ -452,14 +462,16 @@ C7 (`No se pudo generar el cuestionario tras 3 intentos: …`, `quiz-generation.
 
 | Endpoint | Hoy | Contrato | Qué hace el frontend mientras tanto |
 |---|---|---|---|
-| Todas | Un único usuario fijo, se ignora el `Authorization` | Guard JWT compartido con `sigeda-back` (dep. 39) | Envía el token igual; fuera del modo mock deshabilita subir y eliminar, y avisa que los documentos son compartidos |
+| Todas | Un único usuario fijo, se ignora el `Authorization` (y queda en los logs del servicio) | Guard JWT compartido con `sigeda-back` (dep. 39) | Envía el token igual; fuera del modo mock deshabilita subir y eliminar, y avisa que los documentos son compartidos. Generar cuestionarios y abrir consultas sí funcionan: sus filas no las lista ningún endpoint |
+| Parámetros de ruta | Sin `ParseUUIDPipe`: un id mal formado devuelve 500 | 400 (dep. 47) | Solo abre ids con forma de UUID salidos de sus propias listas o de la URL ya validada por zod |
 | `POST /documents/upload` | Sin límite de tamaño | 413 a los 25 MB (dep. 43) | Verifica extensión y tamaño en el navegador antes de enviar |
 | `GET`/`DELETE /documents/{id}`, `GET /quizzes/{id}` | Sin filtro por dueño | Filtro por dueño, 404 ajeno (dep. 47) | Solo abre ids salidos de sus propias listas |
 | `Document.errorMessage` | Texto crudo de la librería | Texto fijo en español (dep. 50) | Muestra C4 tal cual; cualquier otro motivo se reemplaza |
 | `POST /quizzes/generate` | Síncrono, sin tiempo máximo; 400 con el error técnico | Cola opcional (dep. 42); mensaje limpio (dep. 50) | Espera bloqueante explicada, corte a los 120 s, mensaje propio |
 | `GET /quizzes/{id}` | Siempre con `correctAnswer` y `explanation` | `?includeAnswers=false` (dep. 41) | Califica en el navegador y no muestra las respuestas antes de entregar |
 | Intentos de cuestionario | No existen | §2.3 (dep. 40) | No los llama; la nota no se guarda |
-| `POST /chat/sessions` | 500 por `BigInt`; filtra `extractedText` y `storageKey` | `documents` aplanado a `DocumentResponseDto[]` (dep. 45) | Los mocks implementan solo la forma corregida; contra el servidor real la pantalla no funciona |
+| `POST /chat/sessions` | 500 por `BigInt` **después** de crear la fila, así que deja sesiones huérfanas; filtra `extractedText` y `storageKey` | `documents` aplanado a `DocumentResponseDto[]` (dep. 45) y limpieza de las sesiones sin mensajes | Los mocks implementan solo la forma corregida; contra el servidor real la pantalla no funciona |
+| `DELETE /documents/{id}` | Borra en el almacenamiento y luego la fila, sin transacción | Tolerar el fallo del almacenamiento o invertir el orden | Ante el 500 deja el documento en la lista |
 | `GET /chat/sessions/{id}` | 500 por `BigInt`; mensajes sin fuentes | Aplanado (dep. 45) + `sources` por mensaje (dep. 46) | Un error al recuperar muestra "no se pudo recuperar la conversación"; sin `sources`, los `[n]` quedan como texto |
 | `GET /chat/sessions` | No existe | §3.4 (dep. 44) | Sin historial; la sesión vive en la URL |
 | `GET /quizzes`, `sourceDocumentId` | No existe / siempre `null` | §2.4 (dep. 48) | Sin "Mis cuestionarios"; no nombra el documento de cada pregunta |
@@ -470,35 +482,86 @@ C7 (`No se pudo generar el cuestionario tras 3 intentos: …`, `quiz-generation.
 
 ## 7. Datos de los mocks
 
-Ids UUID **v4** válidos (los DTO validan la versión). Usuario: el mismo que fija el middleware, `564984ee-448a-424f-b689-57a03b3ea108`.
+Todos los ids son UUID **v4** válidos (los DTO validan la versión). Usuario: el mismo que fija el middleware, `564984ee-448a-424f-b689-57a03b3ea108`.
 
-**Documentos** (`GET /documents`, en este orden):
+**Estado y reinicio.** Algunos mocks son *stateful* (el contador de consultas de un documento, las sesiones creadas durante la prueba). El contador es **por documento y se cuenta desde su propia creación**: cada respuesta de `GET /documents` o `GET /documents/{id}` en la que ese documento aparece todavía en `processing` suma uno. `src/mocks/ia/` expone `reiniciarIaMock()`, que `reiniciarMocks()` (`src/mocks/reiniciar.ts`) llama y `src/test/setup.ts:47` ya ejecuta en cada `afterEach`: vuelve a los documentos, cuestionarios y conversaciones de este apartado y pone todos los contadores en cero.
+
+### 7.1 Documentos
+
+`GET /documents` los devuelve en este orden (`createdAt` descendente):
 
 | Id | `filename` | `mimeType` | `sizeBytes` | `status` | `tags` | Para |
 |---|---|---|---|---|---|---|
-| `d0c00000-0000-4000-8000-000000000004` | Apuntes de aerodinámica.txt | `text/plain` | 12 288 | `processing` → `ready` | `[]` → `["aerodinámica"]` | CA-DOC-04: pasa a `ready` en la tercera consulta de la lista |
+| `d0c00000-0000-4000-8000-000000000006` | Reglamento de operaciones.pdf | `application/pdf` | 3 145 728 | `processing` **para siempre** | `[]` | CA-DOC-06: nunca termina, así que la consulta periódica llega al tope de 40 |
+| `d0c00000-0000-4000-8000-000000000004` | Apuntes de aerodinámica.txt | `text/plain` | 12 288 | `processing` → `ready` | `[]` → `["aerodinámica"]` | CA-DOC-04: pasa a `ready` en su **tercera** consulta |
 | `d0c00000-0000-4000-8000-000000000003` | Manual de vuelo escaneado.pdf | `application/pdf` | 5 242 880 | `error` | `[]` | CA-DOC-05: `errorMessage` = C4 |
-| `d0c00000-0000-4000-8000-000000000002` | Procedimientos de emergencia.docx | `application/vnd.openxmlformats-officedocument.wordprocessingml.document` | 184 320 | `ready` | `["emergencias", "autorrotación"]` | Segundo documento seleccionable |
+| `d0c00000-0000-4000-8000-000000000002` | Procedimientos de emergencia.docx | `application/vnd.openxmlformats-officedocument.wordprocessingml.document` | 184 320 | `ready` | `["emergencias", "autorrotación"]` | Segundo documento listo: cuestionarios y consultas con dos documentos |
 | `d0c00000-0000-4000-8000-000000000001` | PDI EA-510 Título III.pdf | `application/pdf` | 2 411 008 | `ready` | `["instrucción", "maniobras"]` | Documento principal |
 
-`createdAt` descendente entre `2026-09-18T14:02:11.000Z` y `2026-09-19T08:00:00.000Z`; `processedAt` no nulo solo en los `ready`.
+`createdAt` entre `2026-09-18T14:02:11.000Z` (el `…0001`) y `2026-09-19T08:00:00.000Z` (el `…0006`); `processedAt` no nulo solo en los `ready`.
 
-**Casos fijos de los mocks**
+Consecuencia querida del `…0006`: con las fijaciones por defecto **la lista nunca queda sin filas en `processing`**, que es justo lo que CA-DOC-06 necesita. La prueba de que el intervalo se detiene al llegar a un estado terminal usa un `server.use(...)` con solo filas terminales.
 
 | Caso | Detalle |
 |---|---|
-| Subida correcta | Devuelve 201 con `status: "processing"` e id `d0c00000-0000-4000-8000-000000000005`; pasa a `ready` en la tercera consulta |
-| Subida rechazada | Un archivo `image/png` devuelve C2; sin campo `file`, C1 |
-| Tamaño excedido | Un archivo de más de 25 MB devuelve 413 con el mensaje de §1.1 (el frontend normalmente lo corta antes) |
-| Documento que no se puede eliminar | Ninguno: `DELETE` siempre responde `{"deleted": true}` |
-| Cuestionario | `c0e50000-0000-4000-8000-000000000001`, 3 preguntas (`9e500000-…-0001` opción múltiple, `-0002` verdadero/falso con `correctAnswer: "true"`, `-0003` completar con `_____` en el enunciado y `correctAnswer: "autorrotación"`) |
-| Generación lenta | Pedir 20 preguntas demora 3 s antes de responder; pedirlas con el documento `…0002` devuelve C7 (para CA-CUE-05) |
-| Generación con documento no listo | Incluir `…0003` o `…0004` devuelve C6 con su nombre de archivo |
-| Conversación | `5e550000-0000-4000-8000-000000000001` sobre el documento `…0001`, con dos mensajes (`3e550000-…-0001` del usuario, `-0002` del asistente citando `[1]` y `[2]`) y dos fragmentos `cc000000-…-0001` y `-0002` |
-| Conversación restaurada | `GET /chat/sessions/{id}` devuelve los mensajes con `sources` y `similarity: null` (dep. 46, forma del contrato) |
-| Respuesta sin fuentes | Una pregunta que contenga "clima" devuelve `sources: []` |
-| Respuesta del modelo fallida | Una pregunta que contenga "error" devuelve C10 con `sources: []` |
-| Conversación inexistente | Cualquier otro id de sesión devuelve C9 |
+| Subida correcta | **201** con `status: "processing"` e id `d0c00000-0000-4000-8000-000000000005`, `createdAt` = ahora (encabeza la lista); pasa a `ready` en su tercera consulta, con su propio contador |
+| Subida rechazada | Un archivo `image/png` devuelve C2 con ese `mimeType`; sin campo `file`, C1 |
+| Tamaño excedido | Un archivo de más de 25 MB devuelve **413** con C13 (el frontend normalmente lo corta antes, A11) |
+| Detalle | `GET /documents/{id}` devuelve el documento y suma al contador si está `processing`; cualquier otro UUID v4 devuelve C3 |
+| Eliminar | `DELETE` responde siempre `{"deleted": true}` y saca el documento de la lista; un id desconocido devuelve C3 |
+| Sin documentos (CA-DOC-01) | No hay fijación: se prueba con `server.use(...)` devolviendo `200 []` |
+
+### 7.2 Cuestionarios
+
+Cuestionario fijo `c0e50000-0000-4000-8000-000000000001`, con tres preguntas, una de cada tipo:
+
+| Id | `type` | `correctAnswer` | Nota |
+|---|---|---|---|
+| `9e500000-0000-4000-8000-000000000001` | `multiple_choice` | `"a"` | Cuatro opciones `a`–`d` |
+| `9e500000-0000-4000-8000-000000000002` | `true_false` | `"true"` | Sin `options` (`null`) |
+| `9e500000-0000-4000-8000-000000000003` | `fill_blank` | `"autorrotación"` | El `prompt` contiene `_____` |
+
+`POST /quizzes/generate` decide por **`questionCount`**, para que ningún documento tenga dos papeles a la vez:
+
+| Disparador | Respuesta | Para |
+|---|---|---|
+| `questionCount` = 7 | **400** C7 | CA-CUE-05 (mensaje técnico reemplazado por A5) |
+| `questionCount` = 13 | Nunca responde (`delay('infinite')`) | CA-CUE-06 (corte a los 120 s) |
+| `questionCount` = 20 | 3 s de espera y después el cuestionario fijo | CA-CUE-03 (estado de espera con A3) |
+| `documentIds` con un UUID v4 que no está en §7.1 | **404** C5 | CA-CUE-04, CA-CON-03 |
+| `documentIds` con `…0003`, `…0004` o `…0006` | **400** C6 con esos nombres de archivo | CA-CUE-04 |
+| Cualquier otro caso válido | **201** con el cuestionario fijo y `requestedCount` = lo pedido | Camino feliz |
+
+El mock devuelve siempre las tres preguntas fijas, cualquiera sea `questionCount`: las pruebas necesitan un cuestionario determinista, y `requestedCount` conserva lo que se pidió.
+
+`GET /quizzes/{id}`: el id fijo devuelve el cuestionario completo; cualquier otro UUID v4 devuelve **404** C8 (CA-CUE-12). Los endpoints de intentos (§2.3) **no** están en los mocks: M3 no los llama.
+
+### 7.3 Consultas
+
+Dos conversaciones fijas, que se diferencian **solo** en si sus mensajes traen `sources`, para que los dos caminos de CA-CON-09 sean reales:
+
+| Id | Cómo se restaura | Para |
+|---|---|---|
+| `5e550000-0000-4000-8000-000000000001` — "con fuentes" | `GET /chat/sessions/{id}` devuelve cada mensaje con su arreglo `sources` resuelto y `similarity: null` (forma del contrato, dependencia 46) | CA-CON-09 primer caso: las citas anteriores se abren, sin porcentaje, y **no** aparece A8 |
+| `5e550000-0000-4000-8000-000000000002` — "sin fuentes" | Los mensajes llegan **sin** la clave `sources` (el backend de hoy) | CA-CON-09 segundo caso: los `[n]` quedan como texto y aparece A8 |
+| `5e550000-0000-4000-8000-000000000009` — "ilegible" | **500** `{"statusCode":500,"message":"Internal server error"}` (la forma que produce el fallo de `BigInt`, sin clave `error`) | CA-CON-10: A7 y Nueva consulta |
+| Cualquier otro UUID v4 | **404** C9 | CA-CON-11 |
+
+Ambas conversaciones son sobre el documento `…0001` y tienen dos mensajes: `3e550000-…-0001` del usuario y `-0002` del asistente citando `[1]` y `[2]` (en la "sin fuentes", `3e550000-…-0011` y `-0012`). Los fragmentos citados son `cc000000-0000-4000-8000-000000000001` y `-0002`.
+
+| Caso | Detalle |
+|---|---|
+| Crear conversación | **201** con id `5e550000-0000-4000-8000-000000000003`, `title` por defecto a partir de los nombres de archivo, y `documents` aplanado. Se restaura como la "con fuentes" |
+| Documento inexistente o no listo | C5 y C6, con los mismos disparadores que §7.2 |
+| Respuesta normal | Cita `[1]` y `[2]` con dos `sources` (`similarity` 0.812 y 0.774) |
+| Respuesta sin fuentes | Una pregunta que contenga "clima" devuelve `sources: []` (CA-CON-06, A9) |
+| Respuesta del modelo fallida | Una pregunta que contenga "error" devuelve C10 como `content`, con `sources: []` (CA-CON-07) |
+| Envío fallido | Una pregunta que contenga "falla" devuelve **500**, y nada queda guardado en la conversación (CA-CON-08) |
+| `sessionId` desconocido | C9 |
+
+### 7.4 Lo que no se fija
+
+Los tres casos de **ausencia** — sin documentos (CA-DOC-01), sin documentos listos para el cuestionario (CA-CUE-02) y sin documentos listos para consultar (CA-CON-01) — no tienen fijación propia: se prueban con `server.use(...)` por prueba, como en M2, porque las fijaciones por defecto tienen que sostener los caminos felices.
 
 ---
 
@@ -513,11 +576,11 @@ Numeración de la spec (§10, §13.4, §14.5 y §15.5). Todas son de `sigeda_cha
 | 40 | Intentos de cuestionario: crear, guardar respuestas, entregar, consultar | §2.3 |
 | 41 | `GET /quizzes/{id}?includeAnswers=false` sin `correctAnswer` ni `explanation` | §2.2 |
 | 42 | Generación de cuestionarios en cola, o presupuesto de tiempo documentado | §2.1 |
-| 43 | Límite de tamaño de subida (413) y respaldo por extensión del `mimeType` | §1.1 |
+| 43 | Límite de tamaño de subida (413 con el mensaje C13, no el "File too large" de Nest) y respaldo por extensión del `mimeType` | §1.1, §5 |
 | 44 | `GET /chat/sessions` — historial de conversaciones | §3.4 |
 | 45 | **Error y filtración:** aplanar `documents` con `toDocumentResponse` en las dos rutas de sesión (hoy 500 por `BigInt`, y filtra `extractedText` y `storageKey`) | §3.1, §3.3 |
 | 46 | `sources` resueltas por mensaje en `GET /chat/sessions/{id}` | §3.3 |
-| 47 | **Seguridad:** filtro por dueño en `GET`/`DELETE /documents/{id}` y `GET /quizzes/{id}` | §1.3, §1.4, §2.2 |
+| 47 | **Seguridad:** filtro por dueño en `GET`/`DELETE /documents/{id}` y `GET /quizzes/{id}`, y `ParseUUIDPipe` en los cuatro parámetros de ruta (hoy un id mal formado devuelve 500) | Convenciones, §1.3, §1.4, §2.2, §3.3 |
 | 48 | `GET /quizzes`, `sourceDocumentId` por pregunta y paginación de los listados | §1.2, §2.4 |
 | 49 | **Seguridad:** alcance, validación y paginación en `/prediction/**` | §4 |
 | 50 | Mensajes de error sin internos y en español (documento, generación, validación de DTO) | Convenciones, §1.5, §2.1 |
