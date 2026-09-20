@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { soloMensaje } from '@/features/cuentas/api'
 import type { Pagina, ParametrosPagina } from '@/lib/api/pagina'
 import { sigeda } from '@/lib/api/sigeda'
+import type { CuerpoPersonaNueva } from './schemas'
 
 export type PersonaFila = {
   codigo: string
@@ -67,6 +68,8 @@ const esquemaDetalle = z.object({
 
 const esquemaIdDeUsuario = z.object({ usuario: z.object({ id: z.number() }) })
 
+const esquemaPersonaCreada = z.object({ mensaje: z.string(), persona: z.object({ codigo: z.string() }) })
+
 export function apellidosYNombres(persona: Pick<PersonaFila, 'nombre' | 'aPaterno' | 'aMaterno'>): string {
   const apellidos = [persona.aPaterno, persona.aMaterno].filter(Boolean).join(' ')
   return apellidos === '' ? persona.nombre : `${apellidos}, ${persona.nombre}`
@@ -121,6 +124,14 @@ export async function obtenerPersona(codigo: string): Promise<PersonaDetalle> {
         ? { id: idUsuario, username: usuario.nombre, correo: usuario.correo ?? null, rol: usuario.rol ?? null }
         : null,
   }
+}
+
+export async function crearPersona(cuerpo: CuerpoPersonaNueva): Promise<{ mensaje: string; codigo: string }> {
+  const respuesta = await sigeda.post<unknown>('/api/personas', cuerpo)
+  const leida = esquemaPersonaCreada.safeParse(respuesta)
+  return leida.success
+    ? { mensaje: leida.data.mensaje, codigo: leida.data.persona.codigo }
+    : { mensaje: MENSAJE_PERSONA_GUARDADA, codigo: cuerpo.codigo }
 }
 
 export async function eliminarPersona(codigo: string): Promise<string> {
