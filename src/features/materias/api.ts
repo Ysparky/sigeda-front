@@ -18,7 +18,7 @@ export type CuerpoMateria = { nombre: string; notaMinima: number; coeficiente: n
 export const MENSAJE_MATERIA_GUARDADA = 'Materia guardada con éxito.'
 export const MENSAJE_MATERIA_ELIMINADA = 'Materia eliminado con éxito.'
 
-const esquemaMateria = z.object({
+const esquemaFila = z.object({
   id: z.number(),
   nombre: z.string(),
   notaMinima: z.number(),
@@ -37,7 +37,7 @@ export const clavesMaterias = {
 
 export async function listarMaterias(): Promise<Materia[]> {
   const materias = await sigeda.lista<unknown>('/api/materias')
-  return materias.map((materia) => esquemaMateria.parse(materia))
+  return materias.map((materia) => esquemaFila.parse(materia))
 }
 
 export async function crearMateria(cuerpo: CuerpoMateria): Promise<string> {

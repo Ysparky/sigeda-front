@@ -101,14 +101,19 @@ export async function listarPersonas(parametros: ParametrosPagina): Promise<Pagi
   return { ...pagina, items: pagina.items.map(aPersonaFila) }
 }
 
+async function idDeUsuario(username: string): Promise<number | null> {
+  try {
+    const leida = esquemaIdDeUsuario.parse(await sigeda.get(`/api/personas/${encodeURIComponent(username)}`))
+    return leida.usuario.id
+  } catch {
+    return null
+  }
+}
+
 export async function obtenerPersona(codigo: string): Promise<PersonaDetalle> {
   const datos = esquemaDetalle.parse(await sigeda.get(`/api/personas/${encodeURIComponent(codigo)}/usuario`))
   const usuario = datos.usuario ?? null
-  let idUsuario = usuario?.id ?? null
-  if (usuario && idUsuario === null) {
-    const sesion = esquemaIdDeUsuario.parse(await sigeda.get(`/api/personas/${encodeURIComponent(usuario.nombre)}`))
-    idUsuario = sesion.usuario.id
-  }
+  const idUsuario = usuario === null ? null : (usuario.id ?? (await idDeUsuario(usuario.nombre)))
   return {
     codigo: datos.codigo,
     nombre: datos.nombre,

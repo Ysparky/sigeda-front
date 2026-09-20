@@ -55,6 +55,34 @@ describe('Detalle de maniobra', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/programa/maniobras'))
   })
 
+  it('CA-MAN-05 modificar y eliminar una maniobra refrescan el detalle de su fase', async () => {
+    await iniciarComo('comandante.aguirre')
+    const { usuario, router, queryClient } = renderApp('/programa/fases/1')
+    queryClient.setDefaultOptions({ queries: { retry: false, staleTime: 30_000 }, mutations: { retry: false } })
+    await waitFor(() =>
+      expect(screen.getByRole('region', { name: 'Contacto' })).toHaveTextContent('Sin maniobras asignadas.'),
+    )
+
+    await router.navigate({ to: '/programa/maniobras/$id/editar', params: { id: '11' } })
+    await screen.findByLabelText('Nombre')
+    await usuario.click(await screen.findByRole('checkbox', { name: 'Contacto' }))
+    await usuario.click(screen.getByRole('button', { name: 'Guardar maniobra' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/programa/maniobras/11'))
+
+    await router.navigate({ to: '/programa/fases/$id', params: { id: '1' } })
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Contacto' })).toHaveTextContent('Autorrotación'))
+
+    await router.navigate({ to: '/programa/maniobras/$id', params: { id: '11' } })
+    await usuario.click(await screen.findByRole('button', { name: 'Eliminar' }))
+    await usuario.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Eliminar' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/programa/maniobras'))
+
+    await router.navigate({ to: '/programa/fases/$id', params: { id: '1' } })
+    await waitFor(() =>
+      expect(screen.getByRole('region', { name: 'Contacto' })).toHaveTextContent('Sin maniobras asignadas.'),
+    )
+  })
+
   it('CA-MAN-05 muestra el motivo del backend si rechaza la eliminación', async () => {
     server.use(
       http.delete(`${config.sigedaApiUrl}/api/maniobras/:id`, () =>

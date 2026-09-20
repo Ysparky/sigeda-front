@@ -38,10 +38,8 @@ export function DialogoAsignarRol({ persona, idUsuario }: Props) {
   const roles = useQuery({ ...consultasCuentas.roles(), enabled: abierto })
   const errorDeRoles = errorDePrimeraCarga(roles)
   const compatibles = (roles.data ?? []).filter((rol) => rolesCompatibles(persona.tipo).includes(rol.nombre))
-  const formulario = useForm<Formulario>({
-    resolver: zodResolver(esquema),
-    defaultValues: { idRol: persona.cuenta?.rol ? String(persona.cuenta.rol.id) : '' },
-  })
+  const iniciales: Formulario = { idRol: persona.cuenta?.rol ? String(persona.cuenta.rol.id) : '' }
+  const formulario = useForm<Formulario>({ resolver: zodResolver(esquema), defaultValues: iniciales })
   const { errors } = formulario.formState
 
   const guardar = useMutation({
@@ -53,8 +51,13 @@ export function DialogoAsignarRol({ persona, idUsuario }: Props) {
     },
   })
 
+  function alAbrir(siguiente: boolean) {
+    setAbierto(siguiente)
+    if (siguiente) formulario.reset(iniciales)
+  }
+
   return (
-    <Dialog open={abierto} onOpenChange={setAbierto}>
+    <Dialog open={abierto} onOpenChange={alAbrir}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <ShieldCheck aria-hidden />

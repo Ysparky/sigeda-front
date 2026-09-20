@@ -40,6 +40,17 @@ describe('aplicarErroresDeCampo', () => {
     expect(setError).toHaveBeenCalledWith('nombre', { type: 'server', message: 'El nombre es obligatorio' })
   })
 
+  it('CA-MAN-06 conserva el primer mensaje cuando dos filas caen en el mismo campo', () => {
+    const setError = vi.fn()
+    const error = new ApiError(400, 'Revise los campos marcados.', {
+      'subfases[0].idSubfase': 'La subfase es requerida.',
+      'subfases[1].idSubfase': 'La subfase no existe.',
+    })
+    expect(aplicarErroresDeCampo(error, setError, {}, ['subfases'])).toBe(true)
+    expect(setError).toHaveBeenCalledTimes(1)
+    expect(setError).toHaveBeenCalledWith('subfases', { type: 'server', message: 'La subfase es requerida.' })
+  })
+
   it('no marca nada cuando el error no trae campos', () => {
     const setError = vi.fn()
     expect(aplicarErroresDeCampo(new ApiError(400, 'Asignar aeronave disponible.'), setError)).toBe(false)

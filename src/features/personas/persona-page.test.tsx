@@ -43,6 +43,36 @@ describe('Detalle de persona', () => {
     expect(screen.getByText(TEXTO_SIN_CUENTA)).toBeInTheDocument()
   })
 
+  it('CA-PER-06 si no se recupera el id de la cuenta la persona se muestra sin cuenta', async () => {
+    await iniciarComo('admin.sistema')
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/personas/:cod/usuario`, () =>
+        HttpResponse.json({
+          codigo: '111111',
+          nombre: 'Oscar',
+          aPaterno: 'Lopez',
+          aMaterno: 'Chaparro',
+          dni: '12345678',
+          rango: 'Cadete',
+          tipo: 'Alumno',
+          usuario: { nombre: 'alumno.lopez', correo: 'alumno1@sigeda.com', rol: { id: 1, nombre: 'Alumno' } },
+        }),
+      ),
+      http.get(`${config.sigedaApiUrl}/api/personas/:nom`, () =>
+        HttpResponse.json(
+          { timestamp: '2026-09-19T10:00:00', status: 400, error: 'Petición inválida', message: null },
+          { status: 400 },
+        ),
+      ),
+    )
+    renderApp('/personas/111111')
+    await screen.findByRole('heading', { level: 2, name: 'Cuenta' })
+    expect(screen.getByRole('heading', { level: 1, name: 'Oscar Lopez Chaparro' })).toBeInTheDocument()
+    expect(screen.getByText('12345678')).toBeInTheDocument()
+    expect(cuenta().getByText(TEXTO_SIN_CUENTA)).toBeInTheDocument()
+    expect(screen.queryByText('Página no encontrada')).not.toBeInTheDocument()
+  })
+
   it('CA-PER-12 en la propia persona la cuenta explica que no se gestiona desde aquí', async () => {
     await abrirPersona('000001')
     expect(screen.getByText(TEXTO_CUENTA_PROPIA)).toBeInTheDocument()
@@ -130,6 +160,32 @@ describe('Detalle de persona', () => {
     const dialogo = within(await screen.findByRole('dialog'))
     expect(await dialogo.findByLabelText('Rol')).toBeInTheDocument()
     expect(dialogo.getAllByRole('option').map((opcion) => opcion.textContent)).toEqual(['Elija un rol', 'Alumno'])
+  })
+
+  it('CA-PER-08 cancelar descarta el rol elegido y al reabrir vuelve el de la persona', async () => {
+    const { usuario } = await abrirPersona('765432')
+    await usuario.click(screen.getByRole('button', { name: 'Asignar rol' }))
+    const primera = within(await screen.findByRole('dialog'))
+    expect(await primera.findByLabelText('Rol')).toHaveValue('')
+    await usuario.selectOptions(primera.getByLabelText('Rol'), 'Comandante de Escuadrón')
+    expect(primera.getByLabelText('Rol')).not.toHaveValue('')
+    await usuario.click(primera.getByRole('button', { name: 'Cancelar' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    await usuario.click(screen.getByRole('button', { name: 'Asignar rol' }))
+    const segunda = within(await screen.findByRole('dialog'))
+    expect(await segunda.findByLabelText('Rol')).toHaveValue('')
+  })
+
+  it('CA-PER-09 cancelar descarta la contraseña escrita', async () => {
+    const { usuario } = await abrirPersona('111111')
+    await usuario.click(screen.getByRole('button', { name: 'Restablecer contraseña' }))
+    const primera = within(await screen.findByRole('dialog'))
+    await usuario.type(primera.getByLabelText('Contraseña nueva'), 'clave-segura-1')
+    await usuario.click(primera.getByRole('button', { name: 'Cancelar' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    await usuario.click(screen.getByRole('button', { name: 'Restablecer contraseña' }))
+    const segunda = within(await screen.findByRole('dialog'))
+    expect(segunda.getByLabelText('Contraseña nueva')).toHaveValue('')
   })
 
   it('CA-PER-09 restablece la contraseña pidiéndola dos veces', async () => {

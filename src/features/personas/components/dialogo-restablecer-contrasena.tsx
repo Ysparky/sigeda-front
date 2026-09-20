@@ -37,12 +37,11 @@ type Formulario = z.infer<typeof esquema>
 
 const RENOMBRAR = { password: 'nueva' }
 
+const INICIALES: Formulario = { nueva: '', confirmacion: '' }
+
 export function DialogoRestablecerContrasena({ cuenta }: { cuenta: CuentaDePersona }) {
   const [abierto, setAbierto] = useState(false)
-  const formulario = useForm<Formulario>({
-    resolver: zodResolver(esquema),
-    defaultValues: { nueva: '', confirmacion: '' },
-  })
+  const formulario = useForm<Formulario>({ resolver: zodResolver(esquema), defaultValues: INICIALES })
   const { errors } = formulario.formState
 
   const guardar = useMutation({
@@ -57,8 +56,13 @@ export function DialogoRestablecerContrasena({ cuenta }: { cuenta: CuentaDePerso
     },
   })
 
+  function alAbrir(siguiente: boolean) {
+    setAbierto(siguiente)
+    if (siguiente) formulario.reset(INICIALES)
+  }
+
   return (
-    <Dialog open={abierto} onOpenChange={setAbierto}>
+    <Dialog open={abierto} onOpenChange={alAbrir}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <KeyRound aria-hidden />

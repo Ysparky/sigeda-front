@@ -12,7 +12,7 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/c
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { consultasFases, type FaseConSubfases } from '@/features/fases/api'
+import { clavesFases, consultasFases, type FaseConSubfases } from '@/features/fases/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import {
   MENSAJE_MANIOBRA_MODIFICADA,
@@ -61,6 +61,7 @@ function FormularioConSubfases({ maniobra, fases }: Props & { fases: FaseConSubf
     onSuccess: async (id) => {
       toast.success(modificando ? MENSAJE_MANIOBRA_MODIFICADA : MENSAJE_MANIOBRA_REGISTRADA)
       await queryClient.invalidateQueries({ queryKey: clavesManiobras.todo })
+      await queryClient.invalidateQueries({ queryKey: clavesFases.todo })
       await navegar({ to: '/programa/maniobras/$id', params: { id: String(id) } })
     },
     onError: (error) => {

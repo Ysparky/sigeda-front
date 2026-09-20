@@ -6,7 +6,7 @@ import { ConfirmDialog } from '@/components/confirm-dialog'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { consultasFases } from '@/features/fases/api'
+import { clavesFases, consultasFases } from '@/features/fases/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { usePuede } from '@/lib/auth/use-sesion'
 import { accionDisponible, MENSAJE_DEPENDENCIA_PENDIENTE } from '@/lib/dependencias'
@@ -35,6 +35,7 @@ export function ManiobraPage({ id }: { id: number }) {
     onSuccess: async () => {
       toast.success(MENSAJE_MANIOBRA_ELIMINADA)
       await queryClient.invalidateQueries({ queryKey: clavesManiobras.todo })
+      await queryClient.invalidateQueries({ queryKey: clavesFases.todo })
       await navegar({ to: '/programa/maniobras' })
     },
     onError: (error) => toast.error(error instanceof ApiError ? error.message : MENSAJE_GENERICO),

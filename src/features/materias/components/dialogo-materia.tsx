@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -22,7 +22,7 @@ import { aplicarErroresDeCampo } from '@/lib/formularios'
 import { clavesMaterias, crearMateria, modificarMateria, PARTES_CURSO, type Materia } from '../api'
 import { esquemaMateria, MATERIA_VACIA, type ValoresMateria } from '../schemas'
 
-type Props = { materia?: Materia; disparador: React.ReactNode }
+type Props = { materia?: Materia; disparador: ReactNode }
 
 export function DialogoMateria({ materia, disparador }: Props) {
   const [abierto, setAbierto] = useState(false)

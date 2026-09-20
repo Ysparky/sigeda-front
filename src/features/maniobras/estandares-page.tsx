@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { clavesFases } from '@/features/fases/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import {
   MENSAJE_ESTANDARES_GUARDADOS,
@@ -50,6 +51,7 @@ export function EstandaresPage({ id }: { id: number }) {
     onSuccess: async () => {
       toast.success(MENSAJE_ESTANDARES_GUARDADOS)
       await queryClient.invalidateQueries({ queryKey: clavesManiobras.todo })
+      await queryClient.invalidateQueries({ queryKey: clavesFases.todo })
       await navegar({ to: '/programa/maniobras/$id', params: { id: String(maniobra.id) } })
     },
     onError: (error) => {

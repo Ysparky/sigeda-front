@@ -16,10 +16,17 @@ export function aplicarErroresDeCampo<T extends FieldValues>(
   colapsar: readonly string[] = [],
 ): boolean {
   const entradas = Object.entries(error.erroresDeCampo)
+  const colapsados = new Set<string>()
   for (const [campo, mensaje] of entradas) {
     const ruta = rutaDeCampo(campo, renombrar)
     const raiz = ruta.split('.')[0] ?? ruta
-    setError((colapsar.includes(raiz) ? raiz : ruta) as Path<T>, { type: 'server', message: mensaje })
+    if (!colapsar.includes(raiz)) {
+      setError(ruta as Path<T>, { type: 'server', message: mensaje })
+      continue
+    }
+    if (colapsados.has(raiz)) continue
+    colapsados.add(raiz)
+    setError(raiz as Path<T>, { type: 'server', message: mensaje })
   }
   return entradas.length > 0
 }

@@ -87,6 +87,7 @@ describe('Materias', () => {
     expect(
       await screen.findByText('La materia no se puede eliminar, tiene preguntas o turnos teóricos.'),
     ).toBeInTheDocument()
+    expect(filas().some((fila) => fila[0] === 'Adoctrinamiento de Vuelo')).toBe(true)
     await usuario.click(screen.getByRole('button', { name: 'Eliminar Meteorología' }))
     await usuario.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Eliminar' }))
     expect(await screen.findByText('Materia eliminado con éxito.')).toBeInTheDocument()
