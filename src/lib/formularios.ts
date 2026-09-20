@@ -13,10 +13,13 @@ export function aplicarErroresDeCampo<T extends FieldValues>(
   error: ApiError,
   setError: UseFormSetError<T>,
   renombrar: Readonly<Record<string, string>> = {},
+  colapsar: readonly string[] = [],
 ): boolean {
   const entradas = Object.entries(error.erroresDeCampo)
   for (const [campo, mensaje] of entradas) {
-    setError(rutaDeCampo(campo, renombrar) as Path<T>, { type: 'server', message: mensaje })
+    const ruta = rutaDeCampo(campo, renombrar)
+    const raiz = ruta.split('.')[0] ?? ruta
+    setError((colapsar.includes(raiz) ? raiz : ruta) as Path<T>, { type: 'server', message: mensaje })
   }
   return entradas.length > 0
 }

@@ -29,6 +29,17 @@ describe('aplicarErroresDeCampo', () => {
     })
   })
 
+  it('CA-MAN-06 agrupa en un solo campo los errores de una lista', () => {
+    const setError = vi.fn()
+    const error = new ApiError(400, 'Revise los campos marcados.', {
+      'subfases[0].idSubfase': 'La subfase es requerida.',
+      nombre: 'El nombre es obligatorio',
+    })
+    expect(aplicarErroresDeCampo(error, setError, {}, ['subfases'])).toBe(true)
+    expect(setError).toHaveBeenCalledWith('subfases', { type: 'server', message: 'La subfase es requerida.' })
+    expect(setError).toHaveBeenCalledWith('nombre', { type: 'server', message: 'El nombre es obligatorio' })
+  })
+
   it('no marca nada cuando el error no trae campos', () => {
     const setError = vi.fn()
     expect(aplicarErroresDeCampo(new ApiError(400, 'Asignar aeronave disponible.'), setError)).toBe(false)
