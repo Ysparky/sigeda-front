@@ -73,11 +73,23 @@ function entidadFase(fase: FaseMock) {
   }
 }
 
+function existenteDe(enviada: SubfaseDelCuerpo, conIds: boolean): SubfaseMock | undefined {
+  const id = conIds ? Number(enviada.id) : 0
+  return id > 0 ? buscarSubfase(id) : undefined
+}
+
+function subfaseOmitidaEnUso(fase: FaseMock, subfases: SubfaseDelCuerpo[]): SubfaseMock | null {
+  const conservados = new Set(
+    subfases.map((enviada) => existenteDe(enviada, true)?.id).filter((id) => id !== undefined),
+  )
+  const omitidas = subfasesDeFase(fase.id).filter((subfase) => !conservados.has(subfase.id))
+  return omitidas.find(subfaseEnUso) ?? null
+}
+
 function aplicarSubfases(fase: FaseMock, subfases: SubfaseDelCuerpo[], conIds: boolean) {
   const conservados = new Set<number>()
   for (const enviada of subfases) {
-    const id = conIds ? Number(enviada.id) : 0
-    const existente = id > 0 ? buscarSubfase(id) : undefined
+    const existente = existenteDe(enviada, conIds)
     if (existente) {
       existente.nombre = texto(enviada.nombre)
       existente.descripcion = descripcionNueva(enviada.descripcion, existente.descripcion)
@@ -95,10 +107,7 @@ function aplicarSubfases(fase: FaseMock, subfases: SubfaseDelCuerpo[], conIds: b
     }
   }
   const omitidas = subfasesDeFase(fase.id).filter((subfase) => !conservados.has(subfase.id))
-  const enUso = omitidas.find(subfaseEnUso)
-  if (enUso) return enUso
   datos().subfases = datos().subfases.filter((subfase) => !omitidas.includes(subfase))
-  return null
 }
 
 export const handlersFases = [
@@ -137,9 +146,8 @@ export const handlersFases = [
     const cuerpo = (await request.json()) as CuerpoFase
     const errores = erroresDeFase(cuerpo)
     if (errores.length > 0) return errorResponse(400, 'Error al validar el modelo', null, errores)
-    fase.nombre = texto(cuerpo.nombre)
-    fase.descripcion = descripcionNueva(cuerpo.descripcion, fase.descripcion)
-    const enUso = aplicarSubfases(fase, cuerpo.subfases ?? [], true)
+    const subfases = cuerpo.subfases ?? []
+    const enUso = subfaseOmitidaEnUso(fase, subfases)
     if (enUso) {
       return errorResponse(
         410,
@@ -147,6 +155,9 @@ export const handlersFases = [
         `La subfase ${enUso.nombre} no se puede quitar, tiene maniobras, turnos o evaluaciones.`,
       )
     }
+    fase.nombre = texto(cuerpo.nombre)
+    fase.descripcion = descripcionNueva(cuerpo.descripcion, fase.descripcion)
+    aplicarSubfases(fase, subfases, true)
     return HttpResponse.json(entidadFase(fase))
   }),
   http.delete(`${API}/api/fases/:id`, ({ request, params }) => {
