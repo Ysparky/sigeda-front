@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
+import { toast } from 'sonner'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 import { server } from '@/mocks/server'
 import { sesion } from '@/lib/auth/sesion'
@@ -40,6 +41,7 @@ beforeAll(() => {
 
 afterEach(() => {
   cleanup()
+  toast.dismiss()
   ancla.focus()
   server.resetHandlers()
   reiniciarMocks()

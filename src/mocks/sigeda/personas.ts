@@ -201,6 +201,20 @@ export const handlersPersonas = [
       { status: 201 },
     )
   }),
+  http.get(`${API}/api/personas/alumno/:tipo`, ({ request, params }) => {
+    const permitido = autorizar(request, 'Manage Groups')
+    if (permitido instanceof Response) return permitido
+    const alumnos = datos().personas.filter((persona) => persona.tipo === String(params.tipo) && persona.idGrupo === null)
+    if (alumnos.length === 0) return textoNoEncontrado('No existen personas disponibles.')
+    return HttpResponse.json(
+      alumnos.map((persona) => ({
+        codigo: persona.codigo,
+        nombre: persona.nombre,
+        aPaterno: persona.aPaterno,
+        aMaterno: persona.aMaterno,
+      })),
+    )
+  }),
   http.get(`${API}/api/personas/:cod/usuario`, ({ request, params }) => {
     const permitido = autorizar(request, 'Manage Users')
     if (permitido instanceof Response) return permitido
