@@ -1,31 +1,99 @@
-import { useQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import { AvisoDeError } from '@/components/aviso-de-error'
 import { AvisoDeTeoria } from '@/components/aviso-de-teoria'
 import { PageHeader } from '@/components/page-header'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ApiError } from '@/lib/api/errors'
+import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { PANTALLAS } from '@/lib/auth/pantallas'
 import { useSesion } from '@/lib/auth/use-sesion'
+import { milisegundosRestantes, TEXTO_VENTANA_CERRADA } from '@/lib/dominio/teoria'
 import { errorDePrimeraCarga } from '@/lib/query'
-import { consultasExamenes, type ExamenEnCurso } from './api'
+import {
+  clavesExamenes,
+  consultasExamenes,
+  entregarExamen,
+  MENSAJE_EXAMEN_ENTREGADO,
+  type ExamenEnCurso,
+} from './api'
+import { contarRespondidas } from './autoguardado'
+import { CabeceraDeExamen } from './components/cabecera-de-examen'
 import { ResolucionDeExamen } from './components/resolucion-de-examen'
-import { esExamenEntregado, esExamenNoDisponible } from './mensajes'
+import { esExamenEntregado, esExamenNoDisponible, esVentanaCerrada } from './mensajes'
 import { useAutoguardado } from './use-autoguardado'
 
-function Examen({ examen }: { examen: ExamenEnCurso }) {
+const PASO_DEL_RELOJ = 1_000
+
+function Examen({ examen, idTurno }: { examen: ExamenEnCurso; idTurno: number }) {
+  const navegar = useNavigate()
+  const queryClient = useQueryClient()
   const { respuestas, estado, responder, guardarAhora } = useAutoguardado(examen)
+  const entregado = useRef(false)
+  const [restante, setRestante] = useState(() => milisegundosRestantes(examen.fechaExamen, examen.horaFin))
+  const cerrado = restante === 0
+
+  const entregar = useMutation({
+    mutationFn: () => entregarExamen(examen.id, examen.codAlumno),
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: clavesExamenes.todo })
+    },
+    onSuccess: async () => {
+      toast[cerrado ? 'info' : 'success'](cerrado ? TEXTO_VENTANA_CERRADA : MENSAJE_EXAMEN_ENTREGADO)
+      await navegar({ to: '/examenes/$id/resultado', params: { id: String(idTurno) } })
+    },
+    onError: async (error) => {
+      if (!esVentanaCerrada(error) && !esExamenEntregado(error)) {
+        entregado.current = false
+        toast.error(error instanceof ApiError ? error.message : MENSAJE_GENERICO)
+        return
+      }
+      toast.info(TEXTO_VENTANA_CERRADA)
+      await navegar({ to: '/examenes/$id/resultado', params: { id: String(idTurno) } })
+    },
+  })
+  const enviarEntrega = entregar.mutate
+
+  const entregarAhora = useCallback(async () => {
+    if (entregado.current) return
+    entregado.current = true
+    await guardarAhora()
+    enviarEntrega()
+  }, [enviarEntrega, guardarAhora])
+
+  useEffect(() => {
+    const reloj = setInterval(
+      () => setRestante(milisegundosRestantes(examen.fechaExamen, examen.horaFin)),
+      PASO_DEL_RELOJ,
+    )
+    return () => clearInterval(reloj)
+  }, [examen.fechaExamen, examen.horaFin])
+
+  useEffect(() => {
+    if (cerrado) void entregarAhora()
+  }, [cerrado, entregarAhora])
+
   return (
-    <ResolucionDeExamen
-      examen={examen}
-      respuestas={respuestas}
-      estado={estado}
-      bloqueado={false}
-      alResponder={responder}
-      alReintentar={() => void guardarAhora()}
-    />
+    <>
+      <CabeceraDeExamen
+        restante={restante}
+        respondidas={contarRespondidas(respuestas)}
+        total={examen.preguntas.length}
+        entregando={entregar.isPending}
+        alEntregar={() => void entregarAhora()}
+      />
+      <ResolucionDeExamen
+        examen={examen}
+        respuestas={respuestas}
+        estado={estado}
+        bloqueado={cerrado}
+        alResponder={responder}
+        alReintentar={() => void guardarAhora()}
+      />
+    </>
   )
 }
 
@@ -62,7 +130,7 @@ export function RendirExamenPage({ idTurno }: { idTurno: number }) {
       ) : examen.data === undefined ? (
         <Skeleton className="h-64 w-full" aria-busy="true" />
       ) : (
-        <Examen examen={examen.data} />
+        <Examen examen={examen.data} idTurno={idTurno} />
       )}
     </>
   )
