@@ -32,10 +32,11 @@ function Examen({ examen, idTurno }: { examen: ExamenEnCurso; idTurno: number })
   const navegar = useNavigate()
   const queryClient = useQueryClient()
   const [restante, setRestante] = useState(() => milisegundosRestantes(examen.fechaExamen, examen.horaFin))
-  const { respuestas, estado, responder, guardarAhora } = useAutoguardado(examen, restante)
+  const { respuestas, estado, error: errorDeGuardado, responder, guardarAhora } = useAutoguardado(examen, restante)
   const entregado = useRef(false)
   const restanteRef = useRef(restante)
   const cerrado = restante === 0
+  const cerradaEnElServidor = esVentanaCerrada(errorDeGuardado)
 
   useEffect(() => {
     restanteRef.current = restante
@@ -90,6 +91,13 @@ function Examen({ examen, idTurno }: { examen: ExamenEnCurso; idTurno: number })
     if (cerrado) void entregarAhora()
   }, [cerrado, entregarAhora])
 
+  useEffect(() => {
+    if (!cerradaEnElServidor || entregado.current) return
+    entregado.current = true
+    toast.info(TEXTO_VENTANA_CERRADA)
+    void navegar({ to: '/examenes/$id/resultado', params: { id: String(idTurno) } })
+  }, [cerradaEnElServidor, idTurno, navegar])
+
   return (
     <>
       <CabeceraDeExamen
@@ -102,8 +110,8 @@ function Examen({ examen, idTurno }: { examen: ExamenEnCurso; idTurno: number })
       <ResolucionDeExamen
         examen={examen}
         respuestas={respuestas}
-        estado={estado}
-        bloqueado={cerrado}
+        estado={cerradaEnElServidor ? 'limpio' : estado}
+        bloqueado={cerrado || cerradaEnElServidor}
         alResponder={responder}
         alReintentar={() => void guardarAhora()}
       />

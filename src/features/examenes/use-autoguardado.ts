@@ -106,5 +106,5 @@ export function useAutoguardado(examen: ExamenEnCurso, restante: number) {
     [limpiarDebounce, limpiarMaximo],
   )
 
-  return { respuestas, estado, responder, guardarAhora }
+  return { respuestas, estado, error: guardar.error, responder, guardarAhora }
 }

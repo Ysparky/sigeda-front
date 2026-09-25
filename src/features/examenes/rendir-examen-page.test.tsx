@@ -1,12 +1,18 @@
 import { screen, within } from '@testing-library/react'
 import { delay, http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
-import { TEXTO_AUTOGUARDADO_FALLIDO, TEXTO_GUARDADO, TEXTO_GUARDANDO } from '@/lib/dominio/teoria'
+import {
+  TEXTO_AUTOGUARDADO_FALLIDO,
+  TEXTO_GUARDADO,
+  TEXTO_GUARDANDO,
+  TEXTO_VENTANA_CERRADA,
+} from '@/lib/dominio/teoria'
 import { API } from '@/mocks/sigeda/comun'
 import {
   D8_EXAMEN_NO_DISPONIBLE,
   D9_ALUMNO_NO_HABILITADO,
   D10_EXAMEN_ENTREGADO,
+  D11_VENTANA_CERRADA,
 } from '@/mocks/sigeda/cuestionarios-teoria'
 import { alternativasDePregunta, cuestionarioDe } from '@/mocks/sigeda/datos'
 import { server } from '@/mocks/server'
@@ -166,6 +172,22 @@ describe('Rendir examen', () => {
     await usuario.click(screen.getByRole('button', { name: 'Reintentar' }))
     expect(await screen.findByText(TEXTO_GUARDADO)).toBeInTheDocument()
     expect(cuestionarioDe(3, '111111')?.respuestas[4]).toBe('rotor de cola')
+  })
+
+  it('CA-EXA-10 un 409 D11 del autoguardado muestra E16 y pasa al resultado, no E14', async () => {
+    const { usuario, avanzar } = relojFalso()
+    abrirVentanaDeExamen()
+    server.use(
+      http.put(`${API}/api/cuestionarios/:id/respuestas`, () =>
+        HttpResponse.text(D11_VENTANA_CERRADA, { status: 409 }),
+      ),
+    )
+    const vista = await abrirExamen(usuario)
+    await usuario.type(screen.getByLabelText('Respuesta de la pregunta 4'), 'rotor de cola')
+    await avanzar(2_100)
+    expect(await screen.findByText(TEXTO_VENTANA_CERRADA)).toBeInTheDocument()
+    expect(screen.queryByText(TEXTO_AUTOGUARDADO_FALLIDO)).not.toBeInTheDocument()
+    expect(vista.router.state.location.pathname).toBe('/examenes/3/resultado')
   })
 
   it('CA-EXA-05 el autoguardado reemplaza el conjunto completo', async () => {
