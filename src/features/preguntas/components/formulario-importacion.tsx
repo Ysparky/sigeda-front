@@ -69,7 +69,7 @@ export function FormularioImportacion({ alGenerar }: Props) {
     )
   }
 
-  if (documentos.data === undefined || materias.data === undefined) {
+  if (documentos.data === undefined) {
     return <Skeleton className="h-40 w-full" aria-busy="true" />
   }
 
@@ -201,12 +201,13 @@ export function FormularioImportacion({ alGenerar }: Props) {
                 {...formulario.register('idMateria')}
               >
                 <NativeSelectOption value="">Elija una materia</NativeSelectOption>
-                {materias.data.map((materia) => (
+                {(materias.data ?? []).map((materia) => (
                   <NativeSelectOption key={materia.id} value={materia.id}>
                     {materia.nombre}
                   </NativeSelectOption>
                 ))}
               </NativeSelect>
+              {errorDePrimeraCarga(materias) !== null && <FieldError>No se pudieron cargar las materias.</FieldError>}
               <FieldDescription>Se puede cambiar por pregunta antes de importar.</FieldDescription>
               <FieldError errors={[errors.idMateria]} />
             </Field>

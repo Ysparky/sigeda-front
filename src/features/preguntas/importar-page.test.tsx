@@ -1,7 +1,9 @@
 import { screen } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { TEXTO_GENERACION_DEMORADA, TEXTO_GENERANDO_CUESTIONARIO } from '@/lib/dominio/aprendizaje'
 import { TEXTO_GENERACION_RECHAZADA_E8, TEXTO_REVISAR_IMPORTACION } from '@/lib/dominio/teoria'
+import { API } from '@/mocks/sigeda/comun'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
 import { relojFalso } from '@/test/tiempo'
@@ -99,11 +101,17 @@ describe('Importar preguntas desde IA', () => {
     expect(screen.queryByText(/Unexpected token/)).not.toBeInTheDocument()
   })
 
-  it('CA-IMP-03 un documento que no está listo muestra el mensaje del contrato', async () => {
-    const { usuario } = await abrirImportar()
-    await prepararLote(usuario, '5')
-    await usuario.click(screen.getByLabelText(DOCUMENTO))
-    await usuario.click(screen.getByRole('button', { name: 'Generar preguntas' }))
-    expect(await screen.findByText('Elija al menos un documento.')).toBeInTheDocument()
+  it('CA-IMP-01 un documento que todavía se procesa no se ofrece para generar', async () => {
+    await abrirImportar()
+    expect(screen.getByLabelText(DOCUMENTO)).toBeInTheDocument()
+    expect(screen.queryByLabelText('Reglamento de operaciones.pdf')).not.toBeInTheDocument()
+  })
+
+  it('CA-IMP-01 si el catálogo de materias falla el formulario sigue usable y avisa', async () => {
+    server.use(http.get(`${API}/api/materias`, () => new HttpResponse(null, { status: 500 })))
+    await abrirImportar()
+    expect(await screen.findByText('No se pudieron cargar las materias.')).toBeInTheDocument()
+    expect(screen.getByLabelText(DOCUMENTO)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Generar preguntas' })).toBeEnabled()
   })
 })
