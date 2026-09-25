@@ -44,11 +44,11 @@ afterEach(() => {
   toast.dismiss()
   ancla.focus()
   server.resetHandlers()
+  vi.useRealTimers()
   reiniciarMocks()
   sesion.expirar()
   localStorage.clear()
   document.documentElement.className = ''
-  vi.useRealTimers()
 })
 
 afterAll(() => {

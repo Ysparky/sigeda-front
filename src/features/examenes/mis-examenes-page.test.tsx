@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   TEXTO_SIN_EXAMENES_PENDIENTES,
   TEXTO_SUBSANACION_PENDIENTE,
@@ -90,6 +90,21 @@ describe('Mis exámenes', () => {
     server.use(http.get(`${API}/api/personas/:cod/estado-teorico`, () => HttpResponse.error()))
     await abrirMisExamenes('alumno.torres')
     expect(await screen.findByRole('region', { name: 'Exámenes pendientes' })).toBeInTheDocument()
+    expect(screen.queryByText(TEXTO_SUBSANACION_PENDIENTE)).not.toBeInTheDocument()
+  })
+
+  it('M4-12 fuera del modo mock y sin la dependencia 7 no se consulta el estado teórico', async () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    let consultas = 0
+    server.use(
+      http.get(`${API}/api/personas/:cod/estado-teorico`, () => {
+        consultas += 1
+        return HttpResponse.json({})
+      }),
+    )
+    await abrirMisExamenes('alumno.torres')
+    expect(await screen.findByRole('region', { name: 'Exámenes pendientes' })).toBeInTheDocument()
+    expect(consultas).toBe(0)
     expect(screen.queryByText(TEXTO_SUBSANACION_PENDIENTE)).not.toBeInTheDocument()
   })
 })

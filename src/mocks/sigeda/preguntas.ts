@@ -39,7 +39,7 @@ type CuerpoPregunta = {
 
 type CuerpoLote = { codInstructor?: unknown; preguntas?: unknown }
 
-function normalizar(valor: string): string {
+function normalizarParaBusqueda(valor: string): string {
   return valor
     .trim()
     .toLowerCase()
@@ -202,13 +202,13 @@ function filtradas(url: URL) {
   const dificultad = url.searchParams.get('dificultad')
   const tipo = url.searchParams.get('tipo')
   const origen = url.searchParams.get('origen')
-  const buscado = normalizar(url.searchParams.get('texto') ?? '')
+  const buscado = normalizarParaBusqueda(url.searchParams.get('texto') ?? '')
   return datos()
     .preguntas.filter((pregunta) => (Number.isInteger(idMateria) && idMateria > 0 ? pregunta.idMateria === idMateria : true))
     .filter((pregunta) => (esDificultad(dificultad) ? pregunta.dificultad === dificultad : true))
     .filter((pregunta) => (esTipo(tipo) ? pregunta.tipoPregunta === tipo : true))
     .filter((pregunta) => (ORIGENES.some((valor) => valor === origen) ? pregunta.origen === origen : true))
-    .filter((pregunta) => (buscado === '' ? true : normalizar(pregunta.enunciado).includes(buscado)))
+    .filter((pregunta) => (buscado === '' ? true : normalizarParaBusqueda(pregunta.enunciado).includes(buscado)))
     .map(filaPublica)
 }
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ApiError } from '@/lib/api/errors'
+import { sigeda } from '@/lib/api/sigeda'
 import {
   crearTurnoTeorico,
   eliminarTurnoTeorico,
@@ -12,7 +13,14 @@ import {
 import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
 import { iniciarComo } from '@/test/render'
 import { datos } from './datos'
-import { D6_TURNO_NO_EXISTE, D7_VENTANA_COMENZADA, D26_GRUPO_NO_EXISTE, D28_SIN_GRUPOS } from './turnos-teoricos'
+import {
+  D5_SIN_TURNOS,
+  D6_TURNO_NO_EXISTE,
+  D7_VENTANA_COMENZADA,
+  D19_TURNO_ELIMINADO,
+  D26_GRUPO_NO_EXISTE,
+  D28_SIN_GRUPOS,
+} from './turnos-teoricos'
 
 const PARAMETROS = { page: 0, size: 10, direction: 'ASC' } as const
 
@@ -102,6 +110,11 @@ describe('contrato §3.1 lista de turnos teóricos', () => {
     expect((await listarTurnosTeoricos({ ...PARAMETROS, fechaPre: hoyIso() })).total).toBe(3)
     expect((await listarTurnosTeoricos({ ...PARAMETROS, fechaPost: sumarDias(hoyIso(), -6) })).total).toBe(1)
     expect((await listarTurnosTeoricos({ ...PARAMETROS, idGrupo: 5 })).items).toEqual([])
+  })
+
+  it('CA-TUT-02 una lista vacía responde 404 con el texto D5 que genera el handler', async () => {
+    await comoInstructor()
+    await expect(sigeda.get('/api/turnos-teoricos', { ...PARAMETROS, idGrupo: 5 })).rejects.toThrow(D5_SIN_TURNOS)
   })
 })
 
@@ -303,7 +316,7 @@ describe('contrato §3.4 y §3.5 modificar y eliminar', () => {
 
   it('CA-TUT-11 eliminar solo funciona con el turno programado', async () => {
     await comoInstructor()
-    expect(await eliminarTurnoTeorico(4)).toBe('Turno teórico eliminado con éxito.')
+    expect(await eliminarTurnoTeorico(4)).toBe(D19_TURNO_ELIMINADO)
     expect(datos().turnosTeoricos.some((turno) => turno.id === 4)).toBe(false)
     expect(datos().preguntasTurno.some((fila) => fila.idTurnoTeorico === 4)).toBe(false)
     await expect(eliminarTurnoTeorico(1)).rejects.toThrow(D7_VENTANA_COMENZADA)

@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import { aFechaIso, momento } from '@/lib/dominio/calendario'
+import { aFechaIso } from '@/lib/dominio/calendario'
 import { API, autorizar, erroresDeCampo, texto, textoNoEncontrado, textoProhibido } from './comun'
 import {
   alternativasDePregunta,
@@ -110,10 +110,6 @@ export function resueltoPublico(cuestionario: CuestionarioMock, conDetalle: bool
   }
 }
 
-function ventanaCerrada(turno: TurnoTeoricoMock): boolean {
-  return new Date() > momento(turno.fechaExamen, turno.horaFin)
-}
-
 function horaActual(): string {
   const ahora = new Date()
   return `${String(ahora.getHours()).padStart(2, '0')}:${String(ahora.getMinutes()).padStart(2, '0')}`
@@ -216,7 +212,7 @@ export const handlersCuestionariosTeoria = [
     if (errores.length > 0) return erroresDeCampo(errores)
     if (cuestionario.codAlumno !== codAlumno) return textoProhibido(D15_SOLO_LO_PROPIO)
     const turno = buscarTurnoTeorico(cuestionario.idTurnoTeorico)
-    if (turno && ventanaCerrada(turno)) {
+    if (turno && estadoDelTurno(turno) === 'FINALIZADO') {
       cerrarExamenesVencidos(turno.id)
       return HttpResponse.text(D11_VENTANA_CERRADA, { status: 409 })
     }
@@ -262,7 +258,7 @@ export const handlersCuestionariosTeoria = [
     if (codAlumno === '') return erroresDeCampo(["'codAlumno': El código del alumno es obligatorio."])
     if (cuestionario.codAlumno !== codAlumno) return textoProhibido(D15_SOLO_LO_PROPIO)
     const turno = buscarTurnoTeorico(cuestionario.idTurnoTeorico)
-    if (turno && ventanaCerrada(turno)) {
+    if (turno && estadoDelTurno(turno) === 'FINALIZADO') {
       cerrarExamenesVencidos(turno.id)
       return HttpResponse.text(D11_VENTANA_CERRADA, { status: 409 })
     }

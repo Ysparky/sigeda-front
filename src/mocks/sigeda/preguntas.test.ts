@@ -13,7 +13,13 @@ import {
 import { entregarExamen } from '@/features/examenes/api'
 import { iniciarComo } from '@/test/render'
 import { alternativasDePregunta, cuestionarioDe, datos } from './datos'
-import { D2_PREGUNTA_NO_EXISTE, D3_PREGUNTA_EN_USO, D4_MATERIA_NO_EXISTE, D27_PERSONA_NO_EXISTE } from './preguntas'
+import {
+  D1_SIN_PREGUNTAS,
+  D2_PREGUNTA_NO_EXISTE,
+  D3_PREGUNTA_EN_USO,
+  D4_MATERIA_NO_EXISTE,
+  D27_PERSONA_NO_EXISTE,
+} from './preguntas'
 
 const PARAMETROS = { page: 0, size: 10, direction: 'ASC' } as const
 
@@ -184,6 +190,14 @@ describe('contrato §2.2 y §2.3 detalle y creación', () => {
     await comoInstructor()
     await expect(crearPregunta({ ...NUEVA, idMateria: 99 })).rejects.toThrow(D4_MATERIA_NO_EXISTE)
     await expect(crearPregunta({ ...NUEVA, codInstructor: '000999' })).rejects.toThrow(D27_PERSONA_NO_EXISTE)
+  })
+})
+
+describe('contrato §2.1 ausencias', () => {
+  it('CA-BAN-03 una lista vacía responde 404 con el texto D1 que genera el handler', async () => {
+    await comoInstructor()
+    await expect(sigeda.get('/api/preguntas', { ...PARAMETROS, idMateria: 999 })).rejects.toThrow(D1_SIN_PREGUNTAS)
+    expect((await listarPreguntas({ ...PARAMETROS, idMateria: 999 })).items).toEqual([])
   })
 })
 

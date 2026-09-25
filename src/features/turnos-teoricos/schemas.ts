@@ -5,6 +5,8 @@ import { esFechaIso, esHora, momento, PATRON_HORA } from '@/lib/dominio/calendar
 import {
   ESTADOS_TURNO,
   exigeTurnoOrigen,
+  MENSAJE_MATERIA_OBLIGATORIA,
+  minutosEntre,
   PUNTAJE_TOTAL_EXAMEN,
   TIPOS_EXAMEN,
   VENTANA_MINIMA_MINUTOS,
@@ -35,7 +37,7 @@ export function crearEsquemaTurnoTeorico(ahora: Date) {
     .object({
       nombre: z.string().trim().min(1, 'El nombre es obligatorio').min(10, MENSAJE_NOMBRE).max(60, MENSAJE_NOMBRE),
       programa: z.enum(PROGRAMAS),
-      idMateria: z.string().min(1, 'La materia es obligatoria.'),
+      idMateria: z.string().min(1, MENSAJE_MATERIA_OBLIGATORIA),
       tipoExamen: z.enum(TIPOS_EXAMEN.map((tipo) => tipo.valor)),
       idGrupo: z.string().min(1, 'El grupo es obligatorio.'),
       fechaExamen: z.string().refine(esFechaIso, 'La fecha del examen es obligatoria.'),
@@ -88,12 +90,6 @@ export function crearEsquemaTurnoTeorico(ahora: Date) {
 }
 
 export type ValoresTurnoTeorico = z.input<ReturnType<typeof crearEsquemaTurnoTeorico>>
-
-export function minutosEntre(horaInicio: string, horaFin: string): number {
-  const [hi, mi] = horaInicio.split(':').map(Number)
-  const [hf, mf] = horaFin.split(':').map(Number)
-  return hf * 60 + mf - (hi * 60 + mi)
-}
 
 export function puntajeAsignado(valores: ValoresTurnoTeorico): number {
   return valores.preguntas.reduce((total, pregunta) => total + (Number(pregunta.puntajeMaximo) || 0), 0)

@@ -2,6 +2,7 @@ import type { Pregunta } from '@/features/aprendizaje/api'
 import type { ErroresDeCampo } from '@/lib/api/errors'
 import {
   MARCADOR_COMPLETAR,
+  MENSAJE_RESPUESTA_OBLIGATORIA,
   TEXTO_ALTERNATIVAS_REPETIDAS,
   TEXTO_ENUNCIADO_CORTO,
   TEXTO_ENUNCIADO_RECORTADO,
@@ -19,7 +20,6 @@ export const LARGO_RESPUESTA = 200
 export const TEXTO_SIN_CORRECTA = 'El modelo no marcó ninguna alternativa como correcta: elija la correcta.'
 export const TEXTO_REPETIDA_EN_LOTE = 'La pregunta está repetida en este lote: corrija el enunciado o quítela.'
 export const TEXTO_FALTA_MARCADOR = `El enunciado de una pregunta de completar debe incluir el marcador ${MARCADOR_COMPLETAR}.`
-export const TEXTO_ALTERNATIVA_VACIA = 'La respuesta es obligatoria.'
 
 export type FilaImportacion = {
   id: string
@@ -97,7 +97,7 @@ export function avisosDeFila(fila: FilaImportacion, todas: readonly FilaImportac
   if (largoEnunciado > LARGO_ENUNCIADO) avisos.push(MENSAJE_ENUNCIADO)
   if (fila.tipoPregunta === 'COMPLETAR' && !fila.enunciado.includes(MARCADOR_COMPLETAR)) avisos.push(TEXTO_FALTA_MARCADOR)
   const textos = fila.alternativas.map(normalizar)
-  if (textos.some((texto) => texto === '')) avisos.push(TEXTO_ALTERNATIVA_VACIA)
+  if (textos.some((texto) => texto === '')) avisos.push(MENSAJE_RESPUESTA_OBLIGATORIA)
   const completos = textos.filter((texto) => texto !== '')
   if (new Set(completos).size !== completos.length) avisos.push(TEXTO_ALTERNATIVAS_REPETIDAS)
   if (fila.correcta === '') avisos.push(TEXTO_SIN_CORRECTA)

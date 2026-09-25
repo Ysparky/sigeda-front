@@ -4,6 +4,8 @@ import {
   alternativasRequeridas,
   DIFICULTADES,
   MARCADOR_COMPLETAR,
+  MENSAJE_MATERIA_OBLIGATORIA,
+  MENSAJE_RESPUESTA_OBLIGATORIA,
   ORIGENES_PREGUNTA,
   TEXTOS_VERDADERO_FALSO,
   TIPOS_PREGUNTA,
@@ -36,7 +38,7 @@ export const MENSAJE_ENUNCIADO = 'El enunciado debe tener entre 10 y 500 caracte
 
 export const esquemaPregunta = z
   .object({
-    idMateria: z.string().min(1, 'La materia es obligatoria.'),
+    idMateria: z.string().min(1, MENSAJE_MATERIA_OBLIGATORIA),
     enunciado: z.string().trim().min(1, 'El enunciado es obligatorio.').min(10, MENSAJE_ENUNCIADO).max(500, MENSAJE_ENUNCIADO),
     tipoPregunta: z.enum(TIPOS_PREGUNTA.map((tipo) => tipo.valor)),
     dificultad: z.enum(DIFICULTADES.map((dificultad) => dificultad.valor)),
@@ -46,7 +48,7 @@ export const esquemaPregunta = z
         respuesta: z
           .string()
           .trim()
-          .min(1, 'La respuesta es obligatoria.')
+          .min(1, MENSAJE_RESPUESTA_OBLIGATORIA)
           .max(200, 'La respuesta no puede superar los 200 caracteres.'),
       }),
     ),
@@ -129,7 +131,7 @@ export const esquemaImportacion = z.object({
     .min(1, MENSAJE_CANTIDAD)
     .regex(/^\d{1,2}$/, MENSAJE_CANTIDAD)
     .refine((valor) => Number(valor) >= 2 && Number(valor) <= 20, MENSAJE_CANTIDAD),
-  idMateria: z.string().min(1, 'La materia es obligatoria.'),
+  idMateria: z.string().min(1, MENSAJE_MATERIA_OBLIGATORIA),
   dificultad: z.enum(DIFICULTADES.map((dificultad) => dificultad.valor)),
 })
 

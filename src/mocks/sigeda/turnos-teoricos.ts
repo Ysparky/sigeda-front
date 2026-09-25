@@ -4,6 +4,7 @@ import { normalizarRespuesta } from '@/lib/dominio/aprendizaje'
 import {
   estadoDeVentana,
   exigeTurnoOrigen,
+  minutosEntre,
   PUNTAJE_TOTAL_EXAMEN,
   TIPOS_EXAMEN,
   VENTANA_MINIMA_MINUTOS,
@@ -196,12 +197,6 @@ export function detallePublico(turno: TurnoTeoricoMock) {
         notas.length === 0 ? null : Number((notas.reduce((total, nota) => total + nota, 0) / notas.length).toFixed(2)),
     },
   }
-}
-
-function minutosEntre(horaInicio: string, horaFin: string): number {
-  const [hi, mi] = horaInicio.split(':').map(Number)
-  const [hf, mf] = horaFin.split(':').map(Number)
-  return hf * 60 + mf - (hi * 60 + mi)
 }
 
 function preguntasDelCuerpo(valor: unknown): PreguntaEnviada[] {

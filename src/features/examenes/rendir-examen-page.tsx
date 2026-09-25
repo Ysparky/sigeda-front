@@ -100,6 +100,18 @@ function Examen({ examen, idTurno }: { examen: ExamenEnCurso; idTurno: number })
 
   return (
     <>
+      {entregar.isError && cerrado && (
+        <Alert>
+          <AlertDescription className="grid gap-3">
+            <span>{entregar.error instanceof ApiError ? entregar.error.message : MENSAJE_GENERICO}</span>
+            <Button variant="outline" size="sm" className="justify-self-start" asChild>
+              <Link to="/examenes/$id/resultado" params={{ id: String(idTurno) }}>
+                Ver el resultado
+              </Link>
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
       <CabeceraDeExamen
         restante={restante}
         respondidas={contarRespondidas(respuestas)}
@@ -145,7 +157,14 @@ export function RendirExamenPage({ idTurno }: { idTurno: number }) {
         </Alert>
       ) : esExamenNoDisponible(error) ? (
         <Alert>
-          <AlertDescription>{(error as ApiError).message}</AlertDescription>
+          <AlertDescription className="grid gap-3">
+            <span>{(error as ApiError).message}</span>
+            <Button variant="outline" size="sm" className="justify-self-start" asChild>
+              <Link to="/examenes/$id/resultado" params={{ id: String(idTurno) }}>
+                Ver el resultado
+              </Link>
+            </Button>
+          </AlertDescription>
         </Alert>
       ) : error !== null ? (
         <AvisoDeError error={error} alReintentar={() => void examen.refetch()} />

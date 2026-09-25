@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PANTALLAS } from '@/lib/auth/pantallas'
 import { useSesion } from '@/lib/auth/use-sesion'
+import { accionDisponible } from '@/lib/dependencias'
 import {
   etiquetaDeTipoExamen,
   TEXTO_SIN_EXAMENES_PENDIENTES,
@@ -26,7 +27,10 @@ export function MisExamenesPage() {
   const sesion = useSesion()
   const codAlumno = sesion?.codPersona ?? ''
   const pendientes = useQuery(consultasExamenes.pendientes(codAlumno))
-  const estadoTeorico = useQuery(consultasExamenes.estadoTeorico(codAlumno))
+  const estadoTeorico = useQuery({
+    ...consultasExamenes.estadoTeorico(codAlumno),
+    enabled: codAlumno !== '' && accionDisponible('bloqueoSubsanacion'),
+  })
   const error = errorDePrimeraCarga(pendientes)
 
   return (

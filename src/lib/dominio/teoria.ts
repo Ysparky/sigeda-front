@@ -43,8 +43,18 @@ export type TipoExamen = (typeof TIPOS_EXAMEN)[number]['valor']
 export type EstadoTurnoTeorico = (typeof ESTADOS_TURNO)[number]
 export type EstadoRendicion = 'NO_RINDIO' | 'EN_CURSO' | 'ENTREGADO'
 
+export const MENSAJE_MATERIA_OBLIGATORIA = 'La materia es obligatoria.'
+export const MENSAJE_RESPUESTA_OBLIGATORIA = 'La respuesta es obligatoria.'
+
 export const PUNTAJE_TOTAL_EXAMEN = 20
 export const VENTANA_MINIMA_MINUTOS = 10
+
+export function minutosEntre(horaInicio: string, horaFin: string): number {
+  const [hi, mi] = horaInicio.split(':').map(Number)
+  const [hf, mf] = horaFin.split(':').map(Number)
+  return hf * 60 + mf - (hi * 60 + mi)
+}
+
 export const AVISO_MINUTOS_RESTANTES = 5
 export const TEXTOS_VERDADERO_FALSO = ['Verdadero', 'Falso'] as const
 

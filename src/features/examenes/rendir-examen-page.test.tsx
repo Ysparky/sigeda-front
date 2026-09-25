@@ -225,6 +225,7 @@ describe('Rendir examen', () => {
     renderApp(RUTA)
     expect(await screen.findByText(D8_EXAMEN_NO_DISPONIBLE)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ver el resultado' })).toHaveAttribute('href', '/examenes/3/resultado')
     expect(screen.queryByRole('group', { name: 'Pregunta 1' })).not.toBeInTheDocument()
   })
 

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { Pregunta } from '@/features/aprendizaje/api'
-import { TEXTO_ALTERNATIVAS_REPETIDAS, TEXTO_ENUNCIADO_CORTO, TEXTO_ENUNCIADO_RECORTADO } from '@/lib/dominio/teoria'
+import {
+  MENSAJE_RESPUESTA_OBLIGATORIA,
+  TEXTO_ALTERNATIVAS_REPETIDAS,
+  TEXTO_ENUNCIADO_CORTO,
+  TEXTO_ENUNCIADO_RECORTADO,
+} from '@/lib/dominio/teoria'
 import {
   aCuerpoDeLote,
   avisosDeFila,
@@ -11,7 +16,6 @@ import {
   LARGO_ENUNCIADO,
   LARGO_RESPUESTA,
   recortar,
-  TEXTO_ALTERNATIVA_VACIA,
   TEXTO_REPETIDA_EN_LOTE,
   TEXTO_SIN_CORRECTA,
 } from './importacion'
@@ -158,7 +162,7 @@ describe('ronda de revisión: correcciones', () => {
       'MEDIA',
     )
     const avisos = avisosDeFila(fila, [fila])
-    expect(avisos).toContain(TEXTO_ALTERNATIVA_VACIA)
+    expect(avisos).toContain(MENSAJE_RESPUESTA_OBLIGATORIA)
     expect(avisos).not.toContain(TEXTO_ALTERNATIVAS_REPETIDAS)
   })
 

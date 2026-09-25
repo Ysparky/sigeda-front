@@ -225,4 +225,18 @@ describe('Entrega del examen', () => {
     expect(await screen.findByText('Examen entregado con éxito.')).toBeInTheDocument()
     expect(screen.queryByText(TEXTO_VENTANA_CERRADA)).not.toBeInTheDocument()
   })
+
+  it('CA-EXA-09 una entrega automática que falla deja el acceso al resultado', async () => {
+    const { usuario, avanzar } = relojFalso()
+    abrirVentanaDeExamen({ restantes: 10 })
+    server.use(http.post(`${API}/api/cuestionarios/:id/entregar`, () => HttpResponse.error()))
+    await abrirExamen(usuario)
+    await avanzar(10 * 60_000)
+    await avanzar(100)
+    expect(screen.getByRole('button', { name: 'Entregar' })).toBeDisabled()
+    expect(await screen.findByRole('link', { name: 'Ver el resultado' })).toHaveAttribute(
+      'href',
+      '/examenes/3/resultado',
+    )
+  })
 })
