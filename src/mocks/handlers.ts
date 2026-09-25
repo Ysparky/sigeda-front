@@ -11,6 +11,7 @@ import { handlersGrupos } from './sigeda/grupos'
 import { handlersManiobras } from './sigeda/maniobras'
 import { handlersMaterias } from './sigeda/materias'
 import { handlersPersonas } from './sigeda/personas'
+import { handlersPreguntas } from './sigeda/preguntas'
 import { handlersTurnos } from './sigeda/turnos'
 
 export const handlers: RequestHandler[] = [
@@ -22,6 +23,7 @@ export const handlers: RequestHandler[] = [
   ...handlersFases,
   ...handlersManiobras,
   ...handlersMaterias,
+  ...handlersPreguntas,
   ...handlersTurnos,
   ...handlersEvaluaciones,
   ...handlersDocumentos,
