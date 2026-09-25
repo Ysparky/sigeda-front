@@ -95,17 +95,22 @@ export function MateriasPage() {
                         <DialogoMateria
                           materia={materia}
                           disparador={
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" aria-label={`Modificar ${materia.nombre}`}>
                               <Pencil aria-hidden />
-                              Modificar {materia.nombre}
+                              Modificar
                             </Button>
                           }
                         />
                         <ConfirmDialog
                           disparador={
-                            <Button variant="destructive" size="sm" disabled={eliminar.isPending}>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              disabled={eliminar.isPending}
+                              aria-label={`Eliminar ${materia.nombre}`}
+                            >
                               <Trash2 aria-hidden />
-                              Eliminar {materia.nombre}
+                              Eliminar
                             </Button>
                           }
                           titulo="¿Eliminar la materia?"
