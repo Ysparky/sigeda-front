@@ -39,7 +39,7 @@ export function ConsultasPage() {
   const [elegidos, setElegidos] = useState<string[]>([])
   const [pregunta, setPregunta] = useState('')
   const restaurada = id !== undefined && id !== creadaAqui
-  const sesion = useQuery({ ...consultasAprendizaje.sesion(id ?? ''), enabled: restaurada })
+  const sesion = useQuery({ ...consultasAprendizaje.sesion(id ?? ''), enabled: id !== undefined })
   const errorDeSesion = restaurada ? errorDePrimeraCarga(sesion) : null
 
   const enviar = useMutation({
