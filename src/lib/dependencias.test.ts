@@ -32,4 +32,15 @@ describe('dependencias resueltas', () => {
     expect(accionDisponible('modificarManiobra')).toBe(false)
     expect(accionDisponible('eliminarFase')).toBe(false)
   })
+
+  it('CA-DOC-10 subir y eliminar documentos esperan la dependencia 39', () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    vi.stubEnv('VITE_DEPENDENCIAS_RESUELTAS', '22,30,32,33,37')
+    expect(accionDisponible('subirDocumento')).toBe(false)
+    expect(accionDisponible('eliminarDocumento')).toBe(false)
+    expect(dependenciasPendientes('subirDocumento')).toEqual([39])
+    vi.stubEnv('VITE_DEPENDENCIAS_RESUELTAS', '39')
+    expect(accionDisponible('subirDocumento')).toBe(true)
+    expect(accionDisponible('eliminarDocumento')).toBe(true)
+  })
 })

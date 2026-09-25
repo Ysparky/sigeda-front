@@ -16,6 +16,9 @@ import { Route as AppCuentaRouteImport } from './routes/_app/cuenta'
 import { Route as AppGuiaRouteImport } from './routes/_app/guia'
 import { Route as AppMisEvaluacionesRouteImport } from './routes/_app/mis-evaluaciones'
 import { Route as AppMisTurnosRouteImport } from './routes/_app/mis-turnos'
+import { Route as AppAprendizajeIndexRouteImport } from './routes/_app/aprendizaje/index'
+import { Route as AppAprendizajeConsultasRouteImport } from './routes/_app/aprendizaje/consultas'
+import { Route as AppAprendizajeCuestionarioRouteImport } from './routes/_app/aprendizaje/cuestionario'
 import { Route as AppEvaluacionesIndexRouteImport } from './routes/_app/evaluaciones/index'
 import { Route as AppGruposIndexRouteImport } from './routes/_app/grupos/index'
 import { Route as AppGruposNuevoRouteImport } from './routes/_app/grupos/nuevo'
@@ -79,6 +82,22 @@ const AppMisTurnosRoute = AppMisTurnosRouteImport.update({
   path: '/mis-turnos',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAprendizajeIndexRoute = AppAprendizajeIndexRouteImport.update({
+  id: '/aprendizaje/',
+  path: '/aprendizaje/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAprendizajeConsultasRoute = AppAprendizajeConsultasRouteImport.update({
+  id: '/aprendizaje/consultas',
+  path: '/aprendizaje/consultas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAprendizajeCuestionarioRoute =
+  AppAprendizajeCuestionarioRouteImport.update({
+    id: '/aprendizaje/cuestionario',
+    path: '/aprendizaje/cuestionario',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppEvaluacionesIndexRoute = AppEvaluacionesIndexRouteImport.update({
   id: '/evaluaciones/',
   path: '/evaluaciones/',
@@ -236,11 +255,14 @@ export interface FileRoutesByFullPath {
   '/guia': typeof AppGuiaRoute
   '/mis-evaluaciones': typeof AppMisEvaluacionesRoute
   '/mis-turnos': typeof AppMisTurnosRoute
+  '/aprendizaje/consultas': typeof AppAprendizajeConsultasRoute
+  '/aprendizaje/cuestionario': typeof AppAprendizajeCuestionarioRoute
   '/grupos/nuevo': typeof AppGruposNuevoRoute
   '/personas/$cod': typeof AppPersonasCodRoute
   '/personas/nueva': typeof AppPersonasNuevaRoute
   '/programa/materias': typeof AppProgramaMateriasRoute
   '/turnos/nuevo': typeof AppTurnosNuevoRoute
+  '/aprendizaje/': typeof AppAprendizajeIndexRoute
   '/evaluaciones/': typeof AppEvaluacionesIndexRoute
   '/grupos/': typeof AppGruposIndexRoute
   '/personas/': typeof AppPersonasIndexRoute
@@ -272,11 +294,14 @@ export interface FileRoutesByTo {
   '/mis-evaluaciones': typeof AppMisEvaluacionesRoute
   '/mis-turnos': typeof AppMisTurnosRoute
   '/': typeof AppIndexRoute
+  '/aprendizaje/consultas': typeof AppAprendizajeConsultasRoute
+  '/aprendizaje/cuestionario': typeof AppAprendizajeCuestionarioRoute
   '/grupos/nuevo': typeof AppGruposNuevoRoute
   '/personas/$cod': typeof AppPersonasCodRoute
   '/personas/nueva': typeof AppPersonasNuevaRoute
   '/programa/materias': typeof AppProgramaMateriasRoute
   '/turnos/nuevo': typeof AppTurnosNuevoRoute
+  '/aprendizaje': typeof AppAprendizajeIndexRoute
   '/evaluaciones': typeof AppEvaluacionesIndexRoute
   '/grupos': typeof AppGruposIndexRoute
   '/personas': typeof AppPersonasIndexRoute
@@ -310,11 +335,14 @@ export interface FileRoutesById {
   '/_app/mis-evaluaciones': typeof AppMisEvaluacionesRoute
   '/_app/mis-turnos': typeof AppMisTurnosRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/aprendizaje/consultas': typeof AppAprendizajeConsultasRoute
+  '/_app/aprendizaje/cuestionario': typeof AppAprendizajeCuestionarioRoute
   '/_app/grupos/nuevo': typeof AppGruposNuevoRoute
   '/_app/personas/$cod': typeof AppPersonasCodRoute
   '/_app/personas/nueva': typeof AppPersonasNuevaRoute
   '/_app/programa/materias': typeof AppProgramaMateriasRoute
   '/_app/turnos/nuevo': typeof AppTurnosNuevoRoute
+  '/_app/aprendizaje/': typeof AppAprendizajeIndexRoute
   '/_app/evaluaciones/': typeof AppEvaluacionesIndexRoute
   '/_app/grupos/': typeof AppGruposIndexRoute
   '/_app/personas/': typeof AppPersonasIndexRoute
@@ -348,11 +376,14 @@ export interface FileRouteTypes {
     | '/guia'
     | '/mis-evaluaciones'
     | '/mis-turnos'
+    | '/aprendizaje/consultas'
+    | '/aprendizaje/cuestionario'
     | '/grupos/nuevo'
     | '/personas/$cod'
     | '/personas/nueva'
     | '/programa/materias'
     | '/turnos/nuevo'
+    | '/aprendizaje/'
     | '/evaluaciones/'
     | '/grupos/'
     | '/personas/'
@@ -384,11 +415,14 @@ export interface FileRouteTypes {
     | '/mis-evaluaciones'
     | '/mis-turnos'
     | '/'
+    | '/aprendizaje/consultas'
+    | '/aprendizaje/cuestionario'
     | '/grupos/nuevo'
     | '/personas/$cod'
     | '/personas/nueva'
     | '/programa/materias'
     | '/turnos/nuevo'
+    | '/aprendizaje'
     | '/evaluaciones'
     | '/grupos'
     | '/personas'
@@ -421,11 +455,14 @@ export interface FileRouteTypes {
     | '/_app/mis-evaluaciones'
     | '/_app/mis-turnos'
     | '/_app/'
+    | '/_app/aprendizaje/consultas'
+    | '/_app/aprendizaje/cuestionario'
     | '/_app/grupos/nuevo'
     | '/_app/personas/$cod'
     | '/_app/personas/nueva'
     | '/_app/programa/materias'
     | '/_app/turnos/nuevo'
+    | '/_app/aprendizaje/'
     | '/_app/evaluaciones/'
     | '/_app/grupos/'
     | '/_app/personas/'
@@ -505,6 +542,27 @@ declare module '@tanstack/react-router' {
       path: '/mis-turnos'
       fullPath: '/mis-turnos'
       preLoaderRoute: typeof AppMisTurnosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/aprendizaje/': {
+      id: '/_app/aprendizaje/'
+      path: '/aprendizaje'
+      fullPath: '/aprendizaje/'
+      preLoaderRoute: typeof AppAprendizajeIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/aprendizaje/consultas': {
+      id: '/_app/aprendizaje/consultas'
+      path: '/aprendizaje/consultas'
+      fullPath: '/aprendizaje/consultas'
+      preLoaderRoute: typeof AppAprendizajeConsultasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/aprendizaje/cuestionario': {
+      id: '/_app/aprendizaje/cuestionario'
+      path: '/aprendizaje/cuestionario'
+      fullPath: '/aprendizaje/cuestionario'
+      preLoaderRoute: typeof AppAprendizajeCuestionarioRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/evaluaciones/': {
@@ -712,11 +770,14 @@ interface AppRouteChildren {
   AppMisEvaluacionesRoute: typeof AppMisEvaluacionesRoute
   AppMisTurnosRoute: typeof AppMisTurnosRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppAprendizajeConsultasRoute: typeof AppAprendizajeConsultasRoute
+  AppAprendizajeCuestionarioRoute: typeof AppAprendizajeCuestionarioRoute
   AppGruposNuevoRoute: typeof AppGruposNuevoRoute
   AppPersonasCodRoute: typeof AppPersonasCodRoute
   AppPersonasNuevaRoute: typeof AppPersonasNuevaRoute
   AppProgramaMateriasRoute: typeof AppProgramaMateriasRoute
   AppTurnosNuevoRoute: typeof AppTurnosNuevoRoute
+  AppAprendizajeIndexRoute: typeof AppAprendizajeIndexRoute
   AppEvaluacionesIndexRoute: typeof AppEvaluacionesIndexRoute
   AppGruposIndexRoute: typeof AppGruposIndexRoute
   AppPersonasIndexRoute: typeof AppPersonasIndexRoute
@@ -748,11 +809,14 @@ const AppRouteChildren: AppRouteChildren = {
   AppMisEvaluacionesRoute: AppMisEvaluacionesRoute,
   AppMisTurnosRoute: AppMisTurnosRoute,
   AppIndexRoute: AppIndexRoute,
+  AppAprendizajeConsultasRoute: AppAprendizajeConsultasRoute,
+  AppAprendizajeCuestionarioRoute: AppAprendizajeCuestionarioRoute,
   AppGruposNuevoRoute: AppGruposNuevoRoute,
   AppPersonasCodRoute: AppPersonasCodRoute,
   AppPersonasNuevaRoute: AppPersonasNuevaRoute,
   AppProgramaMateriasRoute: AppProgramaMateriasRoute,
   AppTurnosNuevoRoute: AppTurnosNuevoRoute,
+  AppAprendizajeIndexRoute: AppAprendizajeIndexRoute,
   AppEvaluacionesIndexRoute: AppEvaluacionesIndexRoute,
   AppGruposIndexRoute: AppGruposIndexRoute,
   AppPersonasIndexRoute: AppPersonasIndexRoute,

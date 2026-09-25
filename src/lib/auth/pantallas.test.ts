@@ -66,7 +66,14 @@ describe('menuPara', () => {
   })
 
   it('CA-TUR-14 el alumno ve Mis turnos y Mis evaluaciones, no la programación general', () => {
-    expect(titulosDelMenu('Alumno')).toEqual(['Inicio', 'Mis turnos', 'Mis evaluaciones'])
+    expect(titulosDelMenu('Alumno')).toEqual([
+      'Inicio',
+      'Mis turnos',
+      'Mis evaluaciones',
+      'Documentos',
+      'Cuestionario de práctica',
+      'Consultas',
+    ])
   })
 
   it('el personal ve la programación de turnos, la orden de vuelo y las evaluaciones', () => {
@@ -78,6 +85,9 @@ describe('menuPara', () => {
       'Programación de turnos',
       'Orden de vuelo del día',
       'Evaluaciones',
+      'Documentos',
+      'Cuestionario de práctica',
+      'Consultas',
     ])
     expect(titulosDelMenu('Jefe de Operaciones')).toContain('Programación de turnos')
   })
@@ -99,6 +109,7 @@ describe('menuPara', () => {
       'Programa',
       'Operaciones de vuelo',
       'Evaluaciones',
+      'Aprendizaje',
     ])
     expect(secciones[2]?.pantallas.map((pantalla) => pantalla.titulo)).toEqual([
       'Fases y subfases',
@@ -143,6 +154,18 @@ describe('migasPara', () => {
       PANTALLAS.maniobra,
       PANTALLAS.estandares,
     ])
+  })
+
+  it('M3-13 el cuestionario y las consultas cuelgan de Documentos', () => {
+    expect(migasPara('/aprendizaje/cuestionario', perfilDe('Alumno'), false)).toEqual([
+      PANTALLAS.documentos,
+      PANTALLAS.cuestionario,
+    ])
+    expect(migasPara('/aprendizaje/consultas', perfilDe('Comandante de Escuadrón'), false)).toEqual([
+      PANTALLAS.documentos,
+      PANTALLAS.consultas,
+    ])
+    expect(migasPara('/aprendizaje', perfilDe('Instructor'), false)).toEqual([PANTALLAS.documentos])
   })
 
   it('no agrega migas en Inicio ni en rutas desconocidas', () => {

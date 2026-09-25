@@ -7,6 +7,8 @@ export const DEPENDENCIAS = {
   eliminarPersona: [30],
   modificarManiobra: [32, 33],
   eliminarFase: [37],
+  subirDocumento: [39],
+  eliminarDocumento: [39],
 } as const
 
 export type AccionConDependencia = keyof typeof DEPENDENCIAS
