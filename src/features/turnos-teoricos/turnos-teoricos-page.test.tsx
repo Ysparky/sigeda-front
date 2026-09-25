@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import { MENSAJE_DEPENDENCIA_PENDIENTE } from '@/lib/dependencias'
+import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
 import { TEXTO_SIN_TURNOS_TEORICOS, TEXTO_TEORIA_SOLO_MOCK, TEXTO_VENTANA_COMENZADA } from '@/lib/dominio/teoria'
 import { API } from '@/mocks/sigeda/comun'
 import { D7_VENTANA_COMENZADA } from '@/mocks/sigeda/turnos-teoricos'
@@ -40,7 +41,7 @@ describe('Turnos teóricos', () => {
     expect(primera.getByText('2 de 2')).toBeInTheDocument()
   })
 
-  it('CA-TUT-02 filtra por grupo, materia, estado, tipo y rango de fechas y todo viaja en la URL', async () => {
+  it('CA-TUT-02 filtra por grupo, materia, estado y tipo y todo viaja en la URL', async () => {
     const { router, usuario } = await abrirTurnos()
     await usuario.selectOptions(screen.getByLabelText('Grupo'), 'Grupo 3')
     await screen.findByText('Página 1 de 1 · 3 registros')
@@ -54,6 +55,20 @@ describe('Turnos teóricos', () => {
     await screen.findByText('Página 1 de 1 · 5 registros')
     await usuario.selectOptions(screen.getByLabelText('Materia'), 'Procedimientos de Emergencias')
     await screen.findByText('Página 1 de 1 · 1 registro')
+  })
+
+  it('CA-TUT-02 el rango cerrado de fechas filtra, se muestra en los campos y Limpiar filtros lo borra', async () => {
+    const desde = sumarDias(hoyIso(), -6)
+    const hasta = sumarDias(hoyIso(), 2)
+    const { usuario } = await abrirTurnos(`/teoria/turnos?fechaPre=${desde}&fechaPost=${hasta}`)
+    expect(await screen.findByText('Página 1 de 1 · 3 registros')).toBeInTheDocument()
+    expect(filas()).toHaveLength(3)
+    expect(screen.getByLabelText('Desde')).toHaveValue(desde)
+    expect(screen.getByLabelText('Hasta')).toHaveValue(hasta)
+    await usuario.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    expect(await screen.findByText('Página 1 de 1 · 5 registros')).toBeInTheDocument()
+    expect(screen.getByLabelText('Desde')).toHaveValue('')
+    expect(screen.getByLabelText('Hasta')).toHaveValue('')
   })
 
   it('CA-TUT-02 sin turnos muestra E25 y una URL mal escrita vuelve a los valores por defecto', async () => {
