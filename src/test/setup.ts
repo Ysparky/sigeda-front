@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { toast } from 'sonner'
-import { afterAll, afterEach, beforeAll } from 'vitest'
+import { afterAll, afterEach, beforeAll, vi } from 'vitest'
 import { server } from '@/mocks/server'
 import { sesion } from '@/lib/auth/sesion'
 import { reiniciarMocks } from '@/mocks/reiniciar'
@@ -48,6 +48,7 @@ afterEach(() => {
   sesion.expirar()
   localStorage.clear()
   document.documentElement.className = ''
+  vi.useRealTimers()
 })
 
 afterAll(() => {

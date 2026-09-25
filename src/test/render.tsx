@@ -1,6 +1,6 @@
 import { createMemoryHistory } from '@tanstack/react-router'
 import { render } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import userEvent, { type UserEvent } from '@testing-library/user-event'
 import { App } from '@/app'
 import { sesion } from '@/lib/auth/sesion'
 import { crearQueryClient } from '@/lib/query'
@@ -11,10 +11,9 @@ export function iniciarComo(username: string) {
   return sesion.iniciar(username, CONTRASENA_SEED)
 }
 
-export function renderApp(ruta = '/') {
+export function renderApp(ruta = '/', usuario: UserEvent = userEvent.setup()) {
   const queryClient = crearQueryClient({ reintentar: false })
   const router = crearRouter(queryClient, createMemoryHistory({ initialEntries: [ruta] }))
-  const usuario = userEvent.setup()
   const resultado = render(<App router={router} queryClient={queryClient} />)
   return { ...resultado, router, usuario, queryClient }
 }
