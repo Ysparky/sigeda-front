@@ -12,13 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { PANTALLAS } from '@/lib/auth/pantallas'
 import { accionDisponible } from '@/lib/dependencias'
-import {
-  etiquetaDeDificultad,
-  etiquetaDeTipoExamen,
-  etiquetaDeTipoPregunta,
-  TEXTO_VENTANA_COMENZADA,
-  textoConMinimo,
-} from '@/lib/dominio/teoria'
+import { TEXTO_SIN_HABILITADOS, TEXTO_VENTANA_COMENZADA, etiquetaDeDificultad, etiquetaDeTipoExamen, etiquetaDeTipoPregunta, textoConMinimo } from '@/lib/dominio/teoria'
 import { formatearFecha, formatearNota } from '@/lib/formato'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasTurnosTeoricos, type TurnoTeoricoDetalle } from './api'
@@ -161,51 +155,51 @@ export function ResultadosTurnoPage({ id }: { id: number }) {
             </Table>
           </div>
 
-          <div className="overflow-x-auto rounded-lg border">
-            <Table aria-label="Resultados por alumno">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Alumno</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Nota</TableHead>
-                  <TableHead>Resultado</TableHead>
-                  <TableHead>Estado teórico</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {turno.resultados.map((resultado) => (
-                  <TableRow key={resultado.codAlumno}>
-                    <TableCell>{resultado.alumno}</TableCell>
-                    <TableCell>
-                      <StatusBadge vocabulario="rendicion" valor={resultado.estado} />
-                    </TableCell>
-                    <TableCell className="tabular-nums">
-                      {textoConMinimo(resultado.nota, turno.notaMinimaAplicada)}
-                    </TableCell>
-                    <TableCell>
-                      {resultado.aprobado === null ? (
-                        '—'
-                      ) : (
-                        <StatusBadge vocabulario="examen" valor={resultado.aprobado ? 'aprobado' : 'desaprobado'} />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {resultado.bloqueadoPorSubsanacion ? (
-                        <StatusBadge vocabulario="subsanacion" valor="pendiente" />
-                      ) : (
-                        '—'
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {turno.resultados.length === 0 && (
+          {turno.resultados.length === 0 ? (
             <Alert>
-              <AlertDescription>El grupo no tiene alumnos habilitados para este examen.</AlertDescription>
+              <AlertDescription>{TEXTO_SIN_HABILITADOS}</AlertDescription>
             </Alert>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border">
+              <Table aria-label="Resultados por alumno">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Alumno</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Nota</TableHead>
+                    <TableHead>Resultado</TableHead>
+                    <TableHead>Estado teórico</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {turno.resultados.map((resultado) => (
+                    <TableRow key={resultado.codAlumno}>
+                      <TableCell>{resultado.alumno}</TableCell>
+                      <TableCell>
+                        <StatusBadge vocabulario="rendicion" valor={resultado.estado} />
+                      </TableCell>
+                      <TableCell className="tabular-nums">
+                        {textoConMinimo(resultado.nota, turno.notaMinimaAplicada)}
+                      </TableCell>
+                      <TableCell>
+                        {resultado.aprobado === null ? (
+                          '—'
+                        ) : (
+                          <StatusBadge vocabulario="examen" valor={resultado.aprobado ? 'aprobado' : 'desaprobado'} />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {resultado.bloqueadoPorSubsanacion ? (
+                          <StatusBadge vocabulario="subsanacion" valor="pendiente" />
+                        ) : (
+                          '—'
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </>
       )}

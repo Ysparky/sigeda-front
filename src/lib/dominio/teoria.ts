@@ -132,6 +132,7 @@ export const TEXTO_RESULTADO_SIN_DETALLE =
 export const TEXTO_SUBSANACION_PENDIENTE =
   'Tiene una subsanación pendiente: no puede programarse en turnos prácticos hasta aprobarla.'
 export const TEXTO_ESTADO_TEORICO_DESCONOCIDO = 'No se pudo comprobar el estado teórico de este alumno.'
+export const TEXTO_SIN_HABILITADOS = 'El grupo no tiene alumnos habilitados para este examen.'
 export const TEXTO_SIN_EXAMENES_PENDIENTES = 'No tiene exámenes teóricos pendientes.'
 export const TEXTO_SIN_TURNOS_TEORICOS = 'Todavía no hay turnos teóricos. Programe uno para un grupo y una materia.'
 export const TEXTO_ENUNCIADO_CORTO = 'El enunciado generado es demasiado corto: complételo antes de importar.'

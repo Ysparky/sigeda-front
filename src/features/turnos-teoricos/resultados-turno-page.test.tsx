@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
-import { TEXTO_VENTANA_COMENZADA } from '@/lib/dominio/teoria'
+import { TEXTO_SIN_HABILITADOS, TEXTO_VENTANA_COMENZADA } from '@/lib/dominio/teoria'
 import { API } from '@/mocks/sigeda/comun'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
@@ -129,6 +129,34 @@ describe('Resultados por turno teórico', () => {
     const fila = within(filasDeAlumnos()[0]!)
     expect(fila.getByText('16.00 / mínimo 18')).toBeInTheDocument()
     expect(fila.getByText('Desaprobado')).toBeInTheDocument()
+  })
+
+  it('CA-RES-02 un turno sin alumnos habilitados lo dice y no muestra la tabla', async () => {
+    server.use(
+      http.get(`${API}/api/turnos-teoricos/5`, () =>
+        HttpResponse.json({
+          id: 5,
+          nombre: 'Subsanación Adoctrinamiento de Vuelo',
+          materia: { id: 3, nombre: 'Adoctrinamiento de Vuelo', notaMinima: 16 },
+          tipoExamen: 'SUBSANACION',
+          notaMinimaAplicada: 16,
+          fechaExamen: '2026-09-26',
+          horaInicio: '08:00',
+          horaFin: '09:00',
+          estado: 'PROGRAMADO',
+          grupo: { id: 3, nombre: 'Grupo 3', programa: 'PDI' },
+          instructor: { codigo: '444444', nombre: 'Juan Torres Perez' },
+          turnoOrigen: { id: 1, nombre: 'Mensual Adoctrinamiento de Vuelo', fechaExamen: '2026-09-18' },
+          preguntas: [],
+          resultados: [],
+          resumen: { habilitados: 0, rindieron: 0, aprobados: 0, notaPromedio: null },
+        }),
+      ),
+    )
+    await iniciarComo('instructor.perez')
+    renderApp('/teoria/turnos/5')
+    expect(await screen.findByText(TEXTO_SIN_HABILITADOS)).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Resultados por alumno' })).not.toBeInTheDocument()
   })
 
   it('CA-RES-12 un fallo en la primera carga del detalle ofrece Reintentar', async () => {
