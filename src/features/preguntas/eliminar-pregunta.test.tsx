@@ -42,7 +42,7 @@ describe('Eliminar pregunta', () => {
     expect(screen.getByText('Página 1 de 1 · 3 registros')).toBeInTheDocument()
   })
 
-  it('CA-BAN-11 borrar la última pregunta de una materia la vuelve eliminable', async () => {
+  it('CA-BAN-11 eliminar una pregunta actualiza la lista de la materia filtrada', async () => {
     const { usuario } = await abrirBanco('/banco?idMateria=6')
     await usuario.click(screen.getByRole('button', { name: 'Eliminar la pregunta 16' }))
     await usuario.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Eliminar' }))

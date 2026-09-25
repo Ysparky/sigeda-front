@@ -5,6 +5,7 @@ import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { TEXTO_PREGUNTA_EN_USO } from '@/lib/dominio/teoria'
+import { clavesMaterias } from '@/features/materias/api'
 import { clavesPreguntas, eliminarPregunta, type PreguntaFila } from '../api'
 
 export function EliminarPregunta({ pregunta }: { pregunta: PreguntaFila }) {
@@ -16,7 +17,7 @@ export function EliminarPregunta({ pregunta }: { pregunta: PreguntaFila }) {
     onSuccess: async (mensaje) => {
       toast.success(mensaje)
       await queryClient.invalidateQueries({ queryKey: clavesPreguntas.todo })
-      await queryClient.invalidateQueries({ queryKey: ['materias'] })
+      await queryClient.invalidateQueries({ queryKey: clavesMaterias.todo })
     },
     onError: (error) => toast.error(error instanceof ApiError ? error.message : MENSAJE_GENERICO),
   })
