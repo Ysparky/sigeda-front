@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { AvisoDeError } from '@/components/aviso-de-error'
-import { AvisoDeTeoria } from '@/components/aviso-de-teoria'
+import { AvisoDeDependencia } from '@/components/aviso-de-dependencia'
 import { PageHeader } from '@/components/page-header'
 import { StatusBadge } from '@/components/status-badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PANTALLAS } from '@/lib/auth/pantallas'
 import { useSesion } from '@/lib/auth/use-sesion'
-import { etiquetaDeTipoExamen, TEXTO_RESULTADO_SIN_DETALLE, textoConMinimo } from '@/lib/dominio/teoria'
+import { etiquetaDeTipoExamen, TEXTO_RESULTADO_SIN_DETALLE, TEXTO_TEORIA_SOLO_MOCK, textoConMinimo } from '@/lib/dominio/teoria'
 import { formatearFecha } from '@/lib/formato'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasExamenes } from './api'
@@ -34,7 +34,7 @@ export function ResultadoExamenPage({ idTurno }: { idTurno: number }) {
           </Button>
         }
       />
-      <AvisoDeTeoria accion="rendirExamen" />
+      <AvisoDeDependencia accion="rendirExamen" texto={TEXTO_TEORIA_SOLO_MOCK} />
       {error !== null ? (
         <AvisoDeError error={error} alReintentar={() => void consulta.refetch()} />
       ) : examen === undefined ? (

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { GraduationCap } from 'lucide-react'
 import { AvisoDeError } from '@/components/aviso-de-error'
-import { AvisoDeTeoria } from '@/components/aviso-de-teoria'
+import { AvisoDeDependencia } from '@/components/aviso-de-dependencia'
 import { EmptyState } from '@/components/empty-state'
 import { PageHeader } from '@/components/page-header'
 import { StatusBadge } from '@/components/status-badge'
@@ -17,6 +17,7 @@ import {
   etiquetaDeTipoExamen,
   TEXTO_SIN_EXAMENES_PENDIENTES,
   TEXTO_SUBSANACION_PENDIENTE,
+  TEXTO_TEORIA_SOLO_MOCK,
   textoSeHabilita,
 } from '@/lib/dominio/teoria'
 import { formatearFecha } from '@/lib/formato'
@@ -36,7 +37,7 @@ export function MisExamenesPage() {
   return (
     <>
       <PageHeader titulo={PANTALLAS.misExamenes.titulo} descripcion={PANTALLAS.misExamenes.descripcion} />
-      <AvisoDeTeoria accion="rendirExamen" />
+      <AvisoDeDependencia accion="rendirExamen" texto={TEXTO_TEORIA_SOLO_MOCK} />
       {estadoTeorico.data?.bloqueadoPorSubsanacion === true && (
         <Alert>
           <AlertDescription className="grid gap-1">

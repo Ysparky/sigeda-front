@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { AvisoDeError } from '@/components/aviso-de-error'
-import { AvisoDeTeoria } from '@/components/aviso-de-teoria'
+import { AvisoDeDependencia } from '@/components/aviso-de-dependencia'
 import { PageHeader } from '@/components/page-header'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PANTALLAS } from '@/lib/auth/pantallas'
-import { TEXTO_VENTANA_COMENZADA } from '@/lib/dominio/teoria'
+import { TEXTO_TEORIA_SOLO_MOCK, TEXTO_VENTANA_COMENZADA } from '@/lib/dominio/teoria'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasTurnosTeoricos } from './api'
 import { FormularioTurnoTeorico } from './components/formulario-turno-teorico'
@@ -23,7 +23,7 @@ export function ModificarTurnoTeoricoPage({ id }: { id: number }) {
         titulo={PANTALLAS.modificarTurnoTeorico.titulo}
         descripcion={PANTALLAS.modificarTurnoTeorico.descripcion}
       />
-      <AvisoDeTeoria accion="programarTurnoTeorico" />
+      <AvisoDeDependencia accion="programarTurnoTeorico" texto={TEXTO_TEORIA_SOLO_MOCK} />
       {error !== null ? (
         <AvisoDeError error={error} alReintentar={() => void turno.refetch()} />
       ) : turno.data === undefined ? (

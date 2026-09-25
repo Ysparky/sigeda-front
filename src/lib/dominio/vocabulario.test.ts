@@ -34,6 +34,13 @@ describe('vocabulario del dominio', () => {
   it('devuelve un término neutro con el valor original cuando no lo conoce', () => {
     expect(termino('estado', 'Suspendido')).toEqual({ etiqueta: 'Suspendido', tono: 'neutro' })
   })
+
+  it('M5-20 la severidad y el tipo de alerta tienen tono en los dos vocabularios', () => {
+    expect(termino('severidad', 'ALTA')).toEqual({ etiqueta: 'Alta', tono: 'peligro' })
+    expect(termino('severidad', 'BAJA')).toEqual({ etiqueta: 'Baja', tono: 'neutro' })
+    expect(termino('tipoAlerta', 'SUBSANACION_PENDIENTE')).toEqual({ etiqueta: 'Subsanación pendiente', tono: 'alerta' })
+    expect(termino('tipoAlerta', 'OTRO')).toEqual({ etiqueta: 'OTRO', tono: 'neutro' })
+  })
 })
 
 describe('estados de aeronave', () => {

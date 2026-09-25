@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { CalendarPlus } from 'lucide-react'
 import { AvisoDeError } from '@/components/aviso-de-error'
-import { AvisoDeTeoria } from '@/components/aviso-de-teoria'
+import { AvisoDeDependencia } from '@/components/aviso-de-dependencia'
 import { DataTable } from '@/components/data-table'
 import { EmptyState } from '@/components/empty-state'
 import { PageHeader } from '@/components/page-header'
@@ -14,7 +14,7 @@ import { consultasMaterias } from '@/features/materias/api'
 import { PANTALLAS } from '@/lib/auth/pantallas'
 import { usePuede, useSesion } from '@/lib/auth/use-sesion'
 import { accionDisponible, MENSAJE_DEPENDENCIA_PENDIENTE } from '@/lib/dependencias'
-import { ESTADOS_TURNO, TEXTO_SIN_TURNOS_TEORICOS, TIPOS_EXAMEN } from '@/lib/dominio/teoria'
+import { ESTADOS_TURNO, TEXTO_SIN_TURNOS_TEORICOS, TEXTO_TEORIA_SOLO_MOCK, TIPOS_EXAMEN } from '@/lib/dominio/teoria'
 import { termino } from '@/lib/dominio/vocabulario'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasTurnosTeoricos } from './api'
@@ -76,7 +76,7 @@ export function TurnosTeoricosPage() {
         descripcion={PANTALLAS.turnosTeoricos.descripcion}
         acciones={<AccionRegistrar />}
       />
-      <AvisoDeTeoria accion="programarTurnoTeorico" />
+      <AvisoDeDependencia accion="programarTurnoTeorico" texto={TEXTO_TEORIA_SOLO_MOCK} />
       <section aria-label="Filtros" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-7 lg:items-end">
         <Field>
           <FieldLabel htmlFor="filtro-grupo">Grupo</FieldLabel>

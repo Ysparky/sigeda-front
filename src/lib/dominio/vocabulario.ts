@@ -55,6 +55,20 @@ export const SUBSANACION = {
   pendiente: { etiqueta: 'Subsanación pendiente', tono: 'alerta' },
 } as const satisfies Record<string, Termino>
 
+export const SEVERIDADES_ALERTA = {
+  ALTA: { etiqueta: 'Alta', tono: 'peligro' },
+  MEDIA: { etiqueta: 'Media', tono: 'aviso' },
+  BAJA: { etiqueta: 'Baja', tono: 'neutro' },
+} as const satisfies Record<string, Termino>
+
+export const TIPOS_DE_ALERTA = {
+  VUELO_DESAPROBADO: { etiqueta: 'Vuelo desaprobado', tono: 'info' },
+  ESTADO_CRITICO: { etiqueta: 'Estado crítico', tono: 'peligro' },
+  CHEQUEO_PENDIENTE: { etiqueta: 'Chequeo pendiente', tono: 'aviso' },
+  SUBSANACION_PENDIENTE: { etiqueta: 'Subsanación pendiente', tono: 'alerta' },
+  CAUSAL_TEORICO: { etiqueta: 'Causal teórico', tono: 'violeta' },
+} as const satisfies Record<string, Termino>
+
 export const RESULTADOS_EXAMEN = {
   aprobado: { etiqueta: 'Aprobado', tono: 'exito' },
   desaprobado: { etiqueta: 'Desaprobado', tono: 'peligro' },
@@ -82,6 +96,8 @@ const VOCABULARIOS = {
   rendicion: ESTADOS_RENDICION,
   examen: RESULTADOS_EXAMEN,
   subsanacion: SUBSANACION,
+  severidad: SEVERIDADES_ALERTA,
+  tipoAlerta: TIPOS_DE_ALERTA,
 } as const
 
 export type Vocabulario = keyof typeof VOCABULARIOS

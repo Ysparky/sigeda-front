@@ -3,7 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { AvisoDeError } from '@/components/aviso-de-error'
-import { AvisoDeTeoria } from '@/components/aviso-de-teoria'
+import { AvisoDeDependencia } from '@/components/aviso-de-dependencia'
 import { PageHeader } from '@/components/page-header'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { PANTALLAS } from '@/lib/auth/pantallas'
 import { useSesion } from '@/lib/auth/use-sesion'
-import { milisegundosRestantes, TEXTO_AUTOGUARDADO_FALLIDO, TEXTO_VENTANA_CERRADA } from '@/lib/dominio/teoria'
+import { milisegundosRestantes, TEXTO_AUTOGUARDADO_FALLIDO, TEXTO_TEORIA_SOLO_MOCK, TEXTO_VENTANA_CERRADA } from '@/lib/dominio/teoria'
 import { errorDePrimeraCarga } from '@/lib/query'
 import {
   clavesExamenes,
@@ -143,7 +143,7 @@ export function RendirExamenPage({ idTurno }: { idTurno: number }) {
         titulo={examen.data?.turnoTeorico ?? PANTALLAS.rendirExamen.titulo}
         descripcion={PANTALLAS.rendirExamen.descripcion}
       />
-      <AvisoDeTeoria accion="rendirExamen" />
+      <AvisoDeDependencia accion="rendirExamen" texto={TEXTO_TEORIA_SOLO_MOCK} />
       {esExamenEntregado(error) ? (
         <Alert>
           <AlertDescription className="grid gap-3">

@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { AvisoDeTeoria } from '@/components/aviso-de-teoria'
+import { AvisoDeDependencia } from '@/components/aviso-de-dependencia'
 import { PageHeader } from '@/components/page-header'
 import { PANTALLAS } from '@/lib/auth/pantallas'
+import { TEXTO_TEORIA_SOLO_MOCK } from '@/lib/dominio/teoria'
 import { FormularioImportacion } from './components/formulario-importacion'
 import { TablaDeImportacion } from './components/tabla-de-importacion'
 import { filasDesdeIa, type FilaImportacion } from './importacion'
@@ -12,7 +13,7 @@ export function ImportarPreguntasPage() {
   return (
     <>
       <PageHeader titulo={PANTALLAS.importarPreguntas.titulo} descripcion={PANTALLAS.importarPreguntas.descripcion} />
-      <AvisoDeTeoria accion="importarPreguntas" />
+      <AvisoDeDependencia accion="importarPreguntas" texto={TEXTO_TEORIA_SOLO_MOCK} />
       {filas === null ? (
         <FormularioImportacion
           alGenerar={(cuestionario, valores) =>

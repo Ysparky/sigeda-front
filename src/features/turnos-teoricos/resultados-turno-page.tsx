@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Pencil } from 'lucide-react'
 import { AvisoDeError } from '@/components/aviso-de-error'
-import { AvisoDeTeoria } from '@/components/aviso-de-teoria'
+import { AvisoDeDependencia } from '@/components/aviso-de-dependencia'
 import { PageHeader } from '@/components/page-header'
 import { StatusBadge } from '@/components/status-badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { PANTALLAS } from '@/lib/auth/pantallas'
 import { MENSAJE_DEPENDENCIA_PENDIENTE, accionDisponible } from '@/lib/dependencias'
-import { TEXTO_SIN_HABILITADOS, TEXTO_VENTANA_COMENZADA, etiquetaDeDificultad, etiquetaDeTipoExamen, etiquetaDeTipoPregunta, textoConMinimo } from '@/lib/dominio/teoria'
+import { TEXTO_SIN_HABILITADOS, TEXTO_TEORIA_SOLO_MOCK, TEXTO_VENTANA_COMENZADA, etiquetaDeDificultad, etiquetaDeTipoExamen, etiquetaDeTipoPregunta, textoConMinimo } from '@/lib/dominio/teoria'
 import { formatearFecha, formatearNota } from '@/lib/formato'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasTurnosTeoricos, type TurnoTeoricoDetalle } from './api'
@@ -71,7 +71,7 @@ export function ResultadosTurnoPage({ id }: { id: number }) {
         descripcion={PANTALLAS.resultadosTurnoTeorico.descripcion}
         acciones={turno && <Acciones turno={turno} />}
       />
-      <AvisoDeTeoria accion="programarTurnoTeorico" />
+      <AvisoDeDependencia accion="programarTurnoTeorico" texto={TEXTO_TEORIA_SOLO_MOCK} />
       {error !== null ? (
         <AvisoDeError error={error} alReintentar={() => void consulta.refetch()} />
       ) : turno === undefined ? (

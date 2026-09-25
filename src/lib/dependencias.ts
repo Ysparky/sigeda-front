@@ -15,6 +15,8 @@ export const DEPENDENCIAS = {
   programarTurnoTeorico: [6],
   rendirExamen: [6],
   bloqueoSubsanacion: [7],
+  verIndices: [61, 62],
+  verAlertas: [66],
 } as const
 
 export type AccionConDependencia = keyof typeof DEPENDENCIAS

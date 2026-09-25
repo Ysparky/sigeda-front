@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { Plus, Sparkles } from 'lucide-react'
 import { AvisoDeError } from '@/components/aviso-de-error'
-import { AvisoDeTeoria } from '@/components/aviso-de-teoria'
+import { AvisoDeDependencia } from '@/components/aviso-de-dependencia'
 import { DataTable } from '@/components/data-table'
 import { EmptyState } from '@/components/empty-state'
 import { PageHeader } from '@/components/page-header'
@@ -13,7 +13,7 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { consultasMaterias } from '@/features/materias/api'
 import { PANTALLAS } from '@/lib/auth/pantallas'
 import { accionDisponible, MENSAJE_DEPENDENCIA_PENDIENTE } from '@/lib/dependencias'
-import { DIFICULTADES, ORIGENES_PREGUNTA, TEXTO_SIN_PREGUNTAS, TIPOS_PREGUNTA } from '@/lib/dominio/teoria'
+import { DIFICULTADES, ORIGENES_PREGUNTA, TEXTO_SIN_PREGUNTAS, TEXTO_TEORIA_SOLO_MOCK, TIPOS_PREGUNTA } from '@/lib/dominio/teoria'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasPreguntas } from './api'
 import { COLUMNAS_PREGUNTAS } from './columnas'
@@ -98,7 +98,7 @@ export function BancoPage() {
           </>
         }
       />
-      <AvisoDeTeoria accion="gestionarPreguntas" />
+      <AvisoDeDependencia accion="gestionarPreguntas" texto={TEXTO_TEORIA_SOLO_MOCK} />
       <section aria-label="Filtros" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6 lg:items-end">
         <Field>
           <FieldLabel htmlFor="filtro-materia">Materia</FieldLabel>
