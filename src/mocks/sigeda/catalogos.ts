@@ -95,16 +95,14 @@ export const handlersCatalogos = [
     const permitido = autorizar(request, 'View My Group')
     if (permitido instanceof Response) return permitido
     const programa = programaDeRuta(params.nombre)
-    const codigos = new Set(
-      datos()
-        .turnos.filter((turno) => turno.codInstructor === String(params.cod) && turno.programa === programa)
-        .flatMap((turno) => turno.alumnos.map((alumno) => alumno.codAlumno)),
-    )
-    const alumnos = [...codigos]
-      .map((codigo) => buscarPersona(codigo))
-      .filter((persona): persona is PersonaMock => persona !== undefined)
-      .map(alumnoConEstado)
-    const catalogo = alumnos.length > 0 ? [{ id: 1, persona: alumnos }] : []
+    const catalogo = datos()
+      .turnos.filter((turno) => turno.codInstructor === String(params.cod) && turno.programa === programa)
+      .flatMap((turno) =>
+        turno.alumnos.flatMap((fila) => {
+          const persona = buscarPersona(fila.codAlumno)
+          return persona ? [{ id: turno.id, persona: [alumnoConEstado(persona)] }] : []
+        }),
+      )
     return paginar(catalogo, new URL(request.url), {
       nombreLista: 'grupos',
       propiedadPorDefecto: 'id',
