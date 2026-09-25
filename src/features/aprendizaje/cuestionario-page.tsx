@@ -69,7 +69,7 @@ export function CuestionarioPage() {
               <AlertDescription>{TEXTO_CUESTIONARIO_REINICIADO}</AlertDescription>
             </Alert>
           )}
-          <ResolucionDeCuestionario cuestionario={cuestionario.data} />
+          <ResolucionDeCuestionario key={cuestionario.data.id} cuestionario={cuestionario.data} />
         </>
       )}
     </>

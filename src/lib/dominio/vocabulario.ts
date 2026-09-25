@@ -27,6 +27,11 @@ export const ESTADOS_ALUMNO = {
   'No Apto': { etiqueta: 'No apto', tono: 'peligro' },
 } as const satisfies Record<string, Termino>
 
+export const RESULTADOS_RESPUESTA = {
+  correcta: { etiqueta: 'Correcta', tono: 'exito' },
+  incorrecta: { etiqueta: 'Incorrecta', tono: 'peligro' },
+} as const satisfies Record<string, Termino>
+
 export const ESTADOS_DOCUMENTO = {
   uploading: { etiqueta: 'Procesando', tono: 'aviso' },
   processing: { etiqueta: 'Procesando', tono: 'aviso' },
@@ -51,6 +56,7 @@ const VOCABULARIOS = {
   estado: ESTADOS_ALUMNO,
   aeronave: ESTADOS_AERONAVE,
   documento: ESTADOS_DOCUMENTO,
+  respuesta: RESULTADOS_RESPUESTA,
 } as const
 
 export type Vocabulario = keyof typeof VOCABULARIOS

@@ -81,7 +81,7 @@ describe('Generar el cuestionario de práctica', () => {
       expect(screen.getByLabelText('Cantidad de preguntas')).toBeDisabled()
       expect(screen.getByRole('button', { name: 'Generando…' })).toBeDisabled()
       await avanzar(3000)
-      await waitFor(() => expect(screen.getByText('3 preguntas')).toBeInTheDocument())
+      await waitFor(() => expect(screen.getByRole('group', { name: 'Pregunta 1' })).toBeInTheDocument())
       expect(generaciones).toBe(1)
     } finally {
       server.events.removeListener('request:start', contar)
@@ -146,7 +146,7 @@ describe('Generar el cuestionario de práctica', () => {
     const { router } = await abrirFormulario(usuario)
     await elegirYGenerar(usuario, '20')
     await avanzar(3000)
-    await waitFor(() => expect(screen.getByText('3 preguntas')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByRole('group', { name: 'Pregunta 1' })).toBeInTheDocument())
     expect(router.state.location.search).toEqual({ cuestionario: ID_CUESTIONARIO })
     expect(screen.queryByText(TEXTO_CUESTIONARIO_REINICIADO)).not.toBeInTheDocument()
 
