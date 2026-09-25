@@ -47,6 +47,10 @@ function normalizar(valor: string): string {
     .replace(/\p{Diacritic}/gu, '')
 }
 
+function claveDuplicadoDeLote(pregunta: CuerpoPregunta): string {
+  return `${texto(pregunta.enunciado).trim().toLowerCase()}|${texto(pregunta.tipoPregunta)}`
+}
+
 function esTipo(valor: unknown): valor is TipoPreguntaMock {
   return TIPOS.some((tipo) => tipo === valor)
 }
@@ -223,7 +227,7 @@ export const handlersPreguntas = [
     const vistas = new Set<string>()
     lista.forEach((pregunta, indice) => {
       errores.push(...erroresDePregunta(pregunta, `preguntas[${indice}].`, false))
-      const clave = `${normalizar(texto(pregunta.enunciado))}|${texto(pregunta.tipoPregunta)}`
+      const clave = claveDuplicadoDeLote(pregunta)
       if (vistas.has(clave)) {
         errores.push(`'preguntas[${indice}].enunciado': La pregunta está repetida en este lote.`)
       }
@@ -236,7 +240,7 @@ export const handlersPreguntas = [
     }
     const creadas = lista.map((pregunta) => insertar(pregunta, 'IA', texto(cuerpo.codInstructor)))
     return HttpResponse.json(
-      { mensaje: D21_PREGUNTAS_GUARDADAS, preguntas: creadas.map(filaPublica) },
+      { mensaje: D21_PREGUNTAS_GUARDADAS, preguntas: creadas.map(detallePublico) },
       { status: 201 },
     )
   }),

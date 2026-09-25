@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ApiError, MENSAJE_SIN_PERMISO } from '@/lib/api/errors'
+import { sigeda } from '@/lib/api/sigeda'
 import {
   crearPregunta,
   eliminarPregunta,
@@ -167,7 +168,7 @@ describe('contrato §2.2 y §2.3 detalle y creación', () => {
     expect((repetidas as ApiError).erroresDeCampo.alternativas).toBe('Las alternativas no pueden repetirse.')
   })
 
-  it('responde 404 D4 y D27 para la materia y el instructor inexistentes', async () => {
+  it('contrato §2.3 responde 404 D4 y D27 para la materia y el instructor inexistentes', async () => {
     await comoInstructor()
     await expect(crearPregunta({ ...NUEVA, idMateria: 99 })).rejects.toThrow(D4_MATERIA_NO_EXISTE)
     await expect(crearPregunta({ ...NUEVA, codInstructor: '000999' })).rejects.toThrow(D27_PERSONA_NO_EXISTE)
@@ -219,6 +220,19 @@ describe('contrato §2.6 lote', () => {
     expect((await obtenerPregunta(26)).enunciado).toBe('Otro enunciado generado por la IA para el banco.')
   })
 
+  it('contrato §2.6 el lote responde con la forma de detalle de §2.2, no la fila plana de §2.1', async () => {
+    await comoInstructor()
+    const respuesta = await sigeda.post<{ mensaje: string; preguntas: unknown[] }>('/api/preguntas/lote', {
+      codInstructor: '444444',
+      preguntas: [NUEVA],
+    })
+    const primera = respuesta.preguntas[0] as Record<string, unknown>
+    expect(primera.materia).toEqual({ id: 5, nombre: 'Procedimientos Normales', notaMinima: 16 })
+    expect(primera.alternativas).toHaveLength(4)
+    expect(primera.idMateria).toBeUndefined()
+    expect(primera.cantAlternativas).toBeUndefined()
+  })
+
   it('CA-IMP-09 rechaza el lote completo señalando la fila', async () => {
     await comoInstructor()
     const error = await importarPreguntas({
@@ -231,7 +245,7 @@ describe('contrato §2.6 lote', () => {
     expect(datos().preguntas).toHaveLength(24)
   })
 
-  it('rechaza un lote vacío, uno de más de 20 y los enunciados repetidos dentro del lote', async () => {
+  it('contrato §2.6 rechaza un lote vacío, uno de más de 20 y los enunciados repetidos dentro del lote', async () => {
     await comoInstructor()
     const vacio = await importarPreguntas({ codInstructor: '444444', preguntas: [] }).catch((p: unknown) => p)
     expect((vacio as ApiError).erroresDeCampo.preguntas).toBe('Debe enviar al menos una pregunta.')
