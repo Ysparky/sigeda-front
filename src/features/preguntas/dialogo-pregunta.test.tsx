@@ -79,6 +79,28 @@ describe('Registrar y modificar pregunta', () => {
     expect(await dialogo.findByText('Las alternativas no pueden repetirse.')).toBeInTheDocument()
   })
 
+  it('CA-BAN-04 CA-BAN-05 las alternativas en blanco no cuentan como repetidas', async () => {
+    const { usuario } = await abrirBanco()
+    const dialogo = await abrirRegistrar(usuario)
+    await usuario.click(dialogo.getByRole('button', { name: 'Guardar pregunta' }))
+    expect(await dialogo.findAllByText('La respuesta es obligatoria.')).toHaveLength(4)
+    expect(dialogo.queryByText('Las alternativas no pueden repetirse.')).not.toBeInTheDocument()
+  })
+
+  it('CA-BAN-05 dos alternativas que solo difieren en la tilde son distintas y se guardan', async () => {
+    const { usuario } = await abrirBanco()
+    const dialogo = await abrirRegistrar(usuario)
+    await usuario.selectOptions(dialogo.getByLabelText('Materia'), 'Procedimientos Normales')
+    await usuario.type(dialogo.getByLabelText('Enunciado'), ENUNCIADO)
+    for (const [indice, texto] of ['Sí', 'Si', 'Sí, siempre', 'No'].entries()) {
+      await usuario.type(dialogo.getByLabelText(`Alternativa ${indice + 1}`), texto)
+    }
+    await usuario.click(dialogo.getByRole('radio', { name: 'Alternativa 1 es la correcta' }))
+    await usuario.click(dialogo.getByRole('button', { name: 'Guardar pregunta' }))
+    expect(await screen.findByText('Pregunta guardada con éxito.')).toBeInTheDocument()
+    expect(dialogo.queryByText('Las alternativas no pueden repetirse.')).not.toBeInTheDocument()
+  })
+
   it('CA-BAN-06 verdadero o falso ofrece solo esas dos alternativas y exige marcar una', async () => {
     const { usuario } = await abrirBanco()
     const dialogo = await abrirRegistrar(usuario)

@@ -67,7 +67,9 @@ export const esquemaPregunta = z
         path: ['correcta'],
       })
     }
-    const textos = valores.alternativas.map((alternativa) => alternativa.respuesta.trim().toLowerCase())
+    const textos = valores.alternativas
+      .map((alternativa) => alternativa.respuesta.trim().toLowerCase())
+      .filter((respuesta) => respuesta !== '')
     if (new Set(textos).size !== textos.length) {
       contexto.addIssue({ code: 'custom', message: 'Las alternativas no pueden repetirse.', path: ['alternativas'] })
     }
