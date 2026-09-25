@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { clavesTurnosTeoricos, eliminarTurnoTeorico } from '../api'
 
-type Props = { id: number; nombre: string; alEliminar?: () => void }
+type Props = { id: number; nombre: string; alEliminar?: () => void; deshabilitado?: boolean }
 
-export function EliminarTurnoTeorico({ id, nombre, alEliminar }: Props) {
+export function EliminarTurnoTeorico({ id, nombre, alEliminar, deshabilitado = false }: Props) {
   const queryClient = useQueryClient()
 
   const eliminar = useMutation({
@@ -24,7 +24,12 @@ export function EliminarTurnoTeorico({ id, nombre, alEliminar }: Props) {
   return (
     <ConfirmDialog
       disparador={
-        <Button variant="destructive" size="sm" disabled={eliminar.isPending} aria-label={`Eliminar ${nombre}`}>
+        <Button
+          variant="destructive"
+          size="sm"
+          disabled={deshabilitado || eliminar.isPending}
+          aria-label={`Eliminar ${nombre}`}
+        >
           <Trash2 aria-hidden />
           Eliminar
         </Button>

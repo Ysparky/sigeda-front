@@ -18,7 +18,7 @@ import { ESTADOS_TURNO, TEXTO_SIN_TURNOS_TEORICOS, TIPOS_EXAMEN } from '@/lib/do
 import { termino } from '@/lib/dominio/vocabulario'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasTurnosTeoricos } from './api'
-import { COLUMNAS_TURNOS_TEORICOS, COLUMNAS_TURNOS_TEORICOS_CON_ACCIONES } from './columnas'
+import { COLUMNAS_TURNOS_TEORICOS } from './columnas'
 import type { BusquedaTurnosTeoricos } from './schemas'
 
 const ruta = getRouteApi('/_app/teoria/turnos/')
@@ -56,7 +56,6 @@ export function TurnosTeoricosPage() {
   )
   const turnos = useQuery(consultasTurnosTeoricos.lista(busqueda))
   const error = errorDePrimeraCarga(turnos)
-  const puedeProgramar = accionDisponible('programarTurnoTeorico')
 
   function cambiar(cambios: Partial<BusquedaTurnosTeoricos>) {
     void navegar({ search: (previa) => ({ ...previa, page: 0, ...cambios }) })
@@ -189,7 +188,7 @@ export function TurnosTeoricosPage() {
       ) : (
         <DataTable
           etiqueta="Turnos teóricos programados"
-          columnas={puedeProgramar ? COLUMNAS_TURNOS_TEORICOS_CON_ACCIONES : COLUMNAS_TURNOS_TEORICOS}
+          columnas={COLUMNAS_TURNOS_TEORICOS}
           pagina={turnos.data}
           cargando={turnos.isFetching}
           parametros={busqueda}

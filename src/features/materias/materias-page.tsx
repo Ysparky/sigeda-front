@@ -19,8 +19,9 @@ import { DialogoMateria } from './components/dialogo-materia'
 export function MateriasPage() {
   const materias = useQuery(consultasMaterias.lista())
   const error = errorDePrimeraCarga(materias)
-  const puedeGestionar = usePuede('Manage Subjects') && accionDisponible('gestionarMaterias')
-  const esperaDependencia = usePuede('Manage Subjects') && !accionDisponible('gestionarMaterias')
+  const puedeAdministrar = usePuede('Manage Subjects')
+  const puedeGestionar = puedeAdministrar && accionDisponible('gestionarMaterias')
+  const esperaDependencia = puedeAdministrar && !accionDisponible('gestionarMaterias')
   const queryClient = useQueryClient()
 
   const eliminar = useMutation({
@@ -75,7 +76,7 @@ export function MateriasPage() {
                 <TableHead>Nota mínima</TableHead>
                 <TableHead>Coeficiente</TableHead>
                 <TableHead>Parte del curso</TableHead>
-                {puedeGestionar && (
+                {puedeAdministrar && (
                   <TableHead>
                     <span className="sr-only">Acciones</span>
                   </TableHead>
@@ -89,13 +90,18 @@ export function MateriasPage() {
                   <TableCell className="tabular-nums">{formatearNota(materia.notaMinima)}</TableCell>
                   <TableCell className="tabular-nums">{formatearNota(materia.coeficiente)}</TableCell>
                   <TableCell>{etiquetaDeParte(materia.parte)}</TableCell>
-                  {puedeGestionar && (
+                  {puedeAdministrar && (
                     <TableCell>
                       <div className="flex flex-wrap justify-end gap-2">
                         <DialogoMateria
                           materia={materia}
                           disparador={
-                            <Button variant="outline" size="sm" aria-label={`Modificar ${materia.nombre}`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={esperaDependencia}
+                              aria-label={`Modificar ${materia.nombre}`}
+                            >
                               <Pencil aria-hidden />
                               Modificar
                             </Button>
@@ -106,7 +112,7 @@ export function MateriasPage() {
                             <Button
                               variant="destructive"
                               size="sm"
-                              disabled={eliminar.isPending}
+                              disabled={esperaDependencia || eliminar.isPending}
                               aria-label={`Eliminar ${materia.nombre}`}
                             >
                               <Trash2 aria-hidden />

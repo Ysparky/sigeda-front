@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import { delay, http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   TEXTO_ALTERNATIVAS_REPETIDAS,
   TEXTO_CONFIRMAR_IMPORTACION,
@@ -182,5 +182,12 @@ describe('Revisión de las preguntas generadas', () => {
     await usuario.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Importar' }))
     expect(await fila(3).findByText('El enunciado debe tener entre 10 y 500 caracteres.')).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/banco/importar')
+  })
+
+  it('CA-BAN-14 fuera del modo mock y sin la dependencia 6 Importar al banco queda deshabilitado', async () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    const { usuario } = await generarLote()
+    await arreglarLasBloqueadas(usuario)
+    expect(screen.getByRole('button', { name: 'Importar al banco' })).toBeDisabled()
   })
 })

@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
-import { TEXTO_SIN_HABILITADOS, TEXTO_VENTANA_COMENZADA } from '@/lib/dominio/teoria'
+import { describe, expect, it, vi } from 'vitest'
+import { TEXTO_SIN_HABILITADOS, TEXTO_TEORIA_SOLO_MOCK, TEXTO_VENTANA_COMENZADA } from '@/lib/dominio/teoria'
 import { API } from '@/mocks/sigeda/comun'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
@@ -174,5 +174,14 @@ describe('Resultados por turno teórico', () => {
     await iniciarComo('instructor.perez')
     renderApp('/teoria/turnos/999')
     expect(await screen.findByText(/no encontr/i)).toBeInTheDocument()
+  })
+
+  it('CA-TUT-14 fuera del modo mock y sin la dependencia 6 Modificar y Eliminar quedan deshabilitados', async () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    await abrirResultados(4)
+    expect(screen.getByText(TEXTO_TEORIA_SOLO_MOCK)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Modificar' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Eliminar Quincenal Límites de Operación' })).toBeDisabled()
+    expect(screen.queryByRole('link', { name: 'Modificar' })).not.toBeInTheDocument()
   })
 })

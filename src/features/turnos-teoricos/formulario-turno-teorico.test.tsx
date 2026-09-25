@@ -1,10 +1,11 @@
 import { screen, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
 import {
   TEXTO_MATERIA_SIN_PREGUNTAS,
   TEXTO_SUBSANACION_TARDIA,
+  TEXTO_TEORIA_SOLO_MOCK,
   TEXTO_VENTANA_COMENZADA,
   textoPuntajeAsignado,
 } from '@/lib/dominio/teoria'
@@ -305,5 +306,15 @@ describe('Registrar y modificar turno teórico', () => {
     renderApp('/teoria/turnos/4/editar')
     expect(await screen.findByText('No se pudo conectar con el servidor.')).toBeInTheDocument()
     expect(screen.queryByLabelText('Nombre')).not.toBeInTheDocument()
+  })
+
+  it('CA-TUT-14 fuera del modo mock y sin la dependencia 6 Guardar queda deshabilitado', async () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    const { usuario } = await abrirRegistrar()
+    expect(screen.getByText(TEXTO_TEORIA_SOLO_MOCK)).toBeInTheDocument()
+    await llenarCabecera(usuario)
+    await agregarPregunta(usuario, 1, '17', '20')
+    expect(screen.getByText(textoPuntajeAsignado(20))).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Guardar turno teórico' })).toBeDisabled()
   })
 })

@@ -3,6 +3,7 @@ import { ayudanteDeColumnas } from '@/components/columnas-tabla'
 import { Enlace } from '@/components/enlace'
 import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
+import { accionDisponible } from '@/lib/dependencias'
 import { etiquetaDeTipoExamen, TEXTO_VENTANA_COMENZADA } from '@/lib/dominio/teoria'
 import { formatearFecha } from '@/lib/formato'
 import type { TurnoTeoricoFila } from './api'
@@ -10,7 +11,7 @@ import { EliminarTurnoTeorico } from './components/eliminar-turno-teorico'
 
 const ayudante = ayudanteDeColumnas<TurnoTeoricoFila>()
 
-export const COLUMNAS_TURNOS_TEORICOS = ayudante.columns([
+const COLUMNAS_SIN_ACCIONES = ayudante.columns([
   ayudante.accessor('nombre', {
     header: 'Nombre',
     enableSorting: true,
@@ -58,18 +59,30 @@ const acciones = ayudante.display({
   cell: (contexto) => {
     const turno = contexto.row.original
     if (turno.estado !== 'PROGRAMADO') return <p className="text-xs text-muted-foreground">{TEXTO_VENTANA_COMENZADA}</p>
+    const deshabilitado = !accionDisponible('programarTurnoTeorico')
     return (
       <div className="flex flex-wrap justify-end gap-2">
-        <Button variant="outline" size="sm" asChild>
-          <Enlace to="/teoria/turnos/$id/editar" params={{ id: String(turno.id) }} aria-label={`Modificar ${turno.nombre}`}>
+        {deshabilitado ? (
+          <Button variant="outline" size="sm" disabled aria-label={`Modificar ${turno.nombre}`}>
             <Pencil aria-hidden />
             Modificar
-          </Enlace>
-        </Button>
-        <EliminarTurnoTeorico id={turno.id} nombre={turno.nombre} />
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" asChild>
+            <Enlace
+              to="/teoria/turnos/$id/editar"
+              params={{ id: String(turno.id) }}
+              aria-label={`Modificar ${turno.nombre}`}
+            >
+              <Pencil aria-hidden />
+              Modificar
+            </Enlace>
+          </Button>
+        )}
+        <EliminarTurnoTeorico id={turno.id} nombre={turno.nombre} deshabilitado={deshabilitado} />
       </div>
     )
   },
 })
 
-export const COLUMNAS_TURNOS_TEORICOS_CON_ACCIONES = ayudante.columns([...COLUMNAS_TURNOS_TEORICOS, acciones])
+export const COLUMNAS_TURNOS_TEORICOS = ayudante.columns([...COLUMNAS_SIN_ACCIONES, acciones])

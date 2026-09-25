@@ -29,19 +29,27 @@ function Dato({ etiqueta, children }: { etiqueta: string; children: React.ReactN
 
 function Acciones({ turno }: { turno: TurnoTeoricoDetalle }) {
   const navegar = useNavigate()
-  if (!accionDisponible('programarTurnoTeorico')) return null
   if (turno.estado !== 'PROGRAMADO') return <p className="text-sm text-muted-foreground">{TEXTO_VENTANA_COMENZADA}</p>
+  const deshabilitado = !accionDisponible('programarTurnoTeorico')
   return (
     <>
-      <Button variant="outline" asChild>
-        <Link to="/teoria/turnos/$id/editar" params={{ id: String(turno.id) }}>
+      {deshabilitado ? (
+        <Button variant="outline" disabled>
           <Pencil aria-hidden />
           Modificar
-        </Link>
-      </Button>
+        </Button>
+      ) : (
+        <Button variant="outline" asChild>
+          <Link to="/teoria/turnos/$id/editar" params={{ id: String(turno.id) }}>
+            <Pencil aria-hidden />
+            Modificar
+          </Link>
+        </Button>
+      )}
       <EliminarTurnoTeorico
         id={turno.id}
         nombre={turno.nombre}
+        deshabilitado={deshabilitado}
         alEliminar={() => void navegar({ to: '/teoria/turnos' })}
       />
     </>

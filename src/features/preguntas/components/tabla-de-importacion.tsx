@@ -15,6 +15,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { consultasMaterias } from '@/features/materias/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { useSesion } from '@/lib/auth/use-sesion'
+import { accionDisponible } from '@/lib/dependencias'
 import {
   DIFICULTADES,
   etiquetaDeTipoPregunta,
@@ -210,7 +211,15 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
         </p>
         <ConfirmDialog
           disparador={
-            <Button type="button" disabled={elegidas.length === 0 || !importables || importar.isPending}>
+            <Button
+              type="button"
+              disabled={
+                elegidas.length === 0 ||
+                !importables ||
+                importar.isPending ||
+                !accionDisponible('importarPreguntas')
+              }
+            >
               <Upload aria-hidden />
               Importar al banco
             </Button>

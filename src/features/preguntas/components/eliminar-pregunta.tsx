@@ -8,7 +8,9 @@ import { TEXTO_PREGUNTA_EN_USO } from '@/lib/dominio/teoria'
 import { clavesMaterias } from '@/features/materias/api'
 import { clavesPreguntas, eliminarPregunta, type PreguntaFila } from '../api'
 
-export function EliminarPregunta({ pregunta }: { pregunta: PreguntaFila }) {
+type Props = { pregunta: PreguntaFila; deshabilitado?: boolean }
+
+export function EliminarPregunta({ pregunta, deshabilitado = false }: Props) {
   const queryClient = useQueryClient()
   const etiqueta = `Eliminar la pregunta ${pregunta.id}`
 
@@ -37,7 +39,7 @@ export function EliminarPregunta({ pregunta }: { pregunta: PreguntaFila }) {
   return (
     <ConfirmDialog
       disparador={
-        <Button variant="destructive" size="sm" disabled={eliminar.isPending} aria-label={etiqueta}>
+        <Button variant="destructive" size="sm" disabled={deshabilitado || eliminar.isPending} aria-label={etiqueta}>
           <Trash2 aria-hidden />
           Eliminar
         </Button>

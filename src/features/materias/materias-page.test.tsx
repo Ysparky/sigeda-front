@@ -1,5 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { MENSAJE_DEPENDENCIA_PENDIENTE } from '@/lib/dependencias'
 import { iniciarComo, renderApp } from '@/test/render'
 
 async function abrirMaterias(username = 'comandante.aguirre') {
@@ -27,6 +28,15 @@ describe('Materias', () => {
     await abrirMaterias('jefe.operaciones')
     expect(screen.queryByRole('button', { name: 'Registrar materia' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Modificar/ })).not.toBeInTheDocument()
+  })
+
+  it('CA-MAT-01 sin la dependencia 5 resuelta las acciones de fila siguen a la vista, deshabilitadas', async () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    await abrirMaterias()
+    expect(screen.getByRole('button', { name: 'Registrar materia' })).toBeDisabled()
+    expect(screen.getByText(MENSAJE_DEPENDENCIA_PENDIENTE)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Modificar Meteorología' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Eliminar Meteorología' })).toBeDisabled()
   })
 
   it('CA-MAT-02 registra una materia con todos sus datos', async () => {

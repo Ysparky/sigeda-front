@@ -26,6 +26,7 @@ import { consultasMaterias } from '@/features/materias/api'
 import { consultasPreguntas } from '@/features/preguntas/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { usePuede, useSesion } from '@/lib/auth/use-sesion'
+import { accionDisponible } from '@/lib/dependencias'
 import { sumarDias } from '@/lib/dominio/calendario'
 import {
   exigeTurnoOrigen,
@@ -85,6 +86,7 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
     },
   })
 
+  const puedeProgramar = accionDisponible('programarTurnoTeorico')
   const puntaje = puntajeAsignado(valores)
   const sumaCorrecta = puntaje === PUNTAJE_TOTAL_EXAMEN
   const conOrigen = exigeTurnoOrigen(valores.tipoExamen)
@@ -396,7 +398,7 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
             <Link to="/teoria/turnos">Cancelar</Link>
           )}
         </Button>
-        <Button type="submit" disabled={guardar.isPending || !sumaCorrecta}>
+        <Button type="submit" disabled={guardar.isPending || !sumaCorrecta || !puedeProgramar}>
           {guardar.isPending ? 'Guardando…' : 'Guardar turno teórico'}
         </Button>
       </div>

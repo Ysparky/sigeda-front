@@ -16,7 +16,7 @@ import { accionDisponible, MENSAJE_DEPENDENCIA_PENDIENTE } from '@/lib/dependenc
 import { DIFICULTADES, ORIGENES_PREGUNTA, TEXTO_SIN_PREGUNTAS, TIPOS_PREGUNTA } from '@/lib/dominio/teoria'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasPreguntas } from './api'
-import { COLUMNAS_PREGUNTAS, COLUMNAS_PREGUNTAS_CON_ACCIONES } from './columnas'
+import { COLUMNAS_PREGUNTAS } from './columnas'
 import { DialogoPregunta } from './components/dialogo-pregunta'
 import type { BusquedaPreguntas } from './schemas'
 
@@ -74,7 +74,6 @@ export function BancoPage() {
   const materias = useQuery(consultasMaterias.lista())
   const preguntas = useQuery(consultasPreguntas.lista(busqueda))
   const error = errorDePrimeraCarga(preguntas)
-  const puedeGestionar = accionDisponible('gestionarPreguntas')
 
   function cambiar(cambios: Partial<BusquedaPreguntas>) {
     void navegar({ search: (previa) => ({ ...previa, page: 0, ...cambios }) })
@@ -195,7 +194,7 @@ export function BancoPage() {
       ) : (
         <DataTable
           etiqueta="Preguntas del banco"
-          columnas={puedeGestionar ? COLUMNAS_PREGUNTAS_CON_ACCIONES : COLUMNAS_PREGUNTAS}
+          columnas={COLUMNAS_PREGUNTAS}
           pagina={preguntas.data}
           cargando={preguntas.isFetching}
           parametros={busqueda}
