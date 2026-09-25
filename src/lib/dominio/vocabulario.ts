@@ -51,6 +51,10 @@ export const ESTADOS_RENDICION = {
   ENTREGADO: { etiqueta: 'Entregado', tono: 'exito' },
 } as const satisfies Record<string, Termino>
 
+export const SUBSANACION = {
+  pendiente: { etiqueta: 'Subsanación pendiente', tono: 'alerta' },
+} as const satisfies Record<string, Termino>
+
 export const RESULTADOS_EXAMEN = {
   aprobado: { etiqueta: 'Aprobado', tono: 'exito' },
   desaprobado: { etiqueta: 'Desaprobado', tono: 'peligro' },
@@ -77,6 +81,7 @@ const VOCABULARIOS = {
   turnoTeorico: ESTADOS_TURNO_TEORICO,
   rendicion: ESTADOS_RENDICION,
   examen: RESULTADOS_EXAMEN,
+  subsanacion: SUBSANACION,
 } as const
 
 export type Vocabulario = keyof typeof VOCABULARIOS
