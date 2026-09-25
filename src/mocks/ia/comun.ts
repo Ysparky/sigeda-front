@@ -16,6 +16,10 @@ export function malaPeticion(mensaje: string) {
   return errorNest(400, mensaje, 'Bad Request')
 }
 
+export function errorInterno() {
+  return HttpResponse.json({ statusCode: 500, message: 'Internal server error' }, { status: 500 })
+}
+
 export function documentoPublico(documento: DocumentoMock) {
   return {
     id: documento.id,

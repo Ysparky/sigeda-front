@@ -1,4 +1,6 @@
 import type { RequestHandler } from 'msw'
+import { handlersConsultas } from './ia/consultas'
+import { handlersCuestionarios } from './ia/cuestionarios'
 import { handlersDocumentos } from './ia/documentos'
 import { handlersAuth } from './sigeda/auth'
 import { handlersCatalogos } from './sigeda/catalogos'
@@ -23,4 +25,6 @@ export const handlers: RequestHandler[] = [
   ...handlersTurnos,
   ...handlersEvaluaciones,
   ...handlersDocumentos,
+  ...handlersCuestionarios,
+  ...handlersConsultas,
 ]
