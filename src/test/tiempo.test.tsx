@@ -13,7 +13,7 @@ const ID_LENTO = 'd0c00000-0000-4000-8000-000000000004'
 const ID_ETERNO = 'd0c00000-0000-4000-8000-000000000006'
 
 describe('reloj falso', () => {
-  it('una respuesta demorada llega solo al avanzar el reloj', async () => {
+  it('M3-17 una respuesta demorada llega solo al avanzar el reloj', async () => {
     const { avanzar } = relojFalso()
     server.use(
       http.get(RUTA_PRUEBA, async () => {
@@ -34,7 +34,7 @@ describe('reloj falso', () => {
     expect(recibido).toEqual({ listo: true })
   })
 
-  it('una petición que nunca responde se corta con AbortController', async () => {
+  it('M3-17 una petición que nunca responde se corta con AbortController', async () => {
     const { avanzar } = relojFalso()
     server.use(http.get(RUTA_PRUEBA, async () => { await delay('infinite') }))
     const control = new AbortController()
@@ -50,7 +50,7 @@ describe('reloj falso', () => {
     expect(cortada).toBe(true)
   })
 
-  it('userEvent avanza el reloj falso y abre un diálogo de la aplicación', async () => {
+  it('M3-17 userEvent avanza el reloj falso y abre un diálogo de la aplicación', async () => {
     const { usuario } = relojFalso()
     await iniciarComo('comandante.aguirre')
     renderApp('/programa/materias', usuario)
@@ -61,7 +61,7 @@ describe('reloj falso', () => {
 })
 
 describe('contador de consultas de los documentos', () => {
-  it('el documento lento queda listo en su tercera consulta y el eterno nunca', () => {
+  it('contrato §7.1 el documento lento queda listo en su tercera consulta y el eterno nunca', () => {
     const lento = buscarDocumento(ID_LENTO)
     const eterno = buscarDocumento(ID_ETERNO)
     expect(lento?.status).toBe('processing')
@@ -75,7 +75,7 @@ describe('contador de consultas de los documentos', () => {
     expect(eterno?.consultas).toBe(40)
   })
 
-  it('reiniciarIaMock devuelve los documentos y sus contadores al estado inicial', () => {
+  it('M3-17 reiniciarIaMock devuelve los documentos y sus contadores al estado inicial', () => {
     expect(buscarDocumento(ID_LENTO)?.status).toBe('processing')
     expect(buscarDocumento(ID_LENTO)?.consultas).toBe(0)
     expect(buscarDocumento(ID_LENTO)?.tags).toEqual([])
