@@ -6,18 +6,24 @@ import {
   DEBOUNCE_AUTOGUARDADO,
   MAXIMO_AUTOGUARDADO,
   respuestasIniciales,
+  UMBRAL_GUARDADO_INMEDIATO,
   type EstadoGuardado,
   type Respuestas,
 } from './autoguardado'
 
-export function useAutoguardado(examen: ExamenEnCurso) {
+export function useAutoguardado(examen: ExamenEnCurso, restante: number) {
   const [respuestas, setRespuestas] = useState<Respuestas>(() => respuestasIniciales(examen))
   const [estado, setEstado] = useState<EstadoGuardado>('limpio')
   const ultimas = useRef(respuestas)
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
   const maximo = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const enCurso = useRef<Promise<void> | null>(null)
+  const enCurso = useRef<Promise<boolean> | null>(null)
   const pendiente = useRef(false)
+  const urgente = useRef(restante <= UMBRAL_GUARDADO_INMEDIATO)
+
+  useEffect(() => {
+    urgente.current = restante <= UMBRAL_GUARDADO_INMEDIATO
+  }, [restante])
 
   const guardar = useMutation({
     mutationFn: (valores: Respuestas) =>
@@ -35,17 +41,19 @@ export function useAutoguardado(examen: ExamenEnCurso) {
     maximo.current = null
   }, [])
 
-  const enviarUnaVez = useCallback(async () => {
+  const enviarUnaVez = useCallback(async (): Promise<boolean> => {
     setEstado('guardando')
     try {
       await enviar(ultimas.current)
       setEstado('guardado')
+      return true
     } catch {
       setEstado('error')
+      return false
     }
   }, [enviar])
 
-  const guardarAhora = useCallback((): Promise<void> => {
+  const guardarAhora = useCallback((): Promise<boolean> => {
     limpiarDebounce()
     if (enCurso.current) {
       pendiente.current = true
@@ -53,11 +61,12 @@ export function useAutoguardado(examen: ExamenEnCurso) {
     }
     limpiarMaximo()
     const tanda = (async () => {
-      await enviarUnaVez()
+      let exito = await enviarUnaVez()
       while (pendiente.current) {
         pendiente.current = false
-        await enviarUnaVez()
+        exito = await enviarUnaVez()
       }
+      return exito
     })().finally(() => {
       enCurso.current = null
     })
@@ -71,6 +80,10 @@ export function useAutoguardado(examen: ExamenEnCurso) {
       ultimas.current = siguientes
       setRespuestas(siguientes)
       limpiarDebounce()
+      if (urgente.current) {
+        void guardarAhora()
+        return
+      }
       debounce.current = setTimeout(() => void guardarAhora(), DEBOUNCE_AUTOGUARDADO)
       if (maximo.current === null && enCurso.current === null) {
         maximo.current = setTimeout(() => void guardarAhora(), MAXIMO_AUTOGUARDADO)

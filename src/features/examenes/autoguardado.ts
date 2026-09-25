@@ -2,6 +2,8 @@ import type { ExamenEnCurso, RespuestaDeExamen } from './api'
 
 export const DEBOUNCE_AUTOGUARDADO = 2_000
 export const MAXIMO_AUTOGUARDADO = 10_000
+export const PASO_DEL_RELOJ = 1_000
+export const UMBRAL_GUARDADO_INMEDIATO = DEBOUNCE_AUTOGUARDADO + PASO_DEL_RELOJ
 
 export type Respuestas = Record<number, string>
 

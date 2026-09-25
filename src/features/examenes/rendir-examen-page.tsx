@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { PANTALLAS } from '@/lib/auth/pantallas'
 import { useSesion } from '@/lib/auth/use-sesion'
-import { milisegundosRestantes, TEXTO_VENTANA_CERRADA } from '@/lib/dominio/teoria'
+import { milisegundosRestantes, TEXTO_AUTOGUARDADO_FALLIDO, TEXTO_VENTANA_CERRADA } from '@/lib/dominio/teoria'
 import { errorDePrimeraCarga } from '@/lib/query'
 import {
   clavesExamenes,
@@ -20,39 +20,51 @@ import {
   MENSAJE_EXAMEN_ENTREGADO,
   type ExamenEnCurso,
 } from './api'
-import { contarRespondidas } from './autoguardado'
+import { contarRespondidas, PASO_DEL_RELOJ } from './autoguardado'
 import { CabeceraDeExamen } from './components/cabecera-de-examen'
 import { ResolucionDeExamen } from './components/resolucion-de-examen'
 import { esExamenEntregado, esExamenNoDisponible, esVentanaCerrada } from './mensajes'
 import { useAutoguardado } from './use-autoguardado'
 
-const PASO_DEL_RELOJ = 1_000
+type VariablesEntrega = { cerrado: boolean }
 
 function Examen({ examen, idTurno }: { examen: ExamenEnCurso; idTurno: number }) {
   const navegar = useNavigate()
   const queryClient = useQueryClient()
-  const { respuestas, estado, responder, guardarAhora } = useAutoguardado(examen)
-  const entregado = useRef(false)
   const [restante, setRestante] = useState(() => milisegundosRestantes(examen.fechaExamen, examen.horaFin))
+  const { respuestas, estado, responder, guardarAhora } = useAutoguardado(examen, restante)
+  const entregado = useRef(false)
+  const restanteRef = useRef(restante)
   const cerrado = restante === 0
 
+  useEffect(() => {
+    restanteRef.current = restante
+  }, [restante])
+
   const entregar = useMutation({
-    mutationFn: () => entregarExamen(examen.id, examen.codAlumno),
+    mutationFn: (_variables: VariablesEntrega) => entregarExamen(examen.id, examen.codAlumno),
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: clavesExamenes.todo })
     },
-    onSuccess: async () => {
-      toast[cerrado ? 'info' : 'success'](cerrado ? TEXTO_VENTANA_CERRADA : MENSAJE_EXAMEN_ENTREGADO)
+    onSuccess: async (_datos, variables) => {
+      toast[variables.cerrado ? 'info' : 'success'](
+        variables.cerrado ? TEXTO_VENTANA_CERRADA : MENSAJE_EXAMEN_ENTREGADO,
+      )
       await navegar({ to: '/examenes/$id/resultado', params: { id: String(idTurno) } })
     },
     onError: async (error) => {
-      if (!esVentanaCerrada(error) && !esExamenEntregado(error)) {
-        entregado.current = false
-        toast.error(error instanceof ApiError ? error.message : MENSAJE_GENERICO)
+      if (esVentanaCerrada(error)) {
+        toast.info(TEXTO_VENTANA_CERRADA)
+        await navegar({ to: '/examenes/$id/resultado', params: { id: String(idTurno) } })
         return
       }
-      toast.info(TEXTO_VENTANA_CERRADA)
-      await navegar({ to: '/examenes/$id/resultado', params: { id: String(idTurno) } })
+      if (esExamenEntregado(error)) {
+        toast.info((error as ApiError).message)
+        await navegar({ to: '/examenes/$id/resultado', params: { id: String(idTurno) } })
+        return
+      }
+      entregado.current = false
+      toast.error(error instanceof ApiError ? error.message : MENSAJE_GENERICO)
     },
   })
   const enviarEntrega = entregar.mutate
@@ -60,8 +72,10 @@ function Examen({ examen, idTurno }: { examen: ExamenEnCurso; idTurno: number })
   const entregarAhora = useCallback(async () => {
     if (entregado.current) return
     entregado.current = true
-    await guardarAhora()
-    enviarEntrega()
+    const alDespachar: VariablesEntrega = { cerrado: restanteRef.current === 0 }
+    const guardado = await guardarAhora()
+    if (!guardado) toast.error(TEXTO_AUTOGUARDADO_FALLIDO)
+    enviarEntrega(alDespachar)
   }, [enviarEntrega, guardarAhora])
 
   useEffect(() => {
