@@ -583,3 +583,38 @@ export function cuestionarioDe(idTurnoTeorico: number, codAlumno: string): Cuest
     (cuestionario) => cuestionario.idTurnoTeorico === idTurnoTeorico && cuestionario.codAlumno === codAlumno,
   )
 }
+
+export function alumnosHabilitados(turno: TurnoTeoricoMock): PersonaMock[] {
+  const delGrupo = alumnosDeGrupo(turno.idGrupo)
+  const origen = turno.idTurnoOrigen === null ? undefined : buscarTurnoTeorico(turno.idTurnoOrigen)
+  if (!origen) return delGrupo
+  if (turno.tipoExamen === 'SUBSANACION') {
+    return delGrupo.filter((alumno) => cuestionarioDe(origen.id, alumno.codigo)?.aprobado === false)
+  }
+  if (turno.tipoExamen === 'REZAGADO') {
+    return delGrupo.filter((alumno) => cuestionarioDe(origen.id, alumno.codigo) === undefined)
+  }
+  return delGrupo
+}
+
+export function desaprobadosSinSubsanar(codAlumno: string): CuestionarioMock[] {
+  return datosActuales.cuestionarios.filter((cuestionario) => {
+    if (cuestionario.codAlumno !== codAlumno || cuestionario.aprobado !== false) return false
+    const turno = buscarTurnoTeorico(cuestionario.idTurnoTeorico)
+    if (!turno) return false
+    return !datosActuales.cuestionarios.some((otro) => {
+      if (otro.codAlumno !== codAlumno || otro.aprobado !== true) return false
+      const suTurno = buscarTurnoTeorico(otro.idTurnoTeorico)
+      return (
+        suTurno !== undefined &&
+        suTurno.tipoExamen === 'SUBSANACION' &&
+        suTurno.idMateria === turno.idMateria &&
+        suTurno.fechaExamen >= turno.fechaExamen
+      )
+    })
+  })
+}
+
+export function bloqueadoPorSubsanacion(codAlumno: string): boolean {
+  return desaprobadosSinSubsanar(codAlumno).length > 0
+}
