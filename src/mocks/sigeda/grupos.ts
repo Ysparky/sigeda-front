@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import { API, autorizar, erroresDeCampo, guardado, paginar, textoEliminado, textoNoEncontrado } from './comun'
+import { API, autorizar, erroresDeCampo, guardado, paginar, texto, textoEliminado, textoNoEncontrado } from './comun'
 import { buscarPersona, datos, siguienteId, type GrupoMock, type PersonaMock, type ProgramaMock } from './datos'
 
 type PersonaDeGrupo = { codigo?: unknown; checked?: unknown }
@@ -9,10 +9,6 @@ type CuerpoGrupo = {
   descripcion?: unknown
   programa?: unknown
   personas?: PersonaDeGrupo[] | null
-}
-
-function texto(valor: unknown): string {
-  return typeof valor === 'string' ? valor : ''
 }
 
 function entidadPersona(persona: PersonaMock) {

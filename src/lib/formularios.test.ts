@@ -12,6 +12,11 @@ describe('rutaDeCampo', () => {
     expect(rutaDeCampo('maniobrasTurno[1].nota_min', { nota_min: 'notaMin' })).toBe('maniobrasTurno.1.notaMin')
     expect(rutaDeCampo('aeronave', { aeronave: 'idAeronave' })).toBe('idAeronave')
   })
+
+  it('no toma por renombre una propiedad heredada de Object', () => {
+    expect(rutaDeCampo('constructor')).toBe('constructor')
+    expect(rutaDeCampo('datos.toString', { nota_min: 'notaMin' })).toBe('datos.toString')
+  })
 })
 
 describe('aplicarErroresDeCampo', () => {

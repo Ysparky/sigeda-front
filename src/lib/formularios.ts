@@ -5,7 +5,7 @@ export function rutaDeCampo(campo: string, renombrar: Readonly<Record<string, st
   return campo
     .replace(/\[(\d+)\]/g, '.$1')
     .split('.')
-    .map((segmento) => renombrar[segmento] ?? segmento)
+    .map((segmento) => (Object.hasOwn(renombrar, segmento) ? (renombrar[segmento] ?? segmento) : segmento))
     .join('.')
 }
 

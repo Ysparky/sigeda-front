@@ -5,12 +5,13 @@ function esReintentable(error: unknown) {
   return error instanceof ApiError && (error.status === 0 || error.status >= 500)
 }
 
-export function crearQueryClient() {
+export function crearQueryClient(opciones: { reintentar?: boolean } = {}) {
+  const reintentar = opciones.reintentar ?? true
   return new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: 30_000,
-        retry: (fallas, error) => fallas < 2 && esReintentable(error),
+        retry: (fallas, error) => reintentar && fallas < 2 && esReintentable(error),
       },
       mutations: { retry: false },
     },

@@ -1,26 +1,10 @@
 import { http, HttpResponse } from 'msw'
-import { API, autorizar, errorResponse, paginarConOrden } from './comun'
+import { API, autorizar, erroresDeDescripcion, erroresDeNombre, errorResponse, paginarConOrden, texto } from './comun'
 import { buscarSubfase, datos, maniobrasDeSubfase, siguienteId, type FaseMock, type SubfaseMock } from './datos'
 
 type SubfaseDelCuerpo = { id?: unknown; nombre?: unknown; descripcion?: unknown }
 
 type CuerpoFase = { nombre?: unknown; descripcion?: unknown; subfases?: SubfaseDelCuerpo[] | null }
-
-function texto(valor: unknown): string {
-  return typeof valor === 'string' ? valor : ''
-}
-
-function erroresDeNombre(valor: unknown, campo: string): string[] {
-  const nombre = texto(valor)
-  if (nombre.trim() === '') return [`'${campo}': El nombre es obligatorio`]
-  return nombre.length < 3 || nombre.length > 35
-    ? [`'${campo}': El nombre debe tener entre 3 y 35 caracteres.`]
-    : []
-}
-
-function erroresDeDescripcion(valor: unknown, campo: string): string[] {
-  return texto(valor).length > 255 ? [`'${campo}': La descripción no puede superar los 255 caracteres.`] : []
-}
 
 function erroresDeFase(cuerpo: CuerpoFase): string[] {
   const errores = [...erroresDeNombre(cuerpo.nombre, 'nombre'), ...erroresDeDescripcion(cuerpo.descripcion, 'descripcion')]

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { esquemaPaginacion } from '@/lib/busqueda'
+import { esquemaDescripcionLarga, esquemaNombreCorto } from '@/lib/esquemas'
 import { PROGRAMAS } from '@/features/catalogos/api'
 
 export const esquemaBusquedaGrupos = z.object(esquemaPaginacion)
@@ -7,13 +8,8 @@ export const esquemaBusquedaGrupos = z.object(esquemaPaginacion)
 export type BusquedaGrupos = z.infer<typeof esquemaBusquedaGrupos>
 
 export const esquemaGrupo = z.object({
-  nombre: z
-    .string()
-    .trim()
-    .min(1, 'El nombre es obligatorio')
-    .min(3, 'El nombre debe tener entre 3 y 35 caracteres.')
-    .max(35, 'El nombre debe tener entre 3 y 35 caracteres.'),
-  descripcion: z.string().trim().max(255, 'La descripción no puede superar los 255 caracteres.'),
+  nombre: esquemaNombreCorto,
+  descripcion: esquemaDescripcionLarga,
   programa: z.enum(PROGRAMAS),
   alumnos: z.array(z.string()),
 })

@@ -1,14 +1,10 @@
 import { http, HttpResponse } from 'msw'
-import { API, autorizar, erroresDeCampo, guardado, textoEliminado, textoNoEncontrado } from './comun'
+import { API, autorizar, erroresDeCampo, guardado, texto, textoEliminado, textoNoEncontrado } from './comun'
 import { datos, siguienteId, type MateriaMock, type ParteMock } from './datos'
 
 const PARTES: ParteMock[] = ['PRIMERA_PARTE', 'SEGUNDA_PARTE', 'CULTURA_AERONAUTICA']
 
 type CuerpoMateria = { nombre?: unknown; notaMinima?: unknown; coeficiente?: unknown; parte?: unknown }
-
-function texto(valor: unknown): string {
-  return typeof valor === 'string' ? valor : ''
-}
 
 function esParte(valor: unknown): valor is ParteMock {
   return PARTES.some((parte) => parte === valor)

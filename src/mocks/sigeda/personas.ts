@@ -8,6 +8,7 @@ import {
   erroresDeCampo,
   guardado,
   paginar,
+  texto,
   textoEliminado,
   textoMalaPeticion,
   textoNoEncontrado,
@@ -79,10 +80,6 @@ function detalleUsuario(persona: PersonaMock) {
 const PATRON_CODIGO = /^[A-Za-z0-9]{6}$/
 const PATRON_DNI = /^\d{8}$/
 const PATRON_CORREO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
-
-function texto(valor: unknown): string {
-  return typeof valor === 'string' ? valor : ''
-}
 
 function obligatorio(valor: unknown, campo: string, mensaje: string): string[] {
   return texto(valor).trim() === '' ? [`'${campo}': ${mensaje}`] : []

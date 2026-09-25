@@ -1,9 +1,9 @@
-import { QueryClient } from '@tanstack/react-query'
 import { createMemoryHistory } from '@tanstack/react-router'
 import { render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from '@/app'
 import { sesion } from '@/lib/auth/sesion'
+import { crearQueryClient } from '@/lib/query'
 import { CONTRASENA_SEED } from '@/mocks/sigeda/usuarios'
 import { crearRouter } from '@/router'
 
@@ -12,7 +12,7 @@ export function iniciarComo(username: string) {
 }
 
 export function renderApp(ruta = '/') {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+  const queryClient = crearQueryClient({ reintentar: false })
   const router = crearRouter(queryClient, createMemoryHistory({ initialEntries: [ruta] }))
   const usuario = userEvent.setup()
   const resultado = render(<App router={router} queryClient={queryClient} />)

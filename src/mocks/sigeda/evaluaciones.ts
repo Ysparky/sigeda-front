@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { hoyIso } from '@/lib/dominio/calendario'
 import { esBajoEstandar } from '@/lib/dominio/dirbe'
-import { API, autorizar, paginar, textoNoEncontrado } from './comun'
+import { API, autorizar, paginar, texto, textoNoEncontrado } from './comun'
 import {
   buscarPersona,
   datos,
@@ -38,10 +38,6 @@ const CATEGORIAS: Record<string, string> = {
 const CLASIFICACIONES = ['Malo', 'Regular', 'Bueno', 'Excelente']
 const INVALIDAS = new Set(['ID', 'IB', 'IE', 'RD', 'RE', 'BD', 'ED'])
 const MENSAJE_ULTIMA = 'Solo se puede modificar la ultima evaluación realiza por el alumno.'
-
-function texto(valor: unknown): string {
-  return typeof valor === 'string' ? valor : ''
-}
 
 function opcional(valor: unknown): string | null {
   const limpio = texto(valor).trim()

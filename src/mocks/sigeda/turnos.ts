@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { esFechaIso, esHora, esPosteriorAHoy } from '@/lib/dominio/calendario'
 import { permiteCambios, seSuperponen } from '@/lib/dominio/turno'
-import { API, autorizar, errorResponse, paginar, textoNoEncontrado } from './comun'
+import { API, autorizar, errorResponse, paginar, texto, textoNoEncontrado } from './comun'
 import {
   buscarPersona,
   buscarSubfase,
@@ -29,10 +29,6 @@ const MENSAJE_HORA = 'La hora debe estar en formato HH:mm (09:00, 14:00)'
 
 function programaDeConsulta(valor: string | null): ProgramaMock {
   return (valor ?? 'pdi').toUpperCase() === 'PDE' ? 'PDE' : 'PDI'
-}
-
-function texto(valor: unknown): string {
-  return typeof valor === 'string' ? valor : ''
 }
 
 function resumen(turno: TurnoMock) {

@@ -74,9 +74,9 @@ function FormularioConAlumnos({ grupo, disponibles }: Props & { disponibles: Alu
     onSuccess: async (resultado) => {
       toast.success(resultado.mensaje)
       await queryClient.invalidateQueries({ queryKey: clavesGrupos.todo })
-      await (resultado.id > 0
-        ? navegar({ to: '/grupos/$id', params: { id: String(resultado.id) } })
-        : navegar({ to: '/grupos' }))
+      await (resultado.id === null
+        ? navegar({ to: '/grupos' })
+        : navegar({ to: '/grupos/$id', params: { id: String(resultado.id) } }))
     },
     onError: (error) => {
       if (error instanceof ApiError) aplicarErroresDeCampo(error, formulario.setError)

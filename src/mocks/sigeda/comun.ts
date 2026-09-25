@@ -49,6 +49,20 @@ export function textoEliminado(entidad: string) {
   return HttpResponse.text(`${entidad} eliminado con éxito.`)
 }
 
+export function texto(valor: unknown): string {
+  return typeof valor === 'string' ? valor : ''
+}
+
+export function erroresDeNombre(valor: unknown, campo: string): string[] {
+  const nombre = texto(valor)
+  if (nombre.trim() === '') return [`'${campo}': El nombre es obligatorio`]
+  return nombre.length < 3 || nombre.length > 35 ? [`'${campo}': El nombre debe tener entre 3 y 35 caracteres.`] : []
+}
+
+export function erroresDeDescripcion(valor: unknown, campo: string): string[] {
+  return texto(valor).length > 255 ? [`'${campo}': La descripción no puede superar los 255 caracteres.`] : []
+}
+
 export function numero(url: URL, clave: string, porDefecto: number): number {
   const valor = Number(url.searchParams.get(clave) ?? porDefecto)
   return Number.isFinite(valor) ? valor : porDefecto

@@ -103,18 +103,20 @@ export async function listarAlumnosSinGrupo(): Promise<AlumnoDeGrupo[]> {
   }))
 }
 
-function grupoGuardado(respuesta: unknown, idPorDefecto: number): { mensaje: string; id: number } {
+export type GrupoGuardado = { mensaje: string; id: number | null }
+
+function grupoGuardado(respuesta: unknown, idPorDefecto: number | null): GrupoGuardado {
   const leida = esquemaGrupoGuardado.safeParse(respuesta)
   return leida.success
     ? { mensaje: leida.data.mensaje, id: leida.data.grupo.id }
     : { mensaje: soloMensaje(respuesta, MENSAJE_GRUPO_GUARDADO), id: idPorDefecto }
 }
 
-export async function crearGrupo(cuerpo: CuerpoGrupoNuevo): Promise<{ mensaje: string; id: number }> {
-  return grupoGuardado(await sigeda.post<unknown>('/api/grupos', cuerpo), 0)
+export async function crearGrupo(cuerpo: CuerpoGrupoNuevo): Promise<GrupoGuardado> {
+  return grupoGuardado(await sigeda.post<unknown>('/api/grupos', cuerpo), null)
 }
 
-export async function modificarGrupo(id: number, cuerpo: CuerpoGrupoModificado): Promise<{ mensaje: string; id: number }> {
+export async function modificarGrupo(id: number, cuerpo: CuerpoGrupoModificado): Promise<GrupoGuardado> {
   return grupoGuardado(await sigeda.put<unknown>(`/api/grupos/${encodeURIComponent(id)}`, cuerpo), id)
 }
 
