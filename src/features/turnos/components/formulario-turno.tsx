@@ -68,7 +68,7 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
   const opcionesManiobras = useQuery(consultasCatalogos.maniobras(Number(idSubfase) || 0))
   const ocupacion = useQuery(consultasTurnos.ocupacion(fechaEval, Number(idAeronave) || 0))
   const conflictos = conflictosDeAeronave(horarios, ocupacion.data ?? [], idTurno)
-  const estadosTeoricos = useEstadoTeoricoDeAlumnos(horarios.map((alumno) => alumno.codAlumno))
+  const { estados: estadosTeoricos, comprobando } = useEstadoTeoricoDeAlumnos(horarios.map((alumno) => alumno.codAlumno))
   const hayBloqueados = [...estadosTeoricos.values()].some((estado) => estado.bloqueado)
   const nombreDeAlumno = (codigo: string) =>
     opcionesAlumnos.data?.find((alumno) => alumno.codigo === codigo)?.nombreCompleto ?? codigo
@@ -440,7 +440,7 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
             <Link to="/turnos">Cancelar</Link>
           )}
         </Button>
-        <Button type="submit" disabled={guardar.isPending || hayBloqueados}>
+        <Button type="submit" disabled={guardar.isPending || hayBloqueados || comprobando}>
           {guardar.isPending ? 'Guardando…' : 'Guardar turno'}
         </Button>
       </div>

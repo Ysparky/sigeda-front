@@ -4,7 +4,9 @@ import { accionDisponible } from '@/lib/dependencias'
 
 export type EstadoTeoricoDeAlumno = { bloqueado: boolean; motivo: string | null; desconocido: boolean }
 
-export function useEstadoTeoricoDeAlumnos(codigos: readonly string[]): Map<string, EstadoTeoricoDeAlumno> {
+export type EstadoTeoricoDelTurno = { estados: Map<string, EstadoTeoricoDeAlumno>; comprobando: boolean }
+
+export function useEstadoTeoricoDeAlumnos(codigos: readonly string[]): EstadoTeoricoDelTurno {
   const disponible = accionDisponible('bloqueoSubsanacion')
   const unicos = [...new Set(codigos.filter((codigo) => codigo !== ''))]
   const consultas = useQueries({
@@ -21,5 +23,6 @@ export function useEstadoTeoricoDeAlumnos(codigos: readonly string[]): Map<strin
     }
     if (consulta.error) estados.set(codigo, { bloqueado: false, motivo: null, desconocido: true })
   })
-  return estados
+  const comprobando = disponible && consultas.some((consulta) => consulta.isPending)
+  return { estados, comprobando }
 }

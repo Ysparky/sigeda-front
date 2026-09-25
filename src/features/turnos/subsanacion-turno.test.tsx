@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react'
-import { http, HttpResponse } from 'msw'
+import { delay, http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import { TEXTO_ESTADO_TEORICO_DESCONOCIDO, textoBloqueadoPorSubsanacion } from '@/lib/dominio/teoria'
 import { API } from '@/mocks/sigeda/comun'
@@ -29,6 +29,19 @@ describe('Bloqueo por subsanación en el turno práctico', () => {
     await agregarAlumno(usuario, 1, '666666')
     expect(await screen.findByText(textoBloqueadoPorSubsanacion(MOTIVO))).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Guardar turno' })).toBeDisabled()
+  })
+
+  it('CA-RES-10 mientras no se sabe el estado teórico no se puede guardar', async () => {
+    server.use(
+      http.get(`${API}/api/personas/:cod/estado-teorico`, async () => {
+        await delay(200)
+        return HttpResponse.json({ bloqueadoPorSubsanacion: false, motivo: null, desaprobados: [], pendientes: [] })
+      }),
+    )
+    const { usuario } = await abrirRegistrarTurno()
+    await agregarAlumno(usuario, 1, '111111')
+    expect(screen.getByRole('button', { name: 'Guardar turno' })).toBeDisabled()
+    await expect.poll(() => screen.getByRole('button', { name: 'Guardar turno' })).toBeEnabled()
   })
 
   it('CA-RES-10 un alumno sin subsanación pendiente no muestra ningún aviso', async () => {
