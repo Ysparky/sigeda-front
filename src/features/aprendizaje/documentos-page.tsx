@@ -20,6 +20,8 @@ import { formatearFecha } from '@/lib/formato'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { clavesAprendizaje, consultasAprendizaje, type Documento } from './api'
 import { AvisoDocumentosCompartidos } from './components/aviso-compartido'
+import { DialogoSubirDocumento } from './components/dialogo-subir-documento'
+import { EliminarDocumento } from './components/eliminar-documento'
 import { motivoDelDocumento } from './mensajes'
 
 export const INTERVALO_DE_CONSULTA = 3000
@@ -55,7 +57,11 @@ export function DocumentosPage() {
 
   return (
     <>
-      <PageHeader titulo={PANTALLAS.documentos.titulo} descripcion={PANTALLAS.documentos.descripcion} />
+      <PageHeader
+        titulo={PANTALLAS.documentos.titulo}
+        descripcion={PANTALLAS.documentos.descripcion}
+        acciones={<DialogoSubirDocumento etiqueta="Subir documento" />}
+      />
       <AvisoDocumentosCompartidos />
       {rendido && (
         <Alert>
@@ -77,7 +83,11 @@ export function DocumentosPage() {
       ) : documentos.data === undefined ? (
         <Skeleton className="h-40 w-full" aria-busy="true" />
       ) : filas.length === 0 ? (
-        <EmptyState titulo="Todavía no hay documentos" descripcion={TEXTO_SIN_DOCUMENTOS} />
+        <EmptyState
+          titulo="Todavía no hay documentos"
+          descripcion={TEXTO_SIN_DOCUMENTOS}
+          accion={<DialogoSubirDocumento etiqueta="Subir documento" />}
+        />
       ) : (
         <div className="overflow-x-auto rounded-lg border">
           <Table aria-label="Documentos de estudio">
@@ -89,6 +99,9 @@ export function DocumentosPage() {
                 <TableHead>Estado</TableHead>
                 <TableHead>Etiquetas</TableHead>
                 <TableHead>Subido el</TableHead>
+                <TableHead>
+                  <span className="sr-only">Acciones</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -109,6 +122,11 @@ export function DocumentosPage() {
                   </TableCell>
                   <TableCell>{documento.tags.length === 0 ? '—' : documento.tags.join(', ')}</TableCell>
                   <TableCell className="tabular-nums">{formatearFecha(documento.createdAt)}</TableCell>
+                  <TableCell>
+                    <div className="flex justify-end">
+                      <EliminarDocumento documento={documento} />
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

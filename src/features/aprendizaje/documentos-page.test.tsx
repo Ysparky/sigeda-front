@@ -1,12 +1,24 @@
 import { screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { MENSAJE_GENERICO, MENSAJE_SIN_CONEXION } from '@/lib/api/errors'
 import { config } from '@/lib/config'
-import { TEXTO_DOCUMENTO_CON_ERROR, TEXTO_DOCUMENTO_SIGUE_PROCESANDO, TEXTO_SIN_DOCUMENTOS } from '@/lib/dominio/aprendizaje'
+import { MENSAJE_DEPENDENCIA_PENDIENTE } from '@/lib/dependencias'
+import {
+  MENSAJE_DOCUMENTO_ELIMINADO,
+  MENSAJE_DOCUMENTO_SUBIDO,
+  TEXTO_ARCHIVO_RECHAZADO,
+  TEXTO_CONFIRMAR_ELIMINAR_DOCUMENTO,
+  TEXTO_DOCUMENTO_CON_ERROR,
+  TEXTO_DOCUMENTO_SIGUE_PROCESANDO,
+  TEXTO_DOCUMENTOS_COMPARTIDOS,
+  TEXTO_SIN_DOCUMENTOS,
+} from '@/lib/dominio/aprendizaje'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
 import { relojFalso } from '@/test/tiempo'
-import { C4_SIN_TEXTO_LEGIBLE } from './mensajes'
+import { C1_SIN_ARCHIVO, C4_SIN_TEXTO_LEGIBLE } from './mensajes'
 import { INTERVALO_DE_CONSULTA, LIMITE_DE_CONSULTAS } from './documentos-page'
 
 const RUTA_DOCUMENTOS = `${config.iaApiUrl}/documents`
@@ -15,7 +27,7 @@ function filas() {
   return within(screen.getByRole('table', { name: 'Documentos de estudio' }))
     .getAllByRole('row')
     .slice(1)
-    .map((fila) => within(fila).getAllByRole('cell').map((celda) => celda.textContent))
+    .map((fila) => within(fila).getAllByRole('cell').slice(0, 6).map((celda) => celda.textContent))
 }
 
 function contarConsultas() {
@@ -30,7 +42,7 @@ function contarConsultas() {
   }
 }
 
-async function abrirDocumentos(usuarioDePrueba?: ReturnType<typeof relojFalso>['usuario']) {
+async function abrirDocumentos(usuarioDePrueba?: ReturnType<typeof userEvent.setup>) {
   await iniciarComo('alumno.lopez')
   const vista = renderApp('/aprendizaje', usuarioDePrueba)
   await screen.findByRole('table', { name: 'Documentos de estudio' })
@@ -170,5 +182,140 @@ describe('Documentos de estudio', () => {
     } finally {
       consultas.dejar()
     }
+  })
+})
+
+describe('Subir y eliminar documentos', () => {
+  function archivo(nombre = 'Apuntes nuevos.txt', tipo = 'text/plain', bytes = 32) {
+    return new File([new Uint8Array(bytes)], nombre, { type: tipo })
+  }
+
+  async function abrirDialogo(usuario: ReturnType<typeof renderApp>['usuario']) {
+    await usuario.click(screen.getAllByRole('button', { name: 'Subir documento' })[0]!)
+    return within(await screen.findByRole('dialog'))
+  }
+
+  it('CA-DOC-01 el estado vacío ofrece Subir documento', async () => {
+    server.use(http.get(RUTA_DOCUMENTOS, () => HttpResponse.json([])))
+    await iniciarComo('alumno.lopez')
+    const { usuario } = renderApp('/aprendizaje')
+    expect(await screen.findByText(TEXTO_SIN_DOCUMENTOS)).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Subir documento' })).toHaveLength(2)
+    const dialogo = await abrirDialogo(usuario)
+    expect(dialogo.getByLabelText('Archivo')).toBeInTheDocument()
+  })
+
+  it('CA-DOC-02 y CA-DOC-04 un TXT válido se sube y aparece como Procesando', async () => {
+    const { usuario, avanzar } = relojFalso()
+    await abrirDocumentos(usuario)
+    const dialogo = await abrirDialogo(usuario)
+    await usuario.upload(dialogo.getByLabelText('Archivo'), archivo())
+    await usuario.click(dialogo.getByRole('button', { name: 'Subir' }))
+    expect(await screen.findByText(MENSAJE_DOCUMENTO_SUBIDO)).toBeInTheDocument()
+    await waitFor(() => expect(filas()[0]?.[0]).toBe('Apuntes nuevos.txt'))
+    expect(filas()[0]?.[3]).toBe('Procesando')
+    await avanzar(INTERVALO_DE_CONSULTA)
+    await avanzar(INTERVALO_DE_CONSULTA)
+    await waitFor(() => expect(filas()[0]?.[3]).toBe('Listo'))
+  })
+
+  it('CA-DOC-02 un archivo de otro tipo se rechaza en el navegador con A11 y no se envía', async () => {
+    let subidas = 0
+    server.use(
+      http.post(`${RUTA_DOCUMENTOS}/upload`, () => {
+        subidas += 1
+        return HttpResponse.json({}, { status: 201 })
+      }),
+    )
+    const { usuario } = await abrirDocumentos(userEvent.setup({ applyAccept: false }))
+    const dialogo = await abrirDialogo(usuario)
+    await usuario.upload(dialogo.getByLabelText('Archivo'), archivo('foto.png', 'image/png'))
+    expect(await dialogo.findAllByText(TEXTO_ARCHIVO_RECHAZADO)).toHaveLength(2)
+    await usuario.click(dialogo.getByRole('button', { name: 'Subir' }))
+    expect(subidas).toBe(0)
+    expect(dialogo.getByText('foto.png')).toBeInTheDocument()
+  })
+
+  it('CA-DOC-02 un archivo de más de 25 MB se rechaza en el navegador y no se envía', async () => {
+    let subidas = 0
+    server.use(
+      http.post(`${RUTA_DOCUMENTOS}/upload`, () => {
+        subidas += 1
+        return HttpResponse.json({}, { status: 201 })
+      }),
+    )
+    const { usuario } = await abrirDocumentos()
+    const dialogo = await abrirDialogo(usuario)
+    await usuario.upload(dialogo.getByLabelText('Archivo'), archivo('Manual.pdf', 'application/pdf', 26 * 1024 * 1024))
+    expect(await dialogo.findAllByText(TEXTO_ARCHIVO_RECHAZADO)).toHaveLength(2)
+    await usuario.click(dialogo.getByRole('button', { name: 'Subir' }))
+    expect(subidas).toBe(0)
+  })
+
+  it('CA-DOC-03 el mensaje del servidor se muestra y la selección se conserva', async () => {
+    server.use(
+      http.post(`${RUTA_DOCUMENTOS}/upload`, () =>
+        HttpResponse.json({ statusCode: 400, message: C1_SIN_ARCHIVO, error: 'Bad Request' }, { status: 400 }),
+      ),
+    )
+    const { usuario } = await abrirDocumentos()
+    const dialogo = await abrirDialogo(usuario)
+    await usuario.upload(dialogo.getByLabelText('Archivo'), archivo())
+    await usuario.click(dialogo.getByRole('button', { name: 'Subir' }))
+    expect(await dialogo.findByText(C1_SIN_ARCHIVO)).toBeInTheDocument()
+    expect(dialogo.getByText('Apuntes nuevos.txt')).toBeInTheDocument()
+  })
+
+  it('CA-DOC-09 una caída de red informa la falta de conexión y conserva el archivo', async () => {
+    server.use(http.post(`${RUTA_DOCUMENTOS}/upload`, () => HttpResponse.error()))
+    const { usuario } = await abrirDocumentos()
+    const dialogo = await abrirDialogo(usuario)
+    await usuario.upload(dialogo.getByLabelText('Archivo'), archivo())
+    await usuario.click(dialogo.getByRole('button', { name: 'Subir' }))
+    expect(await dialogo.findByText(MENSAJE_SIN_CONEXION)).toBeInTheDocument()
+    expect(dialogo.getByText('Apuntes nuevos.txt')).toBeInTheDocument()
+  })
+
+  it('CA-DOC-05 un mensaje del servidor que no está en el contrato se reemplaza al subir', async () => {
+    server.use(
+      http.post(`${RUTA_DOCUMENTOS}/upload`, () =>
+        HttpResponse.json(
+          { statusCode: 400, message: ['file must be a valid MIME type'], error: 'Bad Request' },
+          { status: 400 },
+        ),
+      ),
+    )
+    const { usuario } = await abrirDocumentos()
+    const dialogo = await abrirDialogo(usuario)
+    await usuario.upload(dialogo.getByLabelText('Archivo'), archivo())
+    await usuario.click(dialogo.getByRole('button', { name: 'Subir' }))
+    expect(await dialogo.findByText(MENSAJE_GENERICO)).toBeInTheDocument()
+    expect(dialogo.queryByText(/must be a valid MIME type/)).not.toBeInTheDocument()
+  })
+
+  it('CA-DOC-07 eliminar pide confirmación con A13 y quita el documento de la lista', async () => {
+    const { usuario } = await abrirDocumentos()
+    await usuario.click(screen.getByRole('button', { name: 'Eliminar PDI EA-510 Título III.pdf' }))
+    const confirmacion = within(await screen.findByRole('alertdialog'))
+    expect(confirmacion.getByText(TEXTO_CONFIRMAR_ELIMINAR_DOCUMENTO)).toBeInTheDocument()
+    await usuario.click(confirmacion.getByRole('button', { name: 'Eliminar' }))
+    expect(await screen.findByText(MENSAJE_DOCUMENTO_ELIMINADO)).toBeInTheDocument()
+    await waitFor(() => expect(filas().some((fila) => fila[0] === 'PDI EA-510 Título III.pdf')).toBe(false))
+  })
+
+  it('CA-DOC-10 fuera del modo mock y sin la dependencia 39 subir y eliminar están deshabilitados', async () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    await abrirDocumentos()
+    expect(screen.getByRole('button', { name: 'Subir documento' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Eliminar PDI EA-510 Título III.pdf' })).toBeDisabled()
+    expect(screen.getAllByText(MENSAJE_DEPENDENCIA_PENDIENTE).length).toBeGreaterThan(1)
+  })
+
+  it('CA-DOC-10 en modo mock subir y eliminar están disponibles y A1 no aparece', async () => {
+    await abrirDocumentos()
+    expect(screen.getByRole('button', { name: 'Subir documento' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Eliminar PDI EA-510 Título III.pdf' })).toBeEnabled()
+    expect(screen.queryByText(MENSAJE_DEPENDENCIA_PENDIENTE)).not.toBeInTheDocument()
+    expect(screen.queryByText(TEXTO_DOCUMENTOS_COMPARTIDOS)).not.toBeInTheDocument()
   })
 })

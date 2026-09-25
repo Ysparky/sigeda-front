@@ -26,6 +26,10 @@ export const TEXTO_SIN_DOCUMENTOS_LISTOS_CUESTIONARIO =
 export const TEXTO_SIN_DOCUMENTOS_LISTOS_CONSULTAS =
   'No hay documentos listos para consultar. Suba uno en Documentos y espere a que termine de procesarse.'
 
+export const MENSAJE_DOCUMENTO_SUBIDO = 'Documento subido. Aparecerá como Procesando hasta que termine.'
+
+export const MENSAJE_DOCUMENTO_ELIMINADO = 'Documento eliminado.'
+
 export const TIPOS_ACEPTADOS = [
   { extension: '.pdf', mimeType: 'application/pdf', etiqueta: 'PDF' },
   {
