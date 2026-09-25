@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { etiquetaDeDificultad, etiquetaDeOrigen, etiquetaDeTipoPregunta } from '@/lib/dominio/teoria'
 import type { PreguntaFila } from './api'
 import { DialogoPregunta } from './components/dialogo-pregunta'
+import { EliminarPregunta } from './components/eliminar-pregunta'
 
 const ayudante = ayudanteDeColumnas<PreguntaFila>()
 
@@ -41,6 +42,7 @@ const acciones = ayudante.display({
           </Button>
         }
       />
+      <EliminarPregunta pregunta={contexto.row.original} />
     </div>
   ),
 })
