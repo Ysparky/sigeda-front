@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import { documentoPublico, errorInterno, IA, noEncontrado } from './comun'
+import { documentoPublico, errorInterno, IA, noEncontrado, textos } from './comun'
 import { revisarDocumentos } from './cuestionarios'
 import { buscarDocumento, datosIa, type SesionMock } from './datos'
 
@@ -26,9 +26,10 @@ const EXCERPTS = [
 type CuerpoSesion = { documentIds?: unknown }
 type CuerpoMensaje = { sessionId?: unknown; message?: unknown }
 
-function textos(valor: unknown): string[] {
-  return Array.isArray(valor) ? valor.filter((elemento): elemento is string => typeof elemento === 'string') : []
-}
+export const ID_MENSAJE_USUARIO_CON_FUENTES = '3e550000-0000-4000-8000-000000000001'
+export const ID_MENSAJE_ASISTENTE_CON_FUENTES = '3e550000-0000-4000-8000-000000000002'
+export const ID_MENSAJE_USUARIO_SIN_FUENTES = '3e550000-0000-4000-8000-000000000011'
+export const ID_MENSAJE_ASISTENTE_SIN_FUENTES = '3e550000-0000-4000-8000-000000000012'
 
 function fuentesResueltas(similitudes: readonly (number | null)[]) {
   const documento = buscarDocumento(ID_DOCUMENTO_PRINCIPAL)
@@ -42,7 +43,8 @@ function fuentesResueltas(similitudes: readonly (number | null)[]) {
 }
 
 function sesionFija(id: string, conFuentes: boolean): SesionMock {
-  const sufijo = conFuentes ? '000' : '001'
+  const idUsuario = conFuentes ? ID_MENSAJE_USUARIO_CON_FUENTES : ID_MENSAJE_USUARIO_SIN_FUENTES
+  const idAsistente = conFuentes ? ID_MENSAJE_ASISTENTE_CON_FUENTES : ID_MENSAJE_ASISTENTE_SIN_FUENTES
   return {
     id,
     title: 'Consulta sobre PDI EA-510 Título III.pdf',
@@ -51,7 +53,7 @@ function sesionFija(id: string, conFuentes: boolean): SesionMock {
     conFuentes,
     mensajes: [
       {
-        id: `3e550000-0000-4000-8000-0000000${sufijo}1`,
+        id: idUsuario,
         sessionId: id,
         role: 'user',
         content: CONTENIDO_USUARIO,
@@ -59,7 +61,7 @@ function sesionFija(id: string, conFuentes: boolean): SesionMock {
         citedChunkIds: [],
       },
       {
-        id: `3e550000-0000-4000-8000-0000000${sufijo}2`,
+        id: idAsistente,
         sessionId: id,
         role: 'assistant',
         content: CONTENIDO_ASISTENTE,

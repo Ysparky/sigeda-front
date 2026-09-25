@@ -20,6 +20,10 @@ export function errorInterno() {
   return HttpResponse.json({ statusCode: 500, message: 'Internal server error' }, { status: 500 })
 }
 
+export function textos(valor: unknown): string[] {
+  return Array.isArray(valor) ? valor.filter((elemento): elemento is string => typeof elemento === 'string') : []
+}
+
 export function documentoPublico(documento: DocumentoMock) {
   return {
     id: documento.id,

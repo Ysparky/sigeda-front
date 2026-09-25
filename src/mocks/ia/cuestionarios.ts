@@ -1,5 +1,5 @@
 import { delay, http, HttpResponse } from 'msw'
-import { IA, malaPeticion, noEncontrado } from './comun'
+import { IA, malaPeticion, noEncontrado, textos } from './comun'
 import { buscarDocumento } from './datos'
 
 export const ID_CUESTIONARIO = 'c0e50000-0000-4000-8000-000000000001'
@@ -74,10 +74,6 @@ function cuestionario(requestedCount: number, questionTypes: string[]) {
     createdAt: CREADO,
     questions: preguntas(),
   }
-}
-
-function textos(valor: unknown): string[] {
-  return Array.isArray(valor) ? valor.filter((elemento): elemento is string => typeof elemento === 'string') : []
 }
 
 export function revisarDocumentos(ids: readonly string[]): Response | null {

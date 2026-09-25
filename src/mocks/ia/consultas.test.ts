@@ -4,6 +4,10 @@ import { MENSAJE_GENERICO } from '@/lib/api/errors'
 import {
   C10_SIN_RESPUESTA,
   C9_SESION_NO_ENCONTRADA,
+  ID_MENSAJE_ASISTENTE_CON_FUENTES,
+  ID_MENSAJE_ASISTENTE_SIN_FUENTES,
+  ID_MENSAJE_USUARIO_CON_FUENTES,
+  ID_MENSAJE_USUARIO_SIN_FUENTES,
   ID_SESION_CON_FUENTES,
   ID_SESION_CREADA,
   ID_SESION_ILEGIBLE,
@@ -15,6 +19,7 @@ const ID_PRINCIPAL = 'd0c00000-0000-4000-8000-000000000001'
 const ID_SEGUNDO = 'd0c00000-0000-4000-8000-000000000002'
 const ID_ETERNO = 'd0c00000-0000-4000-8000-000000000006'
 const ID_AJENO = '5e550000-0000-4000-8000-00000000aaaa'
+const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 describe('mock de consultas', () => {
   it('contrato §7.3 crear la conversación devuelve el id fijo, el título por defecto y sus documentos', async () => {
@@ -95,6 +100,22 @@ describe('mock de consultas', () => {
     const sesion = await obtenerSesion(ID_SESION_SIN_FUENTES)
     expect(sesion.mensajes.map((mensaje) => mensaje.fuentes)).toEqual([null, null])
     expect(sesion.mensajes[1]?.content).toContain('[1]')
+  })
+
+  it('contrato §7.3 los mensajes de las dos conversaciones fijas tienen los ids que documenta el contrato', async () => {
+    const conFuentes = await obtenerSesion(ID_SESION_CON_FUENTES)
+    expect(conFuentes.mensajes.map((mensaje) => mensaje.id)).toEqual([
+      ID_MENSAJE_USUARIO_CON_FUENTES,
+      ID_MENSAJE_ASISTENTE_CON_FUENTES,
+    ])
+    const sinFuentes = await obtenerSesion(ID_SESION_SIN_FUENTES)
+    expect(sinFuentes.mensajes.map((mensaje) => mensaje.id)).toEqual([
+      ID_MENSAJE_USUARIO_SIN_FUENTES,
+      ID_MENSAJE_ASISTENTE_SIN_FUENTES,
+    ])
+    for (const mensaje of [...conFuentes.mensajes, ...sinFuentes.mensajes]) {
+      expect(mensaje.id).toMatch(UUID_V4)
+    }
   })
 
   it('contrato §7.3 la conversación ilegible responde 500 y otra inexistente C9', async () => {
