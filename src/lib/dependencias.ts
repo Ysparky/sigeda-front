@@ -9,6 +9,12 @@ export const DEPENDENCIAS = {
   eliminarFase: [37],
   subirDocumento: [39],
   eliminarDocumento: [39],
+  gestionarMaterias: [5],
+  gestionarPreguntas: [6],
+  importarPreguntas: [6],
+  programarTurnoTeorico: [6],
+  rendirExamen: [6],
+  bloqueoSubsanacion: [7],
 } as const
 
 export type AccionConDependencia = keyof typeof DEPENDENCIAS

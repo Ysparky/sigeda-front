@@ -33,6 +33,27 @@ describe('dependencias resueltas', () => {
     expect(accionDisponible('eliminarFase')).toBe(false)
   })
 
+  it('CA-BAN-14 CA-TUT-14 M4-17 las acciones de teoría esperan las dependencias 5, 6 y 7', () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    vi.stubEnv('VITE_DEPENDENCIAS_RESUELTAS', '22,30,32,33,37,39')
+    expect(accionDisponible('gestionarMaterias')).toBe(false)
+    expect(accionDisponible('gestionarPreguntas')).toBe(false)
+    expect(accionDisponible('importarPreguntas')).toBe(false)
+    expect(accionDisponible('programarTurnoTeorico')).toBe(false)
+    expect(accionDisponible('rendirExamen')).toBe(false)
+    expect(accionDisponible('bloqueoSubsanacion')).toBe(false)
+    expect(dependenciasPendientes('gestionarMaterias')).toEqual([5])
+    expect(dependenciasPendientes('gestionarPreguntas')).toEqual([6])
+    expect(dependenciasPendientes('bloqueoSubsanacion')).toEqual([7])
+    vi.stubEnv('VITE_DEPENDENCIAS_RESUELTAS', '5,6,7')
+    expect(accionDisponible('gestionarMaterias')).toBe(true)
+    expect(accionDisponible('gestionarPreguntas')).toBe(true)
+    expect(accionDisponible('importarPreguntas')).toBe(true)
+    expect(accionDisponible('programarTurnoTeorico')).toBe(true)
+    expect(accionDisponible('rendirExamen')).toBe(true)
+    expect(accionDisponible('bloqueoSubsanacion')).toBe(true)
+  })
+
   it('CA-DOC-10 subir y eliminar documentos esperan la dependencia 39', () => {
     vi.stubEnv('VITE_MOCK_API', 'false')
     vi.stubEnv('VITE_DEPENDENCIAS_RESUELTAS', '22,30,32,33,37')

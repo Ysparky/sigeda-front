@@ -19,7 +19,10 @@ import { Route as AppMisTurnosRouteImport } from './routes/_app/mis-turnos'
 import { Route as AppAprendizajeIndexRouteImport } from './routes/_app/aprendizaje/index'
 import { Route as AppAprendizajeConsultasRouteImport } from './routes/_app/aprendizaje/consultas'
 import { Route as AppAprendizajeCuestionarioRouteImport } from './routes/_app/aprendizaje/cuestionario'
+import { Route as AppBancoIndexRouteImport } from './routes/_app/banco/index'
+import { Route as AppBancoImportarRouteImport } from './routes/_app/banco/importar'
 import { Route as AppEvaluacionesIndexRouteImport } from './routes/_app/evaluaciones/index'
+import { Route as AppExamenesIndexRouteImport } from './routes/_app/examenes/index'
 import { Route as AppGruposIndexRouteImport } from './routes/_app/grupos/index'
 import { Route as AppGruposNuevoRouteImport } from './routes/_app/grupos/nuevo'
 import { Route as AppPersonasIndexRouteImport } from './routes/_app/personas/index'
@@ -30,12 +33,16 @@ import { Route as AppTurnosIndexRouteImport } from './routes/_app/turnos/index'
 import { Route as AppTurnosNuevoRouteImport } from './routes/_app/turnos/nuevo'
 import { Route as AppEvaluacionesCodIndexRouteImport } from './routes/_app/evaluaciones/$cod/index'
 import { Route as AppEvaluacionesCodEditarRouteImport } from './routes/_app/evaluaciones/$cod/editar'
+import { Route as AppExamenesIdIndexRouteImport } from './routes/_app/examenes/$id/index'
+import { Route as AppExamenesIdResultadoRouteImport } from './routes/_app/examenes/$id/resultado'
 import { Route as AppGruposIdIndexRouteImport } from './routes/_app/grupos/$id/index'
 import { Route as AppGruposIdEditarRouteImport } from './routes/_app/grupos/$id/editar'
 import { Route as AppProgramaFasesIndexRouteImport } from './routes/_app/programa/fases/index'
 import { Route as AppProgramaFasesNuevaRouteImport } from './routes/_app/programa/fases/nueva'
 import { Route as AppProgramaManiobrasIndexRouteImport } from './routes/_app/programa/maniobras/index'
 import { Route as AppProgramaManiobrasNuevaRouteImport } from './routes/_app/programa/maniobras/nueva'
+import { Route as AppTeoriaTurnosIndexRouteImport } from './routes/_app/teoria/turnos/index'
+import { Route as AppTeoriaTurnosNuevoRouteImport } from './routes/_app/teoria/turnos/nuevo'
 import { Route as AppTurnosIdIndexRouteImport } from './routes/_app/turnos/$id/index'
 import { Route as AppTurnosIdEditarRouteImport } from './routes/_app/turnos/$id/editar'
 import { Route as AppTurnosDiaIndexRouteImport } from './routes/_app/turnos/dia/index'
@@ -45,6 +52,8 @@ import { Route as AppProgramaFasesIdEditarRouteImport } from './routes/_app/prog
 import { Route as AppProgramaManiobrasIdIndexRouteImport } from './routes/_app/programa/maniobras/$id/index'
 import { Route as AppProgramaManiobrasIdEditarRouteImport } from './routes/_app/programa/maniobras/$id/editar'
 import { Route as AppProgramaManiobrasIdEstandaresRouteImport } from './routes/_app/programa/maniobras/$id/estandares'
+import { Route as AppTeoriaTurnosIdIndexRouteImport } from './routes/_app/teoria/turnos/$id/index'
+import { Route as AppTeoriaTurnosIdEditarRouteImport } from './routes/_app/teoria/turnos/$id/editar'
 import { Route as AppTurnosIdBriefingAlumnoRouteImport } from './routes/_app/turnos/$id/briefing/$alumno'
 import { Route as AppTurnosIdEvaluarAlumnoRouteImport } from './routes/_app/turnos/$id/evaluar/$alumno'
 
@@ -98,9 +107,24 @@ const AppAprendizajeCuestionarioRoute =
     path: '/aprendizaje/cuestionario',
     getParentRoute: () => AppRoute,
   } as any)
+const AppBancoIndexRoute = AppBancoIndexRouteImport.update({
+  id: '/banco/',
+  path: '/banco/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBancoImportarRoute = AppBancoImportarRouteImport.update({
+  id: '/banco/importar',
+  path: '/banco/importar',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppEvaluacionesIndexRoute = AppEvaluacionesIndexRouteImport.update({
   id: '/evaluaciones/',
   path: '/evaluaciones/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExamenesIndexRoute = AppExamenesIndexRouteImport.update({
+  id: '/examenes/',
+  path: '/examenes/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppGruposIndexRoute = AppGruposIndexRouteImport.update({
@@ -154,6 +178,16 @@ const AppEvaluacionesCodEditarRoute =
     path: '/evaluaciones/$cod/editar',
     getParentRoute: () => AppRoute,
   } as any)
+const AppExamenesIdIndexRoute = AppExamenesIdIndexRouteImport.update({
+  id: '/examenes/$id/',
+  path: '/examenes/$id/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExamenesIdResultadoRoute = AppExamenesIdResultadoRouteImport.update({
+  id: '/examenes/$id/resultado',
+  path: '/examenes/$id/resultado',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppGruposIdIndexRoute = AppGruposIdIndexRouteImport.update({
   id: '/grupos/$id/',
   path: '/grupos/$id/',
@@ -186,6 +220,16 @@ const AppProgramaManiobrasNuevaRoute =
     path: '/programa/maniobras/nueva',
     getParentRoute: () => AppRoute,
   } as any)
+const AppTeoriaTurnosIndexRoute = AppTeoriaTurnosIndexRouteImport.update({
+  id: '/teoria/turnos/',
+  path: '/teoria/turnos/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTeoriaTurnosNuevoRoute = AppTeoriaTurnosNuevoRouteImport.update({
+  id: '/teoria/turnos/nuevo',
+  path: '/teoria/turnos/nuevo',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppTurnosIdIndexRoute = AppTurnosIdIndexRouteImport.update({
   id: '/turnos/$id/',
   path: '/turnos/$id/',
@@ -235,6 +279,16 @@ const AppProgramaManiobrasIdEstandaresRoute =
     path: '/programa/maniobras/$id/estandares',
     getParentRoute: () => AppRoute,
   } as any)
+const AppTeoriaTurnosIdIndexRoute = AppTeoriaTurnosIdIndexRouteImport.update({
+  id: '/teoria/turnos/$id/',
+  path: '/teoria/turnos/$id/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTeoriaTurnosIdEditarRoute = AppTeoriaTurnosIdEditarRouteImport.update({
+  id: '/teoria/turnos/$id/editar',
+  path: '/teoria/turnos/$id/editar',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppTurnosIdBriefingAlumnoRoute =
   AppTurnosIdBriefingAlumnoRouteImport.update({
     id: '/turnos/$id/briefing/$alumno',
@@ -257,35 +311,44 @@ export interface FileRoutesByFullPath {
   '/mis-turnos': typeof AppMisTurnosRoute
   '/aprendizaje/consultas': typeof AppAprendizajeConsultasRoute
   '/aprendizaje/cuestionario': typeof AppAprendizajeCuestionarioRoute
+  '/banco/importar': typeof AppBancoImportarRoute
   '/grupos/nuevo': typeof AppGruposNuevoRoute
   '/personas/$cod': typeof AppPersonasCodRoute
   '/personas/nueva': typeof AppPersonasNuevaRoute
   '/programa/materias': typeof AppProgramaMateriasRoute
   '/turnos/nuevo': typeof AppTurnosNuevoRoute
   '/aprendizaje/': typeof AppAprendizajeIndexRoute
+  '/banco/': typeof AppBancoIndexRoute
   '/evaluaciones/': typeof AppEvaluacionesIndexRoute
+  '/examenes/': typeof AppExamenesIndexRoute
   '/grupos/': typeof AppGruposIndexRoute
   '/personas/': typeof AppPersonasIndexRoute
   '/turnos/': typeof AppTurnosIndexRoute
   '/evaluaciones/$cod/editar': typeof AppEvaluacionesCodEditarRoute
+  '/examenes/$id/resultado': typeof AppExamenesIdResultadoRoute
   '/grupos/$id/editar': typeof AppGruposIdEditarRoute
   '/programa/fases/nueva': typeof AppProgramaFasesNuevaRoute
   '/programa/maniobras/nueva': typeof AppProgramaManiobrasNuevaRoute
+  '/teoria/turnos/nuevo': typeof AppTeoriaTurnosNuevoRoute
   '/turnos/$id/editar': typeof AppTurnosIdEditarRoute
   '/turnos/dia/$fecha': typeof AppTurnosDiaFechaRoute
   '/evaluaciones/$cod/': typeof AppEvaluacionesCodIndexRoute
+  '/examenes/$id/': typeof AppExamenesIdIndexRoute
   '/grupos/$id/': typeof AppGruposIdIndexRoute
   '/programa/fases/': typeof AppProgramaFasesIndexRoute
   '/programa/maniobras/': typeof AppProgramaManiobrasIndexRoute
+  '/teoria/turnos/': typeof AppTeoriaTurnosIndexRoute
   '/turnos/$id/': typeof AppTurnosIdIndexRoute
   '/turnos/dia/': typeof AppTurnosDiaIndexRoute
   '/programa/fases/$id/editar': typeof AppProgramaFasesIdEditarRoute
   '/programa/maniobras/$id/editar': typeof AppProgramaManiobrasIdEditarRoute
   '/programa/maniobras/$id/estandares': typeof AppProgramaManiobrasIdEstandaresRoute
+  '/teoria/turnos/$id/editar': typeof AppTeoriaTurnosIdEditarRoute
   '/turnos/$id/briefing/$alumno': typeof AppTurnosIdBriefingAlumnoRoute
   '/turnos/$id/evaluar/$alumno': typeof AppTurnosIdEvaluarAlumnoRoute
   '/programa/fases/$id/': typeof AppProgramaFasesIdIndexRoute
   '/programa/maniobras/$id/': typeof AppProgramaManiobrasIdIndexRoute
+  '/teoria/turnos/$id/': typeof AppTeoriaTurnosIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -296,35 +359,44 @@ export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/aprendizaje/consultas': typeof AppAprendizajeConsultasRoute
   '/aprendizaje/cuestionario': typeof AppAprendizajeCuestionarioRoute
+  '/banco/importar': typeof AppBancoImportarRoute
   '/grupos/nuevo': typeof AppGruposNuevoRoute
   '/personas/$cod': typeof AppPersonasCodRoute
   '/personas/nueva': typeof AppPersonasNuevaRoute
   '/programa/materias': typeof AppProgramaMateriasRoute
   '/turnos/nuevo': typeof AppTurnosNuevoRoute
   '/aprendizaje': typeof AppAprendizajeIndexRoute
+  '/banco': typeof AppBancoIndexRoute
   '/evaluaciones': typeof AppEvaluacionesIndexRoute
+  '/examenes': typeof AppExamenesIndexRoute
   '/grupos': typeof AppGruposIndexRoute
   '/personas': typeof AppPersonasIndexRoute
   '/turnos': typeof AppTurnosIndexRoute
   '/evaluaciones/$cod/editar': typeof AppEvaluacionesCodEditarRoute
+  '/examenes/$id/resultado': typeof AppExamenesIdResultadoRoute
   '/grupos/$id/editar': typeof AppGruposIdEditarRoute
   '/programa/fases/nueva': typeof AppProgramaFasesNuevaRoute
   '/programa/maniobras/nueva': typeof AppProgramaManiobrasNuevaRoute
+  '/teoria/turnos/nuevo': typeof AppTeoriaTurnosNuevoRoute
   '/turnos/$id/editar': typeof AppTurnosIdEditarRoute
   '/turnos/dia/$fecha': typeof AppTurnosDiaFechaRoute
   '/evaluaciones/$cod': typeof AppEvaluacionesCodIndexRoute
+  '/examenes/$id': typeof AppExamenesIdIndexRoute
   '/grupos/$id': typeof AppGruposIdIndexRoute
   '/programa/fases': typeof AppProgramaFasesIndexRoute
   '/programa/maniobras': typeof AppProgramaManiobrasIndexRoute
+  '/teoria/turnos': typeof AppTeoriaTurnosIndexRoute
   '/turnos/$id': typeof AppTurnosIdIndexRoute
   '/turnos/dia': typeof AppTurnosDiaIndexRoute
   '/programa/fases/$id/editar': typeof AppProgramaFasesIdEditarRoute
   '/programa/maniobras/$id/editar': typeof AppProgramaManiobrasIdEditarRoute
   '/programa/maniobras/$id/estandares': typeof AppProgramaManiobrasIdEstandaresRoute
+  '/teoria/turnos/$id/editar': typeof AppTeoriaTurnosIdEditarRoute
   '/turnos/$id/briefing/$alumno': typeof AppTurnosIdBriefingAlumnoRoute
   '/turnos/$id/evaluar/$alumno': typeof AppTurnosIdEvaluarAlumnoRoute
   '/programa/fases/$id': typeof AppProgramaFasesIdIndexRoute
   '/programa/maniobras/$id': typeof AppProgramaManiobrasIdIndexRoute
+  '/teoria/turnos/$id': typeof AppTeoriaTurnosIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -337,35 +409,44 @@ export interface FileRoutesById {
   '/_app/': typeof AppIndexRoute
   '/_app/aprendizaje/consultas': typeof AppAprendizajeConsultasRoute
   '/_app/aprendizaje/cuestionario': typeof AppAprendizajeCuestionarioRoute
+  '/_app/banco/importar': typeof AppBancoImportarRoute
   '/_app/grupos/nuevo': typeof AppGruposNuevoRoute
   '/_app/personas/$cod': typeof AppPersonasCodRoute
   '/_app/personas/nueva': typeof AppPersonasNuevaRoute
   '/_app/programa/materias': typeof AppProgramaMateriasRoute
   '/_app/turnos/nuevo': typeof AppTurnosNuevoRoute
   '/_app/aprendizaje/': typeof AppAprendizajeIndexRoute
+  '/_app/banco/': typeof AppBancoIndexRoute
   '/_app/evaluaciones/': typeof AppEvaluacionesIndexRoute
+  '/_app/examenes/': typeof AppExamenesIndexRoute
   '/_app/grupos/': typeof AppGruposIndexRoute
   '/_app/personas/': typeof AppPersonasIndexRoute
   '/_app/turnos/': typeof AppTurnosIndexRoute
   '/_app/evaluaciones/$cod/editar': typeof AppEvaluacionesCodEditarRoute
+  '/_app/examenes/$id/resultado': typeof AppExamenesIdResultadoRoute
   '/_app/grupos/$id/editar': typeof AppGruposIdEditarRoute
   '/_app/programa/fases/nueva': typeof AppProgramaFasesNuevaRoute
   '/_app/programa/maniobras/nueva': typeof AppProgramaManiobrasNuevaRoute
+  '/_app/teoria/turnos/nuevo': typeof AppTeoriaTurnosNuevoRoute
   '/_app/turnos/$id/editar': typeof AppTurnosIdEditarRoute
   '/_app/turnos/dia/$fecha': typeof AppTurnosDiaFechaRoute
   '/_app/evaluaciones/$cod/': typeof AppEvaluacionesCodIndexRoute
+  '/_app/examenes/$id/': typeof AppExamenesIdIndexRoute
   '/_app/grupos/$id/': typeof AppGruposIdIndexRoute
   '/_app/programa/fases/': typeof AppProgramaFasesIndexRoute
   '/_app/programa/maniobras/': typeof AppProgramaManiobrasIndexRoute
+  '/_app/teoria/turnos/': typeof AppTeoriaTurnosIndexRoute
   '/_app/turnos/$id/': typeof AppTurnosIdIndexRoute
   '/_app/turnos/dia/': typeof AppTurnosDiaIndexRoute
   '/_app/programa/fases/$id/editar': typeof AppProgramaFasesIdEditarRoute
   '/_app/programa/maniobras/$id/editar': typeof AppProgramaManiobrasIdEditarRoute
   '/_app/programa/maniobras/$id/estandares': typeof AppProgramaManiobrasIdEstandaresRoute
+  '/_app/teoria/turnos/$id/editar': typeof AppTeoriaTurnosIdEditarRoute
   '/_app/turnos/$id/briefing/$alumno': typeof AppTurnosIdBriefingAlumnoRoute
   '/_app/turnos/$id/evaluar/$alumno': typeof AppTurnosIdEvaluarAlumnoRoute
   '/_app/programa/fases/$id/': typeof AppProgramaFasesIdIndexRoute
   '/_app/programa/maniobras/$id/': typeof AppProgramaManiobrasIdIndexRoute
+  '/_app/teoria/turnos/$id/': typeof AppTeoriaTurnosIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -378,35 +459,44 @@ export interface FileRouteTypes {
     | '/mis-turnos'
     | '/aprendizaje/consultas'
     | '/aprendizaje/cuestionario'
+    | '/banco/importar'
     | '/grupos/nuevo'
     | '/personas/$cod'
     | '/personas/nueva'
     | '/programa/materias'
     | '/turnos/nuevo'
     | '/aprendizaje/'
+    | '/banco/'
     | '/evaluaciones/'
+    | '/examenes/'
     | '/grupos/'
     | '/personas/'
     | '/turnos/'
     | '/evaluaciones/$cod/editar'
+    | '/examenes/$id/resultado'
     | '/grupos/$id/editar'
     | '/programa/fases/nueva'
     | '/programa/maniobras/nueva'
+    | '/teoria/turnos/nuevo'
     | '/turnos/$id/editar'
     | '/turnos/dia/$fecha'
     | '/evaluaciones/$cod/'
+    | '/examenes/$id/'
     | '/grupos/$id/'
     | '/programa/fases/'
     | '/programa/maniobras/'
+    | '/teoria/turnos/'
     | '/turnos/$id/'
     | '/turnos/dia/'
     | '/programa/fases/$id/editar'
     | '/programa/maniobras/$id/editar'
     | '/programa/maniobras/$id/estandares'
+    | '/teoria/turnos/$id/editar'
     | '/turnos/$id/briefing/$alumno'
     | '/turnos/$id/evaluar/$alumno'
     | '/programa/fases/$id/'
     | '/programa/maniobras/$id/'
+    | '/teoria/turnos/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -417,35 +507,44 @@ export interface FileRouteTypes {
     | '/'
     | '/aprendizaje/consultas'
     | '/aprendizaje/cuestionario'
+    | '/banco/importar'
     | '/grupos/nuevo'
     | '/personas/$cod'
     | '/personas/nueva'
     | '/programa/materias'
     | '/turnos/nuevo'
     | '/aprendizaje'
+    | '/banco'
     | '/evaluaciones'
+    | '/examenes'
     | '/grupos'
     | '/personas'
     | '/turnos'
     | '/evaluaciones/$cod/editar'
+    | '/examenes/$id/resultado'
     | '/grupos/$id/editar'
     | '/programa/fases/nueva'
     | '/programa/maniobras/nueva'
+    | '/teoria/turnos/nuevo'
     | '/turnos/$id/editar'
     | '/turnos/dia/$fecha'
     | '/evaluaciones/$cod'
+    | '/examenes/$id'
     | '/grupos/$id'
     | '/programa/fases'
     | '/programa/maniobras'
+    | '/teoria/turnos'
     | '/turnos/$id'
     | '/turnos/dia'
     | '/programa/fases/$id/editar'
     | '/programa/maniobras/$id/editar'
     | '/programa/maniobras/$id/estandares'
+    | '/teoria/turnos/$id/editar'
     | '/turnos/$id/briefing/$alumno'
     | '/turnos/$id/evaluar/$alumno'
     | '/programa/fases/$id'
     | '/programa/maniobras/$id'
+    | '/teoria/turnos/$id'
   id:
     | '__root__'
     | '/_app'
@@ -457,35 +556,44 @@ export interface FileRouteTypes {
     | '/_app/'
     | '/_app/aprendizaje/consultas'
     | '/_app/aprendizaje/cuestionario'
+    | '/_app/banco/importar'
     | '/_app/grupos/nuevo'
     | '/_app/personas/$cod'
     | '/_app/personas/nueva'
     | '/_app/programa/materias'
     | '/_app/turnos/nuevo'
     | '/_app/aprendizaje/'
+    | '/_app/banco/'
     | '/_app/evaluaciones/'
+    | '/_app/examenes/'
     | '/_app/grupos/'
     | '/_app/personas/'
     | '/_app/turnos/'
     | '/_app/evaluaciones/$cod/editar'
+    | '/_app/examenes/$id/resultado'
     | '/_app/grupos/$id/editar'
     | '/_app/programa/fases/nueva'
     | '/_app/programa/maniobras/nueva'
+    | '/_app/teoria/turnos/nuevo'
     | '/_app/turnos/$id/editar'
     | '/_app/turnos/dia/$fecha'
     | '/_app/evaluaciones/$cod/'
+    | '/_app/examenes/$id/'
     | '/_app/grupos/$id/'
     | '/_app/programa/fases/'
     | '/_app/programa/maniobras/'
+    | '/_app/teoria/turnos/'
     | '/_app/turnos/$id/'
     | '/_app/turnos/dia/'
     | '/_app/programa/fases/$id/editar'
     | '/_app/programa/maniobras/$id/editar'
     | '/_app/programa/maniobras/$id/estandares'
+    | '/_app/teoria/turnos/$id/editar'
     | '/_app/turnos/$id/briefing/$alumno'
     | '/_app/turnos/$id/evaluar/$alumno'
     | '/_app/programa/fases/$id/'
     | '/_app/programa/maniobras/$id/'
+    | '/_app/teoria/turnos/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -565,11 +673,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAprendizajeCuestionarioRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/banco/': {
+      id: '/_app/banco/'
+      path: '/banco'
+      fullPath: '/banco/'
+      preLoaderRoute: typeof AppBancoIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/banco/importar': {
+      id: '/_app/banco/importar'
+      path: '/banco/importar'
+      fullPath: '/banco/importar'
+      preLoaderRoute: typeof AppBancoImportarRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/evaluaciones/': {
       id: '/_app/evaluaciones/'
       path: '/evaluaciones'
       fullPath: '/evaluaciones/'
       preLoaderRoute: typeof AppEvaluacionesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/examenes/': {
+      id: '/_app/examenes/'
+      path: '/examenes'
+      fullPath: '/examenes/'
+      preLoaderRoute: typeof AppExamenesIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/grupos/': {
@@ -642,6 +771,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEvaluacionesCodEditarRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/examenes/$id/': {
+      id: '/_app/examenes/$id/'
+      path: '/examenes/$id'
+      fullPath: '/examenes/$id/'
+      preLoaderRoute: typeof AppExamenesIdIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/examenes/$id/resultado': {
+      id: '/_app/examenes/$id/resultado'
+      path: '/examenes/$id/resultado'
+      fullPath: '/examenes/$id/resultado'
+      preLoaderRoute: typeof AppExamenesIdResultadoRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/grupos/$id/': {
       id: '/_app/grupos/$id/'
       path: '/grupos/$id'
@@ -682,6 +825,20 @@ declare module '@tanstack/react-router' {
       path: '/programa/maniobras/nueva'
       fullPath: '/programa/maniobras/nueva'
       preLoaderRoute: typeof AppProgramaManiobrasNuevaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/teoria/turnos/': {
+      id: '/_app/teoria/turnos/'
+      path: '/teoria/turnos'
+      fullPath: '/teoria/turnos/'
+      preLoaderRoute: typeof AppTeoriaTurnosIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/teoria/turnos/nuevo': {
+      id: '/_app/teoria/turnos/nuevo'
+      path: '/teoria/turnos/nuevo'
+      fullPath: '/teoria/turnos/nuevo'
+      preLoaderRoute: typeof AppTeoriaTurnosNuevoRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/turnos/$id/': {
@@ -747,6 +904,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProgramaManiobrasIdEstandaresRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/teoria/turnos/$id/': {
+      id: '/_app/teoria/turnos/$id/'
+      path: '/teoria/turnos/$id'
+      fullPath: '/teoria/turnos/$id/'
+      preLoaderRoute: typeof AppTeoriaTurnosIdIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/teoria/turnos/$id/editar': {
+      id: '/_app/teoria/turnos/$id/editar'
+      path: '/teoria/turnos/$id/editar'
+      fullPath: '/teoria/turnos/$id/editar'
+      preLoaderRoute: typeof AppTeoriaTurnosIdEditarRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/turnos/$id/briefing/$alumno': {
       id: '/_app/turnos/$id/briefing/$alumno'
       path: '/turnos/$id/briefing/$alumno'
@@ -772,35 +943,44 @@ interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppAprendizajeConsultasRoute: typeof AppAprendizajeConsultasRoute
   AppAprendizajeCuestionarioRoute: typeof AppAprendizajeCuestionarioRoute
+  AppBancoImportarRoute: typeof AppBancoImportarRoute
   AppGruposNuevoRoute: typeof AppGruposNuevoRoute
   AppPersonasCodRoute: typeof AppPersonasCodRoute
   AppPersonasNuevaRoute: typeof AppPersonasNuevaRoute
   AppProgramaMateriasRoute: typeof AppProgramaMateriasRoute
   AppTurnosNuevoRoute: typeof AppTurnosNuevoRoute
   AppAprendizajeIndexRoute: typeof AppAprendizajeIndexRoute
+  AppBancoIndexRoute: typeof AppBancoIndexRoute
   AppEvaluacionesIndexRoute: typeof AppEvaluacionesIndexRoute
+  AppExamenesIndexRoute: typeof AppExamenesIndexRoute
   AppGruposIndexRoute: typeof AppGruposIndexRoute
   AppPersonasIndexRoute: typeof AppPersonasIndexRoute
   AppTurnosIndexRoute: typeof AppTurnosIndexRoute
   AppEvaluacionesCodEditarRoute: typeof AppEvaluacionesCodEditarRoute
+  AppExamenesIdResultadoRoute: typeof AppExamenesIdResultadoRoute
   AppGruposIdEditarRoute: typeof AppGruposIdEditarRoute
   AppProgramaFasesNuevaRoute: typeof AppProgramaFasesNuevaRoute
   AppProgramaManiobrasNuevaRoute: typeof AppProgramaManiobrasNuevaRoute
+  AppTeoriaTurnosNuevoRoute: typeof AppTeoriaTurnosNuevoRoute
   AppTurnosIdEditarRoute: typeof AppTurnosIdEditarRoute
   AppTurnosDiaFechaRoute: typeof AppTurnosDiaFechaRoute
   AppEvaluacionesCodIndexRoute: typeof AppEvaluacionesCodIndexRoute
+  AppExamenesIdIndexRoute: typeof AppExamenesIdIndexRoute
   AppGruposIdIndexRoute: typeof AppGruposIdIndexRoute
   AppProgramaFasesIndexRoute: typeof AppProgramaFasesIndexRoute
   AppProgramaManiobrasIndexRoute: typeof AppProgramaManiobrasIndexRoute
+  AppTeoriaTurnosIndexRoute: typeof AppTeoriaTurnosIndexRoute
   AppTurnosIdIndexRoute: typeof AppTurnosIdIndexRoute
   AppTurnosDiaIndexRoute: typeof AppTurnosDiaIndexRoute
   AppProgramaFasesIdEditarRoute: typeof AppProgramaFasesIdEditarRoute
   AppProgramaManiobrasIdEditarRoute: typeof AppProgramaManiobrasIdEditarRoute
   AppProgramaManiobrasIdEstandaresRoute: typeof AppProgramaManiobrasIdEstandaresRoute
+  AppTeoriaTurnosIdEditarRoute: typeof AppTeoriaTurnosIdEditarRoute
   AppTurnosIdBriefingAlumnoRoute: typeof AppTurnosIdBriefingAlumnoRoute
   AppTurnosIdEvaluarAlumnoRoute: typeof AppTurnosIdEvaluarAlumnoRoute
   AppProgramaFasesIdIndexRoute: typeof AppProgramaFasesIdIndexRoute
   AppProgramaManiobrasIdIndexRoute: typeof AppProgramaManiobrasIdIndexRoute
+  AppTeoriaTurnosIdIndexRoute: typeof AppTeoriaTurnosIdIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -811,35 +991,44 @@ const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppAprendizajeConsultasRoute: AppAprendizajeConsultasRoute,
   AppAprendizajeCuestionarioRoute: AppAprendizajeCuestionarioRoute,
+  AppBancoImportarRoute: AppBancoImportarRoute,
   AppGruposNuevoRoute: AppGruposNuevoRoute,
   AppPersonasCodRoute: AppPersonasCodRoute,
   AppPersonasNuevaRoute: AppPersonasNuevaRoute,
   AppProgramaMateriasRoute: AppProgramaMateriasRoute,
   AppTurnosNuevoRoute: AppTurnosNuevoRoute,
   AppAprendizajeIndexRoute: AppAprendizajeIndexRoute,
+  AppBancoIndexRoute: AppBancoIndexRoute,
   AppEvaluacionesIndexRoute: AppEvaluacionesIndexRoute,
+  AppExamenesIndexRoute: AppExamenesIndexRoute,
   AppGruposIndexRoute: AppGruposIndexRoute,
   AppPersonasIndexRoute: AppPersonasIndexRoute,
   AppTurnosIndexRoute: AppTurnosIndexRoute,
   AppEvaluacionesCodEditarRoute: AppEvaluacionesCodEditarRoute,
+  AppExamenesIdResultadoRoute: AppExamenesIdResultadoRoute,
   AppGruposIdEditarRoute: AppGruposIdEditarRoute,
   AppProgramaFasesNuevaRoute: AppProgramaFasesNuevaRoute,
   AppProgramaManiobrasNuevaRoute: AppProgramaManiobrasNuevaRoute,
+  AppTeoriaTurnosNuevoRoute: AppTeoriaTurnosNuevoRoute,
   AppTurnosIdEditarRoute: AppTurnosIdEditarRoute,
   AppTurnosDiaFechaRoute: AppTurnosDiaFechaRoute,
   AppEvaluacionesCodIndexRoute: AppEvaluacionesCodIndexRoute,
+  AppExamenesIdIndexRoute: AppExamenesIdIndexRoute,
   AppGruposIdIndexRoute: AppGruposIdIndexRoute,
   AppProgramaFasesIndexRoute: AppProgramaFasesIndexRoute,
   AppProgramaManiobrasIndexRoute: AppProgramaManiobrasIndexRoute,
+  AppTeoriaTurnosIndexRoute: AppTeoriaTurnosIndexRoute,
   AppTurnosIdIndexRoute: AppTurnosIdIndexRoute,
   AppTurnosDiaIndexRoute: AppTurnosDiaIndexRoute,
   AppProgramaFasesIdEditarRoute: AppProgramaFasesIdEditarRoute,
   AppProgramaManiobrasIdEditarRoute: AppProgramaManiobrasIdEditarRoute,
   AppProgramaManiobrasIdEstandaresRoute: AppProgramaManiobrasIdEstandaresRoute,
+  AppTeoriaTurnosIdEditarRoute: AppTeoriaTurnosIdEditarRoute,
   AppTurnosIdBriefingAlumnoRoute: AppTurnosIdBriefingAlumnoRoute,
   AppTurnosIdEvaluarAlumnoRoute: AppTurnosIdEvaluarAlumnoRoute,
   AppProgramaFasesIdIndexRoute: AppProgramaFasesIdIndexRoute,
   AppProgramaManiobrasIdIndexRoute: AppProgramaManiobrasIdIndexRoute,
+  AppTeoriaTurnosIdIndexRoute: AppTeoriaTurnosIdIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

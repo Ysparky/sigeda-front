@@ -70,6 +70,7 @@ describe('menuPara', () => {
       'Inicio',
       'Mis turnos',
       'Mis evaluaciones',
+      'Mis exámenes',
       'Documentos',
       'Cuestionario de práctica',
       'Consultas',
@@ -85,6 +86,8 @@ describe('menuPara', () => {
       'Programación de turnos',
       'Orden de vuelo del día',
       'Evaluaciones',
+      'Banco de preguntas',
+      'Turnos teóricos',
       'Documentos',
       'Cuestionario de práctica',
       'Consultas',
@@ -109,6 +112,7 @@ describe('menuPara', () => {
       'Programa',
       'Operaciones de vuelo',
       'Evaluaciones',
+      'Teoría',
       'Aprendizaje',
     ])
     expect(secciones[2]?.pantallas.map((pantalla) => pantalla.titulo)).toEqual([
@@ -166,6 +170,28 @@ describe('migasPara', () => {
       PANTALLAS.consultas,
     ])
     expect(migasPara('/aprendizaje', perfilDe('Instructor'), false)).toEqual([PANTALLAS.documentos])
+  })
+
+  it('M4-13 arma las migas de las pantallas de teoría', () => {
+    expect(migasPara('/banco/importar', perfilDe('Instructor'), false)).toEqual([
+      PANTALLAS.banco,
+      PANTALLAS.importarPreguntas,
+    ])
+    expect(migasPara('/teoria/turnos/$id/editar', perfilDe('Instructor'), false)).toEqual([
+      PANTALLAS.turnosTeoricos,
+      PANTALLAS.resultadosTurnoTeorico,
+      PANTALLAS.modificarTurnoTeorico,
+    ])
+    expect(migasPara('/examenes/$id/resultado', perfilDe('Alumno'), false)).toEqual([
+      PANTALLAS.misExamenes,
+      PANTALLAS.resultadoExamen,
+    ])
+  })
+
+  it('M4-14 el Comandante de Escuadrón no ve las pantallas de teoría de M4', () => {
+    expect(titulosDelMenu('Comandante de Escuadrón')).not.toContain('Turnos teóricos')
+    expect(titulosDelMenu('Comandante de Escuadrón')).not.toContain('Banco de preguntas')
+    expect(titulosDelMenu('Administrador Web')).not.toContain('Mis exámenes')
   })
 
   it('no agrega migas en Inicio ni en rutas desconocidas', () => {

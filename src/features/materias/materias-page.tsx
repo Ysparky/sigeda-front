@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { usePuede } from '@/lib/auth/use-sesion'
+import { accionDisponible, MENSAJE_DEPENDENCIA_PENDIENTE } from '@/lib/dependencias'
 import { formatearNota } from '@/lib/formato'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { clavesMaterias, consultasMaterias, eliminarMateria, etiquetaDeParte } from './api'
@@ -18,7 +19,8 @@ import { DialogoMateria } from './components/dialogo-materia'
 export function MateriasPage() {
   const materias = useQuery(consultasMaterias.lista())
   const error = errorDePrimeraCarga(materias)
-  const puedeGestionar = usePuede('Manage Subjects')
+  const puedeGestionar = usePuede('Manage Subjects') && accionDisponible('gestionarMaterias')
+  const esperaDependencia = usePuede('Manage Subjects') && !accionDisponible('gestionarMaterias')
   const queryClient = useQueryClient()
 
   const eliminar = useMutation({
@@ -36,15 +38,25 @@ export function MateriasPage() {
         titulo="Materias"
         descripcion="Materias del curso en tierra con su nota mínima y coeficiente."
         acciones={
-          puedeGestionar && (
-            <DialogoMateria
-              disparador={
-                <Button>
-                  <Plus aria-hidden />
-                  Registrar materia
-                </Button>
-              }
-            />
+          esperaDependencia ? (
+            <div className="grid justify-items-end gap-1">
+              <Button disabled>
+                <Plus aria-hidden />
+                Registrar materia
+              </Button>
+              <p className="text-xs text-muted-foreground">{MENSAJE_DEPENDENCIA_PENDIENTE}</p>
+            </div>
+          ) : (
+            puedeGestionar && (
+              <DialogoMateria
+                disparador={
+                  <Button>
+                    <Plus aria-hidden />
+                    Registrar materia
+                  </Button>
+                }
+              />
+            )
           )
         }
       />
