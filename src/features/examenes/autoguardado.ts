@@ -17,6 +17,12 @@ export function respuestasIniciales(examen: ExamenEnCurso): Respuestas {
   return iniciales
 }
 
+export function mismasRespuestas(unas: Respuestas, otras: Respuestas): boolean {
+  const claves = Object.keys(unas)
+  if (claves.length !== Object.keys(otras).length) return false
+  return claves.every((clave) => unas[Number(clave)] === otras[Number(clave)])
+}
+
 export function contarRespondidas(respuestas: Respuestas): number {
   return Object.values(respuestas).filter((valor) => valor.trim() !== '').length
 }

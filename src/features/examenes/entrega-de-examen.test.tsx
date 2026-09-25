@@ -153,6 +153,7 @@ describe('Entrega del examen', () => {
     abrirVentanaDeExamen({ restantes: 1 })
     server.use(http.put(`${API}/api/cuestionarios/:id/respuestas`, () => HttpResponse.error()))
     const { router } = await abrirExamen(usuario)
+    await usuario.type(screen.getByLabelText('Respuesta de la pregunta 4'), 'Regular')
     await avanzar(60_000)
     await esperarRuta(router, '/examenes/3/resultado')
     await avanzar(100)

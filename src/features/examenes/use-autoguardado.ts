@@ -5,6 +5,7 @@ import {
   aRespuestasEnviadas,
   DEBOUNCE_AUTOGUARDADO,
   MAXIMO_AUTOGUARDADO,
+  mismasRespuestas,
   respuestasIniciales,
   UMBRAL_GUARDADO_INMEDIATO,
   type EstadoGuardado,
@@ -15,6 +16,7 @@ export function useAutoguardado(examen: ExamenEnCurso, restante: number) {
   const [respuestas, setRespuestas] = useState<Respuestas>(() => respuestasIniciales(examen))
   const [estado, setEstado] = useState<EstadoGuardado>('limpio')
   const ultimas = useRef(respuestas)
+  const guardadas = useRef(respuestas)
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
   const maximo = useRef<ReturnType<typeof setTimeout> | null>(null)
   const enCurso = useRef<Promise<boolean> | null>(null)
@@ -42,9 +44,11 @@ export function useAutoguardado(examen: ExamenEnCurso, restante: number) {
   }, [])
 
   const enviarUnaVez = useCallback(async (): Promise<boolean> => {
+    const enviadas = ultimas.current
     setEstado('guardando')
     try {
-      await enviar(ultimas.current)
+      await enviar(enviadas)
+      guardadas.current = enviadas
       setEstado('guardado')
       return true
     } catch {
@@ -60,10 +64,12 @@ export function useAutoguardado(examen: ExamenEnCurso, restante: number) {
       return enCurso.current
     }
     limpiarMaximo()
+    if (mismasRespuestas(guardadas.current, ultimas.current)) return Promise.resolve(true)
     const tanda = (async () => {
       let exito = await enviarUnaVez()
       while (pendiente.current) {
         pendiente.current = false
+        if (mismasRespuestas(guardadas.current, ultimas.current)) break
         exito = await enviarUnaVez()
       }
       return exito
