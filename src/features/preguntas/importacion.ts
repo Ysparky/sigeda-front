@@ -1,4 +1,5 @@
 import type { Pregunta } from '@/features/aprendizaje/api'
+import type { ErroresDeCampo } from '@/lib/api/errors'
 import {
   MARCADOR_COMPLETAR,
   TEXTO_ALTERNATIVAS_REPETIDAS,
@@ -8,7 +9,9 @@ import {
   type Dificultad,
   type TipoPregunta,
 } from '@/lib/dominio/teoria'
+import { rutaDeCampo } from '@/lib/formularios'
 import type { CuerpoPregunta } from './api'
+import { MENSAJE_ENUNCIADO } from './schemas'
 
 export const LARGO_ENUNCIADO = 500
 export const LARGO_RESPUESTA = 200
@@ -16,6 +19,7 @@ export const LARGO_RESPUESTA = 200
 export const TEXTO_SIN_CORRECTA = 'El modelo no marcó ninguna alternativa como correcta: elija la correcta.'
 export const TEXTO_REPETIDA_EN_LOTE = 'La pregunta está repetida en este lote: corrija el enunciado o quítela.'
 export const TEXTO_FALTA_MARCADOR = `El enunciado de una pregunta de completar debe incluir el marcador ${MARCADOR_COMPLETAR}.`
+export const TEXTO_ALTERNATIVA_VACIA = 'La respuesta es obligatoria.'
 
 export type FilaImportacion = {
   id: string
@@ -35,11 +39,7 @@ export function recortar(valor: string, largo: number): string {
 }
 
 function normalizar(valor: string): string {
-  return valor
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
+  return valor.trim().toLowerCase()
 }
 
 function tipoDesdeIa(tipo: Pregunta['type']): TipoPregunta {
@@ -92,12 +92,14 @@ export function filasDesdeIa(
 export function avisosDeFila(fila: FilaImportacion, todas: readonly FilaImportacion[]): string[] {
   const avisos: string[] = []
   if (fila.recortado) avisos.push(TEXTO_ENUNCIADO_RECORTADO)
-  if (fila.enunciado.trim().length < 10) avisos.push(TEXTO_ENUNCIADO_CORTO)
+  const largoEnunciado = fila.enunciado.trim().length
+  if (largoEnunciado < 10) avisos.push(TEXTO_ENUNCIADO_CORTO)
+  if (largoEnunciado > LARGO_ENUNCIADO) avisos.push(MENSAJE_ENUNCIADO)
   if (fila.tipoPregunta === 'COMPLETAR' && !fila.enunciado.includes(MARCADOR_COMPLETAR)) avisos.push(TEXTO_FALTA_MARCADOR)
   const textos = fila.alternativas.map(normalizar)
-  if (textos.some((texto) => texto === '') || new Set(textos).size !== textos.length) {
-    avisos.push(TEXTO_ALTERNATIVAS_REPETIDAS)
-  }
+  if (textos.some((texto) => texto === '')) avisos.push(TEXTO_ALTERNATIVA_VACIA)
+  const completos = textos.filter((texto) => texto !== '')
+  if (new Set(completos).size !== completos.length) avisos.push(TEXTO_ALTERNATIVAS_REPETIDAS)
   if (fila.correcta === '') avisos.push(TEXTO_SIN_CORRECTA)
   const clave = `${normalizar(fila.enunciado)}|${fila.tipoPregunta}`
   const primera = todas.find((otra) => `${normalizar(otra.enunciado)}|${otra.tipoPregunta}` === clave)
@@ -121,4 +123,17 @@ export function aCuerpoDeLote(filas: readonly FilaImportacion[]): Omit<CuerpoPre
       correcto: String(indice) === fila.correcta,
     })),
   }))
+}
+
+export function erroresPorFila(
+  errores: ErroresDeCampo,
+  filasEnviadas: readonly FilaImportacion[],
+): Record<string, string> {
+  const porFila: Record<string, string> = {}
+  for (const [campo, mensaje] of Object.entries(errores)) {
+    const indice = Number(rutaDeCampo(campo).split('.')[1])
+    const fila = filasEnviadas[indice]
+    if (fila) porFila[fila.id] = mensaje
+  }
+  return porFila
 }

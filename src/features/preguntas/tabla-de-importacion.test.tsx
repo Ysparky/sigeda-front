@@ -1,5 +1,5 @@
-import { screen, within } from '@testing-library/react'
-import { http, HttpResponse } from 'msw'
+import { screen, waitFor, within } from '@testing-library/react'
+import { delay, http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import {
   TEXTO_ALTERNATIVAS_REPETIDAS,
@@ -11,20 +11,22 @@ import {
 import { API } from '@/mocks/sigeda/comun'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
+import { relojFalso } from '@/test/tiempo'
 import type { UserEvent } from '@testing-library/user-event'
+import { TEXTO_REPETIDA_EN_LOTE } from './importacion'
 
 const DOCUMENTO = 'PDI EA-510 Título III.pdf'
 
-async function generarLote() {
+async function generarLote(usuario?: UserEvent) {
   await iniciarComo('instructor.perez')
-  const resultado = renderApp('/banco/importar')
+  const resultado = renderApp('/banco/importar', usuario)
   await screen.findByLabelText('Cantidad de preguntas')
-  const { usuario } = resultado
-  await usuario.click(screen.getByLabelText(DOCUMENTO))
-  await usuario.selectOptions(screen.getByLabelText('Materia del lote'), 'Adoctrinamiento de Vuelo')
-  await usuario.clear(screen.getByLabelText('Cantidad de preguntas'))
-  await usuario.type(screen.getByLabelText('Cantidad de preguntas'), '12')
-  await usuario.click(screen.getByRole('button', { name: 'Generar preguntas' }))
+  const usuarioActivo = resultado.usuario
+  await usuarioActivo.click(screen.getByLabelText(DOCUMENTO))
+  await usuarioActivo.selectOptions(screen.getByLabelText('Materia del lote'), 'Adoctrinamiento de Vuelo')
+  await usuarioActivo.clear(screen.getByLabelText('Cantidad de preguntas'))
+  await usuarioActivo.type(screen.getByLabelText('Cantidad de preguntas'), '12')
+  await usuarioActivo.click(screen.getByRole('button', { name: 'Generar preguntas' }))
   await screen.findByRole('table', { name: 'Preguntas generadas' })
   return resultado
 }
@@ -62,6 +64,7 @@ describe('Revisión de las preguntas generadas', () => {
     const { usuario } = await generarLote()
     const largo = screen.getByLabelText('Enunciado de la pregunta 1') as HTMLTextAreaElement
     expect(largo.value).toHaveLength(500)
+    expect(largo.maxLength).toBe(500)
     expect(largo.value.startsWith('¿Cuál de las siguientes afirmaciones')).toBe(true)
     expect(fila(1).getByText(TEXTO_ENUNCIADO_RECORTADO)).toBeInTheDocument()
     expect(screen.getByLabelText('Enunciado de la pregunta 5')).toHaveValue('Motor?')
@@ -94,13 +97,58 @@ describe('Revisión de las preguntas generadas', () => {
 
   it('CA-IMP-04 CA-IMP-11 quitar filas cambia el total y sin elegidas Importar está deshabilitado', async () => {
     const { usuario } = await generarLote()
-    await usuario.click(fila(1).getByRole('button', { name: 'Quitar de la importación' }))
+    await usuario.click(fila(1).getByRole('button', { name: 'Quitar la pregunta 1 de la importación' }))
     expect(screen.getByText('Elegidas: 4 de 5.')).toBeInTheDocument()
     for (const numero of [2, 3, 4, 5]) {
       await usuario.click(screen.getByLabelText(`Importar la pregunta ${numero}`))
     }
     expect(screen.getByText('Elegidas: 0 de 5.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Importar al banco' })).toBeDisabled()
+  })
+
+  it('CA-IMP-09 quitar una de dos filas duplicadas habilita la que queda y permite importar', async () => {
+    const { usuario, router } = await generarLote()
+    const enunciadoComun = 'Enunciado de prueba para verificar duplicados en el lote de importación.'
+    await usuario.clear(screen.getByLabelText('Enunciado de la pregunta 1'))
+    await usuario.type(screen.getByLabelText('Enunciado de la pregunta 1'), enunciadoComun)
+    await usuario.clear(screen.getByLabelText('Enunciado de la pregunta 2'))
+    await usuario.type(screen.getByLabelText('Enunciado de la pregunta 2'), enunciadoComun)
+    await usuario.clear(screen.getByLabelText('Alternativa 3 de la pregunta 2'))
+    await usuario.type(screen.getByLabelText('Alternativa 3 de la pregunta 2'), 'El mecánico de línea')
+    for (const numero of [3, 4, 5]) {
+      await usuario.click(screen.getByLabelText(`Importar la pregunta ${numero}`))
+    }
+    expect(fila(2).getByText(TEXTO_REPETIDA_EN_LOTE)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Importar al banco' })).toBeDisabled()
+    await usuario.click(screen.getByLabelText('Importar la pregunta 1'))
+    expect(fila(2).queryByText(TEXTO_REPETIDA_EN_LOTE)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Importar al banco' })).toBeEnabled()
+    await usuario.click(screen.getByRole('button', { name: 'Importar al banco' }))
+    await usuario.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Importar' }))
+    expect(await screen.findByText('Preguntas guardadas con éxito.')).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/banco')
+  })
+
+  it('CA-IMP-10 mientras se importa los controles de cada fila quedan deshabilitados', async () => {
+    const { usuario, avanzar } = relojFalso()
+    server.use(
+      http.post(`${API}/api/preguntas/lote`, async () => {
+        await delay(5000)
+        return HttpResponse.json({ mensaje: 'Preguntas guardadas con éxito.', preguntas: [] }, { status: 201 })
+      }),
+    )
+    const { router } = await generarLote(usuario)
+    await arreglarLasBloqueadas(usuario)
+    await usuario.click(screen.getByRole('button', { name: 'Importar al banco' }))
+    await usuario.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Importar' }))
+    await waitFor(() => expect(screen.getByLabelText('Importar la pregunta 1')).toBeDisabled())
+    expect(screen.getByLabelText('Enunciado de la pregunta 1')).toBeDisabled()
+    expect(screen.getByLabelText('Materia de la pregunta 1')).toBeDisabled()
+    expect(screen.getByLabelText('Dificultad de la pregunta 1')).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Quitar la pregunta 1 de la importación' })).toBeDisabled()
+    await avanzar(5000)
+    expect(await screen.findByText('Preguntas guardadas con éxito.')).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/banco')
   })
 
   it('CA-IMP-08 CA-IMP-09 CA-IMP-10 importa con E7, la materia por pregunta y vuelve al banco', async () => {

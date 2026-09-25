@@ -4,15 +4,18 @@ import { TEXTO_ALTERNATIVAS_REPETIDAS, TEXTO_ENUNCIADO_CORTO, TEXTO_ENUNCIADO_RE
 import {
   aCuerpoDeLote,
   avisosDeFila,
+  erroresPorFila,
   filaDesdeIa,
   filaImportable,
   filasDesdeIa,
   LARGO_ENUNCIADO,
   LARGO_RESPUESTA,
   recortar,
+  TEXTO_ALTERNATIVA_VACIA,
   TEXTO_REPETIDA_EN_LOTE,
   TEXTO_SIN_CORRECTA,
 } from './importacion'
+import { MENSAJE_ENUNCIADO } from './schemas'
 
 function pregunta(parcial: Partial<Pregunta>): Pregunta {
   return {
@@ -121,5 +124,54 @@ describe('contrato §6 mapeo de la importación', () => {
         ],
       },
     ])
+  })
+})
+
+describe('ronda de revisión: correcciones', () => {
+  it('contrato §2.3 dos alternativas que solo difieren en tildes no se consideran repetidas', () => {
+    const fila = filaDesdeIa(
+      pregunta({ options: [{ id: 'a', text: 'Región' }, { id: 'b', text: 'Region' }, { id: 'c', text: 'c' }, { id: 'd', text: 'd' }] }),
+      '3',
+      'MEDIA',
+    )
+    expect(avisosDeFila(fila, [fila])).not.toContain(TEXTO_ALTERNATIVAS_REPETIDAS)
+  })
+
+  it('contrato §2.6 dos enunciados que solo difieren en tildes no se consideran repetidos en el lote', () => {
+    const filas = filasDesdeIa(
+      [
+        pregunta({ id: 'p1', prompt: 'Región de vuelo permitida para el alumno piloto.' }),
+        pregunta({ id: 'p2', prompt: 'Region de vuelo permitida para el alumno piloto.' }),
+      ],
+      '3',
+      'MEDIA',
+    )
+    expect(avisosDeFila(filas[1]!, filas)).not.toContain(TEXTO_REPETIDA_EN_LOTE)
+  })
+
+  it('contrato §2.3 una alternativa vacía muestra que la respuesta es obligatoria, no que está repetida', () => {
+    const fila = filaDesdeIa(
+      pregunta({
+        options: [{ id: 'a', text: '' }, { id: 'b', text: 'Segunda' }, { id: 'c', text: 'Tercera' }, { id: 'd', text: 'Cuarta' }],
+      }),
+      '3',
+      'MEDIA',
+    )
+    const avisos = avisosDeFila(fila, [fila])
+    expect(avisos).toContain(TEXTO_ALTERNATIVA_VACIA)
+    expect(avisos).not.toContain(TEXTO_ALTERNATIVAS_REPETIDAS)
+  })
+
+  it('contrato §2.3 un enunciado editado que vuelve a superar 500 caracteres se bloquea con el mensaje del formulario', () => {
+    const base = filaDesdeIa(pregunta({}), '3', 'MEDIA')
+    const editada = { ...base, enunciado: 'a'.repeat(510), recortado: false }
+    expect(avisosDeFila(editada, [editada])).toContain(MENSAJE_ENUNCIADO)
+    expect(filaImportable(editada, [editada])).toBe(false)
+  })
+
+  it('CA-IMP-09 el error de una fila se ubica según las filas enviadas, no según cualquier otro arreglo', () => {
+    const enviadas = filasDesdeIa([pregunta({ id: 'p1' }), pregunta({ id: 'p2' })], '3', 'MEDIA')
+    const errores = { 'preguntas[1].enunciado': 'El enunciado debe tener entre 10 y 500 caracteres.' }
+    expect(erroresPorFila(errores, enviadas)).toEqual({ p2: 'El enunciado debe tener entre 10 y 500 caracteres.' })
   })
 })

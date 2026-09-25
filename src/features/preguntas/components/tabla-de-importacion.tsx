@@ -21,49 +21,49 @@ import {
   TEXTO_CONFIRMAR_IMPORTACION,
   TEXTO_REVISAR_IMPORTACION,
 } from '@/lib/dominio/teoria'
-import { rutaDeCampo } from '@/lib/formularios'
 import { clavesPreguntas, importarPreguntas } from '../api'
-import { aCuerpoDeLote, avisosDeFila, filaImportable, type FilaImportacion } from '../importacion'
+import {
+  aCuerpoDeLote,
+  avisosDeFila,
+  erroresPorFila,
+  filaImportable,
+  LARGO_ENUNCIADO,
+  type FilaImportacion,
+} from '../importacion'
 
 type Props = { filas: FilaImportacion[] }
 
 export function TablaDeImportacion({ filas: iniciales }: Props) {
   const [filas, setFilas] = useState(iniciales)
-  const [erroresPorFila, setErroresPorFila] = useState<Record<string, string>>({})
+  const [mensajesDeFila, setMensajesDeFila] = useState<Record<string, string>>({})
   const materias = useQuery(consultasMaterias.lista())
   const queryClient = useQueryClient()
   const navegar = useNavigate()
   const sesion = useSesion()
   const elegidas = filas.filter((fila) => fila.incluida)
-  const importables = elegidas.every((fila) => filaImportable(fila, filas))
+  const importables = elegidas.every((fila) => filaImportable(fila, elegidas))
 
   const importar = useMutation({
-    mutationFn: () =>
-      importarPreguntas({ codInstructor: sesion?.codPersona ?? '', preguntas: aCuerpoDeLote(elegidas) }),
+    mutationFn: (filasEnviadas: FilaImportacion[]) =>
+      importarPreguntas({ codInstructor: sesion?.codPersona ?? '', preguntas: aCuerpoDeLote(filasEnviadas) }),
     onSuccess: async (mensaje) => {
       toast.success(mensaje)
       await queryClient.invalidateQueries({ queryKey: clavesPreguntas.todo })
       await navegar({ to: '/banco' })
     },
-    onError: (error) => {
+    onError: (error, filasEnviadas) => {
       if (!(error instanceof ApiError)) {
         toast.error(MENSAJE_GENERICO)
         return
       }
-      const porFila: Record<string, string> = {}
-      for (const [campo, mensaje] of Object.entries(error.erroresDeCampo)) {
-        const indice = Number(rutaDeCampo(campo).split('.')[1])
-        const fila = elegidas[indice]
-        if (fila) porFila[fila.id] = mensaje
-      }
-      setErroresPorFila(porFila)
+      setMensajesDeFila(erroresPorFila(error.erroresDeCampo, filasEnviadas))
       toast.error(error.message)
     },
   })
 
   function actualizar(id: string, cambios: Partial<FilaImportacion>) {
     setFilas((previas) => previas.map((fila) => (fila.id === id ? { ...fila, ...cambios } : fila)))
-    setErroresPorFila((previos) => ({ ...previos, [id]: '' }))
+    setMensajesDeFila((previos) => ({ ...previos, [id]: '' }))
   }
 
   return (
@@ -87,14 +87,15 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
           <TableBody>
             {filas.map((fila, indice) => {
               const numero = indice + 1
-              const avisos = avisosDeFila(fila, filas)
-              const delServidor = erroresPorFila[fila.id]
+              const avisos = avisosDeFila(fila, elegidas)
+              const delServidor = mensajesDeFila[fila.id]
               return (
                 <TableRow key={fila.id}>
                   <TableCell>
                     <Checkbox
                       aria-label={`Importar la pregunta ${numero}`}
                       checked={fila.incluida}
+                      disabled={importar.isPending}
                       onCheckedChange={(marcado) => actualizar(fila.id, { incluida: marcado === true })}
                     />
                   </TableCell>
@@ -102,6 +103,8 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
                     <Textarea
                       aria-label={`Enunciado de la pregunta ${numero}`}
                       value={fila.enunciado}
+                      maxLength={LARGO_ENUNCIADO}
+                      disabled={importar.isPending}
                       onChange={(evento) => actualizar(fila.id, { enunciado: evento.target.value, recortado: false })}
                     />
                   </TableCell>
@@ -111,6 +114,7 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
                       aria-label={`Materia de la pregunta ${numero}`}
                       className="w-full"
                       value={fila.idMateria}
+                      disabled={importar.isPending}
                       onChange={(evento) => actualizar(fila.id, { idMateria: evento.target.value })}
                     >
                       <NativeSelectOption value="">Elija una materia</NativeSelectOption>
@@ -126,6 +130,7 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
                       aria-label={`Dificultad de la pregunta ${numero}`}
                       className="w-full"
                       value={fila.dificultad}
+                      disabled={importar.isPending}
                       onChange={(evento) => actualizar(fila.id, { dificultad: evento.target.value as never })}
                     >
                       {DIFICULTADES.map((dificultad) => (
@@ -142,6 +147,7 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
                       className="grid gap-2"
                       aria-label={`Alternativa correcta de la pregunta ${numero}`}
                       value={fila.correcta}
+                      disabled={importar.isPending}
                       onValueChange={(valor) => valor !== '' && actualizar(fila.id, { correcta: valor })}
                     >
                       {fila.alternativas.map((respuesta, posicion) => (
@@ -158,6 +164,7 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
                             <Input
                               aria-label={`Alternativa ${posicion + 1} de la pregunta ${numero}`}
                               value={respuesta}
+                              disabled={importar.isPending}
                               onChange={(evento) =>
                                 actualizar(fila.id, {
                                   alternativas: fila.alternativas.map((texto, otra) =>
@@ -182,6 +189,8 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
                         variant="ghost"
                         size="sm"
                         className="justify-self-start"
+                        disabled={importar.isPending}
+                        aria-label={`Quitar la pregunta ${numero} de la importación`}
                         onClick={() => actualizar(fila.id, { incluida: false })}
                       >
                         <X aria-hidden />
@@ -209,7 +218,7 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
           titulo="¿Importar las preguntas elegidas?"
           descripcion={TEXTO_CONFIRMAR_IMPORTACION}
           confirmar="Importar"
-          alConfirmar={() => importar.mutate()}
+          alConfirmar={() => importar.mutate(elegidas)}
         />
       </div>
     </>

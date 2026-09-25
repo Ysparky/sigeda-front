@@ -32,7 +32,7 @@ export const esquemaBusquedaPreguntas = z.object({
 
 export type BusquedaPreguntas = z.infer<typeof esquemaBusquedaPreguntas>
 
-const MENSAJE_ENUNCIADO = 'El enunciado debe tener entre 10 y 500 caracteres.'
+export const MENSAJE_ENUNCIADO = 'El enunciado debe tener entre 10 y 500 caracteres.'
 
 export const esquemaPregunta = z
   .object({
