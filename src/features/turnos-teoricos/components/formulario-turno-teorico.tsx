@@ -284,6 +284,9 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
                     </NativeSelectOption>
                   ))}
                 </NativeSelect>
+                {errorDePrimeraCarga(origenes) !== null && (
+                  <FieldError>No se pudieron cargar los turnos de origen.</FieldError>
+                )}
                 <FieldDescription>Solo turnos finalizados de la misma materia y grupo.</FieldDescription>
                 <FieldError errors={[errors.idTurnoOrigen]} />
               </Field>

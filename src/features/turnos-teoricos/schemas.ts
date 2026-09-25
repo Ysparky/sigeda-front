@@ -29,7 +29,6 @@ export const esquemaBusquedaTurnosTeoricos = z.object({
 export type BusquedaTurnosTeoricos = z.infer<typeof esquemaBusquedaTurnosTeoricos>
 
 const MENSAJE_NOMBRE = 'El nombre debe tener entre 10 y 60 caracteres.'
-const MENSAJE_HORA = 'La hora debe estar en formato HH:mm (09:00, 14:00)'
 
 export function crearEsquemaTurnoTeorico(ahora: Date) {
   return z
@@ -40,8 +39,8 @@ export function crearEsquemaTurnoTeorico(ahora: Date) {
       tipoExamen: z.enum(TIPOS_EXAMEN.map((tipo) => tipo.valor)),
       idGrupo: z.string().min(1, 'El grupo es obligatorio.'),
       fechaExamen: z.string().refine(esFechaIso, 'La fecha del examen es obligatoria.'),
-      horaInicio: z.string().regex(PATRON_HORA, MENSAJE_HORA),
-      horaFin: z.string().regex(PATRON_HORA, MENSAJE_HORA),
+      horaInicio: z.string().regex(PATRON_HORA, 'La hora de inicio es obligatoria.'),
+      horaFin: z.string().regex(PATRON_HORA, 'La hora de fin es obligatoria.'),
       idTurnoOrigen: z.string(),
       preguntas: z
         .array(

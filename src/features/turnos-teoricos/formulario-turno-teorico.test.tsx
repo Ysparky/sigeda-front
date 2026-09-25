@@ -9,7 +9,8 @@ import {
   textoPuntajeAsignado,
 } from '@/lib/dominio/teoria'
 import { API } from '@/mocks/sigeda/comun'
-import { D7_VENTANA_COMENZADA } from '@/mocks/sigeda/turnos-teoricos'
+import { buscarTurnoTeorico } from '@/mocks/sigeda/datos'
+import { D7_VENTANA_COMENZADA, detallePublico } from '@/mocks/sigeda/turnos-teoricos'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
 import type { UserEvent } from '@testing-library/user-event'
@@ -54,6 +55,18 @@ describe('Registrar y modificar turno teórico', () => {
     expect(screen.getByText('El examen debe comenzar en el futuro.')).toBeInTheDocument()
     expect(screen.getByText('La ventana del examen debe durar al menos 10 minutos.')).toBeInTheDocument()
     expect(screen.getByText('El grupo es obligatorio.')).toBeInTheDocument()
+  })
+
+  it('CA-TUT-03 la hora de inicio vacía muestra el mensaje del contrato', async () => {
+    const { usuario } = await abrirRegistrar()
+    await usuario.type(screen.getByLabelText('Nombre'), 'Quincenal Límites de Operación')
+    await usuario.selectOptions(screen.getByLabelText('Materia'), 'Límites de Operación')
+    await usuario.selectOptions(screen.getByLabelText('Grupo'), '3')
+    await usuario.type(screen.getByLabelText('Fecha del examen'), EN_CINCO_DIAS)
+    await usuario.type(screen.getByLabelText('Hora de fin'), '10:00')
+    await agregarPregunta(usuario, 1, '17', '20')
+    await usuario.click(screen.getByRole('button', { name: 'Guardar turno teórico' }))
+    expect(await screen.findByText('La hora de inicio es obligatoria.')).toBeInTheDocument()
   })
 
   it('CA-TUT-04 el programa limita los grupos y cambiarlo limpia el grupo elegido', async () => {
@@ -114,6 +127,11 @@ describe('Registrar y modificar turno teórico', () => {
     await agregarPregunta(usuario, 2, '18', '20')
     await usuario.click(screen.getByRole('button', { name: 'Guardar turno teórico' }))
     expect(await screen.findByText('El puntaje debe ser un entero entre 1 y 20.')).toBeInTheDocument()
+    await usuario.clear(screen.getByLabelText('Puntaje 1'))
+    await usuario.type(screen.getByLabelText('Puntaje 1'), '10')
+    await usuario.clear(screen.getByLabelText('Puntaje 2'))
+    await usuario.type(screen.getByLabelText('Puntaje 2'), '21')
+    expect(await screen.findByText('El puntaje debe ser un entero entre 1 y 20.')).toBeInTheDocument()
   })
 
   it('CA-TUT-03 CA-TUT-07 guarda un turno válido y lleva a sus resultados', async () => {
@@ -133,6 +151,8 @@ describe('Registrar y modificar turno teórico', () => {
     expect(screen.getByLabelText('Turno de origen')).toBeInTheDocument()
     await usuario.selectOptions(screen.getByLabelText('Materia'), 'Adoctrinamiento de Vuelo')
     await usuario.selectOptions(screen.getByLabelText('Grupo'), '3')
+    expect(await screen.findByRole('option', { name: 'Mensual Adoctrinamiento de Vuelo' })).toBeInTheDocument()
+    await usuario.selectOptions(screen.getByLabelText('Tipo de examen'), 'Rezagado')
     expect(await screen.findByRole('option', { name: 'Mensual Adoctrinamiento de Vuelo' })).toBeInTheDocument()
     await usuario.selectOptions(screen.getByLabelText('Tipo de examen'), 'Mensual')
     expect(screen.queryByLabelText('Turno de origen')).not.toBeInTheDocument()
@@ -171,6 +191,17 @@ describe('Registrar y modificar turno teórico', () => {
     expect(router.state.location.pathname).toBe('/teoria/turnos/6')
   })
 
+  it('CA-TUT-13 un fallo del catálogo de turnos de origen avisa bajo su selector sin bloquear el formulario', async () => {
+    server.use(http.get(`${API}/api/turnos-teoricos`, () => HttpResponse.error()))
+    const { usuario } = await abrirRegistrar()
+    await usuario.selectOptions(screen.getByLabelText('Tipo de examen'), 'Subsanación')
+    await usuario.selectOptions(screen.getByLabelText('Materia'), 'Adoctrinamiento de Vuelo')
+    await usuario.selectOptions(screen.getByLabelText('Grupo'), '3')
+    expect(await screen.findByText('No se pudieron cargar los turnos de origen.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Turno de origen')).toBeEnabled()
+    expect(screen.getByLabelText('Nombre')).toBeEnabled()
+  })
+
   it('CA-TUT-12 los errores del backend aparecen bajo su campo, con índice en las preguntas', async () => {
     server.use(
       http.post(`${API}/api/turnos-teoricos`, () =>
@@ -189,7 +220,7 @@ describe('Registrar y modificar turno teórico', () => {
     expect(screen.getByText('El puntaje debe ser un entero entre 1 y 20.')).toBeInTheDocument()
   })
 
-  it('CA-TUT-10 modificar aplica las mismas reglas y guarda', async () => {
+  it('CA-TUT-10 modificar reaplica la regla del nombre y guarda', async () => {
     await iniciarComo('instructor.perez')
     const { usuario, router } = renderApp('/teoria/turnos/4/editar')
     expect(await screen.findByLabelText('Nombre')).toHaveValue('Quincenal Límites de Operación')
@@ -203,6 +234,21 @@ describe('Registrar y modificar turno teórico', () => {
     await usuario.click(screen.getByRole('button', { name: 'Guardar turno teórico' }))
     expect(await screen.findByText('Turno teórico guardado con éxito.')).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/teoria/turnos/4')
+  })
+
+  it('CA-TUT-10 modificar reaplica la regla de fecha futura', async () => {
+    const turnoOrigen = buscarTurnoTeorico(4)
+    if (!turnoOrigen) throw new Error('El turno teórico 4 no existe en los datos de prueba')
+    const detalle = {
+      ...detallePublico({ ...turnoOrigen, fechaExamen: sumarDias(hoyIso(), -1) }),
+      estado: 'PROGRAMADO' as const,
+    }
+    server.use(http.get(`${API}/api/turnos-teoricos/4`, () => HttpResponse.json(detalle)))
+    await iniciarComo('instructor.perez')
+    const { usuario } = renderApp('/teoria/turnos/4/editar')
+    await screen.findByLabelText('Nombre')
+    await usuario.click(screen.getByRole('button', { name: 'Guardar turno teórico' }))
+    expect(await screen.findByText('El examen debe comenzar en el futuro.')).toBeInTheDocument()
   })
 
   it('CA-TUT-10 un turno cuya ventana comenzó no ofrece el formulario y muestra E10', async () => {
