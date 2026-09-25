@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import { TEXTO_SIN_HABILITADOS, TEXTO_TEORIA_SOLO_MOCK, TEXTO_VENTANA_COMENZADA } from '@/lib/dominio/teoria'
+import { MENSAJE_DEPENDENCIA_PENDIENTE } from '@/lib/dependencias'
 import { API } from '@/mocks/sigeda/comun'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
@@ -183,5 +184,6 @@ describe('Resultados por turno teórico', () => {
     expect(screen.getByRole('button', { name: 'Modificar' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Eliminar Quincenal Límites de Operación' })).toBeDisabled()
     expect(screen.queryByRole('link', { name: 'Modificar' })).not.toBeInTheDocument()
+    expect(screen.getByText(MENSAJE_DEPENDENCIA_PENDIENTE)).toBeInTheDocument()
   })
 })

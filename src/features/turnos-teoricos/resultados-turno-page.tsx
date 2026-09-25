@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { PANTALLAS } from '@/lib/auth/pantallas'
-import { accionDisponible } from '@/lib/dependencias'
+import { MENSAJE_DEPENDENCIA_PENDIENTE, accionDisponible } from '@/lib/dependencias'
 import { TEXTO_SIN_HABILITADOS, TEXTO_VENTANA_COMENZADA, etiquetaDeDificultad, etiquetaDeTipoExamen, etiquetaDeTipoPregunta, textoConMinimo } from '@/lib/dominio/teoria'
 import { formatearFecha, formatearNota } from '@/lib/formato'
 import { errorDePrimeraCarga } from '@/lib/query'
@@ -52,6 +52,9 @@ function Acciones({ turno }: { turno: TurnoTeoricoDetalle }) {
         deshabilitado={deshabilitado}
         alEliminar={() => void navegar({ to: '/teoria/turnos' })}
       />
+      {deshabilitado && (
+        <p className="w-full text-right text-xs text-muted-foreground">{MENSAJE_DEPENDENCIA_PENDIENTE}</p>
+      )}
     </>
   )
 }
