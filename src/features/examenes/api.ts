@@ -270,6 +270,8 @@ export const clavesExamenes = {
   pendientes: (codAlumno: string) => [...clavesExamenes.todo, 'pendientes', codAlumno] as const,
   examen: (idTurnoTeorico: number, codAlumno: string) =>
     [...clavesExamenes.todo, 'turno', idTurnoTeorico, codAlumno] as const,
+  enCurso: (idTurnoTeorico: number, codAlumno: string) =>
+    [...clavesExamenes.todo, 'en-curso', idTurnoTeorico, codAlumno] as const,
   estadoTeorico: (codAlumno: string) => [...clavesExamenes.todo, 'estado-teorico', codAlumno] as const,
 }
 
@@ -335,6 +337,14 @@ export const consultasExamenes = {
       queryFn: () => obtenerMiExamen(idTurnoTeorico, codAlumno),
       enabled: codAlumno !== '',
       retry: false,
+    }),
+  enCurso: (idTurnoTeorico: number, codAlumno: string) =>
+    queryOptions({
+      queryKey: clavesExamenes.enCurso(idTurnoTeorico, codAlumno),
+      queryFn: () => iniciarExamen(idTurnoTeorico, codAlumno),
+      enabled: codAlumno !== '',
+      retry: false,
+      staleTime: Number.POSITIVE_INFINITY,
     }),
   estadoTeorico: (codAlumno: string) =>
     queryOptions({
