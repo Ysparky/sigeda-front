@@ -11,8 +11,7 @@ import {
   respuestaCorrecta,
   TEXTO_CUESTIONARIO_SIN_NOTA,
 } from '@/lib/dominio/aprendizaje'
-import type { Pregunta } from '../api'
-import type { Cuestionario } from '../api'
+import type { Cuestionario, Pregunta } from '../api'
 
 const VERDADERO_FALSO = [
   { valor: 'true', etiqueta: 'Verdadero' },

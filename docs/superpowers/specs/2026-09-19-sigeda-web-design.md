@@ -869,6 +869,7 @@ Who sees what — `Read` in `permisos.ts`:
 | A14 | Documentos, empty state | Todavía no hay documentos. Suba un archivo PDF, DOCX o TXT para generar cuestionarios y hacer consultas. |
 | A15 | Cuestionario, no document is ready | No hay documentos listos para generar un cuestionario. Suba uno en Documentos y espere a que termine de procesarse. |
 | A16 | Consultas, no document is ready | No hay documentos listos para consultar. Suba uno en Documentos y espere a que termine de procesarse. |
+| A17 | Documentos, empty file rejected in the browser | El archivo está vacío. |
 
 ### 15.4 Acceptance criteria
 

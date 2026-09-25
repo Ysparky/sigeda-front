@@ -22,7 +22,7 @@ import {
   TEXTO_SIN_DOCUMENTOS_LISTOS_CUESTIONARIO,
 } from '@/lib/dominio/aprendizaje'
 import { errorDePrimeraCarga } from '@/lib/query'
-import { generarCuestionario, type Cuestionario, type TipoPregunta } from '../api'
+import { generarCuestionario, type Cuestionario } from '../api'
 import { mensajeDeError } from '../mensajes'
 import { esquemaGeneracion, GENERACION_VACIA, TIPOS_PREGUNTA, type ValoresGeneracion } from '../schemas'
 import { useDocumentosListos } from '../use-documentos-listos'
@@ -44,7 +44,7 @@ export function FormularioGeneracion({ alGenerar }: { alGenerar: (cuestionario: 
         generarCuestionario(
           {
             documentIds: valores.documentos,
-            questionTypes: valores.tipos as TipoPregunta[],
+            questionTypes: valores.tipos,
             questionCount: Number(valores.cantidad),
           },
           senal,

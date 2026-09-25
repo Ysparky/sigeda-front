@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
-  archivoAceptado,
   etiquetaDeTipo,
   formatearTamano,
   normalizarRespuesta,
   porcentajeDeSimilitud,
+  motivoDeRechazo,
   respuestaCorrecta,
+  TEXTO_ARCHIVO_RECHAZADO,
+  TEXTO_ARCHIVO_VACIO,
   trozosConCitas,
 } from './aprendizaje'
 
@@ -27,17 +29,20 @@ describe('formatearTamano', () => {
   })
 })
 
-describe('archivoAceptado', () => {
+describe('motivoDeRechazo', () => {
   it('CA-DOC-02 acepta PDF, DOCX y TXT de hasta 25 MB', () => {
-    expect(archivoAceptado({ name: 'Apunte.pdf', size: 1024 })).toBe(true)
-    expect(archivoAceptado({ name: 'APUNTE.DOCX', size: 26_214_400 })).toBe(true)
-    expect(archivoAceptado({ name: 'apunte.txt', size: 1 })).toBe(true)
+    expect(motivoDeRechazo({ name: 'Apunte.pdf', size: 1024 })).toBeNull()
+    expect(motivoDeRechazo({ name: 'APUNTE.DOCX', size: 26_214_400 })).toBeNull()
+    expect(motivoDeRechazo({ name: 'apunte.txt', size: 1 })).toBeNull()
   })
 
-  it('CA-DOC-02 rechaza otra extensión, el archivo vacío y el que pasa de 25 MB', () => {
-    expect(archivoAceptado({ name: 'foto.png', size: 1024 })).toBe(false)
-    expect(archivoAceptado({ name: 'apunte.txt', size: 0 })).toBe(false)
-    expect(archivoAceptado({ name: 'apunte.pdf', size: 26_214_401 })).toBe(false)
+  it('CA-DOC-02 rechaza con A11 otra extensión y el que pasa de 25 MB', () => {
+    expect(motivoDeRechazo({ name: 'foto.png', size: 1024 })).toBe(TEXTO_ARCHIVO_RECHAZADO)
+    expect(motivoDeRechazo({ name: 'apunte.pdf', size: 26_214_401 })).toBe(TEXTO_ARCHIVO_RECHAZADO)
+  })
+
+  it('M3-6 rechaza el archivo vacío con A17, que explica el motivo', () => {
+    expect(motivoDeRechazo({ name: 'apunte.txt', size: 0 })).toBe(TEXTO_ARCHIVO_VACIO)
   })
 })
 

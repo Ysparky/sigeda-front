@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { Send } from 'lucide-react'
 import { useState } from 'react'
@@ -12,7 +12,14 @@ import { MENSAJE_GENERICO } from '@/lib/api/errors'
 import { PANTALLAS } from '@/lib/auth/pantallas'
 import { TEXTO_CONVERSACION_ILEGIBLE, TEXTO_FUENTES_NO_DISPONIBLES } from '@/lib/dominio/aprendizaje'
 import { errorDePrimeraCarga } from '@/lib/query'
-import { consultasAprendizaje, crearSesion, enviarMensaje, type Documento, type MensajeChat } from './api'
+import {
+  clavesAprendizaje,
+  consultasAprendizaje,
+  crearSesion,
+  enviarMensaje,
+  type MensajeChat,
+  type SesionDeConsulta,
+} from './api'
 import { AvisoDocumentosCompartidos } from './components/aviso-compartido'
 import { Conversacion } from './components/conversacion'
 import { DocumentosDeLaConsulta, SelectorDeDocumentos } from './components/panel-de-documentos'
@@ -27,43 +34,54 @@ function mensajeDelUsuario(texto: string): MensajeChat {
 export function ConsultasPage() {
   const { sesion: id } = ruta.useSearch()
   const navegar = useNavigate()
+  const queryClient = useQueryClient()
   const [creadaAqui, setCreadaAqui] = useState<string | null>(null)
   const [elegidos, setElegidos] = useState<string[]>([])
   const [pregunta, setPregunta] = useState('')
-  const [mensajes, setMensajes] = useState<MensajeChat[]>([])
-  const [documentosLocales, setDocumentosLocales] = useState<Documento[]>([])
   const restaurada = id !== undefined && id !== creadaAqui
   const sesion = useQuery({ ...consultasAprendizaje.sesion(id ?? ''), enabled: restaurada })
   const errorDeSesion = restaurada ? errorDePrimeraCarga(sesion) : null
 
   const enviar = useMutation({
     mutationFn: async (texto: string) => {
-      if (id !== undefined) return { creada: null, respuesta: await enviarMensaje(id, texto) }
-      const creada = await crearSesion(elegidos)
-      return { creada, respuesta: await enviarMensaje(creada.id, texto) }
+      const activa = id ?? (await abrirConversacion())
+      return { activa, respuesta: await enviarMensaje(activa, texto) }
     },
-    onSuccess: async ({ creada, respuesta }, texto) => {
-      setMensajes((previos) => [...previos, { ...mensajeDelUsuario(texto), id: `${respuesta.id}-pregunta` }, respuesta])
+    onSuccess: ({ activa, respuesta }, texto) => {
+      queryClient.setQueryData(clavesAprendizaje.sesion(activa), (previa: SesionDeConsulta | undefined) =>
+        previa === undefined
+          ? previa
+          : {
+              ...previa,
+              mensajes: [
+                ...previa.mensajes,
+                { ...mensajeDelUsuario(texto), id: `${respuesta.id}-pregunta` },
+                respuesta,
+              ],
+            },
+      )
       setPregunta('')
-      if (creada === null) return
-      setCreadaAqui(creada.id)
-      setDocumentosLocales(creada.documentos)
-      await navegar({ to: '/aprendizaje/consultas', search: { sesion: creada.id } })
     },
   })
+
+  async function abrirConversacion(): Promise<string> {
+    const creada = await crearSesion(elegidos)
+    setCreadaAqui(creada.id)
+    queryClient.setQueryData(clavesAprendizaje.sesion(creada.id), creada)
+    await navegar({ to: '/aprendizaje/consultas', search: { sesion: creada.id } })
+    return creada.id
+  }
 
   async function nuevaConsulta() {
     setCreadaAqui(null)
     setElegidos([])
-    setMensajes([])
-    setDocumentosLocales([])
     setPregunta('')
     enviar.reset()
     await navegar({ to: '/aprendizaje/consultas', search: {} })
   }
 
-  const mensajesVisibles = restaurada ? (sesion.data?.mensajes ?? []) : mensajes
-  const documentosVisibles = restaurada ? (sesion.data?.documentos ?? []) : documentosLocales
+  const mensajesVisibles = sesion.data?.mensajes ?? []
+  const documentosVisibles = sesion.data?.documentos ?? []
   const enCurso = enviar.isPending ? [mensajeDelUsuario(enviar.variables)] : []
   const sinFuentesPrevias =
     restaurada &&

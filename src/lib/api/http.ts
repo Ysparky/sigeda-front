@@ -57,6 +57,10 @@ async function leerCuerpo(respuesta: Response): Promise<unknown> {
   }
 }
 
+function errorDeTransporte(senal?: AbortSignal): Error {
+  return senal?.aborted ? new CanceladoError() : new ApiError(0, MENSAJE_SIN_CONEXION)
+}
+
 function esRutaDeAutenticacion(ruta: string) {
   return ruta.startsWith('/auth/')
 }
@@ -91,8 +95,7 @@ export function crearCliente(base: string, autenticacion: Autenticacion) {
         signal: senal,
       })
     } catch {
-      if (senal?.aborted) throw new CanceladoError()
-      throw new ApiError(0, MENSAJE_SIN_CONEXION)
+      throw errorDeTransporte(senal)
     }
 
     if (respuesta.status === 401 && reintentar && !esRutaDeAutenticacion(ruta)) {
@@ -102,7 +105,12 @@ export function crearCliente(base: string, autenticacion: Autenticacion) {
       autenticacion.alExpirar()
     }
 
-    const datos = await leerCuerpo(respuesta)
+    let datos: unknown
+    try {
+      datos = await leerCuerpo(respuesta)
+    } catch {
+      throw errorDeTransporte(senal)
+    }
     if (!respuesta.ok) throw normalizarError(respuesta.status, datos)
     return datos as T
   }

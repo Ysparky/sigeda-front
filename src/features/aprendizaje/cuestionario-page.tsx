@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { PageHeader } from '@/components/page-header'
@@ -9,7 +9,7 @@ import { PANTALLAS } from '@/lib/auth/pantallas'
 import { MENSAJE_GENERICO } from '@/lib/api/errors'
 import { TEXTO_CUESTIONARIO_REINICIADO } from '@/lib/dominio/aprendizaje'
 import { errorDePrimeraCarga } from '@/lib/query'
-import { consultasAprendizaje, type Cuestionario } from './api'
+import { clavesAprendizaje, consultasAprendizaje, type Cuestionario } from './api'
 import { AvisoDocumentosCompartidos } from './components/aviso-compartido'
 import { FormularioGeneracion } from './components/formulario-generacion'
 import { ResolucionDeCuestionario } from './components/resolucion-de-cuestionario'
@@ -20,6 +20,7 @@ const ruta = getRouteApi('/_app/aprendizaje/cuestionario')
 export function CuestionarioPage() {
   const { cuestionario: id } = ruta.useSearch()
   const navegar = useNavigate()
+  const queryClient = useQueryClient()
   const [generadoAqui, setGeneradoAqui] = useState<string | null>(null)
   const cuestionario = useQuery({ ...consultasAprendizaje.cuestionario(id ?? ''), enabled: id !== undefined })
   const error = id === undefined ? null : errorDePrimeraCarga(cuestionario)
@@ -27,6 +28,7 @@ export function CuestionarioPage() {
 
   async function alGenerar(generado: Cuestionario) {
     setGeneradoAqui(generado.id)
+    queryClient.setQueryData(clavesAprendizaje.cuestionario(generado.id), generado)
     await navegar({ to: '/aprendizaje/cuestionario', search: { cuestionario: generado.id } })
   }
 
@@ -55,9 +57,14 @@ export function CuestionarioPage() {
         <Alert variant="destructive">
           <AlertDescription className="grid justify-items-start gap-3">
             <span>{mensajeDeError(error, MENSAJE_GENERICO)}</span>
-            <Button type="button" variant="outline" size="sm" onClick={() => void alVolver()}>
-              Volver al formulario
-            </Button>
+            <div className="flex flex-wrap gap-3">
+              <Button type="button" variant="outline" size="sm" onClick={() => void cuestionario.refetch()}>
+                Reintentar
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => void alVolver()}>
+                Volver al formulario
+              </Button>
+            </div>
           </AlertDescription>
         </Alert>
       ) : cuestionario.data === undefined ? (

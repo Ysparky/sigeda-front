@@ -242,6 +242,38 @@ describe('conLimiteDeTiempo', () => {
     expect(error).toBeInstanceOf(CanceladoError)
   })
 
+  it('M3-4 corta con CanceladoError el corte que llega mientras se lee el cuerpo', async () => {
+    const { avanzar } = relojFalso()
+    vi.stubGlobal('fetch', (_ruta: string, opciones: { signal?: AbortSignal }) =>
+      Promise.resolve({
+        status: 200,
+        ok: true,
+        text: () =>
+          new Promise<string>((_, rechazar) => {
+            opciones.signal?.addEventListener('abort', () =>
+              rechazar(new DOMException('The operation was aborted.', 'AbortError')),
+            )
+          }),
+      }),
+    )
+    try {
+      const cliente = crearCliente(BASE, autenticacion())
+      let error: unknown = null
+      const peticion = conLimiteDeTiempo(120_000, (senal) => cliente.post('/quizzes/generate', {}, senal)).catch(
+        (e: unknown) => {
+          error = e
+        },
+      )
+      await avanzar(119_000)
+      expect(error).toBeNull()
+      await avanzar(1000)
+      await peticion
+      expect(error).toBeInstanceOf(CanceladoError)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
   it('M3-4 devuelve la respuesta y apaga el reloj cuando llega a tiempo', async () => {
     const { avanzar } = relojFalso()
     server.use(

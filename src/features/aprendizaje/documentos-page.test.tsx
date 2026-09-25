@@ -9,12 +9,19 @@ import {
   MENSAJE_DOCUMENTO_ELIMINADO,
   MENSAJE_DOCUMENTO_SUBIDO,
   TEXTO_ARCHIVO_RECHAZADO,
+  TEXTO_ARCHIVO_VACIO,
   TEXTO_CONFIRMAR_ELIMINAR_DOCUMENTO,
   TEXTO_DOCUMENTO_CON_ERROR,
   TEXTO_DOCUMENTO_SIGUE_PROCESANDO,
   TEXTO_DOCUMENTOS_COMPARTIDOS,
   TEXTO_SIN_DOCUMENTOS,
 } from '@/lib/dominio/aprendizaje'
+import { errorNest, malaPeticion } from '@/mocks/ia/comun'
+import {
+  C13_ARCHIVO_GRANDE as C13_DEL_MOCK,
+  C1_SIN_ARCHIVO as C1_DEL_MOCK,
+  C3_DOCUMENTO_NO_ENCONTRADO as C3_DEL_MOCK,
+} from '@/mocks/ia/documentos'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
 import { relojFalso } from '@/test/tiempo'
@@ -166,6 +173,42 @@ describe('Documentos de estudio', () => {
     }
   })
 
+  it('CA-DOC-06 una consulta fallida cuenta para el límite y no vacía la tabla', async () => {
+    let consultas = 0
+    server.use(
+      http.get(RUTA_DOCUMENTOS, () => {
+        consultas += 1
+        if (consultas === 2) {
+          return HttpResponse.json({ statusCode: 500, message: 'Internal server error' }, { status: 500 })
+        }
+        return HttpResponse.json([
+          {
+            id: 'd0c00000-0000-4000-8000-000000000006',
+            filename: 'Reglamento de operaciones.pdf',
+            mimeType: 'application/pdf',
+            sizeBytes: 3_145_728,
+            status: 'processing',
+            errorMessage: null,
+            tags: [],
+            createdAt: '2026-09-19T08:00:00.000Z',
+            processedAt: null,
+          },
+        ])
+      }),
+    )
+    const { usuario, avanzar } = relojFalso()
+    await abrirDocumentos(usuario)
+    expect(filas()).toHaveLength(1)
+    await avanzar(INTERVALO_DE_CONSULTA)
+    await waitFor(() => expect(consultas).toBe(2))
+    expect(filas()[0]).toEqual(['Reglamento de operaciones.pdf', 'PDF', '3.0 MB', 'Procesando', '—', '19/09/2026'])
+    expect(screen.queryByText('No se pudieron cargar los documentos')).not.toBeInTheDocument()
+    for (let vuelta = 2; vuelta < LIMITE_DE_CONSULTAS + 3; vuelta += 1) await avanzar(INTERVALO_DE_CONSULTA)
+    expect(await screen.findByText(TEXTO_DOCUMENTO_SIGUE_PROCESANDO)).toBeInTheDocument()
+    expect(consultas).toBe(LIMITE_DE_CONSULTAS)
+    expect(filas()).toHaveLength(1)
+  })
+
   it('CA-DOC-06 tras 40 consultas seguidas se detiene y ofrece Actualizar', async () => {
     const consultas = contarConsultas()
     try {
@@ -252,6 +295,23 @@ describe('Subir y eliminar documentos', () => {
     expect(subidas).toBe(0)
   })
 
+  it('M3-6 un archivo vacío se rechaza en el navegador con A17 y no se envía', async () => {
+    let subidas = 0
+    server.use(
+      http.post(`${RUTA_DOCUMENTOS}/upload`, () => {
+        subidas += 1
+        return HttpResponse.json({}, { status: 201 })
+      }),
+    )
+    const { usuario } = await abrirDocumentos()
+    const dialogo = await abrirDialogo(usuario)
+    await usuario.upload(dialogo.getByLabelText('Archivo'), archivo('Apuntes vacíos.txt', 'text/plain', 0))
+    expect(await dialogo.findByText(TEXTO_ARCHIVO_VACIO)).toBeInTheDocument()
+    expect(dialogo.getAllByText(TEXTO_ARCHIVO_RECHAZADO)).toHaveLength(1)
+    await usuario.click(dialogo.getByRole('button', { name: 'Subir' }))
+    expect(subidas).toBe(0)
+  })
+
   it('CA-DOC-03 el mensaje del servidor se muestra y la selección se conserva', async () => {
     server.use(
       http.post(`${RUTA_DOCUMENTOS}/upload`, () =>
@@ -291,6 +351,54 @@ describe('Subir y eliminar documentos', () => {
     await usuario.click(dialogo.getByRole('button', { name: 'Subir' }))
     expect(await dialogo.findByText(MENSAJE_GENERICO)).toBeInTheDocument()
     expect(dialogo.queryByText(/must be a valid MIME type/)).not.toBeInTheDocument()
+  })
+
+  it('contrato §5 el C1 definido en el mock llega a la pantalla tal cual', async () => {
+    server.use(http.post(`${RUTA_DOCUMENTOS}/upload`, () => malaPeticion(C1_DEL_MOCK)))
+    const { usuario } = await abrirDocumentos()
+    const dialogo = await abrirDialogo(usuario)
+    await usuario.upload(dialogo.getByLabelText('Archivo'), archivo())
+    await usuario.click(dialogo.getByRole('button', { name: 'Subir' }))
+    expect(await dialogo.findByText(C1_DEL_MOCK)).toBeInTheDocument()
+    expect(dialogo.queryByText(MENSAJE_GENERICO)).not.toBeInTheDocument()
+  })
+
+  it('contrato §5 el C13 definido en el mock llega a la pantalla tal cual', async () => {
+    server.use(
+      http.post(`${RUTA_DOCUMENTOS}/upload`, () => errorNest(413, C13_DEL_MOCK, 'Payload Too Large')),
+    )
+    const { usuario } = await abrirDocumentos()
+    const dialogo = await abrirDialogo(usuario)
+    await usuario.upload(dialogo.getByLabelText('Archivo'), archivo())
+    await usuario.click(dialogo.getByRole('button', { name: 'Subir' }))
+    expect(await dialogo.findByText(C13_DEL_MOCK)).toBeInTheDocument()
+    expect(dialogo.queryByText(MENSAJE_GENERICO)).not.toBeInTheDocument()
+  })
+
+  it('contrato §5 el C3 definido en el mock llega a la pantalla tal cual', async () => {
+    server.use(
+      http.get(RUTA_DOCUMENTOS, () =>
+        HttpResponse.json([
+          {
+            id: 'd0c00000-0000-4000-8000-0000000000ff',
+            filename: 'Apunte ya eliminado.txt',
+            mimeType: 'text/plain',
+            sizeBytes: 2048,
+            status: 'ready',
+            errorMessage: null,
+            tags: [],
+            createdAt: '2026-09-19T08:00:00.000Z',
+            processedAt: '2026-09-19T08:00:30.000Z',
+          },
+        ]),
+      ),
+    )
+    const { usuario } = await abrirDocumentos()
+    await usuario.click(screen.getByRole('button', { name: 'Eliminar Apunte ya eliminado.txt' }))
+    const confirmacion = within(await screen.findByRole('alertdialog'))
+    await usuario.click(confirmacion.getByRole('button', { name: 'Eliminar' }))
+    expect(await screen.findByText(C3_DEL_MOCK)).toBeInTheDocument()
+    expect(screen.queryByText(MENSAJE_GENERICO)).not.toBeInTheDocument()
   })
 
   it('CA-DOC-07 eliminar pide confirmación con A13 y quita el documento de la lista', async () => {

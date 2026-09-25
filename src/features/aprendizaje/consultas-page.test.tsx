@@ -29,6 +29,15 @@ function conversacion() {
   return within(screen.getByRole('region', { name: 'Conversación' }))
 }
 
+function contarPeticiones(metodo: string, url: string) {
+  let total = 0
+  const escuchar = ({ request }: { request: Request }) => {
+    if (request.method === metodo && request.url === url) total += 1
+  }
+  server.events.on('request:start', escuchar)
+  return { total: () => total, dejar: () => server.events.removeListener('request:start', escuchar) }
+}
+
 describe('Consultar los documentos con IA', () => {
   it('CA-CON-01 pide elegir documentos en estado Listo', async () => {
     await abrirConsultas()
@@ -187,7 +196,74 @@ describe('Consultar los documentos con IA', () => {
     expect(screen.getByLabelText('Pregunta')).toHaveValue('esto falla')
     expect(conversacion().queryByRole('group', { name: 'Su pregunta' })).not.toBeInTheDocument()
     expect(conversacion().queryByRole('group', { name: 'Respuesta' })).not.toBeInTheDocument()
-    await usuario.click(screen.getByRole('button', { name: 'Reintentar' }))
+    const envios = contarPeticiones('POST', `${IA}/chat/messages`)
+    try {
+      await usuario.click(screen.getByRole('button', { name: 'Reintentar' }))
+      await waitFor(() => expect(envios.total()).toBe(1))
+    } finally {
+      envios.dejar()
+    }
     expect(await screen.findByText(MENSAJE_GENERICO)).toBeInTheDocument()
+  })
+
+  it('M3-8 volver atrás vacía la conversación y la siguiente pregunta crea una sola conversación', async () => {
+    const creaciones = contarPeticiones('POST', `${IA}/chat/sessions`)
+    const lecturas = contarPeticiones('GET', `${IA}/chat/sessions/${ID_SESION_CREADA}`)
+    try {
+      const { usuario, router } = await abrirConsultas()
+      await usuario.click(screen.getByRole('checkbox', { name: PRINCIPAL }))
+      await preguntar(usuario, '¿Qué es la autorrotación?')
+      expect(await screen.findByRole('group', { name: 'Respuesta' })).toBeInTheDocument()
+      expect(router.state.location.search).toEqual({ sesion: ID_SESION_CREADA })
+      router.history.back()
+      await waitFor(() => expect(router.state.location.search).toEqual({}))
+      expect(await screen.findByRole('group', { name: 'Documentos para consultar' })).toBeInTheDocument()
+      expect(conversacion().queryByRole('group', { name: 'Su pregunta' })).not.toBeInTheDocument()
+      expect(conversacion().queryByRole('group', { name: 'Respuesta' })).not.toBeInTheDocument()
+      expect(creaciones.total()).toBe(1)
+      await preguntar(usuario, '¿Y el régimen de rotor?')
+      expect(await screen.findByRole('group', { name: 'Respuesta' })).toBeInTheDocument()
+      expect(conversacion().getAllByRole('group', { name: 'Su pregunta' })).toHaveLength(1)
+      expect(conversacion().getByText('¿Y el régimen de rotor?')).toBeInTheDocument()
+      expect(creaciones.total()).toBe(2)
+      expect(lecturas.total()).toBe(0)
+    } finally {
+      creaciones.dejar()
+      lecturas.dejar()
+    }
+  })
+
+  it('M3-8 si el envío falla tras crear la conversación, Reintentar no crea otra', async () => {
+    let creaciones = 0
+    server.use(
+      http.post(`${IA}/chat/sessions`, () => {
+        creaciones += 1
+        return HttpResponse.json(
+          {
+            id: ID_SESION_CREADA,
+            title: `Consulta sobre ${PRINCIPAL}`,
+            createdAt: '2026-09-19T10:30:00.000Z',
+            documents: [],
+          },
+          { status: 201 },
+        )
+      }),
+      http.post(`${IA}/chat/messages`, () =>
+        HttpResponse.json({ statusCode: 500, message: 'Internal server error' }, { status: 500 }),
+      ),
+    )
+    const envios = contarPeticiones('POST', `${IA}/chat/messages`)
+    try {
+      const { usuario } = await abrirConsultas()
+      await usuario.click(screen.getByRole('checkbox', { name: PRINCIPAL }))
+      await preguntar(usuario, '¿Qué es la autorrotación?')
+      expect(await screen.findByText(MENSAJE_GENERICO)).toBeInTheDocument()
+      expect(creaciones).toBe(1)
+      await usuario.click(screen.getByRole('button', { name: 'Reintentar' }))
+      await waitFor(() => expect(envios.total()).toBe(2))
+      expect(creaciones).toBe(1)
+    } finally {
+      envios.dejar()
+    }
   })
 })

@@ -18,8 +18,8 @@ import { Input } from '@/components/ui/input'
 import { MENSAJE_GENERICO } from '@/lib/api/errors'
 import { accionDisponible, MENSAJE_DEPENDENCIA_PENDIENTE } from '@/lib/dependencias'
 import {
-  archivoAceptado,
   MENSAJE_DOCUMENTO_SUBIDO,
+  motivoDeRechazo,
   TEXTO_ARCHIVO_RECHAZADO,
   TIPOS_ACEPTADOS,
 } from '@/lib/dominio/aprendizaje'
@@ -31,7 +31,7 @@ const ACEPTADOS = TIPOS_ACEPTADOS.map((tipo) => tipo.extension).join(',')
 export function DialogoSubirDocumento({ etiqueta }: { etiqueta: string }) {
   const [abierto, setAbierto] = useState(false)
   const [archivo, setArchivo] = useState<File | null>(null)
-  const [rechazado, setRechazado] = useState(false)
+  const [rechazo, setRechazo] = useState<string | null>(null)
   const queryClient = useQueryClient()
   const disponible = accionDisponible('subirDocumento')
 
@@ -59,14 +59,15 @@ export function DialogoSubirDocumento({ etiqueta }: { etiqueta: string }) {
 
   function alElegir(elegido: File | null) {
     setArchivo(elegido)
-    setRechazado(elegido !== null && !archivoAceptado(elegido))
+    setRechazo(elegido === null ? null : motivoDeRechazo(elegido))
     subir.reset()
   }
 
   function alEnviar(evento: React.FormEvent) {
     evento.preventDefault()
-    if (archivo === null || !archivoAceptado(archivo)) {
-      setRechazado(archivo !== null)
+    const motivo = archivo === null ? null : motivoDeRechazo(archivo)
+    if (archivo === null || motivo !== null) {
+      setRechazo(motivo)
       return
     }
     subir.mutate(archivo)
@@ -76,7 +77,7 @@ export function DialogoSubirDocumento({ etiqueta }: { etiqueta: string }) {
     setAbierto(siguiente)
     if (!siguiente) {
       setArchivo(null)
-      setRechazado(false)
+      setRechazo(null)
       subir.reset()
     }
   }
@@ -95,9 +96,9 @@ export function DialogoSubirDocumento({ etiqueta }: { etiqueta: string }) {
           <DialogDescription>{TEXTO_ARCHIVO_RECHAZADO}</DialogDescription>
         </DialogHeader>
         <form noValidate onSubmit={alEnviar}>
-          {rechazado && (
+          {rechazo !== null && (
             <Alert variant="destructive">
-              <AlertDescription>{TEXTO_ARCHIVO_RECHAZADO}</AlertDescription>
+              <AlertDescription>{rechazo}</AlertDescription>
             </Alert>
           )}
           {subir.error && (

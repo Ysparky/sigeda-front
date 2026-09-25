@@ -16,6 +16,7 @@ export const TEXTO_RESPUESTA_SIN_FUENTES =
   'No se encontraron fragmentos relevantes en los documentos seleccionados para esta pregunta.'
 export const TEXTO_CUESTIONARIO_SIN_NOTA = 'El cuestionario de práctica no se registra: su nota es solo para estudiar.'
 export const TEXTO_ARCHIVO_RECHAZADO = 'Solo se aceptan archivos PDF, DOCX o TXT de hasta 25 MB.'
+export const TEXTO_ARCHIVO_VACIO = 'El archivo está vacío.'
 export const TEXTO_DOCUMENTO_CON_ERROR = 'No se pudo procesar el documento. Elimínelo y vuelva a subirlo.'
 export const TEXTO_CONFIRMAR_ELIMINAR_DOCUMENTO =
   'Se eliminará el documento. Los cuestionarios ya generados se conservan, pero las consultas que lo usan se quedarán sin esa fuente.'
@@ -55,10 +56,11 @@ export function formatearTamano(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export function archivoAceptado(archivo: { name: string; size: number }): boolean {
+export function motivoDeRechazo(archivo: { name: string; size: number }): string | null {
   const nombre = archivo.name.toLowerCase()
   const extensionValida = TIPOS_ACEPTADOS.some((tipo) => nombre.endsWith(tipo.extension))
-  return extensionValida && archivo.size > 0 && archivo.size <= TAMANO_MAXIMO_BYTES
+  if (!extensionValida || archivo.size > TAMANO_MAXIMO_BYTES) return TEXTO_ARCHIVO_RECHAZADO
+  return archivo.size === 0 ? TEXTO_ARCHIVO_VACIO : null
 }
 
 export function normalizarRespuesta(valor: string): string {

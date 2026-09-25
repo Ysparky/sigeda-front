@@ -90,6 +90,44 @@ describe('Recuperar una conversación', () => {
     expect(screen.queryByRole('group', { name: 'Respuesta' })).not.toBeInTheDocument()
   })
 
+  it('M3-8 una pregunta nueva en una conversación restaurada sigue en pantalla al resolverse', async () => {
+    server.use(
+      http.post(`${config.iaApiUrl}/chat/messages`, () =>
+        HttpResponse.json(
+          {
+            message: {
+              id: '3e550000-0000-4000-8000-100000000021',
+              sessionId: ID_SESION_CON_FUENTES,
+              role: 'assistant',
+              content: 'El régimen debe mantenerse dentro del arco verde [1].',
+              citedChunkIds: [],
+              createdAt: '2026-09-19T10:40:00.000Z',
+            },
+            sources: [
+              {
+                referenceNumber: 1,
+                documentId: 'd0c00000-0000-4000-8000-000000000001',
+                documentFilename: PRINCIPAL,
+                excerpt: 'El paso colectivo controla el régimen durante el descenso.',
+                similarity: 0.771,
+              },
+            ],
+          },
+          { status: 201 },
+        ),
+      ),
+    )
+    const { usuario } = await abrirConversacion(ID_SESION_CON_FUENTES)
+    expect(await screen.findByRole('group', { name: 'Respuesta' })).toBeInTheDocument()
+    await usuario.type(screen.getByLabelText('Pregunta'), '¿Y el régimen de rotor?')
+    await usuario.click(screen.getByRole('button', { name: 'Enviar' }))
+    expect(await screen.findByText(/dentro del arco verde/)).toBeInTheDocument()
+    expect(conversacion().getByText('¿Y el régimen de rotor?')).toBeInTheDocument()
+    expect(conversacion().getAllByRole('group', { name: 'Su pregunta' })).toHaveLength(2)
+    expect(conversacion().getAllByRole('group', { name: 'Respuesta' })).toHaveLength(2)
+    expect(screen.getByLabelText('Pregunta')).toHaveValue('')
+  })
+
   it('CA-CON-13 la conversación nunca muestra el texto extraído ni la ruta de almacenamiento', async () => {
     server.use(
       http.get(`${config.iaApiUrl}/chat/sessions/:id`, () =>

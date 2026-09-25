@@ -72,7 +72,7 @@ export function SelectorDeDocumentos({
     <Card>
       <CardHeader>
         <CardTitle>
-          <h2>Documentos de la consulta</h2>
+          <h2>Elija los documentos</h2>
         </CardTitle>
       </CardHeader>
       <CardContent>
