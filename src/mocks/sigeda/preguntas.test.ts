@@ -173,6 +173,12 @@ describe('contrato §2.2 y §2.3 detalle y creación', () => {
       ],
     }).catch((problema: unknown) => problema)
     expect((repetidas as ApiError).erroresDeCampo.alternativas).toBe('Las alternativas no pueden repetirse.')
+    const vacias = await crearPregunta({
+      ...NUEVA,
+      alternativas: NUEVA.alternativas.map((alternativa, indice) => ({ ...alternativa, respuesta: indice < 2 ? '' : alternativa.respuesta })),
+    }).catch((problema: unknown) => problema)
+    expect((vacias as ApiError).erroresDeCampo.alternativas).toBeUndefined()
+    expect((vacias as ApiError).erroresDeCampo['alternativas[0].respuesta']).toBe('La respuesta es obligatoria.')
     expect(
       await crearPregunta({
         ...NUEVA,
