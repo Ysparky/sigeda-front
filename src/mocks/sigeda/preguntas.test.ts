@@ -10,8 +10,9 @@ import {
   modificarPregunta,
   type CuerpoPregunta,
 } from '@/features/preguntas/api'
+import { entregarExamen } from '@/features/examenes/api'
 import { iniciarComo } from '@/test/render'
-import { datos } from './datos'
+import { alternativasDePregunta, cuestionarioDe, datos } from './datos'
 import { D2_PREGUNTA_NO_EXISTE, D3_PREGUNTA_EN_USO, D4_MATERIA_NO_EXISTE, D27_PERSONA_NO_EXISTE } from './preguntas'
 
 const PARAMETROS = { page: 0, size: 10, direction: 'ASC' } as const
@@ -204,6 +205,64 @@ describe('contrato §2.4 y §2.5 modificar y eliminar', () => {
     expect(despues.origen).toBe('IA')
     expect(despues.enunciado).toBe('Enunciado corregido a mano después de importarlo desde la IA.')
     await expect(modificarPregunta(999, NUEVA)).rejects.toThrow(D2_PREGUNTA_NO_EXISTE)
+  })
+
+  it('contrato §2.4 las alternativas conservan su id y la respuesta del alumno sigue valiendo', async () => {
+    await comoInstructor()
+    const idsAntes = alternativasDePregunta(1).map((alternativa) => alternativa.id)
+    const guardada = cuestionarioDe(3, '111111')?.respuestas[1]
+    expect(idsAntes.map(String)).toContain(guardada)
+    const antes = await obtenerPregunta(1)
+    await modificarPregunta(1, {
+      codInstructor: '444444',
+      idMateria: antes.materia.id,
+      enunciado: 'Enunciado corregido mientras un alumno tiene el examen en curso.',
+      tipoPregunta: antes.tipoPregunta,
+      dificultad: antes.dificultad,
+      explicacion: antes.explicacion,
+      alternativas: antes.alternativas.map(({ respuesta, correcto }) => ({ respuesta, correcto })),
+    })
+    expect(alternativasDePregunta(1).map((alternativa) => alternativa.id)).toEqual(idsAntes)
+    await iniciarComo('alumno.lopez')
+    await entregarExamen(3, '111111')
+    const primera = cuestionarioDe(3, '111111')?.calificaciones.find((fila) => fila.idPregunta === 1)
+    expect(primera?.respuestaAlumno).not.toBeNull()
+    expect(primera?.correcto).toBe(true)
+  })
+
+  it('contrato §2.4 una alternativa quitada se borra y una nueva recibe un id nuevo', async () => {
+    await comoInstructor()
+    const idsAntes = alternativasDePregunta(17).map((alternativa) => alternativa.id)
+    expect(idsAntes).toHaveLength(4)
+    const siguiente = datos().secuencias.alternativa
+    const base = { codInstructor: '444444', idMateria: 4, dificultad: 'BAJA' } as const
+    await modificarPregunta(17, {
+      ...base,
+      enunciado: 'Los límites de operación se encuentran en el manual de _____.',
+      tipoPregunta: 'COMPLETAR',
+      explicacion: null,
+      alternativas: [{ respuesta: 'vuelo', correcto: true }],
+    })
+    expect(alternativasDePregunta(17).map((alternativa) => alternativa.id)).toEqual([idsAntes[0]])
+    expect(datos().alternativas.filter((alternativa) => idsAntes.slice(1).includes(alternativa.id))).toEqual([])
+    await modificarPregunta(17, {
+      ...base,
+      enunciado: '¿Dónde se encuentran los límites de operación de la aeronave?',
+      tipoPregunta: 'OPCION_MULTIPLE',
+      explicacion: null,
+      alternativas: [
+        { respuesta: 'En el manual de vuelo', correcto: true },
+        { respuesta: 'En la orden de vuelo del día', correcto: false },
+        { respuesta: 'En el PDI EA-510', correcto: false },
+        { respuesta: 'En la hoja de briefing', correcto: false },
+      ],
+    })
+    expect(alternativasDePregunta(17).map((alternativa) => alternativa.id)).toEqual([
+      idsAntes[0],
+      siguiente,
+      siguiente + 1,
+      siguiente + 2,
+    ])
   })
 
   it('CA-BAN-11 eliminar responde 409 D3 si está en uso y 200 D18 si no', async () => {

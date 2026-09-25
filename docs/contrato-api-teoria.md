@@ -279,6 +279,8 @@ Los errores de una alternativa llevan el índice en el nombre del campo: `"'alte
 
 Mismo cuerpo, mismas reglas y mismo `201` que §2.3. `origen` **no cambia nunca**: una pregunta importada desde IA que se corrige a mano sigue siendo `IA`. `404` D2 si la pregunta no existe, `404` D4 si la nueva `idMateria` no existe, `404` D27 si el `codInstructor` no existe.
 
+**Las alternativas se actualizan en su lugar, no se borran y se reinsertan.** El arreglo `alternativas` del cuerpo no lleva ids, así que se empareja por posición con las alternativas que la pregunta ya tiene, ordenadas por `id`: la alternativa de la posición *i* conserva su `id` y solo cambia su `respuesta` y su `correcto`, una alternativa que el cuerpo ya no trae se borra y una posición nueva recibe un `id` nuevo. **No es un detalle interno:** §4.3 guarda la respuesta del alumno como el `id` de la alternativa en texto y §4.4 califica comparando contra ese `id`, de modo que renumerar las alternativas de una pregunta que está en un examen `EN_CURSO` le borraría la respuesta al alumno sin que nada lo avise.
+
 **Se puede modificar una pregunta `enUso`, y lo que eso significa:**
 
 | Quién la usa | Qué ve después de la modificación |

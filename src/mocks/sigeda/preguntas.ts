@@ -162,14 +162,22 @@ export function erroresDePregunta(cuerpo: CuerpoPregunta, prefijo = '', conInstr
 }
 
 function guardarAlternativas(idPregunta: number, cuerpo: CuerpoPregunta) {
-  datos().alternativas = datos().alternativas.filter((alternativa) => alternativa.idPregunta !== idPregunta)
-  for (const alternativa of alternativasDelCuerpo(cuerpo.alternativas)) {
-    datos().alternativas.push({
-      id: siguienteId('alternativa'),
-      idPregunta,
-      respuesta: texto(alternativa.respuesta).trim(),
-      correcto: alternativa.correcto === true,
-    })
+  const enviadas = alternativasDelCuerpo(cuerpo.alternativas)
+  const existentes = alternativasDePregunta(idPregunta)
+  enviadas.forEach((alternativa, indice) => {
+    const respuesta = texto(alternativa.respuesta).trim()
+    const correcto = alternativa.correcto === true
+    const actual = existentes[indice]
+    if (actual) {
+      actual.respuesta = respuesta
+      actual.correcto = correcto
+      return
+    }
+    datos().alternativas.push({ id: siguienteId('alternativa'), idPregunta, respuesta, correcto })
+  })
+  const quitadas = new Set(existentes.slice(enviadas.length).map((alternativa) => alternativa.id))
+  if (quitadas.size > 0) {
+    datos().alternativas = datos().alternativas.filter((alternativa) => !quitadas.has(alternativa.id))
   }
 }
 
