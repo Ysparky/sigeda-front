@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { API, autorizar, erroresDeCampo, guardado, texto, textoEliminado, textoNoEncontrado } from './comun'
-import { datos, siguienteId, type MateriaMock, type ParteMock } from './datos'
+import { datos, materiaEnUso, siguienteId, type MateriaMock, type ParteMock } from './datos'
 
 const PARTES: ParteMock[] = ['PRIMERA_PARTE', 'SEGUNDA_PARTE', 'CULTURA_AERONAUTICA']
 
@@ -78,7 +78,6 @@ export const handlersMaterias = [
       notaMinima: Number(cuerpo.notaMinima),
       coeficiente: Number(cuerpo.coeficiente),
       parte: esParte(cuerpo.parte) ? cuerpo.parte : 'PRIMERA_PARTE',
-      conPreguntas: false,
     }
     datos().materias.push(materia)
     return guardado('Materia', 'materia', materiaPublica(materia))
@@ -109,7 +108,7 @@ export const handlersMaterias = [
     if (permitido instanceof Response) return permitido
     const materia = datos().materias.find((candidata) => candidata.id === Number(params.id))
     if (!materia) return textoNoEncontrado('Materia especificada no existe.')
-    if (materia.conPreguntas) {
+    if (materiaEnUso(materia.id)) {
       return HttpResponse.text('La materia no se puede eliminar, tiene preguntas o turnos teóricos.', { status: 409 })
     }
     datos().materias = datos().materias.filter((candidata) => candidata.id !== materia.id)

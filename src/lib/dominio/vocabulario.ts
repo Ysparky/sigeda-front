@@ -39,6 +39,23 @@ export const ESTADOS_DOCUMENTO = {
   error: { etiqueta: 'Error', tono: 'peligro' },
 } as const satisfies Record<string, Termino>
 
+export const ESTADOS_TURNO_TEORICO = {
+  PROGRAMADO: { etiqueta: 'Programado', tono: 'info' },
+  EN_CURSO: { etiqueta: 'En curso', tono: 'aviso' },
+  FINALIZADO: { etiqueta: 'Finalizado', tono: 'neutro' },
+} as const satisfies Record<string, Termino>
+
+export const ESTADOS_RENDICION = {
+  NO_RINDIO: { etiqueta: 'No rindió', tono: 'neutro' },
+  EN_CURSO: { etiqueta: 'En curso', tono: 'aviso' },
+  ENTREGADO: { etiqueta: 'Entregado', tono: 'exito' },
+} as const satisfies Record<string, Termino>
+
+export const RESULTADOS_EXAMEN = {
+  aprobado: { etiqueta: 'Aprobado', tono: 'exito' },
+  desaprobado: { etiqueta: 'Desaprobado', tono: 'peligro' },
+} as const satisfies Record<string, Termino>
+
 export const ESTADOS_AERONAVE = {
   Disponible: { etiqueta: 'Disponible', tono: 'exito' },
   En_Mantenimiento: { etiqueta: 'En mantenimiento', tono: 'aviso' },
@@ -57,6 +74,9 @@ const VOCABULARIOS = {
   aeronave: ESTADOS_AERONAVE,
   documento: ESTADOS_DOCUMENTO,
   respuesta: RESULTADOS_RESPUESTA,
+  turnoTeorico: ESTADOS_TURNO_TEORICO,
+  rendicion: ESTADOS_RENDICION,
+  examen: RESULTADOS_EXAMEN,
 } as const
 
 export type Vocabulario = keyof typeof VOCABULARIOS

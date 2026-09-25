@@ -1,4 +1,12 @@
 import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
+import {
+  crearTeoria,
+  type AlternativaMock,
+  type CuestionarioMock,
+  type PreguntaMock,
+  type PreguntaTurnoMock,
+  type TurnoTeoricoMock,
+} from './semilla-teoria'
 import { crearUsuarios, ROLES_MOCK, type RolMock, type UsuarioMock } from './usuarios'
 
 export type ProgramaMock = 'PDI' | 'PDE'
@@ -31,14 +39,7 @@ export type EstandarMock = { id: number; nombre: string; descripcion: string | n
 
 export type ParteMock = 'PRIMERA_PARTE' | 'SEGUNDA_PARTE' | 'CULTURA_AERONAUTICA'
 
-export type MateriaMock = {
-  id: number
-  nombre: string
-  notaMinima: number
-  coeficiente: number
-  parte: ParteMock
-  conPreguntas: boolean
-}
+export type MateriaMock = { id: number; nombre: string; notaMinima: number; coeficiente: number; parte: ParteMock }
 
 export type AeronaveMock = { id: number; nombre: string; descripcion: string; imagen: string | null; estado: string }
 
@@ -102,6 +103,10 @@ export type Secuencias = {
   maniobra: number
   estandar: number
   materia: number
+  pregunta: number
+  alternativa: number
+  turnoTeorico: number
+  cuestionario: number
 }
 
 export type DatosMock = {
@@ -117,6 +122,11 @@ export type DatosMock = {
   aeronaves: AeronaveMock[]
   turnos: TurnoMock[]
   evaluaciones: EvaluacionMock[]
+  preguntas: PreguntaMock[]
+  alternativas: AlternativaMock[]
+  turnosTeoricos: TurnoTeoricoMock[]
+  preguntasTurno: PreguntaTurnoMock[]
+  cuestionarios: CuestionarioMock[]
   secuencias: Secuencias
 }
 
@@ -275,7 +285,6 @@ export function crearDatos(hoy: string = hoyIso()): DatosMock {
       notaMinima,
       coeficiente,
       parte: 'PRIMERA_PARTE' as ParteMock,
-      conPreguntas: indice + 1 === 3,
     })),
     aeronaves: [
       { id: 1, nombre: 'Robinson R22', descripcion: 'Helicóptero de entrenamiento básico', imagen: null, estado: 'Disponible' },
@@ -442,7 +451,21 @@ export function crearDatos(hoy: string = hoyIso()): DatosMock {
         ]),
       },
     ],
-    secuencias: { turno: 10, usuario: 13, grupo: 7, fase: 4, subfase: 6, maniobra: 12, estandar: 13, materia: 12 },
+    ...crearTeoria(hoy),
+    secuencias: {
+      turno: 10,
+      usuario: 13,
+      grupo: 7,
+      fase: 4,
+      subfase: 6,
+      maniobra: 12,
+      estandar: 13,
+      materia: 12,
+      pregunta: 25,
+      alternativa: 101,
+      turnoTeorico: 6,
+      cuestionario: 4,
+    },
   }
 }
 
@@ -514,4 +537,49 @@ export function subfasesDeManiobra(idManiobra: number): SubfaseMock[] {
 
 export function estandaresDeManiobra(idManiobra: number): EstandarMock[] {
   return datosActuales.estandares.filter((estandar) => estandar.idManiobra === idManiobra)
+}
+
+export function buscarMateria(id: number): MateriaMock | undefined {
+  return datosActuales.materias.find((materia) => materia.id === id)
+}
+
+export function buscarTurnoTeorico(id: number): TurnoTeoricoMock | undefined {
+  return datosActuales.turnosTeoricos.find((turno) => turno.id === id)
+}
+
+export function buscarPregunta(id: number): PreguntaMock | undefined {
+  return datosActuales.preguntas.find((pregunta) => pregunta.id === id)
+}
+
+export function alternativasDePregunta(idPregunta: number): AlternativaMock[] {
+  return datosActuales.alternativas.filter((alternativa) => alternativa.idPregunta === idPregunta).sort((a, b) => a.id - b.id)
+}
+
+export function preguntasDelTurno(idTurnoTeorico: number): PreguntaTurnoMock[] {
+  return datosActuales.preguntasTurno
+    .filter((fila) => fila.idTurnoTeorico === idTurnoTeorico)
+    .sort((a, b) => a.orden - b.orden)
+}
+
+export function preguntaEnUso(idPregunta: number): boolean {
+  return datosActuales.preguntasTurno.some((fila) => fila.idPregunta === idPregunta)
+}
+
+export function materiaEnUso(idMateria: number): boolean {
+  return (
+    datosActuales.preguntas.some((pregunta) => pregunta.idMateria === idMateria) ||
+    datosActuales.turnosTeoricos.some((turno) => turno.idMateria === idMateria)
+  )
+}
+
+export function alumnosDeGrupo(idGrupo: number): PersonaMock[] {
+  return datosActuales.personas
+    .filter((persona) => persona.tipo === 'Alumno' && persona.idGrupo === idGrupo)
+    .sort((a, b) => a.aPaterno.localeCompare(b.aPaterno, 'es'))
+}
+
+export function cuestionarioDe(idTurnoTeorico: number, codAlumno: string): CuestionarioMock | undefined {
+  return datosActuales.cuestionarios.find(
+    (cuestionario) => cuestionario.idTurnoTeorico === idTurnoTeorico && cuestionario.codAlumno === codAlumno,
+  )
 }

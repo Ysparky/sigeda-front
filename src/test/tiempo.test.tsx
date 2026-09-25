@@ -4,8 +4,11 @@ import { describe, expect, it } from 'vitest'
 import { config } from '@/lib/config'
 import { buscarDocumento, consultar, datosIa } from '@/mocks/ia/datos'
 import { server } from '@/mocks/server'
+import { buscarTurnoTeorico } from '@/mocks/sigeda/datos'
+import { ID_TURNO_ABIERTO } from '@/mocks/sigeda/semilla-teoria'
+import { estadoDeVentana, milisegundosRestantes } from '@/lib/dominio/teoria'
 import { iniciarComo, renderApp } from './render'
-import { relojFalso } from './tiempo'
+import { abrirVentanaDeExamen, relojFalso } from './tiempo'
 
 const RUTA_PRUEBA = `${config.iaApiUrl}/prueba-de-reloj`
 
@@ -81,5 +84,30 @@ describe('contador de consultas de los documentos', () => {
     expect(buscarDocumento(ID_LENTO)?.tags).toEqual([])
     expect(buscarDocumento(ID_ETERNO)?.consultas).toBe(0)
     expect(datosIa().sesiones).toEqual([])
+  })
+})
+
+describe('ventana del examen en las pruebas', () => {
+  it('M4-19 abre la ventana del turno 3 alrededor del reloj falso', () => {
+    relojFalso()
+    const turno = abrirVentanaDeExamen({ transcurridos: 5, restantes: 25 })
+    expect(turno.horaInicio).toBe('08:55')
+    expect(turno.horaFin).toBe('09:25')
+    expect(estadoDeVentana(turno.fechaExamen, turno.horaInicio, turno.horaFin)).toBe('EN_CURSO')
+    expect(milisegundosRestantes(turno.fechaExamen, turno.horaFin)).toBe(25 * 60_000)
+  })
+
+  it('M4-19 avanzar el reloj los minutos restantes cierra la ventana', async () => {
+    const { avanzar } = relojFalso()
+    const turno = abrirVentanaDeExamen({ restantes: 10 })
+    await avanzar(10 * 60_000 + 1000)
+    expect(estadoDeVentana(turno.fechaExamen, turno.horaInicio, turno.horaFin)).toBe('FINALIZADO')
+    expect(milisegundosRestantes(turno.fechaExamen, turno.horaFin)).toBe(0)
+  })
+
+  it('M4-19 exige el reloj falso y deja el turno en 00:00–23:59 después de reiniciar', () => {
+    expect(() => abrirVentanaDeExamen()).toThrow('abrirVentanaDeExamen se llama despues de relojFalso()')
+    const turno = buscarTurnoTeorico(ID_TURNO_ABIERTO)
+    expect([turno?.horaInicio, turno?.horaFin]).toEqual(['00:00', '23:59'])
   })
 })
