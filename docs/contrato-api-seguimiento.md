@@ -2,7 +2,7 @@
 
 **Versión:** 1 · 2026-09-25
 **Implementa:** `sigeda-back` (Spring Boot), branch `main` (leído en `ec2b0dd`) y `sigeda_chat_status` (NestJS), branch `feat/migracion-sigeda-back` (leído en `15b4e86`)
-**Consume:** `sigeda-web` M5. Los mocks MSW (`src/mocks/sigeda/` y `src/mocks/ia/`) implementan exactamente este documento.
+**Consume:** `sigeda-web` M5. Los mocks MSW de `src/mocks/sigeda/` implementan exactamente este documento; **nada de `src/mocks/ia/` lo implementa**, porque M5 no consume el servidor de IA (§8).
 **Para:** Victor — implementación en `sigeda-back`; la §8 es para quien mantiene `sigeda_chat_status`
 
 Fuentes del dominio: PDI EA-510 2023, Título III cap. VI y Título IV (spec §3.4), «Descripción Eval» y «Flujo Desaprobado».
@@ -204,9 +204,9 @@ Alcance: los grupos del llamador, o todos los del programa si además tiene `Vie
 | `ESTADO_CRITICO` | `codAlumno` (un alumno tiene un estado) | `ESTADO_CRITICO:777777` |
 | `CHEQUEO_PENDIENTE` | `codAlumno` | `CHEQUEO_PENDIENTE:999999` |
 | `SUBSANACION_PENDIENTE` | `codAlumno` + `idCuestionario` del examen desaprobado | `SUBSANACION_PENDIENTE:666666:2` |
-| `CAUSAL_TEORICO` | `codAlumno` + código de causal + `idMateria` (vacío si no lleva materia) | `CAUSAL_TEORICO:111111:PROMEDIO_ASIGNATURA:3` · `CAUSAL_TEORICO:111111:TRES_ASIGNATURAS:` |
+| `CAUSAL_TEORICO` | `codAlumno` + código de causal + `idMateria` (vacío si no lleva materia) | `CAUSAL_TEORICO:111111:PROMEDIO_ASIGNATURA:3` · `CAUSAL_TEORICO:111111:PROMEDIO_ASIGNATURA:2` · `CAUSAL_TEORICO:111111:TRES_ASIGNATURAS:` |
 
-La primera versión de este contrato usaba `codAlumno` para las causales, y eso colisionaba en cuanto un alumno tenía dos — que es el caso normal, porque las siete causales de §5.1 no son excluyentes. Un código de causal sin materia solo puede ocurrir una vez por alumno, así que el segmento vacío sigue siendo único.
+La primera versión de este contrato usaba `codAlumno` para las causales, y eso colisionaba en cuanto un alumno tenía dos — que es el caso normal, porque las siete causales de §5.1 no son excluyentes. **Los dos primeros ejemplos son el caso que obliga a llevar `idMateria` en la clave**: el mismo alumno con el mismo código de causal en dos asignaturas distintas, que es lo que `PROMEDIO_ASIGNATURA` hace en cuanto dos asignaturas caen por debajo de 13. Un código de causal **sin** materia solo puede ocurrir una vez por alumno, así que el segmento vacío sigue siendo único.
 
 **Cómo se deriva cada tipo.** Ninguno es un dato nuevo: los cinco salen de lo que ya está guardado.
 
@@ -382,7 +382,11 @@ Las tres sumas de pesos de fase cierran en 1.00, y las tres de sub fase también
 
 **Qué evaluaciones entran como `NMI`.** Las misiones de **Complementación de Fase no cuentan para el promedio** (`pdi:589`), lo que coincide con que `CalculoNota` solo puntúa `Ponderada` y `Chequeo Sub Fase` (`EvaluacionController.java:291-292`) y con que un `Chequeo` guarda `promedio: null` (`data_prod.sql:178`). Así que `NMI` son las evaluaciones `Ponderada` y `Chequeo Sub Fase`, que es lo mismo que ya filtra `GET /api/evaluaciones/promedio/subfase/{id}/persona/{cod}` (`evaluacion/services/EvaluacionServiceImpl.java:33-36`).
 
-**Una diferencia entre el PDI y el backend que el índice hereda.** El PDI fija la nota base de una misión en **17.50** (`pdi:565`) y `CalculoNota` usa **17** (`:47-61`); el PDI define «VUELO MALO» también «cuando por tercera misión consecutiva no alcance el rendimiento estándar requerido en la misma tarea» (`pdi:591`) y el backend no implementa esa tercera condición. Spec §2 ya resuelve el conflicto —el código de `sigeda-back` manda sobre el texto— así que los índices se calculan sobre el `promedio` que el backend produce, y quedan medio punto por debajo de lo que el PDI produciría en una misión toda en estándar. Se anota porque es la clase de diferencia que alguien descubre comparando una nota a mano.
+**Dos cosas sobre la nota de misión, porque los índices se calculan sobre ella.**
+
+**La nota base es 17, y el propio PDI da las dos cifras en una sola frase.** `pdi:565` dice literalmente «La nota base de cada misión será de **diecisiete (17.50)**»: la palabra y el número no coinciden **dentro de la misma oración**, y `CalculoNota` implementa la palabra (`:47-61`). Así que esto no es el backend apartándose de la norma, es el backend eligiendo una de las dos cifras que la norma da, y la escrita con letra. Conviene presentarlo así a quien valide: «el código está medio punto bajo» y «la fuente se contradice» piden acciones opuestas.
+
+**La tercera condición de «VUELO MALO» no es un `if` que falte.** «Cuando por tercera misión consecutiva no alcance el rendimiento estándar requerido en la misma tarea» (`pdi:591`) necesita el historial del alumno **de una maniobra a través de varias misiones**, y `CalculoNota` recibe las `calificaciones` de una sola evaluación y nada más (`:70-77`). Ninguna lógica local puede verlo: hace falta una consulta nueva sobre `calificaciones` cruzada con las evaluaciones anteriores del alumno. Anotarlo como un bug de una línea le costaría una tarde a alguien.
 
 **El leyendario de `NFAD` está cruzado en la fuente.** La fórmula usa `C, N, I, F, CX` (`pdi:698-699`) y el leyendario que la sigue dice `C` = Contacto, **`E` = Navegación**, **`N/I` = Instrumentos**, `F` = Formación, **`N` = Campos Extraños** (`pdi:700-706`). Las letras del leyendario no son las de la fórmula. La única lectura que cierra en 1.00 y que respeta el orden de la fórmula es `C` = Contacto 0.25, `N` = Navegación 0.25, `I` = Instrumentos 0.20, `F` = Formación 0.15, `CX` = Campos Extraños 0.15, y es la que este contrato implementa — pero un lector del PDI podría concluir que Campos Extraños pesa 0.25. Es un defecto del documento, no una ambigüedad de diseño, y conviene señalarlo al validar.
 
@@ -639,6 +643,8 @@ Las dos reglas del criterio coinciden con `pdi:748-752` (Adaptación y Helitrans
 
 Así que la dependencia 65 son dos cosas, y en este orden: **añadir las columnas** `fecha` (date), `tipo` (`OPERACIONES` · `COMANDO` · `SUBFASE`, los escalones de `pdi:754-758` y `:793-797`) y `resultado` (`Aprobado` · `Desaprobado`) **y escribir también las filas de los chequeos desaprobados**, que es lo que convierte la tabla en un historial; y **luego** la ruta. Sin lo primero, el panel puede mostrar los chequeos que el alumno pasó y no los que lo llevaron al Chequeo de Comando, que son justamente los que interesan.
 
+**Y un peligro que llega con esas filas nuevas.** `Persona.recuperarCont(ChequeoFinal)` (`grupo/entities/Persona.java:238-245`) hace lo contrario de `reiniciarCont`: **restaura** `contChequeo`, `contMalo` y `contRegular` desde una fila y **suma** su `contEval`. `ResultadoController` lo llama en cuatro sitios (`:166`, `:176`, `:230`, `:240`), siempre para deshacer o rehacer un chequeo. Hoy eso es seguro porque toda fila es un chequeo aprobado; en cuanto existan filas de chequeos desaprobados, **ese camino de restauración no debe recogerlas**, o un chequeo malo devolvería al alumno los contadores que tenía antes de pasar uno bueno. De modo que `resultado` tiene que entrar en la **consulta** que alimenta `recuperarCont`, no solo en la forma de la respuesta.
+
 **200** — arreglo no paginado, ordenado por `fecha` ascendente (un alumno tiene pocos chequeos y la pantalla los muestra como una línea de tiempo):
 
 ```json
@@ -673,7 +679,7 @@ Siete avisos sobre estos cinco, dos de ellos correcciones a lo que decían contr
 
 6. **Ninguno de estos cinco endpoints tenía handler de mock para tres de ellos.** `GET /api/personas/{cod}/alumno`, el reporte de subfase y los promedios de subfase están documentados desde M1 y **no existen en `src/mocks/`**; sin handler, la cabecera del legajo, el reporte y la media de S9 no son probables. La §9.9 los fija.
 
-7. **El reporte de subfase depende de que la subfase tenga maniobras, y cuatro de las cinco sembradas no las tienen.** `maniobras_subfase` (`data_prod.sql:25-36`) liga maniobras a las subfases 2, 3 y 4 y **nunca a la 1 ni a la 5**. Como todas las evaluaciones que el mock traía estaban en la subfase 1, el reporte no se podía probar con ellas; por eso las evaluaciones que M5 agrega para `777777` están en la subfase **3** (§9.2).
+7. **El reporte de subfase depende de que la subfase tenga maniobras, y cuatro de las cinco sembradas no las tienen.** `maniobras_subfase` (`data_prod.sql:25-35`) liga maniobras a las subfases 2, 3 y 4 y **nunca a la 1 ni a la 5**. Como todas las evaluaciones que el mock traía estaban en la subfase 1, el reporte no se podía probar con ellas; por eso las evaluaciones que M5 agrega para `777777` están en la subfase **3** (§9.2).
 4. **`GET /api/turnos/alumno` sigue roto.** `TurnoRealizado` proyecta `getCantGrupo()` (`turno/projections/TurnoRealizado.java:19`) contra un `Turno` cuya columna es `cant_alumno` (`schema_prod.sql:281`). Dependencia **12**, abierta desde M1. El panel de turnos muestra el resto de los campos y pone **S11** en lugar de la cantidad de alumnos; no la inventa ni la oculta.
 5. **El evaluador no se puede enlazar.** `EvaluacionPractica.codEvaluador` es `@Transient` (`:41-42`) y `evaluaciones_practicas` no tiene columna `cod_evaluador` (`schema_prod.sql:162-180`), así que el valor que se asigna al crear (`EvaluacionController.java:303`) **nunca se guarda** y toda lectura devuelve `null`. Solo sobrevive el texto `evaluador`, armado como `nombre + " " + aPaterno` (`:304`) — sin apellido materno y sin código. El legajo muestra ese texto y **S10** al lado, y no ofrece ningún enlace a la persona del evaluador. No se pide corregirlo: sería una columna nueva y una migración para un enlace que ninguna pantalla de M5 necesita.
 
@@ -767,6 +773,8 @@ Personas y grupos: alumnos `111111` (grupo 1), `222222` (grupo 2), `555555` y `6
 
 **El grupo 6 se renombra a «Promoción 2026-A».** Motivo: hoy los seis grupos se llaman literalmente `Grupo 1`…`Grupo 6`, así que la etiqueta S4 que Escuadrón deriva de `idGrupo` es **indistinguible** del nombre real y CA-SEG-04 no puede fallar nunca. Con el grupo 6 renombrado, Escuadrón muestra «Grupo 6» para `999999` (porque el catálogo de §1 no trae el nombre) y su legajo muestra «Promoción 2026-A» (porque la dependencia 64 sí lo trae): las dos pantallas discrepan a propósito, CA-SEG-04 y CA-LEG-01 se vuelven falsables, y la pareja demuestra para qué existe la dependencia 64. Cuesta ajustar **dos** aserciones existentes: `src/features/turnos-teoricos/formulario-turno-teorico.test.tsx:90` y `src/features/grupos/grupos-page.test.tsx:36`.
 
+**Y hay una tercera prueba que hay que volver a correr aunque no cambie.** `src/mocks/sigeda/cuestionarios-teoria.test.ts:230-242` (CA-RES-10) afirma `[false, null, [], []]` para `999999` entre otros, y los dos turnos teóricos que la §9.8 agrega lo vuelven una aserción con carga: sigue pasando porque `desaprobadosSinSubsanar` (`src/mocks/sigeda/datos.ts:600-616`) exige que la subsanación sea `aprobado === true`, de la misma materia y con `fechaExamen >= ` la del turno desaprobado, y el turno 7 en `hoy − 11` cubre al turno 6 en `hoy − 12`. **Invertir esas dos fechas invierte la aserción sin que nada más avise.**
+
 **Los contadores no cuadran con las evaluaciones, y eso es fiel a la semilla.** `555555` tiene `cont_malo = 1` y ninguna evaluación `Malo` (`data_prod.sql:64` frente a `:177-181`). Los mocks mantienen la separación que describe la §6.1: **contadores para la regla de chequeo, evaluaciones para el historial**, y ninguna prueba intenta reconciliarlos.
 
 **Un aviso que sale de leer el código, no de la semilla:** los contadores de `999999` (2 Malos y 2 Regulares) describen un estado que **`ResultadoController` no puede producir**, porque `esRegularAlternado` congela `contRegular` en 1 (§9.3 y dependencia 71). Como fijación está bien — la semilla es un dato escrito a mano y el criterio la lee tal cual —, pero no se puede llegar a ella volando.
@@ -795,7 +803,7 @@ Las ocho que M5 agrega, cada una con sus seis calificaciones. Los códigos sigue
 | `999999-1` | `999999` | `hoy − 20` | 1 Contacto | Ponderada | **Regular** | `'15.0'` | — | un desaprobado por Regular alternado, en un tercer grupo |
 | `999999-2` | `999999` | `hoy − 10` | 1 | **Chequeo Sub Fase** | Bueno | `'17.0'` | `999999-1` | la única fila con esa categoría, y la que **deriva** la fila de chequeos (§9.4) |
 
-Por qué `777777` necesita **tres** Malos y no dos Malos con dos Regulares: porque las otras cinco ramas del criterio son inalcanzables en un replay (§9.3). Y por qué sus evaluaciones están en la subfase **3** y no en la 1: porque la subfase 1 **no tiene ninguna maniobra** en la semilla (`data_prod.sql:25-36` liga maniobras a las subfases 2, 3 y 4, nunca a la 1), así que un reporte de subfase sobre ella devolvería `maniobras: []` y CA-LEG-05 no sería probable. La subfase 3 tiene las maniobras 9 y 10.
+Por qué `777777` necesita **tres** Malos y no dos Malos con dos Regulares: porque de las cuatro ramas de `comprobarCriterio1` — la que aplica a Adaptación y a Helitransportadas — las **tres** que cuentan Regulares son inalcanzables en un replay (§9.3), y `malos == 3` es la única que queda. Y por qué sus evaluaciones están en la subfase **3** y no en la 1: porque la subfase 1 **no tiene ninguna maniobra** en la semilla (`data_prod.sql:25-35` liga maniobras a las subfases 2, 3 y 4, nunca a la 1), así que un reporte de subfase sobre ella devolvería `maniobras: []` y CA-LEG-05 no sería probable. La subfase 3 tiene las maniobras 9 y 10.
 
 ### 9.3 Desaprobados — **derivados**, con la precondición que faltaba
 
@@ -810,24 +818,30 @@ si  eval.esPonderada()  Y  alumno.esApto()          ← la condición que faltab
 
 `alumno.esApto()` delega en `Estado.esApto`, que es **estrictamente** `"Apto"` (`grupo/entities/Estado.java:26-28`). Decir «una Ponderada Mala siempre abre un Desaprobado» era falso: **para un alumno que ya no está `Apto` no abre nada, no mueve ningún contador y no dispara ningún chequeo.**
 
-**El replay parte de cero y es dependiente del orden.** Parte de cero porque `ResultadoController` es el único escritor y el mock no tiene historia anterior a sus propias evaluaciones; es dependiente del orden porque cada paso lee los contadores que dejó el anterior. El handler recorre las evaluaciones por `fecha` ascendente y, dentro de la misma fecha, por `codigo`. La derivación además no es monótona en el backend real: `updateAll` **borra** un Desaprobado cuando una edición quita su causa (`:122-123`) y devuelve el alumno a `Apto` cuando el criterio deja de cumplirse (`:130-131`); M5 no edita evaluaciones, así que el mock solo necesita el camino de alta.
+**El replay parte de cero contadores y de estado `Apto`, y es dependiente del orden.** Las dos partes del punto de partida importan. **De cero** porque `ResultadoController` es el único escritor y el mock no tiene historia anterior a sus propias evaluaciones. **Y de `Apto`** porque la guarda de `:35` mira el estado, no los contadores: un autor de handler que tomara el estado inicial de la §9.1 — donde `777777` figura `En Chequeo`, que es una invención del frontend (`docs/decisiones.md:49`) y no de la semilla — obtendría **cero desaprobados para él**, que es exactamente la trampa en la que cayó la versión anterior de esta sección. Los estados de la §9.1 son el resultado del replay, no su entrada.
+
+Es dependiente del orden porque cada paso lee los contadores y el estado que dejó el anterior. El handler recorre las evaluaciones por `fecha` ascendente y, dentro de la misma fecha, por `codigo`. **Todo el estado del replay es por alumno** — los cuatro contadores y el `estado` viven en la `Persona` —, así que intercalar alumnos no cambia ningún resultado; la tabla de abajo está en orden de `fecha`, que es el orden real, y no agrupada por alumno.
+
+La derivación además no es monótona en el backend real: `updateAll` **borra** un Desaprobado cuando una edición quita su causa (`:122-123`) y devuelve el alumno a `Apto` cuando el criterio deja de cumplirse (`:130-131`); M5 no edita evaluaciones, así que el mock solo necesita el camino de alta.
 
 El replay sobre las doce evaluaciones de §9.2:
 
-| # | Evaluación | Estado al entrar | Qué pasa |
-|---|---|---|---|
-| 1 | `111111-1` Ponderada Bueno | Apto | ni Malo ni Regular → nada |
-| 2 | `555555-1` Ponderada Regular | Apto | `contRegular` 0 es par → alternado → **Desaprobado**, `contRegular` = 1 |
-| 3 | `555555-2` Chequeo | Apto | rama `esChequeo()` (`:60-76`): `contChequeo` = 1; no estaba `En Final`, así que **no** escribe `ChequeoFinal` ni cambia el estado |
-| 4 | `555555-3` Ponderada Regular | Apto | `contRegular` 1 es impar → **no** alternado → **nada**. ← la regla del Regular alternado |
-| 5 | `666666-1` Ponderada Malo | Apto | **Desaprobado**, `contMalo` = 1. Criterio: `malos == 3`? no |
-| 6 | `777777-1` Ponderada Malo | Apto | **Desaprobado**, `contMalo` = 1 |
-| 7 | `777777-2` Ponderada Malo | Apto | **Desaprobado**, `contMalo` = 2 |
-| 8 | `777777-3` Ponderada Malo | Apto | **Desaprobado**, `contMalo` = 3 → `comprobarCriterio1(3, 0)` → **estado = `En Chequeo`** |
-| 9 | `777777-4` Ponderada Malo | **En Chequeo** | la guarda `esApto()` falla → **nada**. ← la precondición |
-| 10 | `777777-5` Ponderada Bueno | En Chequeo | igual: nada |
-| 11 | `999999-1` Ponderada Regular | Apto | `contRegular` 0 par → **Desaprobado**, `contRegular` = 1 |
-| 12 | `999999-2` Chequeo Sub Fase | Apto | rama `esChequeoSubFase()` (`:78-90`): sin notas bajas → **escribe `ChequeoFinal`**, estado = `Apto`, `reiniciarCont()` pone los cuatro contadores a cero |
+| # | Fecha | Evaluación | Estado al entrar | Qué pasa |
+|---|---|---|---|---|
+| 1 | 2024-03-01 | `111111-1` Ponderada Bueno | Apto | ni Malo ni Regular → nada |
+| 2 | 2024-03-01 | `555555-1` Ponderada Regular | Apto | `contRegular` 0 es par → alternado → **Desaprobado**, `contRegular` = 1 |
+| 3 | 2024-03-08 | `555555-2` Chequeo | Apto | rama `esChequeo()` (`:60-76`): `contChequeo` = 1; **sus seis calificaciones están en el estándar**, así que `hayNotasBajas` es falso, pero no estaba `En Final` → **no** escribe `ChequeoFinal` ni cambia el estado |
+| 4 | 2024-03-15 | `555555-3` Ponderada Regular | Apto | `contRegular` 1 es impar → **no** alternado → **nada**. ← la regla del Regular alternado |
+| 5 | `hoy − 30` | `666666-1` Ponderada Malo | Apto | **Desaprobado**, `contMalo` = 1. Criterio: `malos == 3`? no |
+| 6 | `hoy − 28` | `777777-1` Ponderada Malo | Apto | **Desaprobado**, `contMalo` = 1 |
+| 7 | `hoy − 21` | `777777-2` Ponderada Malo | Apto | **Desaprobado**, `contMalo` = 2 |
+| 8 | `hoy − 20` | `999999-1` Ponderada Regular | Apto | `contRegular` 0 par → **Desaprobado**, `contRegular` = 1 |
+| 9 | `hoy − 14` | `777777-3` Ponderada Malo | Apto | **Desaprobado**, `contMalo` = 3 → `comprobarCriterio1(3, 0)` → **estado = `En Chequeo`** |
+| 10 | `hoy − 10` | `999999-2` Chequeo Sub Fase | Apto | rama `esChequeoSubFase()` (`:78-90`): **sus seis calificaciones están en el estándar**, así que `hayNotasBajas` es falso → **escribe `ChequeoFinal`**, estado = `Apto`, `reiniciarCont()` pone los cuatro contadores a cero |
+| 11 | `hoy − 7` | `777777-4` Ponderada Malo | **En Chequeo** | la guarda `esApto()` falla → **nada**. ← la precondición |
+| 12 | `hoy − 3` | `777777-5` Ponderada Bueno | En Chequeo | igual: nada |
+
+**`hayNotasBajas` es un insumo, no un detalle.** Los pasos 3 y 10 dependen de él y ninguna otra parte de las fijaciones lo fija, así que se dice aquí: las seis calificaciones de `555555-2` y las seis de `999999-2` están **todas en o sobre el estándar**. Si una sola de las de `999999-2` estuviera bajo el estándar, `:80-81` lo pondría `En Complementación` y **no habría ninguna fila de chequeos** en todo el fixture.
 
 **Seis desaprobados**, en cuatro alumnos y tres grupos:
 
@@ -842,7 +856,7 @@ El replay sobre las doce evaluaciones de §9.2:
 
 Suficiente para el filtro por grupo de §2.1, para que `GET /api/desaprobados/persona/777777` devuelva tres filas y `654321` devuelva **404** D3, y para que CA-LEG-07 tenga caso en dos subfases distintas.
 
-**Y un hallazgo del replay que vale una dependencia.** `esRegularAlternado` devuelve `true` solo si `contRegular` es 0 o par (`TurnoDesaprobado.java:8-13`), y es la **única** vía por la que `contRegular` crece (`ResultadoController.java:42-44`, e igual en `updateAll` `:116-118`). De modo que `contRegular` sube de 0 a 1 y **nunca más**: en 1 la comprobación es falsa, así que no se incrementa, así que sigue en 1. Consecuencia: de las cuatro ramas de `comprobarCriterio1` solo `malos == 3` es alcanzable, y de las tres de `comprobarCriterio2` solo `malos == 2`. Las cuatro ramas que el PDI define con Regulares — `2M+2R`, `1M+4R`, `6R` en `pdi:750-752` y `1M+2R`, `4R` en `pdi:782-783` — **están muertas**. Es la dependencia **71**.
+**Y un hallazgo del replay que vale una dependencia.** El PDI escribe sus ramas como «calificativos REGULARES **alternados**» (`pdi:750-752`, `:782-783`), y `esRegularAlternado` (`TurnoDesaprobado.java:8-13`) comprueba **la paridad de un contador** — `contRegular == 0 || contRegular % 2 == 0` —, que no es una prueba de que los Regulares alternen con nada. Es además la **única** vía por la que `contRegular` crece (`ResultadoController.java:42-44`, e igual en `updateAll` `:116-118`), así que el contador sube de 0 a 1 y **nunca más**: en 1 la comprobación es falsa, no se incrementa, sigue en 1. Consecuencia: de las **siete** ramas que el PDI define — cuatro en `comprobarCriterio1` (`:16-21`) y tres en `comprobarCriterio2` (`:24-28`) — las **cinco** que cuentan Regulares están muertas (`2M+2R`, `1M+4R`, `6R`, `1M+2R`, `4R`), y solo disparan `malos == 3` y `malos == 2`. No es un contador atascado: es «alternados» mal implementado, y arreglarlo pasa por decidir qué significa sobre la secuencia de clasificaciones del alumno. Es la dependencia **71**.
 
 ### 9.4 Chequeos — 1 fila, derivada
 
@@ -913,21 +927,24 @@ Doce filas, todas derivadas por las reglas de §2.1 excepto las tres causales, q
 | 1 | `SUBSANACION_PENDIENTE` | **ALTA** | `666666` | 3 | `bloqueadoPorSubsanacion` de M4 |
 | 2 | `ESTADO_CRITICO` | MEDIA | `777777` | 4 | `estado = En Chequeo` |
 | 3 | `CHEQUEO_PENDIENTE` | MEDIA | `999999` | 6 | contadores 2M+2R con estado `Apto` |
-| 4 | `CAUSAL_TEORICO` | MEDIA | `111111` | 1 | `PROMEDIO_ASIGNATURA`, materia 3 |
-| 5 | `CAUSAL_TEORICO` | MEDIA | `111111` | 1 | `PERIODICOS_GENERALES`, materia 2 |
-| 6 | `CAUSAL_TEORICO` | MEDIA | `111111` | 1 | `TRES_ASIGNATURAS`, **sin materia** |
-| 7 | `VUELO_DESAPROBADO` | BAJA | `555555` | 3 | desaprobado `555555-1` |
-| 8 | `VUELO_DESAPROBADO` | BAJA | `666666` | 3 | desaprobado `666666-1` |
-| 9–11 | `VUELO_DESAPROBADO` | BAJA | `777777` | 4 | desaprobados `777777-1`, `777777-2`, `777777-3` |
-| 12 | `VUELO_DESAPROBADO` | BAJA | `999999` | 6 | desaprobado `999999-1` |
+| 4 | `CAUSAL_TEORICO` | MEDIA | `111111` | 1 | `PROMEDIO_ASIGNATURA`, **materia 3** |
+| 5 | `CAUSAL_TEORICO` | MEDIA | `111111` | 1 | `PROMEDIO_ASIGNATURA`, **materia 2** ← el mismo código en otra asignatura |
+| 6 | `CAUSAL_TEORICO` | MEDIA | `111111` | 1 | `PERIODICOS_GENERALES`, grupo B, materia 2 |
+| 7 | `CAUSAL_TEORICO` | MEDIA | `111111` | 1 | `TRES_ASIGNATURAS`, **sin materia** |
+| 8 | `VUELO_DESAPROBADO` | BAJA | `555555` | 3 | desaprobado `555555-1` |
+| 9 | `VUELO_DESAPROBADO` | BAJA | `666666` | 3 | desaprobado `666666-1` |
+| 10–12 | `VUELO_DESAPROBADO` | BAJA | `777777` | 4 | desaprobados `777777-1`, `777777-2`, `777777-3` |
+| 13 | `VUELO_DESAPROBADO` | BAJA | `999999` | 6 | desaprobado `999999-1` |
 
-**Doce filas**, con las tres severidades presentes: 1 `ALTA`, 5 `MEDIA`, 6 `BAJA`. Consecuencias buscadas:
+**Trece filas**, con las tres severidades presentes: 1 `ALTA`, 6 `MEDIA`, 6 `BAJA`. Consecuencias buscadas:
 
-- **Las tres causales de `111111` prueban que el `id` sintético no colisiona**: mismo tipo y mismo alumno tres veces, con `id` distinto porque la clave natural lleva el código de causal y la materia, incluida una con `idMateria: null`.
+- **Las filas 4 y 5 son las que prueban que el `id` sintético no colisiona**, y la versión anterior de estas fijaciones no las tenía: llevaba tres causales de **tres códigos distintos**, de modo que el segmento del código ya las separaba y el `idMateria` de la clave no hacía falta para nada. Con dos `PROMEDIO_ASIGNATURA` en asignaturas distintas, la clave **necesita** la materia o las dos filas colapsan.
+- Las cuatro causales cubren además las tres formas de payload: con materia, con grupo **y** materia, y sin ninguna de las dos (`idMateria: null`).
 - `777777` tiene **cuatro** alertas (tres desaprobados y su estado) y **ninguna** es `CHEQUEO_PENDIENTE` aunque cumpla el criterio, porque su estado ya se movió; `999999` tiene la `CHEQUEO_PENDIENTE` que él no tiene.
-- Los cuatro grupos con alumnos aparecen, así que el filtro por grupo separa. Con `size=10` la lista pagina en **2 páginas** y con `size=6` en 2 también.
-- Un instructor sin `View All Groups` que solo alcanza los grupos 1, 2 y 3 ve **seis** de las doce (las de `111111`, `555555` y `666666`), que es lo que prueba el alcance de §2.1.
+- Los cuatro grupos con alumnos aparecen, así que el filtro por grupo separa. Con `size=10` la lista pagina en **2 páginas** y con `size=6` en 3.
+- Un instructor sin `View All Groups` que solo alcanza los grupos 1, 2 y 3 ve **siete** de las trece (las cuatro de `111111`, la de `555555` y las dos de `666666`), que es lo que prueba el alcance de §2.1.
 - El orden por defecto pone la de `666666` primera y las seis de vuelo desaprobado al final, lo que prueba que el ordinal de severidad funciona y no el alfabético.
+- **Ninguna fila ejerce `ESTADO_CRITICO` en `ALTA` ni en `BAJA`**: el único estado no-`Apto` del fixture es `En Chequeo`, que cae en `MEDIA`. Las otras dos bandas de la tabla de §2.1 se prueban con `server.use(...)` (§9.10).
 
 ### 9.8 Estado teórico, causales e historial
 
@@ -937,10 +954,10 @@ Lo de M4 (`contrato-api-teoria.md` §9.3) **no cambia**: `666666` es el único c
 
 | Alumno | `causales` |
 |---|---|
-| `111111` | `PROMEDIO_ASIGNATURA` con `idMateria: 3` («Nota de asignatura 12.50 en Adoctrinamiento de Vuelo, por debajo de 13.»); `PERIODICOS_GENERALES` con `idMateria: 2` y `grupo` = las cinco asignaturas del grupo B que existen en el catálogo («3 desaprobados consecutivos en periódicos de Ingeniería del Helicóptero.»); `TRES_ASIGNATURAS` con `idMateria: null` y `grupo: null` («3 asignaturas desaprobadas.») |
+| `111111` | **Cuatro.** `PROMEDIO_ASIGNATURA` con `idMateria: 3` («Nota de asignatura 12.50 en Adoctrinamiento de Vuelo, por debajo de 13.»); `PROMEDIO_ASIGNATURA` con `idMateria: 2` («Nota de asignatura 11.80 en Ingeniería del Helicóptero, por debajo de 13.»); `PERIODICOS_GENERALES` con `idMateria: 2` y `grupo` = las cinco asignaturas del grupo B que existen en el catálogo («3 desaprobados consecutivos en periódicos de Ingeniería del Helicóptero.»); `TRES_ASIGNATURAS` con `idMateria: null` y `grupo: null` («3 asignaturas desaprobadas.») |
 | todos los demás | `[]` |
 
-Así `111111` prueba «causal sin bloqueo», las tres formas de payload y la rama de materia nula, y `666666` prueba «bloqueo sin causal» — los dos casos que la pantalla tiene que distinguir. Las otras cuatro etiquetas se ejercen con `server.use(...)` (§9.10).
+Las dos primeras son **el mismo código en dos asignaturas**, que es el caso que obliga a llevar `idMateria` en la clave sintética de §2.1 y el que la versión anterior de estas fijaciones no cubría. Entre las cuatro, `111111` prueba «causal sin bloqueo», las tres formas de payload (con materia, con grupo y materia, sin ninguna) y la colisión de claves; `666666` prueba «bloqueo sin causal». Las otras tres etiquetas — `DOS_EXAMENES`, `SEGUNDA_SUBSANACION`, `PERIODICOS_CRITICOS` — y el `INOPINADOS` se ejercen con `server.use(...)` (§9.10).
 
 **Historial teórico (§5.2).** M5 agrega **dos turnos teóricos** (ids 6 y 7) y **dos exámenes** (ids 4 y 5), para grupo 6, materia 1 Aerodinámica (mínimo 16), de modo que exista una cadena de subsanación **completa** — la de `666666` está pendiente y por tanto no tiene segunda nota:
 
@@ -977,7 +994,7 @@ Las dos filas de `999999` son las que prueban CA-LEG-11 y S17: la nota **10.00 e
 
 `654321` no tiene cuenta → `usuario: null`. Un código inexistente → **404** D2.
 
-**`GET /api/evaluaciones/subfase/{id}/persona/{cod}`** (`reportes-subfase.ts`). El par que prueba CA-LEG-05 es **(`777777`, subfase 3)**, y es el único que puede: la subfase 1, donde están todas las evaluaciones de `555555`, **no tiene ninguna maniobra** (`data_prod.sql:25-36`), así que su reporte vendría con `maniobras: []`.
+**`GET /api/evaluaciones/subfase/{id}/persona/{cod}`** (`reportes-subfase.ts`). El par que prueba CA-LEG-05 es **(`777777`, subfase 3)**, y es el único que puede: la subfase 1, donde están todas las evaluaciones de `555555`, **no tiene ninguna maniobra** (`data_prod.sql:25-35`), así que su reporte vendría con `maniobras: []`.
 
 ```json
 {
@@ -1009,6 +1026,7 @@ Se prueba con `server.use(...)` por prueba, porque las fijaciones por defecto ti
 - el escuadrón vacío (D1) y el escuadrón de un instructor sin alumnos (S2);
 - la lista de alertas vacía (D10), la de índices vacía (D12) y la de chequeos vacía (D13);
 - las **cuatro** etiquetas de causal que el fixture no lleva (`DOS_EXAMENES`, `SEGUNDA_SUBSANACION`, `PERIODICOS_CRITICOS`, `INOPINADOS`);
+- las bandas `ALTA` y `BAJA` de `ESTADO_CRITICO`: el fixture solo tiene `En Chequeo`, que es `MEDIA`, así que un alumno `En Deliberación` o `No Apto` (→ `ALTA`) y uno `En Observación` (→ `BAJA`) se devuelven por `server.use(...)`. La tabla de §2.1 cubre los seis estados; las fijaciones por defecto, uno;
 - un panel del legajo que falla en su primera carga, uno por uno;
 - un `estado-teorico` en lote que no responde (S5) y uno individual que no responde;
 - un `GET /api/personas/{cod}/legajo` sin `usuario` y sin `grupo`;
@@ -1043,12 +1061,12 @@ Numeración de la spec (§10, §13.4, §14.5, §15.5, §16.5 y §17.5). Todas so
 | **62** | **Esquema y datos, y es prerrequisito de 61 y 63.** (a) `evaluaciones_practicas.promedio` a columna **numérica** (hoy `varchar(255)`), porque ordenar y promediar texto es lexicográfico. (b) `fase` con FK a `fases` (hoy un string denormalizado con sus tres valores escritos a mano en la entidad), porque un renombre rompe en silencio todo agregado por fase. (c) **Los pesos de sub fase del PDI como dato**: 0.25 · 0.25 · 0.20 · 0.15 · 0.15 en Adaptación, 0.30 · 0.30 · 0.40 en Helitransportadas, 0.50 · 0.50 en Aerotácticas (`pdi:698-723`), y qué sub fase corresponde a cada símbolo — el leyendario del PDI está cruzado y la semilla solo tiene cinco sub fases (§3.3 ítem 2). (d) **La tabla de coeficientes de misión**, que el PDI promete y no entrega (§3.3 ítem 1): **sin ella `NSF` no es computable por nadie**, ni por este sistema ni con lápiz | §3.1, §3.2, §4.1 |
 | **63** | `GET /api/reportes/orden-merito` con el desempate NFPI ↓ / NIA ↓ / código ↑ — que es de este contrato, porque el PDI no lo define — y los no rankeables al final sin puesto. Se calcula en cada lectura: no devuelve sello de tiempo porque no hay ningún trabajo programado del que colgarlo. **El primer endpoint que `Create Reports` protegería de verdad** | §4.1 |
 | **64** | `GET /api/personas/{cod}/legajo`: `codigo`, `tipo`, `idGrupo`, nombre y programa del grupo, los cuatro contadores y el bloque `chequeo` derivado de `TurnoDesaprobado`, incluido `cuentaConEsteEstado`. **Precisión sobre el motivo:** el Jefe de Operaciones **sí** tiene `Manage Groups` (`Role.java:33`) y ya puede leer los contadores por `GET /api/grupos/{id}`; quienes no pueden son el **Instructor** y el **Comandante** (`Role.java:25-29`, `:18-23`), que son la audiencia del panel. Y aun para él, `GET /api/grupos/{id}` devuelve la entidad `Grupo` completa con todas sus personas, no una cabecera de legajo, y responde 200 con cuerpo vacío para un id inexistente (dependencia 18) | §6.1 |
-| **65** | `GET /api/personas/{cod}/chequeos`, **y antes las columnas y las filas que le faltan a `chequeos_finales`**: `fecha`, `tipo` (OPERACIONES · COMANDO · SUBFASE) y `resultado`, **y escribir también los chequeos desaprobados**. Hoy la tabla guarda un código y cuatro contadores, no tiene ninguna ruta porque su único escritor es un `@Component` sin `@RequestMapping`, y sus dos escrituras ocurren **solo al aprobar** y van seguidas de `reiniciarCont()` — así que una fila significa «chequeo aprobado» y los chequeos que llevaron al alumno al Chequeo de Comando no dejan rastro (§6.2) | §6.2 |
+| **65** | `GET /api/personas/{cod}/chequeos`, **y antes las columnas y las filas que le faltan a `chequeos_finales`**: `fecha`, `tipo` (OPERACIONES · COMANDO · SUBFASE) y `resultado`, **y escribir también los chequeos desaprobados**. Hoy la tabla guarda un código y cuatro contadores, no tiene ninguna ruta porque su único escritor es un `@Component` sin `@RequestMapping`, y sus dos escrituras ocurren **solo al aprobar** y van seguidas de `reiniciarCont()` — así que una fila significa «chequeo aprobado» y los chequeos que llevaron al alumno al Chequeo de Comando no dejan rastro (§6.2). **Peligro que traen las filas nuevas:** `Persona.recuperarCont` (`grupo/entities/Persona.java:238-245`), que `ResultadoController` llama en `:166`, `:176`, `:230` y `:240`, **restaura** los contadores desde una fila; en cuanto existan filas de chequeos desaprobados, `resultado` tiene que formar parte de esa consulta o un chequeo malo devolverá contadores que el alumno ya había limpiado | §6.2 |
 | **66** | `GET /api/seguimiento/alertas`, **y las dos correcciones de seguridad que arrastra**: (a) `findByCodPersona` es `findByCodigoContaining`, un `LIKE %cod%` sobre el código de la evaluación, así que cualquier titular de `View Disapproved` vuelca los desaprobados de todos los alumnos con un valor de un carácter; (b) los cuatro endpoints sin `@PreAuthorize`, uno de ellos un `DELETE` sin comprobación de existencia que cualquier usuario autenticado, **incluido un Alumno**, puede llamar. Amplía la 17. **Depende además de la 7, la 64 y la 68**, porque tres de los cinco tipos de alerta se derivan del estado teórico, de los contadores y de las causales | §2 |
 | **67** | `GET /api/cuestionarios?codAlumno=&idMateria=&estado=`: el historial teórico del alumno, con `idTurnoOrigen` y `subsanadoPor` para poder mostrar las dos notas de una subsanación. Recortado de M4 (spec §16.6 ítem 1); recupera el id **D14**. Amplía la 6 | §5.2 |
 | **68** | `causales[]` en `estado-teorico`, con **siete** códigos tomados del PDI Título IV (`pdi:738-745`). Los dos de periódicos cuentan **por grupo de asignaturas** («cualquiera de ellos»), no por asignatura, y se reconcilian con el catálogo de once por pares (asignatura, `tipoExamen`) usando la tabla de periodicidad (`pdi:527-547`); la única ausencia real es **«Instrumentos»**, que el PDI evalúa y nombra y que no está entre las once (§5.1). Amplía la 7 | §5.1 |
 | **70** | Inasistencias: `PUT /api/turnos-teoricos/{id}/inasistencias/{codAlumno}`, la columna `inasistencia_justificada` y la reducción del **50 %** del rezagado injustificado. `pdi:558` y `:685` la aplican a **«un test o examen»** sin restringirla a los periódicos, así que afecta a `PT`, a `PE`, y por tanto a `NA` y a `NCT`, además del `NEI`. Recortada de M4 (spec §16.6 ítem 2). **M5 no construye pantalla para esto**: hasta que exista, `reduccionPorRezagadoAplicada` es siempre `false` y ninguna nota se reduce | §3.4 |
-| **71** | **Bug, encontrado al derivar las fijaciones de §9.3:** `esRegularAlternado` (`evaluacion/utils/TurnoDesaprobado.java:8-13`) solo devuelve `true` cuando `contRegular` es 0 o par, y es la única vía por la que `contRegular` crece (`ResultadoController.java:42-44`, `:116-118`). De modo que sube de 0 a 1 y **nunca más**. Consecuencia: de las seis ramas de chequeo que el PDI define (`pdi:750-752`, `:782-783`), las **cuatro** que cuentan Regulares — `2M+2R`, `1M+4R`, `6R`, `1M+2R`, `4R` — son **inalcanzables**, y solo disparan `3 Malos` en Adaptación/Helitransportadas y `2 Malos` en Aerotácticas. La comparación es además por igualdad estricta (`malos == 3`), lo que es inofensivo solo porque el estado se mueve exactamente en 3 | §9.3 |
+| **71** | **Bug, encontrado al derivar las fijaciones de §9.3, y es «alternados» mal implementado antes que un contador atascado.** El PDI escribe sus ramas como «calificativos REGULARES **alternados**» (`pdi:750-752`, `:782-783`), y `esRegularAlternado` (`evaluacion/utils/TurnoDesaprobado.java:8-13`) comprueba **la paridad de un contador** (`contRegular == 0 || contRegular % 2 == 0`), que no prueba que los Regulares alternen con nada. Es además la única vía por la que `contRegular` crece (`ResultadoController.java:42-44`, `:116-118`), así que sube de 0 a 1 y **nunca más**. Consecuencia: de las **siete** ramas que el PDI define — cuatro en `comprobarCriterio1` (`:16-21`) y tres en `comprobarCriterio2` (`:24-28`) — las **cinco** que cuentan Regulares son **inalcanzables** (`2M+2R`, `1M+4R`, `6R`, `1M+2R`, `4R`), y solo disparan `3 Malos` en Adaptación/Helitransportadas y `2 Malos` en Aerotácticas. Arreglarlo pasa por definir «alternados» sobre la secuencia de clasificaciones del alumno, no por cambiar cómo se incrementa un contador. La comparación es además por igualdad estricta (`malos == 3`), inofensivo solo porque el estado se mueve exactamente en 3 | §9.3 |
 
 **Ids retirados:** la **69** se pedía para el servicio de predicción (aceptar un `Persona.codigo` y recalibrar los umbrales) y **se retira con la §8**, sin reutilizar el número. La advertencia de por qué no debe concederse sin la 49 está en §8.
 
