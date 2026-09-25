@@ -1,4 +1,4 @@
-import type { FieldValues, Path, UseFormSetError } from 'react-hook-form'
+import type { FieldValues, Path, UseFormGetValues, UseFormSetError } from 'react-hook-form'
 import type { ApiError } from '@/lib/api/errors'
 
 export function rutaDeCampo(campo: string, renombrar: Readonly<Record<string, string>> = {}): string {
@@ -14,19 +14,24 @@ export function aplicarErroresDeCampo<T extends FieldValues>(
   setError: UseFormSetError<T>,
   renombrar: Readonly<Record<string, string>> = {},
   colapsar: readonly string[] = [],
-): boolean {
-  const entradas = Object.entries(error.erroresDeCampo)
+  getValues?: UseFormGetValues<T>,
+): string[] {
   const colapsados = new Set<string>()
-  for (const [campo, mensaje] of entradas) {
+  const huerfanos: string[] = []
+  for (const [campo, mensaje] of Object.entries(error.erroresDeCampo)) {
     const ruta = rutaDeCampo(campo, renombrar)
     const raiz = ruta.split('.')[0] ?? ruta
-    if (!colapsar.includes(raiz)) {
-      setError(ruta as Path<T>, { type: 'server', message: mensaje })
+    const colapsado = colapsar.includes(raiz)
+    const destino = colapsado ? raiz : ruta
+    if (getValues !== undefined && getValues(destino as Path<T>) === undefined) {
+      huerfanos.push(mensaje)
       continue
     }
-    if (colapsados.has(raiz)) continue
-    colapsados.add(raiz)
-    setError(raiz as Path<T>, { type: 'server', message: mensaje })
+    if (colapsado) {
+      if (colapsados.has(raiz)) continue
+      colapsados.add(raiz)
+    }
+    setError(destino as Path<T>, { type: 'server', message: mensaje })
   }
-  return entradas.length > 0
+  return huerfanos
 }

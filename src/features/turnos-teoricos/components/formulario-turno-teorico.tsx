@@ -25,7 +25,7 @@ import { PROGRAMAS } from '@/features/catalogos/api'
 import { consultasMaterias } from '@/features/materias/api'
 import { consultasPreguntas } from '@/features/preguntas/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
-import { useSesion } from '@/lib/auth/use-sesion'
+import { usePuede, useSesion } from '@/lib/auth/use-sesion'
 import { sumarDias } from '@/lib/dominio/calendario'
 import {
   exigeTurnoOrigen,
@@ -47,7 +47,8 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
   const navegar = useNavigate()
   const queryClient = useQueryClient()
   const sesion = useSesion()
-  const [errorGeneral, setErrorGeneral] = useState<string | null>(null)
+  const todosLosGrupos = usePuede('Manage Groups')
+  const [erroresGenerales, setErroresGenerales] = useState<string[]>([])
   const [materiaPendiente, setMateriaPendiente] = useState<string | null>(null)
   const esquema = useMemo(() => crearEsquemaTurnoTeorico(new Date()), [])
   const formulario = useForm<ValoresTurnoTeorico>({ resolver: zodResolver(esquema), defaultValues: valoresIniciales })
@@ -56,7 +57,9 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
   const valores = useWatch({ control: formulario.control }) as ValoresTurnoTeorico
 
   const materias = useQuery(consultasMaterias.lista())
-  const grupos = useQuery(consultasTurnosTeoricos.grupos(sesion?.codPersona ?? null, valores.programa))
+  const grupos = useQuery(
+    consultasTurnosTeoricos.grupos(todosLosGrupos ? null : (sesion?.codPersona ?? null), valores.programa),
+  )
   const banco = useQuery(consultasPreguntas.porMateria(Number(valores.idMateria) || 0))
   const origenes = useQuery(
     consultasTurnosTeoricos.finalizados(Number(valores.idMateria) || 0, Number(valores.idGrupo) || 0),
@@ -74,10 +77,10 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
     },
     onError: (error) => {
       if (error instanceof ApiError) {
-        aplicarErroresDeCampo(error, formulario.setError)
-        setErrorGeneral(error.message)
+        const huerfanos = aplicarErroresDeCampo(error, formulario.setError, {}, [], formulario.getValues)
+        setErroresGenerales(huerfanos.length > 0 ? huerfanos : [error.message])
       } else {
-        setErrorGeneral(MENSAJE_GENERICO)
+        setErroresGenerales([MENSAJE_GENERICO])
       }
     },
   })
@@ -104,15 +107,19 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
     <form
       noValidate
       onSubmit={formulario.handleSubmit((siguientes) => {
-        setErrorGeneral(null)
+        setErroresGenerales([])
         guardar.mutate(siguientes)
       })}
       className="grid gap-6"
     >
-      {errorGeneral && (
+      {erroresGenerales.length > 0 && (
         <Alert variant="destructive">
           <AlertTitle>No se pudo guardar el turno teórico</AlertTitle>
-          <AlertDescription>{errorGeneral}</AlertDescription>
+          <AlertDescription className="grid gap-1">
+            {erroresGenerales.map((mensaje) => (
+              <span key={mensaje}>{mensaje}</span>
+            ))}
+          </AlertDescription>
         </Alert>
       )}
       <Card>
@@ -150,6 +157,7 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
                 )}
               />
               <FieldDescription>Se elige primero: limita los grupos ofrecidos.</FieldDescription>
+              <FieldError errors={[errors.programa]} />
             </Field>
             <Field data-invalid={Boolean(errors.idGrupo)}>
               <FieldLabel htmlFor="turno-teorico-grupo">Grupo</FieldLabel>
@@ -236,6 +244,7 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
                   </NativeSelect>
                 )}
               />
+              <FieldError errors={[errors.tipoExamen]} />
             </Field>
             <Field data-invalid={Boolean(errors.fechaExamen)}>
               <FieldLabel htmlFor="turno-teorico-fecha">Fecha del examen</FieldLabel>

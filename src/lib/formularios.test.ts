@@ -26,7 +26,7 @@ describe('aplicarErroresDeCampo', () => {
       nombre: 'Nombre debe tener de 10 a 30 caracteres.',
       'alumnosTurno[0].codAlumno': 'Código de alumno es requerido.',
     })
-    expect(aplicarErroresDeCampo(error, setError)).toBe(true)
+    expect(aplicarErroresDeCampo(error, setError)).toEqual([])
     expect(setError).toHaveBeenCalledWith('nombre', { type: 'server', message: 'Nombre debe tener de 10 a 30 caracteres.' })
     expect(setError).toHaveBeenCalledWith('alumnosTurno.0.codAlumno', {
       type: 'server',
@@ -40,7 +40,7 @@ describe('aplicarErroresDeCampo', () => {
       'subfases[0].idSubfase': 'La subfase es requerida.',
       nombre: 'El nombre es obligatorio',
     })
-    expect(aplicarErroresDeCampo(error, setError, {}, ['subfases'])).toBe(true)
+    expect(aplicarErroresDeCampo(error, setError, {}, ['subfases'])).toEqual([])
     expect(setError).toHaveBeenCalledWith('subfases', { type: 'server', message: 'La subfase es requerida.' })
     expect(setError).toHaveBeenCalledWith('nombre', { type: 'server', message: 'El nombre es obligatorio' })
   })
@@ -51,14 +51,41 @@ describe('aplicarErroresDeCampo', () => {
       'subfases[0].idSubfase': 'La subfase es requerida.',
       'subfases[1].idSubfase': 'La subfase no existe.',
     })
-    expect(aplicarErroresDeCampo(error, setError, {}, ['subfases'])).toBe(true)
+    expect(aplicarErroresDeCampo(error, setError, {}, ['subfases'])).toEqual([])
     expect(setError).toHaveBeenCalledTimes(1)
     expect(setError).toHaveBeenCalledWith('subfases', { type: 'server', message: 'La subfase es requerida.' })
   })
 
   it('no marca nada cuando el error no trae campos', () => {
     const setError = vi.fn()
-    expect(aplicarErroresDeCampo(new ApiError(400, 'Asignar aeronave disponible.'), setError)).toBe(false)
+    expect(aplicarErroresDeCampo(new ApiError(400, 'Asignar aeronave disponible.'), setError)).toEqual([])
     expect(setError).not.toHaveBeenCalled()
+  })
+
+  it('CA-TUT-12 devuelve el mensaje de un campo que el formulario no tiene y no lo marca', () => {
+    const setError = vi.fn()
+    const getValues = ((ruta: string) => (ruta === 'nombre' ? 'Quincenal' : undefined)) as never
+    const error = new ApiError(400, 'Revise los campos marcados.', {
+      codInstructor: 'El grupo no corresponde al instructor.',
+      nombre: 'El nombre es obligatorio',
+    })
+    expect(aplicarErroresDeCampo(error, setError, {}, [], getValues)).toEqual([
+      'El grupo no corresponde al instructor.',
+    ])
+    expect(setError).toHaveBeenCalledTimes(1)
+    expect(setError).toHaveBeenCalledWith('nombre', { type: 'server', message: 'El nombre es obligatorio' })
+  })
+
+  it('CA-TUT-12 trata como huérfano un índice que el formulario ya no muestra', () => {
+    const setError = vi.fn()
+    const getValues = ((ruta: string) => (ruta === 'preguntas.0.puntajeMaximo' ? '10' : undefined)) as never
+    const error = new ApiError(400, 'Revise los campos marcados.', {
+      'preguntas[0].puntajeMaximo': 'El puntaje debe ser un entero entre 1 y 20.',
+      'preguntas[7].puntajeMaximo': 'El puntaje debe ser un entero entre 1 y 20.',
+    })
+    expect(aplicarErroresDeCampo(error, setError, {}, [], getValues)).toEqual([
+      'El puntaje debe ser un entero entre 1 y 20.',
+    ])
+    expect(setError).toHaveBeenCalledTimes(1)
   })
 })

@@ -245,6 +245,15 @@ describe('contrato §3.3 registrar turno teórico', () => {
     )
   })
 
+  it('CA-TUT-04 con Manage Groups basta que el grupo pertenezca al programa', async () => {
+    await iniciarComo('admin.sistema')
+    const cuerpo = { ...nuevoTurno(), codInstructor: '000001', idGrupo: 4 }
+    expect(await crearTurnoTeorico(cuerpo)).toEqual({ mensaje: 'Turno teórico guardado con éxito.', id: 6 })
+    expect((await obtenerTurnoTeorico(6)).grupo).toEqual({ id: 4, nombre: 'Grupo 4', programa: 'PDI' })
+    const sinAlumnos = await errorDe(crearTurnoTeorico({ ...cuerpo, idGrupo: 5 }))
+    expect(sinAlumnos.erroresDeCampo.idGrupo).toBe('El grupo no tiene alumnos.')
+  })
+
   it('CA-TUT-08 exige el turno de origen solo en subsanación o rezagado', async () => {
     await comoInstructor()
     const sinOrigen = await errorDe(crearTurnoTeorico({ ...nuevoTurno(), tipoExamen: 'SUBSANACION' }))

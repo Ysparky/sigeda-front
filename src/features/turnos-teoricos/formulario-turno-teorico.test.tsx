@@ -81,6 +81,35 @@ describe('Registrar y modificar turno teórico', () => {
     expect(within(screen.getByLabelText('Grupo')).getAllByRole('option')).toHaveLength(1)
   })
 
+  it('CA-TUT-04 el Administrador Web ve todos los grupos del programa y guarda el turno', async () => {
+    await iniciarComo('admin.sistema')
+    const { usuario, router } = renderApp('/teoria/turnos/nuevo')
+    await screen.findByLabelText('Nombre')
+    await screen.findByRole('option', { name: 'Adoctrinamiento de Vuelo' })
+    await screen.findByRole('option', { name: 'Grupo 6 · 1 alumno' })
+    expect(within(screen.getByLabelText('Grupo')).getAllByRole('option')).toHaveLength(6)
+    await llenarCabecera(usuario)
+    await agregarPregunta(usuario, 1, '17', '10')
+    await agregarPregunta(usuario, 2, '18', '10')
+    await usuario.click(screen.getByRole('button', { name: 'Guardar turno teórico' }))
+    expect(await screen.findByText('Turno teórico guardado con éxito.')).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/teoria/turnos/6')
+  })
+
+  it('CA-TUT-12 un error de un campo que el formulario no dibuja se muestra en el aviso del formulario', async () => {
+    server.use(
+      http.post(`${API}/api/turnos-teoricos`, () =>
+        HttpResponse.json(["'codInstructor': El grupo no corresponde al instructor."], { status: 400 }),
+      ),
+    )
+    const { usuario } = await abrirRegistrar()
+    await llenarCabecera(usuario)
+    await agregarPregunta(usuario, 1, '17', '20')
+    await usuario.click(screen.getByRole('button', { name: 'Guardar turno teórico' }))
+    expect(await screen.findByText('El grupo no corresponde al instructor.')).toBeInTheDocument()
+    expect(screen.queryByText('Revise los campos marcados.')).not.toBeInTheDocument()
+  })
+
   it('CA-TUT-05 las preguntas son las de la materia, cambiarla confirma y limpia la selección', async () => {
     const { usuario } = await abrirRegistrar()
     expect(screen.getByRole('button', { name: 'Agregar pregunta' })).toBeDisabled()

@@ -54,6 +54,7 @@ function FormularioPregunta({ pregunta, alGuardar }: PropsFormulario) {
   const sesion = useSesion()
   const materias = useQuery(consultasMaterias.lista())
   const [tipoPendiente, setTipoPendiente] = useState<TipoPregunta | null>(null)
+  const [huerfanos, setHuerfanos] = useState<string[]>([])
   const formulario = useForm<ValoresPregunta>({
     resolver: zodResolver(esquemaPregunta),
     defaultValues: pregunta ? valoresDesdePregunta(pregunta) : preguntaVacia(),
@@ -72,7 +73,11 @@ function FormularioPregunta({ pregunta, alGuardar }: PropsFormulario) {
       await queryClient.invalidateQueries({ queryKey: clavesPreguntas.todo })
     },
     onError: (error) => {
-      if (error instanceof ApiError) aplicarErroresDeCampo(error, formulario.setError)
+      setHuerfanos(
+        error instanceof ApiError
+          ? aplicarErroresDeCampo(error, formulario.setError, {}, [], formulario.getValues)
+          : [],
+      )
     },
   })
 
@@ -94,12 +99,22 @@ function FormularioPregunta({ pregunta, alGuardar }: PropsFormulario) {
   }
 
   return (
-    <form noValidate onSubmit={formulario.handleSubmit((valores) => guardar.mutate(valores))}>
+    <form
+      noValidate
+      onSubmit={formulario.handleSubmit((valores) => {
+        setHuerfanos([])
+        guardar.mutate(valores)
+      })}
+    >
       <FieldGroup>
         {guardar.error && (
           <Alert variant="destructive">
-            <AlertDescription>
-              {guardar.error instanceof ApiError ? guardar.error.message : MENSAJE_GENERICO}
+            <AlertDescription className="grid gap-1">
+              {huerfanos.length > 0 ? (
+                huerfanos.map((mensaje) => <span key={mensaje}>{mensaje}</span>)
+              ) : (
+                <span>{guardar.error instanceof ApiError ? guardar.error.message : MENSAJE_GENERICO}</span>
+              )}
             </AlertDescription>
           </Alert>
         )}
@@ -136,6 +151,7 @@ function FormularioPregunta({ pregunta, alGuardar }: PropsFormulario) {
             ))}
           </NativeSelect>
           <FieldDescription>Cambiarlo rehace las alternativas.</FieldDescription>
+          <FieldError errors={[errors.tipoPregunta]} />
         </Field>
         <Field data-invalid={Boolean(errors.enunciado)}>
           <FieldLabel htmlFor="pregunta-enunciado">Enunciado</FieldLabel>
@@ -164,6 +180,7 @@ function FormularioPregunta({ pregunta, alGuardar }: PropsFormulario) {
               </NativeSelectOption>
             ))}
           </NativeSelect>
+          <FieldError errors={[errors.dificultad]} />
         </Field>
         <Field data-invalid={Boolean(errors.alternativas ?? errors.correcta)}>
           <FieldLabel>{tipoPregunta === 'COMPLETAR' ? 'Respuesta esperada' : 'Alternativas'}</FieldLabel>

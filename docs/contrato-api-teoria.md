@@ -480,7 +480,7 @@ Validación → **400** arreglo:
 | Campo | Regla | Mensaje exacto |
 |---|---|---|
 | `codInstructor` | obligatorio y de 6 dígitos (que exista es el 404 D27) | `El código del instructor es obligatorio.` |
-| | el grupo debe ser uno de los que devuelve §3.0 para ese instructor | `El grupo no corresponde al instructor.` |
+| | el grupo debe ser uno de los que devuelve §3.0 para ese instructor, **salvo que el llamador tenga además `Manage Groups`**: a ese le basta que el grupo pertenezca al `programa` enviado, igual que §3.0 le devuelve todos los grupos del programa. `codInstructor` sigue siendo el de quien programa el turno y se guarda como tal | `El grupo no corresponde al instructor.` |
 | `nombre` | obligatorio | `El nombre es obligatorio` |
 | | 10 a 60 caracteres, no solo espacios | `El nombre debe tener entre 10 y 60 caracteres.` |
 | `programa` | obligatorio y `PDI` o `PDE` | `Ingresar programa válido.` |

@@ -276,13 +276,13 @@ function gruposDelInstructor(codInstructor: string): number[] {
   return [...new Set(ids)]
 }
 
-function erroresDeCruce(cuerpo: CuerpoTurno): string[] {
+function erroresDeCruce(cuerpo: CuerpoTurno, todosLosGrupos: boolean): string[] {
   const errores: string[] = []
   const grupo = datos().grupos.find((candidato) => candidato.id === Number(cuerpo.idGrupo))
   if (!grupo) return errores
   if (alumnosDeGrupo(grupo.id).length === 0) errores.push("'idGrupo': El grupo no tiene alumnos.")
   if (grupo.programa !== cuerpo.programa) errores.push("'programa': El programa no corresponde al grupo.")
-  if (!gruposDelInstructor(texto(cuerpo.codInstructor)).includes(grupo.id)) {
+  if (!todosLosGrupos && !gruposDelInstructor(texto(cuerpo.codInstructor)).includes(grupo.id)) {
     errores.push("'codInstructor': El grupo no corresponde al instructor.")
   }
   const origen = typeof cuerpo.idTurnoOrigen === 'number' ? buscarTurnoTeorico(cuerpo.idTurnoOrigen) : undefined
@@ -407,7 +407,7 @@ export const handlersTurnosTeoricos = [
     if (forma.length > 0) return erroresDeCampo(forma)
     const faltante = noEncontrados(cuerpo)
     if (faltante) return faltante
-    const cruce = erroresDeCruce(cuerpo)
+    const cruce = erroresDeCruce(cuerpo, !(autorizar(request, 'Manage Groups') instanceof Response))
     if (cruce.length > 0) return erroresDeCampo(cruce)
     const turno: TurnoTeoricoMock = {
       id: siguienteId('turnoTeorico'),
@@ -444,7 +444,7 @@ export const handlersTurnosTeoricos = [
     if (forma.length > 0) return erroresDeCampo(forma)
     const faltante = noEncontrados(cuerpo)
     if (faltante) return faltante
-    const cruce = erroresDeCruce(cuerpo)
+    const cruce = erroresDeCruce(cuerpo, !(autorizar(request, 'Manage Groups') instanceof Response))
     if (cruce.length > 0) return erroresDeCampo(cruce)
     aplicar(turno, cuerpo)
     return HttpResponse.json({ mensaje: D22_TURNO_GUARDADO, turnoTeorico: detallePublico(turno) }, { status: 201 })
