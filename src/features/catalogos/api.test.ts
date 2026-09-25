@@ -1,5 +1,8 @@
+import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { permisosDeRol } from '@/lib/auth/permisos'
+import { config } from '@/lib/config'
+import { server } from '@/mocks/server'
 import { iniciarComo } from '@/test/render'
 import {
   agruparPorGrupo,
@@ -83,6 +86,30 @@ describe('M1-9 selector de alumnos por rol', () => {
 })
 
 describe('agruparPorGrupo', () => {
+  it('el catálogo del instructor recorre todas las páginas y no se corta en la primera', async () => {
+    await iniciarComo('instructor.perez')
+    const pedidas: string[] = []
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/grupos/instructor/:cod/programa/:nombre`, ({ request }) => {
+        const page = new URL(request.url).searchParams.get('page') ?? '0'
+        pedidas.push(page)
+        const codigo = page === '0' ? '111111' : '999999'
+        return HttpResponse.json({
+          content: [
+            { persona: [{ codigo, nombre: 'Uno', aPaterno: 'Dos', aMaterno: 'Tres', idGrupo: 1, estado: 'Apto' }] },
+          ],
+          totalElements: 2,
+          totalPages: 2,
+          size: 100,
+          number: Number(page),
+        })
+      }),
+    )
+    const alumnos = await listarAlumnos('instructor', 'PDI', '444444')
+    expect(pedidas).toEqual(['0', '1'])
+    expect(alumnos.map((alumno) => alumno.codigo)).toEqual(['111111', '999999'])
+  })
+
   it('agrupa las opciones por su grupo y deja aparte a los alumnos sin grupo', () => {
     expect(
       agruparPorGrupo([
