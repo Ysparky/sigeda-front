@@ -33,7 +33,7 @@ Consume dos backends: `../sigeda-back` (Spring Boot, `:8080`) para instrucción,
 pnpm dev:mock
 ```
 
-MSW responde en el navegador a `/auth/*`, a los turnos, evaluaciones y catálogos de `docs/contrato-api-turnos.md`, a las personas, cuentas, grupos, fases, maniobras y materias de `docs/contrato-api-matricula.md` y a los documentos, cuestionarios y consultas de `docs/contrato-api-aprendizaje.md`, con datos basados en el seed de `sigeda-back` (los datos vuelven al estado inicial al recargar). Contraseña de todos: `123`.
+MSW responde en el navegador a `/auth/*`, a los turnos, evaluaciones y catálogos de `docs/contrato-api-turnos.md`, a las personas, cuentas, grupos, fases, maniobras y materias de `docs/contrato-api-matricula.md`, a los documentos, cuestionarios y consultas de `docs/contrato-api-aprendizaje.md` y al banco de preguntas, los turnos teóricos y los exámenes de `docs/contrato-api-teoria.md`, con datos basados en el seed de `sigeda-back` (los datos vuelven al estado inicial al recargar). Contraseña de todos: `123`.
 
 | Usuario | Rol |
 |---|---|
@@ -51,6 +51,8 @@ MSW responde en el navegador a `/auth/*`, a los turnos, evaluaciones y catálogo
 2. `sigeda_chat_status` en `:3000` (solo para Aprendizaje).
 3. Copie `.env.example` a `.env.local` si los puertos cambian, y ejecute `pnpm dev`.
 
-`VITE_DEPENDENCIAS_RESUELTAS` lista, separados por coma, los números de dependencia de backend ya corregidos en los servidores en uso (por ejemplo `22,30,32,33,37,39`). Mientras falte el número, la aplicación deshabilita la acción que lo necesita: Registrar persona (22), Eliminar persona (30), Modificar maniobra (32 y 33), Eliminar fase (37) y, en Aprendizaje, Subir documento y Eliminar documento (39, `sigeda_chat_status`). En modo demostración todas están disponibles.
+`VITE_DEPENDENCIAS_RESUELTAS` lista, separados por coma, los números de dependencia de backend ya corregidos en los servidores en uso (por ejemplo `22,30,32,33,37,39`). Mientras falte el número, la aplicación deshabilita la acción que lo necesita: Registrar persona (22), Eliminar persona (30), Modificar maniobra (32 y 33), Eliminar fase (37), las escrituras de Materias (5), todo el módulo de Teoría (6) y el bloqueo por subsanación del formulario de turno práctico (7); en Aprendizaje, Subir documento y Eliminar documento (39, `sigeda_chat_status`). En modo demostración todas están disponibles.
+
+Teoría contra el servidor real: nada del módulo existe todavía en `sigeda-back` (dependencias 6 y 7), así que las seis pantallas avisan en su encabezado que funcionan solo en modo mock y sus escrituras quedan deshabilitadas. El detalle de lo que falta está en `docs/contrato-api-teoria.md` §10.
 
 Aprendizaje contra el servidor real: sin la dependencia 39 los documentos son compartidos entre todos los usuarios y las tres pantallas lo avisan; Consultas necesita además la dependencia 45, sin la cual `GET /chat/sessions/{id}` responde 500 y la conversación no se puede recuperar. Mientras falte la 39, la aplicación igual envía a `sigeda_chat_status` un JWT válido de 24 h de `sigeda-back` que ese servicio ignora y conserva en sus registros de acceso (contrato §0), así que conviene no publicarlos.
