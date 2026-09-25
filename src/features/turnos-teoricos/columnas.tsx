@@ -74,8 +74,8 @@ const acciones = ayudante.display({
     if (turno.estado !== 'PROGRAMADO') {
       return (
         <div className="flex justify-end">
-          <span className="text-xs text-muted-foreground" title={TEXTO_VENTANA_COMENZADA} aria-hidden>
-            —
+          <span className="text-xs whitespace-nowrap text-muted-foreground" title={TEXTO_VENTANA_COMENZADA} aria-hidden>
+            Ventana comenzada
           </span>
           <span className="sr-only">{TEXTO_VENTANA_COMENZADA}</span>
         </div>
