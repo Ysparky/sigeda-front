@@ -25,9 +25,9 @@ export function EliminarDocumento({ documento }: { documento: Documento }) {
   if (!disponible) {
     return (
       <div className="grid justify-items-end gap-1">
-        <Button variant="destructive" size="sm" disabled>
+        <Button variant="destructive" size="sm" disabled aria-label={`Eliminar ${documento.filename}`}>
           <Trash2 aria-hidden />
-          Eliminar {documento.filename}
+          Eliminar
         </Button>
         <p className="text-xs text-muted-foreground">{MENSAJE_DEPENDENCIA_PENDIENTE}</p>
       </div>
@@ -37,9 +37,14 @@ export function EliminarDocumento({ documento }: { documento: Documento }) {
   return (
     <ConfirmDialog
       disparador={
-        <Button variant="destructive" size="sm" disabled={eliminar.isPending}>
+        <Button
+          variant="destructive"
+          size="sm"
+          disabled={eliminar.isPending}
+          aria-label={`Eliminar ${documento.filename}`}
+        >
           <Trash2 aria-hidden />
-          Eliminar {documento.filename}
+          Eliminar
         </Button>
       }
       titulo="¿Eliminar el documento?"
