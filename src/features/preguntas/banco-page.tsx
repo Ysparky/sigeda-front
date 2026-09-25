@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
-import { Sparkles } from 'lucide-react'
+import { Plus, Sparkles } from 'lucide-react'
 import { AvisoDeError } from '@/components/aviso-de-error'
 import { AvisoDeTeoria } from '@/components/aviso-de-teoria'
 import { DataTable } from '@/components/data-table'
@@ -16,7 +16,8 @@ import { accionDisponible, MENSAJE_DEPENDENCIA_PENDIENTE } from '@/lib/dependenc
 import { DIFICULTADES, ORIGENES_PREGUNTA, TEXTO_SIN_PREGUNTAS, TIPOS_PREGUNTA } from '@/lib/dominio/teoria'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasPreguntas } from './api'
-import { COLUMNAS_PREGUNTAS } from './columnas'
+import { COLUMNAS_PREGUNTAS, COLUMNAS_PREGUNTAS_CON_ACCIONES } from './columnas'
+import { DialogoPregunta } from './components/dialogo-pregunta'
 import type { BusquedaPreguntas } from './schemas'
 
 const ruta = getRouteApi('/_app/banco/')
@@ -43,12 +44,37 @@ function AccionImportar() {
   )
 }
 
+function AccionRegistrar() {
+  if (!accionDisponible('gestionarPreguntas')) {
+    return (
+      <div className="grid justify-items-end gap-1">
+        <Button disabled>
+          <Plus aria-hidden />
+          Registrar pregunta
+        </Button>
+        <p className="text-xs text-muted-foreground">{MENSAJE_DEPENDENCIA_PENDIENTE}</p>
+      </div>
+    )
+  }
+  return (
+    <DialogoPregunta
+      disparador={
+        <Button>
+          <Plus aria-hidden />
+          Registrar pregunta
+        </Button>
+      }
+    />
+  )
+}
+
 export function BancoPage() {
   const busqueda = ruta.useSearch()
   const navegar = ruta.useNavigate()
   const materias = useQuery(consultasMaterias.lista())
   const preguntas = useQuery(consultasPreguntas.lista(busqueda))
   const error = errorDePrimeraCarga(preguntas)
+  const puedeGestionar = accionDisponible('gestionarPreguntas')
 
   function cambiar(cambios: Partial<BusquedaPreguntas>) {
     void navegar({ search: (previa) => ({ ...previa, page: 0, ...cambios }) })
@@ -66,7 +92,12 @@ export function BancoPage() {
       <PageHeader
         titulo={PANTALLAS.banco.titulo}
         descripcion={PANTALLAS.banco.descripcion}
-        acciones={<AccionImportar />}
+        acciones={
+          <>
+            <AccionImportar />
+            <AccionRegistrar />
+          </>
+        }
       />
       <AvisoDeTeoria accion="gestionarPreguntas" />
       <section aria-label="Filtros" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6 lg:items-end">
@@ -164,7 +195,7 @@ export function BancoPage() {
       ) : (
         <DataTable
           etiqueta="Preguntas del banco"
-          columnas={COLUMNAS_PREGUNTAS}
+          columnas={puedeGestionar ? COLUMNAS_PREGUNTAS_CON_ACCIONES : COLUMNAS_PREGUNTAS}
           pagina={preguntas.data}
           cargando={preguntas.isFetching}
           parametros={busqueda}
@@ -174,7 +205,12 @@ export function BancoPage() {
             <EmptyState
               titulo="No hay preguntas"
               descripcion={hayFiltros ? 'Ninguna pregunta coincide con los filtros.' : TEXTO_SIN_PREGUNTAS}
-              accion={<AccionImportar />}
+              accion={
+                <div className="flex flex-wrap items-start justify-center gap-2">
+                  <AccionImportar />
+                  <AccionRegistrar />
+                </div>
+              }
             />
           }
         />

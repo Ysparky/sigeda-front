@@ -97,6 +97,7 @@ describe('Banco de preguntas', () => {
     await abrirBanco()
     expect(screen.getByText(TEXTO_TEORIA_SOLO_MOCK)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Importar desde IA' })).toBeDisabled()
-    expect(screen.getByText(MENSAJE_DEPENDENCIA_PENDIENTE)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Registrar pregunta' })).toBeDisabled()
+    expect(screen.getAllByText(MENSAJE_DEPENDENCIA_PENDIENTE)).toHaveLength(2)
   })
 })
