@@ -166,6 +166,17 @@ describe('contrato §2.2 y §2.3 detalle y creación', () => {
       ],
     }).catch((problema: unknown) => problema)
     expect((repetidas as ApiError).erroresDeCampo.alternativas).toBe('Las alternativas no pueden repetirse.')
+    expect(
+      await crearPregunta({
+        ...NUEVA,
+        alternativas: [
+          { respuesta: 'Sí', correcto: true },
+          { respuesta: 'Si', correcto: false },
+          { respuesta: 'c', correcto: false },
+          { respuesta: 'd', correcto: false },
+        ],
+      }),
+    ).toBe('Pregunta guardada con éxito.')
   })
 
   it('contrato §2.3 responde 404 D4 y D27 para la materia y el instructor inexistentes', async () => {

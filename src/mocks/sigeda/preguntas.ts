@@ -119,7 +119,7 @@ function erroresDeAlternativas(cuerpo: CuerpoPregunta, prefijo: string): string[
     } else if (alternativas.filter((alternativa) => alternativa.correcto === true).length !== 1) {
       errores.push(`'${prefijo}alternativas': Debe marcar exactamente una alternativa como correcta.`)
     } else {
-      const normalizadas = alternativas.map((alternativa) => normalizar(texto(alternativa.respuesta)))
+      const normalizadas = alternativas.map((alternativa) => texto(alternativa.respuesta).trim().toLowerCase())
       if (new Set(normalizadas).size !== normalizadas.length) {
         errores.push(`'${prefijo}alternativas': Las alternativas no pueden repetirse.`)
       }

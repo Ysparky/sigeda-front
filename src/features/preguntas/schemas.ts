@@ -66,9 +66,7 @@ export const esquemaPregunta = z
         path: ['correcta'],
       })
     }
-    const textos = valores.alternativas.map((alternativa) =>
-      alternativa.respuesta.trim().toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, ''),
-    )
+    const textos = valores.alternativas.map((alternativa) => alternativa.respuesta.trim().toLowerCase())
     if (new Set(textos).size !== textos.length) {
       contexto.addIssue({ code: 'custom', message: 'Las alternativas no pueden repetirse.', path: ['alternativas'] })
     }
