@@ -1,8 +1,9 @@
-import { http, HttpResponse } from 'msw'
+import { delay, http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import { server } from '@/mocks/server'
-import { ApiError, MENSAJE_SIN_CONEXION } from './errors'
-import { construirUrl, crearCliente, type Autenticacion } from './http'
+import { relojFalso } from '@/test/tiempo'
+import { ApiError, CanceladoError, MENSAJE_SIN_CONEXION } from './errors'
+import { conLimiteDeTiempo, construirUrl, crearCliente, type Autenticacion } from './http'
 
 const BASE = 'http://api.prueba'
 
@@ -145,5 +146,113 @@ describe('crearCliente', () => {
       status: 0,
       message: MENSAJE_SIN_CONEXION,
     })
+  })
+})
+
+describe('subirArchivo', () => {
+  const archivo = () => new File(['contenido del apunte'], 'Apunte.txt', { type: 'text/plain' })
+
+  it('M3-6 envía el archivo en el campo file, con el token y sin fijar el Content-Type', async () => {
+    let nombre: string | null = null
+    let tipoDeclarado: string | null = null
+    let cabecera: string | null = null
+    server.use(
+      http.post(`${BASE}/documents/upload`, async ({ request }) => {
+        cabecera = request.headers.get('Authorization')
+        tipoDeclarado = request.headers.get('Content-Type')
+        const formulario = await request.formData()
+        const recibido = formulario.get('file')
+        nombre = recibido instanceof File ? recibido.name : null
+        return HttpResponse.json({ id: 'd0c00000-0000-4000-8000-000000000005' }, { status: 201 })
+      }),
+    )
+    await expect(crearCliente(BASE, autenticacion()).subirArchivo('/documents/upload', archivo())).resolves.toEqual({
+      id: 'd0c00000-0000-4000-8000-000000000005',
+    })
+    expect(nombre).toBe('Apunte.txt')
+    expect(cabecera).toBe('Bearer token-1')
+    expect(tipoDeclarado).toMatch(/^multipart\/form-data; boundary=/)
+  })
+
+  it('M3-6 reenvía el archivo tras renovar el token', async () => {
+    const vigentes = ['viejo']
+    const auth = autenticacion({
+      obtenerToken: () => vigentes.at(-1) ?? null,
+      renovarToken: vi.fn(async () => {
+        vigentes.push('nuevo')
+        return { estado: 'renovado', token: 'nuevo' } as const
+      }),
+    })
+    const recibidos: string[] = []
+    server.use(
+      http.post(`${BASE}/documents/upload`, async ({ request }) => {
+        const formulario = await request.formData()
+        const recibido = formulario.get('file')
+        recibidos.push(recibido instanceof File ? recibido.name : '')
+        return request.headers.get('Authorization') === 'Bearer nuevo'
+          ? HttpResponse.json({ id: 'ok' }, { status: 201 })
+          : new HttpResponse(null, { status: 401 })
+      }),
+    )
+    await expect(crearCliente(BASE, auth).subirArchivo('/documents/upload', archivo())).resolves.toEqual({ id: 'ok' })
+    expect(recibidos).toEqual(['Apunte.txt', 'Apunte.txt'])
+  })
+
+  it('CA-DOC-09 una caída de red al subir informa la falta de conexión', async () => {
+    server.use(http.post(`${BASE}/documents/upload`, () => HttpResponse.error()))
+    await expect(crearCliente(BASE, autenticacion()).subirArchivo('/documents/upload', archivo())).rejects.toMatchObject({
+      status: 0,
+      message: MENSAJE_SIN_CONEXION,
+    })
+  })
+
+  it('CA-DOC-03 propaga el mensaje del servidor que rechaza el archivo', async () => {
+    server.use(
+      http.post(`${BASE}/documents/upload`, () =>
+        HttpResponse.json(
+          {
+            statusCode: 400,
+            message: 'Tipo de archivo no soportado: image/png. Solo se aceptan PDF, DOCX y TXT.',
+            error: 'Bad Request',
+          },
+          { status: 400 },
+        ),
+      ),
+    )
+    await expect(crearCliente(BASE, autenticacion()).subirArchivo('/documents/upload', archivo())).rejects.toMatchObject({
+      status: 400,
+      message: 'Tipo de archivo no soportado: image/png. Solo se aceptan PDF, DOCX y TXT.',
+    })
+  })
+})
+
+describe('conLimiteDeTiempo', () => {
+  it('M3-4 corta con CanceladoError la petición que no responde', async () => {
+    const { avanzar } = relojFalso()
+    server.use(http.post(`${BASE}/quizzes/generate`, async () => { await delay('infinite') }))
+    const cliente = crearCliente(BASE, autenticacion())
+    let error: unknown = null
+    const peticion = conLimiteDeTiempo(120_000, (senal) => cliente.post('/quizzes/generate', {}, senal)).catch((e: unknown) => {
+      error = e
+    })
+    await avanzar(119_000)
+    expect(error).toBeNull()
+    await avanzar(1000)
+    await peticion
+    expect(error).toBeInstanceOf(CanceladoError)
+  })
+
+  it('M3-4 devuelve la respuesta y apaga el reloj cuando llega a tiempo', async () => {
+    const { avanzar } = relojFalso()
+    server.use(
+      http.post(`${BASE}/quizzes/generate`, async () => {
+        await delay(3000)
+        return HttpResponse.json({ id: 'c0e5' }, { status: 201 })
+      }),
+    )
+    const cliente = crearCliente(BASE, autenticacion())
+    const peticion = conLimiteDeTiempo(120_000, (senal) => cliente.post('/quizzes/generate', {}, senal))
+    await avanzar(3000)
+    await expect(peticion).resolves.toEqual({ id: 'c0e5' })
   })
 })

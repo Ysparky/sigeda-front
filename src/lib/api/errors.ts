@@ -12,6 +12,13 @@ export class ApiError extends Error {
   }
 }
 
+export class CanceladoError extends Error {
+  constructor() {
+    super('La petición se canceló.')
+    this.name = 'CanceladoError'
+  }
+}
+
 export const MENSAJE_SIN_CONEXION = 'No se pudo conectar con el servidor.'
 export const MENSAJE_SIN_PERMISO = 'No tiene permisos para esta acción.'
 export const MENSAJE_GENERICO = 'Ocurrió un error inesperado. Intente nuevamente.'
