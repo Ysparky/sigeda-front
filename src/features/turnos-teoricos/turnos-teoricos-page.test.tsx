@@ -41,6 +41,14 @@ describe('Turnos teóricos', () => {
     expect(primera.getByText('2 de 2')).toBeInTheDocument()
   })
 
+  it('CA-TUT-01 el nombre y la materia se truncan y conservan el texto completo en title', async () => {
+    await abrirTurnos()
+    const nombre = screen.getByTitle('Mensual Adoctrinamiento de Vuelo')
+    expect(nombre).toHaveClass('truncate')
+    expect(nombre).toHaveAttribute('href', '/teoria/turnos/1')
+    expect(within(filas()[0]!).getAllByTitle('Adoctrinamiento de Vuelo')[0]).toHaveClass('truncate')
+  })
+
   it('CA-TUT-02 filtra por grupo, materia, estado y tipo y todo viaja en la URL', async () => {
     const { router, usuario } = await abrirTurnos()
     await usuario.selectOptions(screen.getByLabelText('Grupo'), 'Grupo 3')

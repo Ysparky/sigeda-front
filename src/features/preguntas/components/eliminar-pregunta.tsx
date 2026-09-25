@@ -26,12 +26,12 @@ export function EliminarPregunta({ pregunta, deshabilitado = false }: Props) {
 
   if (pregunta.enUso) {
     return (
-      <div className="grid justify-items-end gap-1">
+      <div className="grid max-w-44 justify-items-end gap-1">
         <Button variant="destructive" size="sm" disabled aria-label={etiqueta}>
           <Trash2 aria-hidden />
           Eliminar
         </Button>
-        <p className="text-xs text-muted-foreground">{TEXTO_PREGUNTA_EN_USO}</p>
+        <p className="text-xs whitespace-normal text-muted-foreground">{TEXTO_PREGUNTA_EN_USO}</p>
       </div>
     )
   }

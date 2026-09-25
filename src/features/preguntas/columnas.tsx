@@ -14,7 +14,11 @@ const COLUMNAS_SIN_ACCIONES = ayudante.columns([
   ayudante.accessor('enunciado', {
     header: 'Enunciado',
     enableSorting: true,
-    cell: (contexto) => <span className="block max-w-xl">{contexto.getValue()}</span>,
+    cell: (contexto) => (
+      <span className="block max-w-xs truncate" title={contexto.getValue()}>
+        {contexto.getValue()}
+      </span>
+    ),
   }),
   ayudante.accessor('tipoPregunta', {
     header: 'Tipo',

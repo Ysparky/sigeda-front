@@ -92,6 +92,13 @@ describe('Banco de preguntas', () => {
     expect(await screen.findByRole('table', { name: 'Preguntas del banco' })).toBeInTheDocument()
   })
 
+  it('CA-BAN-01 el enunciado se trunca con puntos suspensivos y conserva el texto completo en title', async () => {
+    await abrirBanco()
+    const enunciado = screen.getByTitle('¿Qué documento fija la conducta del alumno piloto durante la instrucción?')
+    expect(enunciado).toHaveClass('truncate')
+    expect(enunciado).toHaveTextContent('¿Qué documento fija la conducta del alumno piloto durante la instrucción?')
+  })
+
   it('CA-BAN-14 fuera del modo mock y sin la dependencia 6 muestra E1 y deshabilita Importar', async () => {
     vi.stubEnv('VITE_MOCK_API', 'false')
     await abrirBanco()

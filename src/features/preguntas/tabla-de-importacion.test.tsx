@@ -190,4 +190,11 @@ describe('Revisión de las preguntas generadas', () => {
     await arreglarLasBloqueadas(usuario)
     expect(screen.getByRole('button', { name: 'Importar al banco' })).toBeDisabled()
   })
+
+  it('CA-IMP-05 el aviso que bloquea la fila usa el color destructivo del sistema', async () => {
+    await generarLote()
+    expect(fila(1).getByText(TEXTO_ENUNCIADO_RECORTADO)).toHaveClass('text-destructive')
+    expect(fila(2).getByText(TEXTO_ALTERNATIVAS_REPETIDAS)).toHaveClass('text-destructive')
+    expect(fila(5).getByText(TEXTO_ENUNCIADO_CORTO)).toHaveClass('text-destructive')
+  })
 })

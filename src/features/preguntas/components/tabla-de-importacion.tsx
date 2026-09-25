@@ -78,7 +78,6 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
             <TableRow>
               <TableHead>Importar</TableHead>
               <TableHead>Enunciado</TableHead>
-              <TableHead>Tipo</TableHead>
               <TableHead>Materia</TableHead>
               <TableHead>Dificultad</TableHead>
               <TableHead>Alternativas</TableHead>
@@ -100,17 +99,19 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
                       onCheckedChange={(marcado) => actualizar(fila.id, { incluida: marcado === true })}
                     />
                   </TableCell>
-                  <TableCell className="min-w-72">
-                    <Textarea
-                      aria-label={`Enunciado de la pregunta ${numero}`}
-                      value={fila.enunciado}
-                      maxLength={LARGO_ENUNCIADO}
-                      disabled={importar.isPending}
-                      onChange={(evento) => actualizar(fila.id, { enunciado: evento.target.value, recortado: false })}
-                    />
+                  <TableCell className="min-w-64">
+                    <div className="grid gap-1">
+                      <p className="text-xs text-muted-foreground">{etiquetaDeTipoPregunta(fila.tipoPregunta)}</p>
+                      <Textarea
+                        aria-label={`Enunciado de la pregunta ${numero}`}
+                        value={fila.enunciado}
+                        maxLength={LARGO_ENUNCIADO}
+                        disabled={importar.isPending}
+                        onChange={(evento) => actualizar(fila.id, { enunciado: evento.target.value, recortado: false })}
+                      />
+                    </div>
                   </TableCell>
-                  <TableCell>{etiquetaDeTipoPregunta(fila.tipoPregunta)}</TableCell>
-                  <TableCell>
+                  <TableCell className="min-w-56">
                     <NativeSelect
                       aria-label={`Materia de la pregunta ${numero}`}
                       className="w-full"
@@ -126,7 +127,7 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
                       ))}
                     </NativeSelect>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="min-w-28">
                     <NativeSelect
                       aria-label={`Dificultad de la pregunta ${numero}`}
                       className="w-full"
@@ -179,12 +180,16 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
                       ))}
                     </ToggleGroup>
                   </TableCell>
-                  <TableCell className="min-w-64">
-                    <div className="grid gap-1 text-sm">
+                  <TableCell className="min-w-52">
+                    <div className="grid max-w-64 gap-1 text-sm whitespace-normal">
                       {avisos.map((aviso) => (
-                        <p key={aviso}>{aviso}</p>
+                        <p key={aviso} className="text-destructive">
+                          {aviso}
+                        </p>
                       ))}
-                      {delServidor !== undefined && delServidor !== '' && <p>{delServidor}</p>}
+                      {delServidor !== undefined && delServidor !== '' && (
+                        <p className="text-destructive">{delServidor}</p>
+                      )}
                       <Button
                         type="button"
                         variant="ghost"

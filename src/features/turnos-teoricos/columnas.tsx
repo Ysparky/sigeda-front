@@ -16,12 +16,25 @@ const COLUMNAS_SIN_ACCIONES = ayudante.columns([
     header: 'Nombre',
     enableSorting: true,
     cell: (contexto) => (
-      <Enlace to="/teoria/turnos/$id" params={{ id: String(contexto.row.original.id) }}>
+      <Enlace
+        to="/teoria/turnos/$id"
+        params={{ id: String(contexto.row.original.id) }}
+        className="block max-w-48 truncate"
+        title={contexto.getValue()}
+      >
         {contexto.getValue()}
       </Enlace>
     ),
   }),
-  ayudante.accessor('materia', { header: 'Materia', enableSorting: true }),
+  ayudante.accessor('materia', {
+    header: 'Materia',
+    enableSorting: true,
+    cell: (contexto) => (
+      <span className="block max-w-36 truncate" title={contexto.getValue()}>
+        {contexto.getValue()}
+      </span>
+    ),
+  }),
   ayudante.accessor('tipoExamen', { header: 'Tipo de examen', cell: (contexto) => etiquetaDeTipoExamen(contexto.getValue()) }),
   ayudante.accessor('grupo', { header: 'Grupo', enableSorting: true }),
   ayudante.accessor('fechaExamen', {
@@ -58,7 +71,9 @@ const acciones = ayudante.display({
   header: () => <span className="sr-only">Acciones</span>,
   cell: (contexto) => {
     const turno = contexto.row.original
-    if (turno.estado !== 'PROGRAMADO') return <p className="text-xs text-muted-foreground">{TEXTO_VENTANA_COMENZADA}</p>
+    if (turno.estado !== 'PROGRAMADO') {
+      return <p className="max-w-44 text-xs whitespace-normal text-muted-foreground">{TEXTO_VENTANA_COMENZADA}</p>
+    }
     const deshabilitado = !accionDisponible('programarTurnoTeorico')
     return (
       <div className="flex flex-wrap justify-end gap-2">
