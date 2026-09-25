@@ -13,6 +13,7 @@ type Props = { pregunta: PreguntaFila; deshabilitado?: boolean }
 export function EliminarPregunta({ pregunta, deshabilitado = false }: Props) {
   const queryClient = useQueryClient()
   const etiqueta = `Eliminar la pregunta ${pregunta.id}`
+  const idAviso = `pregunta-en-uso-${pregunta.id}`
 
   const eliminar = useMutation({
     mutationFn: () => eliminarPregunta(pregunta.id),
@@ -26,12 +27,21 @@ export function EliminarPregunta({ pregunta, deshabilitado = false }: Props) {
 
   if (pregunta.enUso) {
     return (
-      <div className="grid max-w-44 justify-items-end gap-1">
-        <Button variant="destructive" size="sm" disabled aria-label={etiqueta}>
+      <div className="flex justify-end">
+        <Button
+          variant="destructive"
+          size="sm"
+          disabled
+          aria-describedby={idAviso}
+          aria-label={etiqueta}
+          title={TEXTO_PREGUNTA_EN_USO}
+        >
           <Trash2 aria-hidden />
           Eliminar
         </Button>
-        <p className="text-xs whitespace-normal text-muted-foreground">{TEXTO_PREGUNTA_EN_USO}</p>
+        <span id={idAviso} className="sr-only">
+          {TEXTO_PREGUNTA_EN_USO}
+        </span>
       </div>
     )
   }

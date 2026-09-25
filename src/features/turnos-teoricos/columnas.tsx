@@ -72,7 +72,14 @@ const acciones = ayudante.display({
   cell: (contexto) => {
     const turno = contexto.row.original
     if (turno.estado !== 'PROGRAMADO') {
-      return <p className="max-w-44 text-xs whitespace-normal text-muted-foreground">{TEXTO_VENTANA_COMENZADA}</p>
+      return (
+        <div className="flex justify-end">
+          <span className="text-xs text-muted-foreground" title={TEXTO_VENTANA_COMENZADA} aria-hidden>
+            —
+          </span>
+          <span className="sr-only">{TEXTO_VENTANA_COMENZADA}</span>
+        </div>
+      )
     }
     const deshabilitado = !accionDisponible('programarTurnoTeorico')
     return (

@@ -111,7 +111,7 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
                       />
                     </div>
                   </TableCell>
-                  <TableCell className="min-w-56">
+                  <TableCell className="min-w-64">
                     <NativeSelect
                       aria-label={`Materia de la pregunta ${numero}`}
                       className="w-full"
@@ -166,6 +166,7 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
                             <Input
                               aria-label={`Alternativa ${posicion + 1} de la pregunta ${numero}`}
                               value={respuesta}
+                              title={respuesta}
                               disabled={importar.isPending}
                               onChange={(evento) =>
                                 actualizar(fila.id, {
