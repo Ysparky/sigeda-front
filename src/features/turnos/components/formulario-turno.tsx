@@ -27,9 +27,11 @@ import { hoyIso } from '@/lib/dominio/calendario'
 import { NOTAS_DIRBE } from '@/lib/dominio/dirbe'
 import { conflictosDeAeronave } from '@/lib/dominio/turno'
 import { termino } from '@/lib/dominio/vocabulario'
+import { TEXTO_ESTADO_TEORICO_DESCONOCIDO, textoBloqueadoPorSubsanacion } from '@/lib/dominio/teoria'
 import { aplicarErroresDeCampo } from '@/lib/formularios'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasTurnos, useGuardarTurno } from '../api'
+import { useEstadoTeoricoDeAlumnos } from '../use-estado-teorico'
 import { aCuerpoTurno, crearEsquemaTurno, type ValoresTurno } from '../schemas'
 
 const RENOMBRAR = { aeronave: 'idAeronave', nota_min: 'notaMin' }
@@ -66,6 +68,8 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
   const opcionesManiobras = useQuery(consultasCatalogos.maniobras(Number(idSubfase) || 0))
   const ocupacion = useQuery(consultasTurnos.ocupacion(fechaEval, Number(idAeronave) || 0))
   const conflictos = conflictosDeAeronave(horarios, ocupacion.data ?? [], idTurno)
+  const estadosTeoricos = useEstadoTeoricoDeAlumnos(horarios.map((alumno) => alumno.codAlumno))
+  const hayBloqueados = [...estadosTeoricos.values()].some((estado) => estado.bloqueado)
   const nombreDeAlumno = (codigo: string) =>
     opcionesAlumnos.data?.find((alumno) => alumno.codigo === codigo)?.nombreCompleto ?? codigo
 
@@ -262,6 +266,7 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
           {alumnos.fields.map((fila, indice) => {
             const error = errors.alumnosTurno?.[indice]
             const numero = indice + 1
+            const estadoTeorico = estadosTeoricos.get(horarios[indice]?.codAlumno ?? '')
             return (
               <div key={fila.id} className="grid items-start gap-3 sm:grid-cols-[1fr_8rem_8rem_auto]">
                 <Field data-invalid={Boolean(error?.codAlumno)}>
@@ -284,6 +289,10 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
                     ))}
                   </NativeSelect>
                   <FieldError errors={[error?.codAlumno]} />
+                  {estadoTeorico?.bloqueado === true && (
+                    <FieldError>{textoBloqueadoPorSubsanacion(estadoTeorico.motivo ?? '')}</FieldError>
+                  )}
+                  {estadoTeorico?.desconocido === true && <FieldError>{TEXTO_ESTADO_TEORICO_DESCONOCIDO}</FieldError>}
                 </Field>
                 <Field data-invalid={Boolean(error?.horaInicio)}>
                   <FieldLabel htmlFor={`inicio-${indice}`}>Inicio {numero}</FieldLabel>
@@ -431,7 +440,7 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
             <Link to="/turnos">Cancelar</Link>
           )}
         </Button>
-        <Button type="submit" disabled={guardar.isPending}>
+        <Button type="submit" disabled={guardar.isPending || hayBloqueados}>
           {guardar.isPending ? 'Guardando…' : 'Guardar turno'}
         </Button>
       </div>

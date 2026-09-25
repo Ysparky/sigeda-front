@@ -4,13 +4,22 @@ import { describe, expect, it } from 'vitest'
 import { config } from '@/lib/config'
 import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
 import { server } from '@/mocks/server'
+import { textoBloqueadoPorSubsanacion } from '@/lib/dominio/teoria'
 import { iniciarComo, renderApp } from '@/test/render'
+import type { UserEvent } from '@testing-library/user-event'
+
+const MOTIVO_666666 = 'Desaprobó Mensual Adoctrinamiento de Vuelo (12.00 / mínimo 18). Subsanación pendiente.'
 
 async function abrirEdicion(id = 8) {
   await iniciarComo('jefe.operaciones')
   const vista = renderApp(`/turnos/${id}/editar`)
   await screen.findByRole('heading', { name: 'Modificar turno' })
   return vista
+}
+
+async function quitarAlumnoBloqueado(usuario: UserEvent) {
+  await screen.findByText(textoBloqueadoPorSubsanacion(MOTIVO_666666))
+  await usuario.click(screen.getByRole('button', { name: 'Quitar alumno 2' }))
 }
 
 describe('Modificar turno', () => {
@@ -54,6 +63,7 @@ describe('Modificar turno', () => {
 
   it('CA-TUR-12 aplica las mismas validaciones que registrar', async () => {
     const { usuario } = await abrirEdicion()
+    await quitarAlumnoBloqueado(usuario)
     await usuario.clear(await screen.findByLabelText('Nombre'))
     await usuario.type(screen.getByLabelText('Nombre'), 'Corto')
     await usuario.clear(screen.getByLabelText('Fecha de evaluación'))
@@ -65,6 +75,7 @@ describe('Modificar turno', () => {
 
   it('CA-TUR-12 guarda los cambios sin advertir cruces con su propio horario', async () => {
     const { usuario, router } = await abrirEdicion()
+    await quitarAlumnoBloqueado(usuario)
     await usuario.clear(await screen.findByLabelText('Nombre'))
     await usuario.type(screen.getByLabelText('Nombre'), 'Navegación Nocturna II')
     expect(screen.queryByText('Horario superpuesto en la aeronave')).not.toBeInTheDocument()
@@ -91,6 +102,7 @@ describe('Modificar turno', () => {
     )
     const { usuario } = await abrirEdicion()
     await screen.findByLabelText('Nombre')
+    await quitarAlumnoBloqueado(usuario)
     await usuario.click(screen.getByRole('button', { name: 'Guardar turno' }))
     expect(await screen.findByText('No se puede modificar. El turno ya ha sido evaluado.')).toBeInTheDocument()
   })
