@@ -12,7 +12,7 @@ import { useSesion } from '@/lib/auth/use-sesion'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasExamenes, type ExamenEnCurso } from './api'
 import { ResolucionDeExamen } from './components/resolucion-de-examen'
-import { esExamenEntregado } from './mensajes'
+import { esExamenEntregado, esExamenNoDisponible } from './mensajes'
 import { useAutoguardado } from './use-autoguardado'
 
 function Examen({ examen }: { examen: ExamenEnCurso }) {
@@ -52,6 +52,10 @@ export function RendirExamenPage({ idTurno }: { idTurno: number }) {
               </Link>
             </Button>
           </AlertDescription>
+        </Alert>
+      ) : esExamenNoDisponible(error) ? (
+        <Alert>
+          <AlertDescription>{(error as ApiError).message}</AlertDescription>
         </Alert>
       ) : error !== null ? (
         <AvisoDeError error={error} alReintentar={() => void examen.refetch()} />

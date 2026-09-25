@@ -16,41 +16,76 @@ export function useAutoguardado(examen: ExamenEnCurso) {
   const ultimas = useRef(respuestas)
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
   const maximo = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const enCurso = useRef<Promise<void> | null>(null)
+  const pendiente = useRef(false)
 
   const guardar = useMutation({
     mutationFn: (valores: Respuestas) =>
       guardarRespuestas(examen.id, examen.codAlumno, aRespuestasEnviadas(valores)),
-    onSuccess: () => setEstado('guardado'),
-    onError: () => setEstado('error'),
   })
   const enviar = guardar.mutateAsync
 
-  const limpiarRelojes = useCallback(() => {
+  const limpiarDebounce = useCallback(() => {
     if (debounce.current) clearTimeout(debounce.current)
-    if (maximo.current) clearTimeout(maximo.current)
     debounce.current = null
+  }, [])
+
+  const limpiarMaximo = useCallback(() => {
+    if (maximo.current) clearTimeout(maximo.current)
     maximo.current = null
   }, [])
 
-  const guardarAhora = useCallback(async () => {
-    limpiarRelojes()
+  const enviarUnaVez = useCallback(async () => {
     setEstado('guardando')
-    await enviar(ultimas.current).catch(() => undefined)
-  }, [enviar, limpiarRelojes])
+    try {
+      await enviar(ultimas.current)
+      setEstado('guardado')
+    } catch {
+      setEstado('error')
+    }
+  }, [enviar])
+
+  const guardarAhora = useCallback((): Promise<void> => {
+    limpiarDebounce()
+    if (enCurso.current) {
+      pendiente.current = true
+      return enCurso.current
+    }
+    limpiarMaximo()
+    const tanda = (async () => {
+      await enviarUnaVez()
+      while (pendiente.current) {
+        pendiente.current = false
+        await enviarUnaVez()
+      }
+    })().finally(() => {
+      enCurso.current = null
+    })
+    enCurso.current = tanda
+    return tanda
+  }, [enviarUnaVez, limpiarDebounce, limpiarMaximo])
 
   const responder = useCallback(
     (idPregunta: number, valor: string) => {
       const siguientes = { ...ultimas.current, [idPregunta]: valor }
       ultimas.current = siguientes
       setRespuestas(siguientes)
-      if (debounce.current) clearTimeout(debounce.current)
+      limpiarDebounce()
       debounce.current = setTimeout(() => void guardarAhora(), DEBOUNCE_AUTOGUARDADO)
-      if (maximo.current === null) maximo.current = setTimeout(() => void guardarAhora(), MAXIMO_AUTOGUARDADO)
+      if (maximo.current === null && enCurso.current === null) {
+        maximo.current = setTimeout(() => void guardarAhora(), MAXIMO_AUTOGUARDADO)
+      }
     },
-    [guardarAhora],
+    [guardarAhora, limpiarDebounce],
   )
 
-  useEffect(() => limpiarRelojes, [limpiarRelojes])
+  useEffect(
+    () => () => {
+      limpiarDebounce()
+      limpiarMaximo()
+    },
+    [limpiarDebounce, limpiarMaximo],
+  )
 
   return { respuestas, estado, responder, guardarAhora }
 }

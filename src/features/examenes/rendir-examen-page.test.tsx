@@ -3,7 +3,11 @@ import { delay, http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { TEXTO_AUTOGUARDADO_FALLIDO, TEXTO_GUARDADO, TEXTO_GUARDANDO } from '@/lib/dominio/teoria'
 import { API } from '@/mocks/sigeda/comun'
-import { D9_ALUMNO_NO_HABILITADO, D10_EXAMEN_ENTREGADO } from '@/mocks/sigeda/cuestionarios-teoria'
+import {
+  D8_EXAMEN_NO_DISPONIBLE,
+  D9_ALUMNO_NO_HABILITADO,
+  D10_EXAMEN_ENTREGADO,
+} from '@/mocks/sigeda/cuestionarios-teoria'
 import { alternativasDePregunta, cuestionarioDe } from '@/mocks/sigeda/datos'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
@@ -105,7 +109,47 @@ describe('Rendir examen', () => {
       await usuario.type(campo, 'a')
       await avanzar(1_500)
     }
-    expect(conteo.total()).toBeGreaterThanOrEqual(1)
+    expect(conteo.total()).toBe(1)
+    conteo.detener()
+  })
+
+  it('contrato §4.3 una respuesta lenta nunca pisa una más nueva: el servidor termina con ambas', async () => {
+    const { usuario, avanzar } = relojFalso()
+    abrirVentanaDeExamen()
+    let llamada = 0
+    server.use(
+      http.put(`${API}/api/cuestionarios/:id/respuestas`, async ({ request }) => {
+        llamada += 1
+        if (llamada === 1) await delay(5_000)
+        const cuerpo = (await request.json()) as { respuestas?: { idPregunta?: unknown; respuesta?: unknown }[] }
+        const cuestionario = cuestionarioDe(3, '111111')
+        if (cuestionario) {
+          cuestionario.respuestas = {}
+          for (const fila of cuerpo.respuestas ?? []) {
+            const valor = typeof fila.respuesta === 'string' ? fila.respuesta : ''
+            if (valor !== '') cuestionario.respuestas[Number(fila.idPregunta)] = valor
+          }
+        }
+        return HttpResponse.json({
+          mensaje: 'Respuestas guardadas.',
+          respuestasGuardadas: cuerpo.respuestas?.length ?? 0,
+        })
+      }),
+    )
+    const conteo = contarGuardados()
+    await abrirExamen(usuario)
+    await usuario.click(within(screen.getByRole('group', { name: 'Pregunta 2' })).getAllByRole('radio')[0]!)
+    await avanzar(2_100)
+    expect(await screen.findByText(TEXTO_GUARDANDO)).toBeInTheDocument()
+    expect(conteo.total()).toBe(1)
+    await usuario.type(screen.getByLabelText('Respuesta de la pregunta 4'), 'cola')
+    await avanzar(2_100)
+    expect(conteo.total()).toBe(1)
+    await avanzar(3_000)
+    expect(await screen.findByText(TEXTO_GUARDADO)).toBeInTheDocument()
+    expect(conteo.total()).toBe(2)
+    expect(Object.keys(cuestionarioDe(3, '111111')?.respuestas ?? {}).sort()).toEqual(['1', '2', '3', '4'])
+    expect(cuestionarioDe(3, '111111')?.respuestas[4]).toBe('cola')
     conteo.detener()
   })
 
@@ -146,6 +190,19 @@ describe('Rendir examen', () => {
     renderApp(RUTA)
     expect(await screen.findByText(D10_EXAMEN_ENTREGADO)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ver el resultado' })).toHaveAttribute('href', '/examenes/3/resultado')
+    expect(screen.queryByRole('group', { name: 'Pregunta 1' })).not.toBeInTheDocument()
+  })
+
+  it('contrato §4.2 D8 la ventana no disponible no ofrece Reintentar ni el examen', async () => {
+    server.use(
+      http.post(`${API}/api/turnos-teoricos/:id/iniciar`, () =>
+        HttpResponse.text(D8_EXAMEN_NO_DISPONIBLE, { status: 409 }),
+      ),
+    )
+    await iniciarComo('alumno.lopez')
+    renderApp(RUTA)
+    expect(await screen.findByText(D8_EXAMEN_NO_DISPONIBLE)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument()
     expect(screen.queryByRole('group', { name: 'Pregunta 1' })).not.toBeInTheDocument()
   })
 

@@ -8,6 +8,10 @@ function esConflicto(error: unknown, mensaje: string): boolean {
   return error instanceof ApiError && error.status === 409 && error.message.trim() === mensaje
 }
 
+export function esExamenNoDisponible(error: unknown): boolean {
+  return esConflicto(error, D8_EXAMEN_NO_DISPONIBLE)
+}
+
 export function esExamenEntregado(error: unknown): boolean {
   return esConflicto(error, D10_EXAMEN_ENTREGADO)
 }
