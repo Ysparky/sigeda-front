@@ -56,3 +56,42 @@ export function archivoAceptado(archivo: { name: string; size: number }): boolea
   const extensionValida = TIPOS_ACEPTADOS.some((tipo) => nombre.endsWith(tipo.extension))
   return extensionValida && archivo.size > 0 && archivo.size <= TAMANO_MAXIMO_BYTES
 }
+
+export function normalizarRespuesta(valor: string): string {
+  return valor
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/\s+/g, ' ')
+}
+
+export function respuestaCorrecta(tipo: string, correcta: string, dada: string): boolean {
+  return tipo === 'fill_blank' ? normalizarRespuesta(dada) === normalizarRespuesta(correcta) : dada === correcta
+}
+
+export const MARCADOR_COMPLETAR = '_____'
+
+export type TrozoDeRespuesta = { texto: string; cita: number | null }
+
+const PATRON_CITA = /\[(\d+)\]/g
+
+export function trozosConCitas(contenido: string, cantidadDeFuentes: number): TrozoDeRespuesta[] {
+  const trozos: TrozoDeRespuesta[] = []
+  let ultimo = 0
+  for (const coincidencia of contenido.matchAll(PATRON_CITA)) {
+    const indice = coincidencia.index
+    const numero = Number(coincidencia[1])
+    const enRango = numero >= 1 && numero <= cantidadDeFuentes
+    if (!enRango) continue
+    if (indice > ultimo) trozos.push({ texto: contenido.slice(ultimo, indice), cita: null })
+    trozos.push({ texto: coincidencia[0], cita: numero })
+    ultimo = indice + coincidencia[0].length
+  }
+  if (ultimo < contenido.length) trozos.push({ texto: contenido.slice(ultimo), cita: null })
+  return trozos
+}
+
+export function porcentajeDeSimilitud(similitud: number | null): string | null {
+  return similitud === null ? null : `${Math.round(similitud * 100)} %`
+}
