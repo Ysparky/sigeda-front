@@ -1,7 +1,7 @@
 import { formatearFecha, formatearNota } from '@/lib/formato'
 import { momento } from './calendario'
 
-export { MARCADOR_COMPLETAR } from './aprendizaje'
+export { MARCADOR_COMPLETAR, TEXTO_GENERACION_RECHAZADA as TEXTO_GENERACION_RECHAZADA_E8 } from './aprendizaje'
 
 export const TIPOS_PREGUNTA = [
   { valor: 'OPCION_MULTIPLE', etiqueta: 'Opción múltiple' },

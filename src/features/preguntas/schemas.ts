@@ -9,6 +9,7 @@ import {
   TIPOS_PREGUNTA,
   type TipoPregunta,
 } from '@/lib/dominio/teoria'
+import { MENSAJE_CANTIDAD, TIPOS_PREGUNTA as TIPOS_DE_IA } from '@/features/aprendizaje/schemas'
 import type { CuerpoPregunta, PreguntaDetalle } from './api'
 
 export const esquemaBusquedaPreguntas = z.object({
@@ -116,4 +117,26 @@ export function aCuerpoPregunta(valores: ValoresPregunta, codInstructor: string)
       correcto: String(indice) === valores.correcta,
     })),
   }
+}
+
+export const esquemaImportacion = z.object({
+  documentos: z.array(z.string()).min(1, 'Elija al menos un documento.'),
+  tipos: z.array(z.enum(TIPOS_DE_IA.map((tipo) => tipo.valor))).min(1, 'Elija al menos un tipo de pregunta.'),
+  cantidad: z
+    .string()
+    .min(1, MENSAJE_CANTIDAD)
+    .regex(/^\d{1,2}$/, MENSAJE_CANTIDAD)
+    .refine((valor) => Number(valor) >= 2 && Number(valor) <= 20, MENSAJE_CANTIDAD),
+  idMateria: z.string().min(1, 'La materia es obligatoria.'),
+  dificultad: z.enum(DIFICULTADES.map((dificultad) => dificultad.valor)),
+})
+
+export type ValoresImportacion = z.input<typeof esquemaImportacion>
+
+export const IMPORTACION_VACIA: ValoresImportacion = {
+  documentos: [],
+  tipos: ['multiple_choice'],
+  cantidad: '5',
+  idMateria: '',
+  dificultad: 'MEDIA',
 }
