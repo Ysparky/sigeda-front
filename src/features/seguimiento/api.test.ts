@@ -24,6 +24,18 @@ const ALUMNOS: AlumnoSeguimiento[] = [
   { codigo: '654321', nombreCompleto: 'Lucía Mendoza Ríos', idGrupo: null, estado: 'Apto' },
 ]
 
+function contarPeticiones() {
+  let total = 0
+  const oyente = () => {
+    total += 1
+  }
+  server.events.on('request:start', oyente)
+  return {
+    total: () => total,
+    detener: () => server.events.removeListener('request:start', oyente),
+  }
+}
+
 describe('catálogo de seguimiento', () => {
   it('M5-6 la escalera tiene dos peldaños y el jefe de operaciones cae en el del instructor', () => {
     expect(fuenteDeSeguimiento(permisosDeRol('Comandante de Escuadrón'))).toBe('todos')
@@ -91,7 +103,10 @@ describe('catálogo de seguimiento', () => {
 
   it('M5-6 sin código de persona la fuente del instructor no pide nada', async () => {
     await iniciarComo('instructor.perez')
+    const conteo = contarPeticiones()
     await expect(listarSeguimiento('instructor', 'PDI', null)).resolves.toEqual([])
+    expect(conteo.total()).toBe(0)
+    conteo.detener()
   })
 })
 
@@ -132,6 +147,7 @@ describe('estado teórico en lote', () => {
     await iniciarComo('instructor.perez')
     const estados = await estadoTeoricoEnLote(['555555', '666666'])
     expect(estados.map((estado) => estado.codAlumno)).toEqual(['555555', '666666'])
+    expect(estados.every((estado) => !Object.hasOwn(estado, 'causales'))).toBe(true)
     expect(estados.find((estado) => estado.codAlumno === '666666')).toMatchObject({
       bloqueadoPorSubsanacion: true,
       alumno: 'Ana Torres Martinez',
@@ -147,7 +163,10 @@ describe('estado teórico en lote', () => {
 
   it('contrato §5.3 sin códigos no pide nada y con más de cien el servidor responde D16', async () => {
     await iniciarComo('instructor.perez')
+    const conteo = contarPeticiones()
     await expect(estadoTeoricoEnLote([])).resolves.toEqual([])
+    expect(conteo.total()).toBe(0)
+    conteo.detener()
     const muchos = Array.from({ length: 101 }, (_, indice) => String(indice).padStart(6, '0'))
     await expect(estadoTeoricoEnLote(muchos)).rejects.toBeInstanceOf(ApiError)
     await expect(estadoTeoricoEnLote(muchos)).rejects.toMatchObject({

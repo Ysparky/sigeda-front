@@ -74,6 +74,16 @@ function aOpcion(persona: NombreAlumno, grupo: string | null): OpcionAlumno {
   return { codigo: persona.codigo, nombreCompleto: nombreCompleto(persona), grupo }
 }
 
+async function todasLasFilas<T>(ruta: string): Promise<T[]> {
+  const primera = await sigeda.pagina<T>(ruta, { page: 0, size: 100 })
+  const restantes = await Promise.all(
+    Array.from({ length: Math.max(primera.totalPages - 1, 0) }, (_, indice) =>
+      sigeda.pagina<T>(ruta, { page: indice + 1, size: 100 }),
+    ),
+  )
+  return [primera, ...restantes].flatMap((pagina) => pagina.items)
+}
+
 function sinRepetidos(opciones: OpcionAlumno[]): OpcionAlumno[] {
   const vistos = new Set<string>()
   return opciones.filter((opcion) => {
@@ -93,23 +103,21 @@ export async function listarAlumnos(
     return sinRepetidos(grupos.flatMap((grupo) => grupo.personas.map((persona) => aOpcion(persona, grupo.nombre))))
   }
   if (fuente === 'todos') {
-    const pagina = await sigeda.pagina<{ personas: AlumnoConGrupo[] }>(
+    const grupos = await todasLasFilas<{ personas: AlumnoConGrupo[] }>(
       `/api/grupos/programa/${encodeURIComponent(programa)}`,
-      { page: 0, size: 100 },
     )
     return sinRepetidos(
-      pagina.items.flatMap((grupo) =>
+      grupos.flatMap((grupo) =>
         grupo.personas.map((persona) => aOpcion(persona, persona.idGrupo === null ? null : `Grupo ${persona.idGrupo}`)),
       ),
     )
   }
   if (!codPersona) return []
-  const pagina = await sigeda.pagina<{ persona: AlumnoConGrupo[] | AlumnoConGrupo }>(
+  const filas = await todasLasFilas<{ persona: AlumnoConGrupo[] | AlumnoConGrupo }>(
     `/api/grupos/instructor/${encodeURIComponent(codPersona)}/programa/${encodeURIComponent(programa)}`,
-    { page: 0, size: 100 },
   )
   return sinRepetidos(
-    pagina.items.flatMap((item) =>
+    filas.flatMap((item) =>
       (Array.isArray(item.persona) ? item.persona : [item.persona]).map((persona) =>
         aOpcion(persona, persona.idGrupo === null ? null : `Grupo ${persona.idGrupo}`),
       ),
