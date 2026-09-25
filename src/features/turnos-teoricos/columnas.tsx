@@ -1,0 +1,75 @@
+import { Pencil } from 'lucide-react'
+import { ayudanteDeColumnas } from '@/components/columnas-tabla'
+import { Enlace } from '@/components/enlace'
+import { StatusBadge } from '@/components/status-badge'
+import { Button } from '@/components/ui/button'
+import { etiquetaDeTipoExamen, TEXTO_VENTANA_COMENZADA } from '@/lib/dominio/teoria'
+import { formatearFecha } from '@/lib/formato'
+import type { TurnoTeoricoFila } from './api'
+import { EliminarTurnoTeorico } from './components/eliminar-turno-teorico'
+
+const ayudante = ayudanteDeColumnas<TurnoTeoricoFila>()
+
+export const COLUMNAS_TURNOS_TEORICOS = ayudante.columns([
+  ayudante.accessor('nombre', {
+    header: 'Nombre',
+    enableSorting: true,
+    cell: (contexto) => (
+      <Enlace to="/teoria/turnos/$id" params={{ id: String(contexto.row.original.id) }}>
+        {contexto.getValue()}
+      </Enlace>
+    ),
+  }),
+  ayudante.accessor('materia', { header: 'Materia', enableSorting: true }),
+  ayudante.accessor('tipoExamen', { header: 'Tipo de examen', cell: (contexto) => etiquetaDeTipoExamen(contexto.getValue()) }),
+  ayudante.accessor('grupo', { header: 'Grupo', enableSorting: true }),
+  ayudante.accessor('fechaExamen', {
+    header: 'Fecha',
+    enableSorting: true,
+    cell: (contexto) => <span className="tabular-nums">{formatearFecha(contexto.getValue())}</span>,
+  }),
+  ayudante.display({
+    id: 'horario',
+    header: 'Horario',
+    cell: (contexto) => (
+      <span className="tabular-nums">
+        {contexto.row.original.horaInicio}–{contexto.row.original.horaFin}
+      </span>
+    ),
+  }),
+  ayudante.accessor('estado', {
+    header: 'Estado',
+    cell: (contexto) => <StatusBadge vocabulario="turnoTeorico" valor={contexto.getValue()} />,
+  }),
+  ayudante.display({
+    id: 'rindieron',
+    header: 'Rindieron',
+    cell: (contexto) => (
+      <span className="tabular-nums">
+        {contexto.row.original.rindieron} de {contexto.row.original.cantAlumnos}
+      </span>
+    ),
+  }),
+])
+
+const acciones = ayudante.display({
+  id: 'acciones',
+  header: () => <span className="sr-only">Acciones</span>,
+  cell: (contexto) => {
+    const turno = contexto.row.original
+    if (turno.estado !== 'PROGRAMADO') return <p className="text-xs text-muted-foreground">{TEXTO_VENTANA_COMENZADA}</p>
+    return (
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button variant="outline" size="sm" asChild>
+          <Enlace to="/teoria/turnos/$id/editar" params={{ id: String(turno.id) }} aria-label={`Modificar ${turno.nombre}`}>
+            <Pencil aria-hidden />
+            Modificar
+          </Enlace>
+        </Button>
+        <EliminarTurnoTeorico id={turno.id} nombre={turno.nombre} />
+      </div>
+    )
+  },
+})
+
+export const COLUMNAS_TURNOS_TEORICOS_CON_ACCIONES = ayudante.columns([...COLUMNAS_TURNOS_TEORICOS, acciones])
