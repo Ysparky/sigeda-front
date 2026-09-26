@@ -24,6 +24,7 @@ const ayudante = ayudanteDeColumnas<EvaluacionResumen>()
 const columnas = ayudante.columns([
   ayudante.accessor('codigo', {
     header: 'Código',
+    enableSorting: true,
     cell: (contexto) => (
       <Enlace to="/evaluaciones/$cod" params={{ cod: contexto.getValue() }} className="font-mono text-xs">
         {contexto.getValue()}
@@ -42,6 +43,7 @@ const columnas = ayudante.columns([
   ayudante.accessor('evaluador', { header: 'Evaluador' }),
   ayudante.accessor('fecha', {
     header: 'Fecha',
+    enableSorting: true,
     cell: (contexto) => <span className="tabular-nums">{formatearFecha(contexto.getValue())}</span>,
   }),
   ayudante.accessor('promedio', {
@@ -69,7 +71,8 @@ export function HistorialPractico({ codAlumno, busqueda }: Props) {
       clasificacion: busqueda.clasificacion,
       page: busqueda.page,
       size: busqueda.size,
-      direction: 'ASC',
+      property: busqueda.property,
+      direction: busqueda.direction,
     }),
   )
   const error = errorDePrimeraCarga(evaluaciones)
@@ -85,6 +88,8 @@ export function HistorialPractico({ codAlumno, busqueda }: Props) {
         ...previa,
         page: cambios.page ?? previa.page,
         size: cambios.size ?? previa.size,
+        property: cambios.property ?? previa.property,
+        direction: cambios.direction ?? previa.direction,
       }),
     })
   }
@@ -141,7 +146,12 @@ export function HistorialPractico({ codAlumno, busqueda }: Props) {
           columnas={columnas}
           pagina={evaluaciones.data}
           cargando={evaluaciones.isFetching}
-          parametros={{ page: busqueda.page, size: busqueda.size, direction: 'ASC' }}
+          parametros={{
+            page: busqueda.page,
+            size: busqueda.size,
+            property: busqueda.property,
+            direction: busqueda.direction,
+          }}
           alCambiar={cambiarPagina}
           idDeFila={(evaluacion) => evaluacion.codigo}
           vacio={<EmptyState titulo="No hay evaluaciones" descripcion={TEXTO_SIN_EVALUACIONES_EN_LA_SUBFASE} />}

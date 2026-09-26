@@ -57,6 +57,13 @@ function dato(region: ReturnType<typeof within>, etiqueta: string) {
   return within(region.getByText(etiqueta).closest('div') as HTMLElement)
 }
 
+function codigosDelHistorial() {
+  return within(screen.getByRole('table', { name: 'Historial de evaluaciones' }))
+    .getAllByRole('row')
+    .slice(1)
+    .map((fila) => within(fila).getAllByRole('link')[0]?.textContent ?? '')
+}
+
 describe('Legajo: cabecera y pestañas', () => {
   it('CA-LEG-01 la cabecera muestra código, nombres, DNI, rango, tipo, estado, grupo y cuenta', async () => {
     await abrirLegajo()
@@ -144,6 +151,32 @@ describe('Legajo: historial práctico', () => {
     )
     await reabrirLegajo('555555', '?tab=practico&idSubfase=2')
     expect(await screen.findByText('No hay evaluaciones')).toBeInTheDocument()
+  })
+
+  it('CA-LEG-03 abre en fecha descendente, igual que el teórico, y el encabezado lo invierte', async () => {
+    const { usuario, router } = await abrirLegajo('777777', '?tab=practico')
+    const tabla = within(await screen.findByRole('table', { name: 'Historial de evaluaciones' }))
+    expect(codigosDelHistorial()).toEqual(['777777-6', '777777-4', '777777-3', '777777-2', '777777-1'])
+    expect(tabla.queryByRole('button', { name: 'Nombre' })).not.toBeInTheDocument()
+    await usuario.click(tabla.getByRole('button', { name: 'Fecha' }))
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ property: 'fecha', direction: 'ASC' }))
+    await waitFor(() =>
+      expect(codigosDelHistorial()).toEqual(['777777-1', '777777-2', '777777-3', '777777-4', '777777-6']),
+    )
+  })
+
+  it('CA-LEG-03 el orden del historial se alcanza por la URL y viaja a la consulta', async () => {
+    const consultas: URL[] = []
+    server.events.on('request:start', ({ request }) => {
+      const url = new URL(request.url)
+      if (url.pathname === '/api/evaluaciones/filter/persona/777777') consultas.push(url)
+    })
+    await abrirLegajo('777777', '?tab=practico&property=codigo&direction=ASC')
+    await screen.findByRole('table', { name: 'Historial de evaluaciones' })
+    server.events.removeAllListeners('request:start')
+    expect(codigosDelHistorial()).toEqual(['777777-1', '777777-2', '777777-3', '777777-4', '777777-6'])
+    expect(consultas.map((url) => url.searchParams.get('property'))).toContain('codigo')
+    expect(consultas.map((url) => url.searchParams.get('direction'))).toContain('ASC')
   })
 
   it('CA-LEG-04 el evaluador es el texto del servidor, con S10 y sin enlace a su persona', async () => {

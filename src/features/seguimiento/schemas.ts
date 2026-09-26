@@ -26,12 +26,18 @@ export const esquemaBusquedaAlertas = z.object({
 
 export const PESTANAS = ['resumen', 'practico', 'teorico'] as const
 
+export const PROPIEDAD_LEGAJO_POR_DEFECTO = 'fecha'
+
 export const esquemaBusquedaLegajo = z.object({
   tab: z.enum(PESTANAS).default('resumen').catch('resumen'),
   idSubfase: numeroOpcional,
   clasificacion: z.enum(CLASIFICACIONES_FILTRO).optional().catch(undefined),
   page: esquemaPaginacion.page,
   size: esquemaPaginacion.size,
+  property: z.string().trim().min(1).default(PROPIEDAD_LEGAJO_POR_DEFECTO).catch(PROPIEDAD_LEGAJO_POR_DEFECTO),
+  direction: z.enum(['ASC', 'DESC']).default('DESC').catch('DESC'),
+  pageTurnos: esquemaPaginacion.page,
+  sizeTurnos: esquemaPaginacion.size,
 })
 
 export const esquemaBusquedaReportes = z.object({
