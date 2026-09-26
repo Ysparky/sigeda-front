@@ -799,7 +799,7 @@ Las ocho que M5 agrega, cada una con sus seis calificaciones. Los códigos sigue
 | `777777-2` | `777777` | `hoy − 21` | 3 | Ponderada | **Malo** | `'12.0'` | `777777-1` | segundo Malo |
 | `777777-3` | `777777` | `hoy − 14` | 3 | Ponderada | **Malo** | `'12.0'` | `777777-2` | tercer Malo: **cumple el criterio y mueve el estado** |
 | `777777-4` | `777777` | `hoy − 7` | 3 | Ponderada | **Malo** | `'12.0'` | `777777-3` | Malo **ya `En Chequeo`**: no abre nada (§9.3) |
-| `777777-5` | `777777` | `hoy − 3` | 3 | Ponderada | **Bueno** | `'17.0'` | `777777-4` | da variedad a los promedios de subfase y cumple `pdi:753` (tras un Malo solo Bueno o Malo) |
+| `777777-6` | `777777` | `hoy − 3` | 3 | Ponderada | **Bueno** | `'17.0'` | `777777-4` | da variedad a los promedios de subfase y cumple `pdi:753` (tras un Malo solo Bueno o Malo) |
 | `999999-1` | `999999` | `hoy − 20` | 1 Contacto | Ponderada | **Regular** | `'15.0'` | — | un desaprobado por Regular alternado, en un tercer grupo |
 | `999999-2` | `999999` | `hoy − 10` | 1 | **Chequeo Sub Fase** | Bueno | `'17.0'` | `999999-1` | la única fila con esa categoría, y la que **deriva** la fila de chequeos (§9.4) |
 
@@ -839,7 +839,7 @@ El replay sobre las doce evaluaciones de §9.2:
 | 9 | `hoy − 14` | `777777-3` Ponderada Malo | Apto | **Desaprobado**, `contMalo` = 3 → `comprobarCriterio1(3, 0)` → **estado = `En Chequeo`** |
 | 10 | `hoy − 10` | `999999-2` Chequeo Sub Fase | Apto | rama `esChequeoSubFase()` (`:78-90`): **sus seis calificaciones están en el estándar**, así que `hayNotasBajas` es falso → **escribe `ChequeoFinal`**, estado = `Apto`, `reiniciarCont()` pone los cuatro contadores a cero |
 | 11 | `hoy − 7` | `777777-4` Ponderada Malo | **En Chequeo** | la guarda `esApto()` falla → **nada**. ← la precondición |
-| 12 | `hoy − 3` | `777777-5` Ponderada Bueno | En Chequeo | igual: nada |
+| 12 | `hoy − 3` | `777777-6` Ponderada Bueno | En Chequeo | igual: nada |
 
 **`hayNotasBajas` es un insumo, no un detalle.** Los pasos 3 y 10 dependen de él y ninguna otra parte de las fijaciones lo fija, así que se dice aquí: las seis calificaciones de `555555-2` y las seis de `999999-2` están **todas en o sobre el estándar**. Si una sola de las de `999999-2` estuviera bajo el estándar, `:80-81` lo pondría `En Complementación` y **no habría ninguna fila de chequeos** en todo el fixture.
 
@@ -1014,7 +1014,7 @@ Las dos filas de `999999` son las que prueban CA-LEG-11 y S17: la nota **10.00 e
 ```json
 [ { "codigo": "777777-1", "promedio": "12.0" }, { "codigo": "777777-2", "promedio": "12.0" },
   { "codigo": "777777-3", "promedio": "12.0" }, { "codigo": "777777-4", "promedio": "12.0" },
-  { "codigo": "777777-5", "promedio": "17.0" } ]
+  { "codigo": "777777-6", "promedio": "17.0" } ]
 ```
 
 Cinco promedios cuya media simple es **13.00** exactos (65 ÷ 5), que es la cifra de S9 y la única que M5 calcula. Para (`555555`, 1) son dos filas — `555555-1` 14.0 y `555555-3` 15.0, porque `555555-2` es un `Chequeo` y el filtro lo excluye — con media **14.50**: prueba el filtro por categoría. Para (`999999`, 1) son dos, 15.0 y 17.0, media **16.00**, y una de ellas es la única `Chequeo Sub Fase` del fixture, que prueba el otro brazo del filtro.

@@ -1565,7 +1565,7 @@ Then replace the seven alumno rows of `crearDatos` and the block that patches `c
     ['111111', '111111-1'],
     ['555555', '555555-3'],
     ['666666', '666666-1'],
-    ['777777', '777777-5'],
+    ['777777', '777777-6'],
     ['999999', '999999-2'],
   ] as const) {
     const alumno = personas.find((candidata) => candidata.codigo === codigo)
@@ -1622,7 +1622,7 @@ and, for `777777`, five rows built from this table — same shape, `idSubFase: 3
 | `777777-2` | `sumarDias(hoy, -21)` | `Malo` | `'12.0'` | `'777777-1'` | `Apto` | idem |
 | `777777-3` | `sumarDias(hoy, -14)` | `Malo` | `'12.0'` | `'777777-2'` | `Apto` | idem |
 | `777777-4` | `sumarDias(hoy, -7)` | `Malo` | `'12.0'` | `'777777-3'` | `En Chequeo` | idem |
-| `777777-5` | `sumarDias(hoy, -3)` | `Bueno` | `'17.0'` | `'777777-4'` | `En Chequeo` | `[9,'B','B']`, `[10,'B','B']` |
+| `777777-6` | `sumarDias(hoy, -3)` | `Bueno` | `'17.0'` | `'777777-4'` | `En Chequeo` | `[9,'B','B']`, `[10,'B','B']` |
 
 and two rows for `999999`, `idSubFase: 1`, `subFase: 'Contacto'`, `fase: 'Adaptación'`, `evaluador: 'Maria Flores'`, `alumno: 'Luis Diaz'`:
 
@@ -2070,7 +2070,7 @@ describe('el reporte de subfase, que nunca tuvo handler', () => {
       '777777-2',
       '777777-3',
       '777777-4',
-      '777777-5',
+      '777777-6',
     ])
     expect(reporte.notas[0]).toMatchObject({ categoria: 'Ponderada', clasificacion: 'Malo', promedio: '12.0' })
     expect(reporte.notas[0]?.calificaciones).toEqual([
@@ -6238,7 +6238,7 @@ describe('Legajo: ciclo de chequeo', () => {
   it('CA-LEG-10 enlaza la cadena por la evaluación previa y muestra el estado que cada una tenía', async () => {
     await abrirLegajo('777777', '?tab=practico')
     const chequeo = panel('Ciclo de chequeo')
-    expect(await chequeo.findByRole('link', { name: '777777-5' })).toHaveAttribute('href', '/evaluaciones/777777-5')
+    expect(await chequeo.findByRole('link', { name: '777777-6' })).toHaveAttribute('href', '/evaluaciones/777777-6')
     expect(chequeo.getByText('En Chequeo')).toBeInTheDocument()
     expect(chequeo.getByRole('link', { name: '777777-4' })).toHaveAttribute('href', '/evaluaciones/777777-4')
   })
