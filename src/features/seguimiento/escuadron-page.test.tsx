@@ -252,6 +252,14 @@ describe('Escuadrón: estado y situación teórica', () => {
     expect(resumen.queryByText(/^Apto:/)).not.toBeInTheDocument()
   })
 
+  it('CA-SEG-06 el resumen cuenta toda la lista filtrada, no solo la página visible', async () => {
+    await abrirEscuadron('/seguimiento?size=2')
+    expect(filas()).toHaveLength(2)
+    const resumen = within(screen.getByRole('region', { name: 'Resumen por estado' }))
+    expect(resumen.getByText('Apto: 5')).toBeInTheDocument()
+    expect(resumen.getByText('En chequeo: 1')).toBeInTheDocument()
+  })
+
   it('CA-SEG-07 la columna de estado teórico marca al alumno bloqueado por subsanación', async () => {
     await abrirEscuadron()
     const tabla = within(screen.getByRole('table', { name: 'Alumnos del escuadrón' }))
