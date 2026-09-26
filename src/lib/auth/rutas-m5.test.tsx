@@ -42,8 +42,12 @@ describe('rutas de seguimiento', () => {
 
   it('M5-19 el comandante alcanza las cuatro pantallas de personal', async () => {
     await iniciarComo('comandante.aguirre')
-    const { router } = renderApp('/seguimiento/alertas')
+    const { router } = renderApp('/seguimiento')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Escuadrón' })).toBeInTheDocument()
+    await router.navigate({ to: '/seguimiento/alertas' })
     expect(await screen.findByRole('heading', { level: 1, name: 'Alertas' })).toBeInTheDocument()
+    await router.navigate({ to: '/seguimiento/$alumno', params: { alumno: '555555' } })
+    expect(await screen.findByRole('heading', { level: 1, name: 'Legajo del alumno' })).toBeInTheDocument()
     await router.navigate({ to: '/reportes' })
     expect(await screen.findByRole('heading', { level: 1, name: 'Reportes y orden de mérito' })).toBeInTheDocument()
   })
@@ -71,11 +75,15 @@ describe('rutas de seguimiento', () => {
 
   it('M5-9 el legajo y las alertas cuelgan del escuadrón en las migas', async () => {
     await iniciarComo('instructor.perez')
-    renderApp('/seguimiento/alertas')
+    const { router } = renderApp('/seguimiento/alertas')
     await screen.findByRole('heading', { level: 1, name: 'Alertas' })
     const migas = within(screen.getByRole('navigation', { name: 'Migas de pan' }))
     expect(migas.getByRole('link', { name: 'Escuadrón' })).toHaveAttribute('href', '/seguimiento')
     expect(migas.getByText('Alertas')).toBeInTheDocument()
+    await router.navigate({ to: '/seguimiento/$alumno', params: { alumno: '555555' } })
+    await screen.findByRole('heading', { level: 1, name: 'Legajo del alumno' })
+    const migasLegajo = within(screen.getByRole('navigation', { name: 'Migas de pan' }))
+    expect(migasLegajo.getByRole('link', { name: 'Escuadrón' })).toHaveAttribute('href', '/seguimiento')
   })
 
   it('M5-22 en modo mock ninguna pantalla muestra un aviso de dependencia', async () => {
