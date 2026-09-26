@@ -13,8 +13,9 @@ const API = config.sigedaApiUrl
 async function abrirAlertas(ruta = '/seguimiento/alertas?size=20', username = 'comandante.aguirre') {
   await iniciarComo(username)
   const vista = renderApp(ruta)
-  await screen.findByRole('heading', { name: 'Alertas' })
   await screen.findByRole('table', { name: 'Alertas del escuadrón' })
+  await screen.findByText(/registros?$/)
+  await within(screen.getByLabelText('Grupo')).findByRole('option', { name: 'Grupo 4' })
   return vista
 }
 
@@ -50,6 +51,11 @@ describe('Alertas', () => {
 
   it('CA-ALE-02 filtra por programa, grupo y tipo y todo viaja en la URL', async () => {
     const { usuario, router } = await abrirAlertas()
+    await usuario.selectOptions(screen.getByLabelText('Programa'), 'PDE')
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ programa: 'PDE' }))
+    expect(await screen.findByText(TEXTO_SIN_ALERTAS)).toBeInTheDocument()
+    await usuario.selectOptions(screen.getByLabelText('Programa'), 'PDI')
+    await waitFor(() => expect(filas()).toHaveLength(13))
     await usuario.selectOptions(screen.getByLabelText('Grupo'), '4')
     await waitFor(() => expect(router.state.location.search).toMatchObject({ idGrupo: 4 }))
     await waitFor(() => expect(filas()).toHaveLength(4))
@@ -67,6 +73,18 @@ describe('Alertas', () => {
     await usuario.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
     await waitFor(() => expect(filas()).toHaveLength(13))
     expect(screen.getByLabelText('Desde')).toHaveValue('')
+    const hasta = sumarDias(hoyIso(), -25)
+    await usuario.type(screen.getByLabelText('Hasta'), hasta)
+    await waitFor(() => expect(filas()).toHaveLength(3))
+  })
+
+  it('CA-ALE-08 si el catálogo de grupos falla lo avisa bajo su propio selector y la tabla sigue', async () => {
+    server.use(http.get(`${API}/api/grupos/programa/:nombre`, () => HttpResponse.error()))
+    await iniciarComo('comandante.aguirre')
+    renderApp('/seguimiento/alertas?size=20')
+    await screen.findByRole('table', { name: 'Alertas del escuadrón' })
+    expect(await screen.findByText('No se pudieron cargar los grupos.')).toBeInTheDocument()
+    await waitFor(() => expect(filas()).toHaveLength(13))
   })
 
   it('CA-ALE-02 una URL mal escrita vuelve a los valores por defecto', async () => {
