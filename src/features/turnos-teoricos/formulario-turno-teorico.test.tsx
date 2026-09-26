@@ -87,7 +87,7 @@ describe('Registrar y modificar turno teórico', () => {
     const { usuario, router } = renderApp('/teoria/turnos/nuevo')
     await screen.findByLabelText('Nombre')
     await screen.findByRole('option', { name: 'Adoctrinamiento de Vuelo' })
-    await screen.findByRole('option', { name: 'Grupo 6 · 1 alumno' })
+    await screen.findByRole('option', { name: 'Promoción 2026-A · 1 alumno' })
     expect(within(screen.getByLabelText('Grupo')).getAllByRole('option')).toHaveLength(6)
     await llenarCabecera(usuario)
     await agregarPregunta(usuario, 1, '17', '10')

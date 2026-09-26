@@ -9,8 +9,10 @@ import { iniciarComo } from '@/test/render'
 import {
   estadoTeoricoEnLote,
   fuenteDeSeguimiento,
+  listarDesaprobados,
   listarSeguimiento,
   paginarAlumnos,
+  MENSAJE_CODIGO_INVALIDO,
   type AlumnoSeguimiento,
   type FiltrosEscuadron,
 } from './api'
@@ -173,5 +175,27 @@ describe('estado teórico en lote', () => {
       status: 400,
       erroresDeCampo: { codAlumnos: 'No se pueden consultar más de 100 alumnos a la vez.' },
     })
+  })
+})
+
+const fuentes = import.meta.glob<string>('/src/features/**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true })
+
+describe('el agujero de desaprobados se expone, nunca se explota', () => {
+  it('CA-ALE-06 la capa de API rechaza un codPersona que no tenga exactamente seis caracteres', async () => {
+    await iniciarComo('instructor.perez')
+    await expect(listarDesaprobados('7')).rejects.toThrow(MENSAJE_CODIGO_INVALIDO)
+    await expect(listarDesaprobados('7777777')).rejects.toThrow(MENSAJE_CODIGO_INVALIDO)
+    await expect(listarDesaprobados('')).rejects.toThrow(MENSAJE_CODIGO_INVALIDO)
+    await expect(listarDesaprobados('777777')).resolves.toHaveLength(3)
+  })
+
+  it('CA-ALE-06 ninguna pantalla llama a un endpoint de desaprobados sin permiso declarado', () => {
+    const referencias = Object.entries(fuentes)
+      .filter(([archivo]) => !archivo.includes('.test.'))
+      .flatMap(([archivo, fuente]) =>
+        [...fuente.matchAll(/\/api\/desaprobados[^`'"]*/g)].map((coincidencia) => [archivo, coincidencia[0]] as const),
+      )
+    expect(referencias.length).toBeGreaterThan(0)
+    expect(referencias.filter(([, ruta]) => !ruta.startsWith('/api/desaprobados/persona/'))).toEqual([])
   })
 })

@@ -136,12 +136,29 @@ export async function estadoTeoricoEnLote(codigos: readonly string[]): Promise<E
   return sigeda.lista<EstadoTeoricoResumen>('/api/estado-teorico', { codAlumnos: [...codigos].join(',') })
 }
 
+export const MENSAJE_CODIGO_INVALIDO = 'El código de la persona debe tener seis caracteres.'
+
+export type Desaprobado = {
+  codigo: string
+  clasificacion: string
+  subfase: string
+  fecha: string
+  programa: string
+  idSubfase: number
+}
+
+export async function listarDesaprobados(codPersona: string): Promise<Desaprobado[]> {
+  if (codPersona.length !== 6) throw new Error(MENSAJE_CODIGO_INVALIDO)
+  return sigeda.lista<Desaprobado>(`/api/desaprobados/persona/${encodeURIComponent(codPersona)}`)
+}
+
 export const clavesSeguimiento = {
   todo: ['seguimiento'] as const,
   alumnos: (fuente: FuenteSeguimiento, programa: Programa, codPersona: string | null) =>
     [...clavesSeguimiento.todo, 'alumnos', fuente, programa, codPersona] as const,
   estadoTeorico: (codigos: readonly string[]) =>
     [...clavesSeguimiento.todo, 'estado-teorico', [...codigos].sort()] as const,
+  desaprobados: (codPersona: string) => [...clavesSeguimiento.todo, 'desaprobados', codPersona] as const,
 }
 
 export const consultasSeguimiento = {
@@ -156,5 +173,10 @@ export const consultasSeguimiento = {
       queryKey: clavesSeguimiento.estadoTeorico(codigos),
       queryFn: () => estadoTeoricoEnLote(codigos),
       retry: false,
+    }),
+  desaprobados: (codPersona: string) =>
+    queryOptions({
+      queryKey: clavesSeguimiento.desaprobados(codPersona),
+      queryFn: () => listarDesaprobados(codPersona),
     }),
 }

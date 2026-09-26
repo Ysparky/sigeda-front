@@ -33,7 +33,7 @@ describe('Grupos', () => {
     expect(router.state.location.search).toMatchObject({ property: 'nombre', direction: 'ASC' })
     await usuario.click(screen.getByRole('button', { name: /Nombre/ }))
     expect(router.state.location.search).toMatchObject({ property: 'nombre', direction: 'DESC' })
-    await waitFor(() => expect(filas()[0]?.[0]).toBe('Grupo 6'))
+    await waitFor(() => expect(filas()[0]?.[0]).toBe('Promoción 2026-A'))
   })
 
   it('CA-GRU-01 también la ve el jefe de operaciones', async () => {
