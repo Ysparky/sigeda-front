@@ -20,6 +20,7 @@ import {
   TEXTO_DESAPROBADOS_LOS_VE_SU_INSTRUCTOR,
   TEXTO_DESEMPATE,
   TEXTO_ESTADO_TEORICO_EN_LOTE,
+  TEXTO_ESTADO_TEORICO_SIN_SERVIDOR,
   TEXTO_ESTADO_YA_CAMBIO,
   TEXTO_EVALUADOR_SIN_CODIGO,
   TEXTO_HISTORIAL_TEORICO_SIN_SERVIDOR,
@@ -178,6 +179,9 @@ describe('textos fijos de la spec §17.3', () => {
     expect(TEXTO_INDICES_SIN_SERVIDOR).toBe('El servidor todavía no calcula los índices del PDI.')
     expect(TEXTO_HISTORIAL_TEORICO_SIN_SERVIDOR).toBe(
       'El historial de exámenes teóricos todavía no existe en el servidor.',
+    )
+    expect(TEXTO_ESTADO_TEORICO_SIN_SERVIDOR).toBe(
+      'El estado teórico y sus causales todavía no existen en el servidor.',
     )
     expect(TEXTO_SIN_ALUMNOS_CON_INDICES).toBe('Todavía no hay alumnos con índices calculados en este programa.')
     expect(TEXTO_ORDEN_MERITO_SIN_SERVIDOR).toBe('El servidor todavía no calcula el orden de mérito.')

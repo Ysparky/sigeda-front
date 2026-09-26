@@ -7,6 +7,8 @@ import { PANTALLAS } from '@/lib/auth/pantallas'
 import { ETIQUETAS_PESTANA, TEXTO_INDICES_SOLO_MOCK } from '@/lib/dominio/seguimiento'
 import { CabeceraDelLegajo } from './components/cabecera-del-legajo'
 import { HistorialPractico } from './components/historial-practico'
+import { PanelDeEstadoTeorico } from './components/panel-de-estado-teorico'
+import { PanelDeIndices } from './components/panel-de-indices'
 import { consultasSeguimiento } from './api'
 import { PESTANAS } from './schemas'
 
@@ -38,7 +40,13 @@ export function LegajoPage({ codAlumno }: { codAlumno: string }) {
           </Enlace>
         ))}
       </nav>
-      {busqueda.tab === 'resumen' && <CabeceraDelLegajo codAlumno={codAlumno} alumno={alumno} />}
+      {busqueda.tab === 'resumen' && (
+        <>
+          <CabeceraDelLegajo codAlumno={codAlumno} alumno={alumno} />
+          <PanelDeIndices codAlumno={codAlumno} />
+          <PanelDeEstadoTeorico codAlumno={codAlumno} />
+        </>
+      )}
       {busqueda.tab === 'practico' && <HistorialPractico codAlumno={codAlumno} busqueda={busqueda} />}
       {busqueda.tab === 'teorico' && null}
     </div>
