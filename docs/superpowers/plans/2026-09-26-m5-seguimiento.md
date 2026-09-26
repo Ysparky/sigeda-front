@@ -2026,7 +2026,7 @@ describe('GET /api/personas/{cod}/legajo', () => {
     await iniciarComo('alumno.ramirez')
     await expect(sigeda.get('/api/personas/777777/legajo')).resolves.toBeTruthy()
     await expect(sigeda.get('/api/personas/000000/legajo')).rejects.toMatchObject({ status: 404 })
-    await iniciarComo('raul.paredes')
+    tokens.guardar(jwtDePrueba('raul.paredes'), '')
     await expect(sigeda.get('/api/personas/777777/legajo')).rejects.toMatchObject({
       status: 403,
       message: MENSAJE_SIN_PERMISO,
@@ -2035,7 +2035,7 @@ describe('GET /api/personas/{cod}/legajo', () => {
 })
 ```
 
-`raul.paredes` is the seeded account with `idRol: null` (`usuarios.ts:39`), so `permisosDeRol('')` is empty and `autorizar` answers 403: it is how the baseline proves a permission is really enforced without inventing a role.
+`raul.paredes` is the seeded account with `idRol: null` (`usuarios.ts:39`), so `permisosDeRol('')` is empty and `autorizar` answers 403: it is how the baseline proves a permission is really enforced without inventing a role. **It cannot be reached through `iniciarComo`**: `auth.ts`'s `puedeIniciarSesion` refuses to authenticate any roleless user, so the login fails before the 403 can happen. Use the direct-token idiom instead — `tokens.guardar(jwtDePrueba('raul.paredes'), '')`, as `tokens.test.ts` and `src/mocks/sigeda/alumnos.test.ts:96` do — importing `tokens` from `@/lib/auth/tokens` and `jwtDePrueba` from `@/mocks/sigeda/auth`.
 
 Create `src/mocks/sigeda/reportes-subfase.test.ts`:
 
@@ -2568,7 +2568,7 @@ describe('GET /api/personas/{cod}/indices', () => {
       status: 404,
       message: 'Persona especificada no existe.',
     })
-    await iniciarComo('raul.paredes')
+    tokens.guardar(jwtDePrueba('raul.paredes'), '')
     await expect(sigeda.get('/api/personas/777777/indices')).rejects.toMatchObject({
       status: 403,
       message: MENSAJE_SIN_PERMISO,
@@ -3132,7 +3132,7 @@ describe('GET /api/personas/{cod}/chequeos', () => {
       status: 404,
       message: 'Persona especificada no existe.',
     })
-    await iniciarComo('raul.paredes')
+    tokens.guardar(jwtDePrueba('raul.paredes'), '')
     await expect(sigeda.get('/api/personas/999999/chequeos')).rejects.toMatchObject({
       status: 403,
       message: MENSAJE_SIN_PERMISO,
