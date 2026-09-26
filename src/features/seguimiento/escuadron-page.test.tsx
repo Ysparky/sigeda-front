@@ -3,7 +3,12 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { MENSAJE_SIN_CONEXION } from '@/lib/api/errors'
 import { config } from '@/lib/config'
-import { TEXTO_SIN_ALUMNOS_ASIGNADOS, TEXTO_SIN_ALUMNOS_EN_PROGRAMA, TEXTO_SIN_GRUPO } from '@/lib/dominio/seguimiento'
+import {
+  TEXTO_ALUMNOS_SIN_COINCIDENCIAS,
+  TEXTO_SIN_ALUMNOS_ASIGNADOS,
+  TEXTO_SIN_ALUMNOS_EN_PROGRAMA,
+  TEXTO_SIN_GRUPO,
+} from '@/lib/dominio/seguimiento'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
 import { relojFalso } from '@/test/tiempo'
@@ -188,6 +193,26 @@ describe('Escuadrón: filtros', () => {
   it('CA-SEG-03 un programa sin alumnos muestra S6', async () => {
     await abrirEscuadron('/seguimiento?programa=PDE')
     expect(await screen.findByText(TEXTO_SIN_ALUMNOS_EN_PROGRAMA)).toBeInTheDocument()
+  })
+
+  it('CA-SEG-03 un filtro que no encuentra a nadie lo dice, sin pedir nada y sin esconder los filtros', async () => {
+    const { usuario } = await abrirEscuadron('/seguimiento')
+    expect(filas()).toHaveLength(6)
+    let peticiones = 0
+    const oyente = () => {
+      peticiones += 1
+    }
+    server.events.on('request:start', oyente)
+    await usuario.selectOptions(screen.getByLabelText('Estado'), 'No Apto')
+    expect(await screen.findByText(TEXTO_ALUMNOS_SIN_COINCIDENCIAS)).toBeInTheDocument()
+    expect(screen.queryByText(TEXTO_SIN_ALUMNOS_EN_PROGRAMA)).not.toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Alumnos del escuadrón' })).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Estado')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Limpiar filtros' })).toBeInTheDocument()
+    expect(peticiones).toBe(0)
+    server.events.removeListener('request:start', oyente)
+    await usuario.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    expect(await screen.findByRole('table', { name: 'Alumnos del escuadrón' })).toBeInTheDocument()
   })
 
   it('CA-SEG-09 un fallo en la primera carga muestra el aviso con Reintentar, no una lista vacía', async () => {
