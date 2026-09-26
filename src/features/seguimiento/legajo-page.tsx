@@ -7,6 +7,8 @@ import { PANTALLAS } from '@/lib/auth/pantallas'
 import { ETIQUETAS_PESTANA, TEXTO_INDICES_SOLO_MOCK } from '@/lib/dominio/seguimiento'
 import { CabeceraDelLegajo } from './components/cabecera-del-legajo'
 import { HistorialPractico } from './components/historial-practico'
+import { PanelDeChequeo } from './components/panel-de-chequeo'
+import { PanelDeDesaprobados } from './components/panel-de-desaprobados'
 import { PanelDeEstadoTeorico } from './components/panel-de-estado-teorico'
 import { PanelDeIndices } from './components/panel-de-indices'
 import { PanelDePromedios } from './components/panel-de-promedios'
@@ -56,6 +58,8 @@ export function LegajoPage({ codAlumno }: { codAlumno: string }) {
           <PanelDeSubfase codAlumno={codAlumno} idSubfase={busqueda.idSubfase} />
           <PanelDePromedios codAlumno={codAlumno} idSubfase={busqueda.idSubfase} />
           <PanelDeTurnos codAlumno={codAlumno} />
+          <PanelDeDesaprobados codAlumno={codAlumno} />
+          <PanelDeChequeo codAlumno={codAlumno} />
         </>
       )}
       {busqueda.tab === 'teorico' && null}

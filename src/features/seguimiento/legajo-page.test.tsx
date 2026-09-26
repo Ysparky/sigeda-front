@@ -4,19 +4,26 @@ import { describe, expect, it, vi } from 'vitest'
 import { config } from '@/lib/config'
 import { MENSAJE_SIN_CONEXION } from '@/lib/api/errors'
 import {
+  TEXTO_CHEQUEO_LO_DECIDE_EL_SERVIDOR,
   TEXTO_CHEQUEO_SIN_SERVIDOR,
+  TEXTO_DESAPROBADOS_LOS_VE_SU_INSTRUCTOR,
   TEXTO_ESTADO_TEORICO_SIN_SERVIDOR,
+  TEXTO_ESTADO_YA_CAMBIO,
   TEXTO_EVALUADOR_SIN_CODIGO,
   TEXTO_INDICES_SIN_SERVIDOR,
   TEXTO_MEDIA_SIMPLE_SUBFASE,
   TEXTO_SIN_CAUSALES,
+  TEXTO_SIN_CHEQUEOS,
   TEXTO_SIN_DATOS_SUFICIENTES,
+  TEXTO_SIN_DESAPROBADOS,
   TEXTO_SIN_EVALUACIONES_EN_LA_SUBFASE,
   TEXTO_SIN_GRUPO,
   TEXTO_SIN_PROMEDIOS_PONDERADOS,
   TEXTO_SIN_SUBFASE_ELEGIDA,
   TEXTO_SIN_TURNOS_DEL_ALUMNO,
   TEXTO_TURNO_SIN_CANTIDAD,
+  textoCriterioCumplido,
+  textoRegularAlternado,
 } from '@/lib/dominio/seguimiento'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
@@ -445,6 +452,120 @@ describe('Legajo: turnos realizados', () => {
     expect(await turnos.findByText(TEXTO_SIN_TURNOS_DEL_ALUMNO)).toBeInTheDocument()
     expect(turnos.queryByRole('table')).not.toBeInTheDocument()
     expect(turnos.queryByText(TEXTO_TURNO_SIN_CANTIDAD)).not.toBeInTheDocument()
+  })
+})
+
+describe('Legajo: vuelos desaprobados', () => {
+  it('CA-LEG-07 muestra código, clasificación, sub fase, fecha y programa y enlaza la evaluación', async () => {
+    await abrirLegajo('777777', '?tab=practico')
+    const desaprobados = panel('Vuelos desaprobados')
+    const tabla = within(await desaprobados.findByRole('table', { name: 'Vuelos desaprobados del alumno' }))
+    expect(tabla.getAllByRole('row').slice(1)).toHaveLength(3)
+    const fila = within(tabla.getByRole('link', { name: '777777-1' }).closest('tr') as HTMLElement)
+    expect(fila.getByText('Malo')).toBeInTheDocument()
+    expect(fila.getByText('Instrumentos')).toBeInTheDocument()
+    expect(fila.getByText('PDI')).toBeInTheDocument()
+    expect(tabla.getByRole('link', { name: '777777-1' })).toHaveAttribute('href', '/evaluaciones/777777-1')
+  })
+
+  it('CA-LEG-07 sin View Disapproved el panel no se pide ni se muestra', async () => {
+    const pedidas: string[] = []
+    server.events.on('request:start', ({ request }) => pedidas.push(new URL(request.url).pathname))
+    await abrirLegajo('777777', '?tab=practico', 'jefe.operaciones')
+    await screen.findByRole('table', { name: 'Historial de evaluaciones' })
+    server.events.removeAllListeners('request:start')
+    expect(pedidas).not.toContain('/api/desaprobados/persona/777777')
+    expect(screen.queryByRole('region', { name: 'Vuelos desaprobados' })).not.toBeInTheDocument()
+    expect(screen.queryByText(TEXTO_DESAPROBADOS_LOS_VE_SU_INSTRUCTOR)).not.toBeInTheDocument()
+  })
+
+  it('CA-LEG-07 en el legajo propio de un alumno se muestra S29 en lugar del panel', async () => {
+    await abrirLegajo('777777', '?tab=practico', 'alumno.ramirez')
+    expect(await screen.findByText(TEXTO_DESAPROBADOS_LOS_VE_SU_INSTRUCTOR)).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Vuelos desaprobados del alumno' })).not.toBeInTheDocument()
+  })
+
+  it('CA-LEG-07 sin vuelos desaprobados el panel lo dice en vez de una tabla vacía', async () => {
+    await abrirLegajo('654321', '?tab=practico')
+    const desaprobados = panel('Vuelos desaprobados')
+    expect(await desaprobados.findByText(TEXTO_SIN_DESAPROBADOS)).toBeInTheDocument()
+    expect(desaprobados.queryByRole('table')).not.toBeInTheDocument()
+  })
+})
+
+describe('Legajo: ciclo de chequeo', () => {
+  it('CA-LEG-09 muestra los cuatro contadores y el criterio que aplica a la fase', async () => {
+    await abrirLegajo('777777', '?tab=practico')
+    const chequeo = panel('Ciclo de chequeo')
+    expect(await chequeo.findByText('Criterio 1')).toBeInTheDocument()
+    expect(chequeo.getByText('Chequeos: 4')).toBeInTheDocument()
+    expect(chequeo.getByText('Evaluaciones: 10')).toBeInTheDocument()
+    expect(chequeo.getByText('Malos: 3')).toBeInTheDocument()
+    expect(chequeo.getByText('Regulares: 2')).toBeInTheDocument()
+    expect(chequeo.getByText('3 vuelos Malos')).toBeInTheDocument()
+    expect(chequeo.getByText('6 Regulares alternados')).toBeInTheDocument()
+  })
+
+  it('CA-LEG-09 muestra el historial de chequeos y la regla del Regular alternado', async () => {
+    await abrirLegajo('999999', '?tab=practico')
+    const chequeo = panel('Ciclo de chequeo')
+    expect(await chequeo.findByText(textoRegularAlternado(true))).toBeInTheDocument()
+    const historial = within(chequeo.getByRole('table', { name: 'Historial de chequeos' }))
+    expect(historial.getAllByRole('row').slice(1)).toHaveLength(1)
+    const fila = within(historial.getAllByRole('row')[1]!)
+    expect(fila.getByText('Aprobado')).toBeInTheDocument()
+    expect(fila.getByText('Contacto')).toBeInTheDocument()
+    await reabrirLegajo('777777', '?tab=practico')
+    expect(await panel('Ciclo de chequeo').findByText(TEXTO_SIN_CHEQUEOS)).toBeInTheDocument()
+  })
+
+  it('CA-LEG-09 sin la dependencia del ciclo de chequeo el panel lo dice y no pide nada', async () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    const pedidas: string[] = []
+    server.events.on('request:start', ({ request }) => pedidas.push(new URL(request.url).pathname))
+    await abrirLegajo('777777', '?tab=practico')
+    expect(await panel('Ciclo de chequeo').findByText(TEXTO_CHEQUEO_SIN_SERVIDOR)).toBeInTheDocument()
+    expect(pedidas.some((ruta) => ruta.includes('/legajo') || ruta.includes('/chequeos'))).toBe(false)
+    server.events.removeAllListeners('request:start')
+    vi.unstubAllEnvs()
+  })
+
+  it('CA-LEG-10 con el criterio cumplido y el estado ya movido muestra S12 y S31', async () => {
+    await abrirLegajo('777777', '?tab=practico')
+    const chequeo = panel('Ciclo de chequeo')
+    expect(await chequeo.findByText(textoCriterioCumplido('Adaptación', '3 vuelos Malos'))).toBeInTheDocument()
+    expect(chequeo.getByText(TEXTO_ESTADO_YA_CAMBIO)).toBeInTheDocument()
+    expect(chequeo.queryByText(TEXTO_CHEQUEO_LO_DECIDE_EL_SERVIDOR)).not.toBeInTheDocument()
+  })
+
+  it('CA-LEG-10 con el criterio cumplido y el alumno todavía Apto muestra S12 y S30', async () => {
+    await abrirLegajo('999999', '?tab=practico')
+    const chequeo = panel('Ciclo de chequeo')
+    expect(await chequeo.findByText(textoCriterioCumplido('Adaptación', '2 Malos y 2 Regulares alternados'))).toBeInTheDocument()
+    expect(chequeo.getByText(TEXTO_CHEQUEO_LO_DECIDE_EL_SERVIDOR)).toBeInTheDocument()
+    expect(chequeo.queryByText(TEXTO_ESTADO_YA_CAMBIO)).not.toBeInTheDocument()
+  })
+
+  it('CA-LEG-10 sin cumplir el criterio no muestra S12, S30 ni S31', async () => {
+    await abrirLegajo('555555', '?tab=practico')
+    const chequeo = panel('Ciclo de chequeo')
+    await chequeo.findByText('Chequeos: 2')
+    expect(chequeo.queryByText(TEXTO_CHEQUEO_LO_DECIDE_EL_SERVIDOR)).not.toBeInTheDocument()
+    expect(chequeo.queryByText(TEXTO_ESTADO_YA_CAMBIO)).not.toBeInTheDocument()
+  })
+
+  it('CA-LEG-10 enlaza la cadena por la evaluación previa y muestra el estado que cada una tenía', async () => {
+    await abrirLegajo('777777', '?tab=practico')
+    const chequeo = panel('Ciclo de chequeo')
+    expect(await chequeo.findByRole('link', { name: '777777-6' })).toHaveAttribute('href', '/evaluaciones/777777-6')
+    expect(chequeo.getByText('En Chequeo')).toBeInTheDocument()
+    expect(chequeo.getByRole('link', { name: '777777-4' })).toHaveAttribute('href', '/evaluaciones/777777-4')
+  })
+
+  it('el ancla #chequeo de las alertas cae sobre el panel de chequeo', async () => {
+    await abrirLegajo('999999', '?tab=practico#chequeo')
+    const chequeo = await screen.findByRole('region', { name: 'Ciclo de chequeo' })
+    expect(chequeo).toHaveAttribute('id', 'chequeo')
   })
 })
 
