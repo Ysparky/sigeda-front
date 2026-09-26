@@ -2,7 +2,7 @@ import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import { config } from '@/lib/config'
-import { MENSAJE_SIN_CONEXION } from '@/lib/api/errors'
+import { MENSAJE_SIN_CONEXION, MENSAJE_SIN_PERMISO } from '@/lib/api/errors'
 import {
   TEXTO_CHEQUEO_LO_DECIDE_EL_SERVIDOR,
   TEXTO_CHEQUEO_SIN_SERVIDOR,
@@ -10,15 +10,20 @@ import {
   TEXTO_ESTADO_TEORICO_SIN_SERVIDOR,
   TEXTO_ESTADO_YA_CAMBIO,
   TEXTO_EVALUADOR_SIN_CODIGO,
+  TEXTO_HISTORIAL_TEORICO_SIN_SERVIDOR,
   TEXTO_INDICES_SIN_SERVIDOR,
+  TEXTO_INDICES_SOLO_MOCK,
   TEXTO_MEDIA_SIMPLE_SUBFASE,
+  TEXTO_PREVALECE_LA_PRIMERA_NOTA,
   TEXTO_SIN_CAUSALES,
   TEXTO_SIN_CHEQUEOS,
   TEXTO_SIN_DATOS_SUFICIENTES,
   TEXTO_SIN_DESAPROBADOS,
   TEXTO_SIN_EVALUACIONES_EN_LA_SUBFASE,
+  TEXTO_SIN_EXAMENES_DEL_ALUMNO,
   TEXTO_SIN_GRUPO,
   TEXTO_SIN_PROMEDIOS_PONDERADOS,
+  TEXTO_SIN_SEGUNDA_NOTA,
   TEXTO_SIN_SUBFASE_ELEGIDA,
   TEXTO_SIN_TURNOS_DEL_ALUMNO,
   TEXTO_TURNO_SIN_CANTIDAD,
@@ -580,5 +585,94 @@ describe('Legajo: un panel que falla', () => {
     server.resetHandlers()
     await usuario.click(indices.getByRole('button', { name: 'Reintentar' }))
     expect(await indices.findByText('12.80')).toBeInTheDocument()
+  })
+})
+
+describe('Legajo: historial teórico', () => {
+  it('CA-LEG-11 muestra materia, tipo de examen, fecha, nota con su mínimo y si aprobó', async () => {
+    await abrirLegajo('999999', '?tab=teorico')
+    const historial = panel('Historial de exámenes')
+    const tabla = within(await historial.findByRole('table', { name: 'Exámenes del alumno' }))
+    for (const columna of ['Materia', 'Tipo de examen', 'Fecha', 'Nota', 'Resultado']) {
+      expect(tabla.getByText(columna)).toBeInTheDocument()
+    }
+    expect(tabla.getAllByText('Aerodinámica Aplicada a Helicópteros')).toHaveLength(2)
+    expect(tabla.getByText('10.00 / mínimo 16')).toBeInTheDocument()
+    expect(tabla.getByText('17.00 / mínimo 16')).toBeInTheDocument()
+    expect(tabla.getByText('Desaprobado')).toBeInTheDocument()
+    expect(tabla.getByText('Aprobado')).toBeInTheDocument()
+  })
+
+  it('CA-LEG-11 una fila desaprobada con subsanación aprobada muestra las dos notas y S17', async () => {
+    await abrirLegajo('999999', '?tab=teorico')
+    const historial = panel('Historial de exámenes')
+    expect(await historial.findByText(TEXTO_PREVALECE_LA_PRIMERA_NOTA)).toBeInTheDocument()
+    const desaprobada = within(historial.getByText('10.00 / mínimo 16').closest('tr') as HTMLElement)
+    expect(desaprobada.getByText(/Subsanada con 17\.00/)).toBeInTheDocument()
+  })
+
+  it('CA-LEG-11 la fila de la subsanación muestra su turno de origen', async () => {
+    await abrirLegajo('999999', '?tab=teorico')
+    const historial = panel('Historial de exámenes')
+    const subsanacion = within((await historial.findByText('17.00 / mínimo 16')).closest('tr') as HTMLElement)
+    expect(subsanacion.getByText(/Test Aerodinámica Aplicada a Helicópteros/)).toBeInTheDocument()
+  })
+
+  it('CA-LEG-11 una subsanación pendiente muestra que no hay segunda nota', async () => {
+    await abrirLegajo('666666', '?tab=teorico')
+    const historial = panel('Historial de exámenes')
+    expect(await historial.findByText(TEXTO_SIN_SEGUNDA_NOTA)).toBeInTheDocument()
+    expect(historial.getByText('12.00 / mínimo 18')).toBeInTheDocument()
+  })
+
+  it('CA-LEG-11 sin exámenes el panel lo dice en vez de una tabla vacía', async () => {
+    await abrirLegajo('777777', '?tab=teorico')
+    const historial = panel('Historial de exámenes')
+    expect(await historial.findByText(TEXTO_SIN_EXAMENES_DEL_ALUMNO)).toBeInTheDocument()
+    expect(historial.queryByRole('table')).not.toBeInTheDocument()
+    expect(historial.queryByText(TEXTO_PREVALECE_LA_PRIMERA_NOTA)).not.toBeInTheDocument()
+  })
+})
+
+describe('Legajo: propiedad y modo vivo', () => {
+  it('CA-LEG-15 /mi-legajo lleva al alumno a su propio legajo y pide su propio código', async () => {
+    const pedidas: string[] = []
+    server.events.on('request:start', ({ request }) => pedidas.push(new URL(request.url).pathname))
+    await iniciarComo('alumno.castro')
+    const { router } = renderApp('/mi-legajo')
+    await screen.findByRole('heading', { level: 1, name: 'Legajo del alumno' })
+    expect(router.state.location.pathname).toBe('/seguimiento/999999')
+    await waitFor(() => expect(pedidas).toContain('/api/personas/999999/alumno'))
+    server.events.removeAllListeners('request:start')
+    expect(pedidas.some((ruta) => ruta.includes('555555'))).toBe(false)
+  })
+
+  it('CA-LEG-15 un código ajeno en la URL lo rechaza el cargador de la ruta', async () => {
+    await iniciarComo('alumno.castro')
+    renderApp('/seguimiento/555555')
+    expect(await screen.findByText(MENSAJE_SIN_PERMISO)).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Cabecera' })).not.toBeInTheDocument()
+  })
+
+  it('CA-LEG-17 fuera del modo mock cada panel muestra su propio aviso y el encabezado S1', async () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    const { usuario } = await abrirLegajo('777777')
+    expect(screen.getByText(TEXTO_INDICES_SOLO_MOCK)).toBeInTheDocument()
+    expect(await panel('Índices del PDI').findByText(TEXTO_INDICES_SIN_SERVIDOR)).toBeInTheDocument()
+    await usuario.click(screen.getByRole('link', { name: 'Práctico' }))
+    expect(await panel('Ciclo de chequeo').findByText(TEXTO_CHEQUEO_SIN_SERVIDOR)).toBeInTheDocument()
+    await usuario.click(screen.getByRole('link', { name: 'Teórico' }))
+    expect(await panel('Historial de exámenes').findByText(TEXTO_HISTORIAL_TEORICO_SIN_SERVIDOR)).toBeInTheDocument()
+  })
+
+  it('CA-LEG-17 sin ninguna dependencia resuelta los cuatro paneles reales siguen funcionando', async () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    const { usuario } = await abrirLegajo('777777', '?tab=practico&idSubfase=3')
+    expect(await screen.findByRole('table', { name: 'Historial de evaluaciones' })).toBeInTheDocument()
+    expect(await panel('Reporte de sub fase').findByText('Instrumentos')).toBeInTheDocument()
+    expect(await panel('Promedios de la sub fase').findByText('13.00')).toBeInTheDocument()
+    expect(await panel('Vuelos desaprobados').findByRole('table', { name: 'Vuelos desaprobados del alumno' })).toBeInTheDocument()
+    await usuario.click(screen.getByRole('link', { name: 'Resumen' }))
+    expect(await panel('Cabecera').findByText('Carlos Ramirez Sanchez')).toBeInTheDocument()
   })
 })

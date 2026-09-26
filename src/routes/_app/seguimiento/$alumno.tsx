@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { cargarLegajoVisible } from '@/features/seguimiento/cargar'
 import { LegajoPage } from '@/features/seguimiento/legajo-page'
 import { esquemaBusquedaLegajo } from '@/features/seguimiento/schemas'
 import { exigirPantalla } from '@/lib/auth/guardas'
@@ -7,6 +8,7 @@ import { PANTALLAS } from '@/lib/auth/pantallas'
 export const Route = createFileRoute('/_app/seguimiento/$alumno')({
   validateSearch: esquemaBusquedaLegajo,
   beforeLoad: ({ context }) => exigirPantalla(PANTALLAS.legajo, context.sesion.actual()),
+  loader: ({ context, params }) => cargarLegajoVisible(context.sesion.actual(), params.alumno),
   component: RutaLegajo,
 })
 
