@@ -41,7 +41,7 @@ export function columnasAlertas() {
       cell: (contexto) => {
         const etiqueta = etiquetaDeGrupoConNombre(contexto.row.original.idGrupo, contexto.getValue())
         return (
-          <span className="block max-w-[12rem] truncate" title={etiqueta}>
+          <span className="block max-w-[8rem] truncate" title={etiqueta}>
             {etiqueta}
           </span>
         )
