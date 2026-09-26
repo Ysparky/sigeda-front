@@ -1,10 +1,12 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { MENSAJE_SIN_CONEXION } from '@/lib/api/errors'
 import { config } from '@/lib/config'
 import {
   TEXTO_ALUMNOS_SIN_COINCIDENCIAS,
+  TEXTO_ESTADO_TEORICO_EN_LOTE,
+  TEXTO_REQUIERE_ATENCION,
   TEXTO_SIN_ALUMNOS_ASIGNADOS,
   TEXTO_SIN_ALUMNOS_EN_PROGRAMA,
   TEXTO_SIN_GRUPO,
@@ -64,8 +66,8 @@ describe('Escuadrón', () => {
     expect(router.state.location.search).toMatchObject({ size: 2, page: 0 })
     expect(screen.getByText('Página 1 de 3 · 6 registros')).toBeInTheDocument()
     let pedidos = 0
-    const contar = () => {
-      pedidos += 1
+    const contar = ({ request }: { request: Request }) => {
+      if (new URL(request.url).pathname.startsWith('/api/grupos/')) pedidos += 1
     }
     server.events.on('request:start', contar)
     await usuario.click(screen.getByRole('button', { name: 'Siguiente' }))
@@ -225,5 +227,90 @@ describe('Escuadrón: filtros', () => {
     server.resetHandlers()
     await usuario.click(screen.getByRole('button', { name: 'Reintentar' }))
     expect(await screen.findByRole('table', { name: 'Alumnos del escuadrón' })).toBeInTheDocument()
+  })
+})
+
+describe('Escuadrón: estado y situación teórica', () => {
+  it('CA-SEG-06 cada estado se muestra con su etiqueta y su tono', async () => {
+    await abrirEscuadron()
+    const fila = within(screen.getByRole('link', { name: '777777' }).closest('tr') as HTMLElement)
+    const insignia = fila.getByText('En chequeo')
+    expect(insignia).toHaveAttribute('data-tono', 'alerta')
+    const apto = within(screen.getByRole('link', { name: '111111' }).closest('tr') as HTMLElement).getByText('Apto')
+    expect(apto).toHaveAttribute('data-tono', 'exito')
+  })
+
+  it('CA-SEG-06 el encabezado resume cuántos alumnos hay en cada estado de la lista', async () => {
+    const { usuario, router } = await abrirEscuadron()
+    const resumen = within(screen.getByRole('region', { name: 'Resumen por estado' }))
+    expect(resumen.getByText('Apto: 5')).toBeInTheDocument()
+    expect(resumen.getByText('En chequeo: 1')).toBeInTheDocument()
+    expect(resumen.queryByText(/No apto/)).not.toBeInTheDocument()
+    await usuario.selectOptions(screen.getByLabelText('Grupo'), '4')
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ idGrupo: 4 }))
+    await waitFor(() => expect(resumen.getByText('En chequeo: 1')).toBeInTheDocument())
+    expect(resumen.queryByText(/^Apto:/)).not.toBeInTheDocument()
+  })
+
+  it('CA-SEG-07 la columna de estado teórico marca al alumno bloqueado por subsanación', async () => {
+    await abrirEscuadron()
+    const tabla = within(screen.getByRole('table', { name: 'Alumnos del escuadrón' }))
+    expect(tabla.getByText('Estado teórico')).toBeInTheDocument()
+    const bloqueado = within(screen.getByRole('link', { name: '666666' }).closest('tr') as HTMLElement)
+    expect(await bloqueado.findByText('Subsanación pendiente')).toBeInTheDocument()
+    const libre = within(screen.getByRole('link', { name: '111111' }).closest('tr') as HTMLElement)
+    expect(libre.queryByText('Subsanación pendiente')).not.toBeInTheDocument()
+  })
+
+  it('CA-SEG-07 si la consulta en lote falla la columna muestra S5 y ninguna fila se oculta', async () => {
+    server.use(http.get(`${API}/api/estado-teorico`, () => HttpResponse.error()))
+    await abrirEscuadron()
+    expect(await screen.findByText(TEXTO_ESTADO_TEORICO_EN_LOTE)).toBeInTheDocument()
+    expect(filas()).toHaveLength(6)
+    expect(screen.queryByText('Subsanación pendiente')).not.toBeInTheDocument()
+  })
+
+  it('CA-SEG-10 fuera del modo mock y sin la dependencia 56 la columna no se pide ni se muestra', async () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    const pedidas: string[] = []
+    server.events.on('request:start', ({ request }) => pedidas.push(new URL(request.url).pathname))
+    await abrirEscuadron()
+    server.events.removeAllListeners('request:start')
+    expect(pedidas).not.toContain('/api/estado-teorico')
+    expect(screen.queryByText('Estado teórico')).not.toBeInTheDocument()
+    expect(filas()).toHaveLength(6)
+    expect(screen.getByText('Apto: 5')).toBeInTheDocument()
+  })
+
+  it('CA-SEG-11 toda fila cuyo estado no sea Apto se marca con S28', async () => {
+    await abrirEscuadron()
+    const marcadas = screen.getAllByText(TEXTO_REQUIERE_ATENCION)
+    expect(marcadas).toHaveLength(1)
+    expect(marcadas[0]?.closest('tr')).toContainElement(screen.getByRole('link', { name: '777777' }))
+  })
+
+  it('CA-SEG-11 la marca sale del dato que ya trae la lista, sin ninguna petición adicional', async () => {
+    server.use(
+      http.get(`${API}/api/grupos/programa/:nombre`, () =>
+        HttpResponse.json({
+          content: [
+            {
+              personas: [
+                { codigo: '111111', nombre: 'Oscar', aPaterno: 'Lopez', aMaterno: 'Chaparro', idGrupo: 1, estado: 'No Apto' },
+                { codigo: '222222', nombre: 'Juan', aPaterno: 'Falconi', aMaterno: 'Fernandez', idGrupo: 2, estado: 'Apto' },
+              ],
+            },
+          ],
+          totalElements: 1,
+          totalPages: 1,
+          size: 10,
+          number: 0,
+        }),
+      ),
+    )
+    await abrirEscuadron()
+    expect(screen.getAllByText(TEXTO_REQUIERE_ATENCION)).toHaveLength(1)
+    const fila = within(screen.getByRole('link', { name: '111111' }).closest('tr') as HTMLElement)
+    expect(fila.getByText('No apto')).toHaveAttribute('data-tono', 'peligro')
   })
 })

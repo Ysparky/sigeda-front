@@ -1,20 +1,24 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AvisoDeError } from '@/components/aviso-de-error'
 import { DataTable } from '@/components/data-table'
 import { EmptyState } from '@/components/empty-state'
 import { PageHeader } from '@/components/page-header'
 import { PANTALLAS } from '@/lib/auth/pantallas'
 import { useSesion } from '@/lib/auth/use-sesion'
+import { accionDisponible } from '@/lib/dependencias'
 import {
   TEXTO_ALUMNOS_SIN_COINCIDENCIAS,
+  TEXTO_ESTADO_TEORICO_EN_LOTE,
   TEXTO_SIN_ALUMNOS_ASIGNADOS,
   TEXTO_SIN_ALUMNOS_EN_PROGRAMA,
 } from '@/lib/dominio/seguimiento'
 import { errorDePrimeraCarga } from '@/lib/query'
-import { consultasSeguimiento, fuenteDeSeguimiento, paginarAlumnos } from './api'
-import { COLUMNAS_ESCUADRON } from './columnas'
+import { consultasSeguimiento, filtrarAlumnos, fuenteDeSeguimiento, paginarAlumnos } from './api'
+import { columnasEscuadron } from './columnas'
 import { FiltrosEscuadron } from './components/filtros-escuadron'
+import { ResumenDeEstados } from './components/resumen-de-estados'
 import type { BusquedaEscuadron } from './schemas'
 
 const ruta = getRouteApi('/_app/seguimiento/')
@@ -30,6 +34,17 @@ export function EscuadronPage() {
   })
   const error = errorDePrimeraCarga(alumnos)
   const pagina = alumnos.data === undefined ? undefined : paginarAlumnos(alumnos.data, busqueda)
+  const visibles = filtrarAlumnos(alumnos.data ?? [], busqueda)
+
+  const conTeorica = accionDisponible('verBloqueoTeoricoLote')
+  const codigos = pagina?.items.map((alumno) => alumno.codigo) ?? []
+  const teorico = useQuery({
+    ...consultasSeguimiento.estadoTeorico(codigos),
+    enabled: conTeorica && codigos.length > 0,
+  })
+  const mapaTeorico = conTeorica
+    ? new Map((teorico.data ?? []).map((fila) => [fila.codAlumno, fila.bloqueadoPorSubsanacion]))
+    : null
 
   function cambiar(cambios: Partial<BusquedaEscuadron>) {
     void navegar({ search: (previa) => ({ ...previa, page: 0, ...cambios }) })
@@ -53,9 +68,15 @@ export function EscuadronPage() {
       ) : (
         <>
           <FiltrosEscuadron busqueda={busqueda} alumnos={alumnos.data ?? []} alCambiar={cambiar} />
+          <ResumenDeEstados alumnos={visibles} />
+          {conTeorica && teorico.isError && (
+            <Alert>
+              <AlertDescription>{TEXTO_ESTADO_TEORICO_EN_LOTE}</AlertDescription>
+            </Alert>
+          )}
           <DataTable
             etiqueta="Alumnos del escuadrón"
-            columnas={COLUMNAS_ESCUADRON}
+            columnas={columnasEscuadron({ estadoTeorico: mapaTeorico })}
             pagina={pagina}
             cargando={alumnos.isFetching}
             parametros={busqueda}
