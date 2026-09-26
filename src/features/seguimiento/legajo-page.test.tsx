@@ -14,6 +14,8 @@ import {
   TEXTO_INDICES_SIN_SERVIDOR,
   TEXTO_INDICES_SOLO_MOCK,
   TEXTO_MEDIA_SIMPLE_SUBFASE,
+  TEXTO_MITAD_PRACTICA,
+  TEXTO_MITAD_TEORICA,
   TEXTO_PREVALECE_LA_PRIMERA_NOTA,
   TEXTO_SIN_CAUSALES,
   TEXTO_SIN_CHEQUEOS,
@@ -217,6 +219,27 @@ describe('Legajo: índices del PDI', () => {
     for (const sigla of ['NFAD', 'NFOH', 'NFOA']) {
       expect(indices.getByText(sigla)).toBeInTheDocument()
     }
+  })
+
+  it('CA-LEG-13 dos encabezados separan la mitad teórica de la práctica y cada cifra cae bajo el suyo', async () => {
+    await abrirLegajo('555555')
+    const indices = panel('Índices del PDI')
+    const teorica = await indices.findByRole('heading', { level: 3, name: TEXTO_MITAD_TEORICA })
+    const practica = indices.getByRole('heading', { level: 3, name: TEXTO_MITAD_PRACTICA })
+    const mitadTeorica = within(teorica.parentElement as HTMLElement)
+    const mitadPractica = within(practica.parentElement as HTMLElement)
+    for (const sigla of ['NIT', 'NCT', 'NEI']) {
+      expect(mitadTeorica.getByText(sigla)).toBeInTheDocument()
+      expect(mitadPractica.queryByText(sigla)).not.toBeInTheDocument()
+    }
+    for (const sigla of ['NIA', 'NFAD', 'NFOH', 'NFOA']) {
+      expect(mitadPractica.getByText(sigla)).toBeInTheDocument()
+      expect(mitadTeorica.queryByText(sigla)).not.toBeInTheDocument()
+    }
+    expect(dato(mitadTeorica, 'NEI').getByText('16.00')).toBeInTheDocument()
+    expect(dato(mitadPractica, 'NFOH').getByText('16.00')).toBeInTheDocument()
+    expect(mitadTeorica.queryByText('NFPI')).not.toBeInTheDocument()
+    expect(mitadPractica.queryByText('NFPI')).not.toBeInTheDocument()
   })
 
   it('CA-LEG-13 cada fase baja a sus sub fases con el peso que informa el servidor', async () => {
