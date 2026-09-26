@@ -1,18 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  coincideTexto,
-  criterioDeFase,
-  etiquetaDeCausal,
-  etiquetaDeGrupo,
-  etiquetaDeSeveridad,
-  etiquetaDeTipoAlerta,
-  formulaDeIndice,
   INDICES,
-  mediaSimple,
-  ordinalDeSeveridad,
-  ramasDeCriterio,
-  requiereAtencion,
-  resumirEstados,
   SEVERIDADES,
   TEXTO_ALERTAS_SIN_SERVIDOR,
   TEXTO_CHEQUEO_LO_DECIDE_EL_SERVIDOR,
@@ -27,6 +15,8 @@ import {
   TEXTO_INDICES_SIN_SERVIDOR,
   TEXTO_INDICES_SOLO_MOCK,
   TEXTO_MEDIA_SIMPLE_SUBFASE,
+  TEXTO_NOTA_QUE_PREVALECE,
+  TEXTO_NO_REEMPLAZA_LA_NOTA,
   TEXTO_ORDEN_MERITO_SIN_SERVIDOR,
   TEXTO_PREVALECE_LA_PRIMERA_NOTA,
   TEXTO_REQUIERE_ATENCION,
@@ -38,11 +28,23 @@ import {
   TEXTO_SIN_GRUPO,
   TEXTO_SIN_SUBFASE_ELEGIDA,
   TEXTO_TURNO_SIN_CANTIDAD,
+  TIPOS_ALERTA,
+  coincideTexto,
+  criterioDeFase,
+  etiquetaDeCausal,
+  etiquetaDeGrupo,
+  etiquetaDeSeveridad,
+  etiquetaDeTipoAlerta,
+  formulaDeIndice,
+  mediaSimple,
+  ordinalDeSeveridad,
+  ramasDeCriterio,
+  requiereAtencion,
+  resumirEstados,
   textoCriterioCumplido,
   textoOrdenDeMeritoConsultado,
   textoRegularAlternado,
   textoSinNfpi,
-  TIPOS_ALERTA,
 } from './seguimiento'
 
 describe('vocabulario de seguimiento', () => {
@@ -196,6 +198,8 @@ describe('textos fijos de la spec §17.3', () => {
       'El estado teórico y sus causales todavía no existen en el servidor.',
     )
     expect(TEXTO_SIN_SUBFASE_ELEGIDA).toBe('Elija una sub fase para ver su reporte y sus promedios.')
+    expect(TEXTO_NOTA_QUE_PREVALECE).toBe('Esta nota es la que cuenta')
+    expect(TEXTO_NO_REEMPLAZA_LA_NOTA).toBe('No reemplaza la nota anterior')
   })
 
   it('M5-9 los cuatro textos con parámetros los interpolan como la spec los escribe', () => {

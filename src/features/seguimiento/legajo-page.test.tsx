@@ -21,6 +21,8 @@ import {
   TEXTO_SIN_DESAPROBADOS,
   TEXTO_SIN_EVALUACIONES_EN_LA_SUBFASE,
   TEXTO_SIN_EXAMENES_DEL_ALUMNO,
+  TEXTO_NOTA_QUE_PREVALECE,
+  TEXTO_NO_REEMPLAZA_LA_NOTA,
   TEXTO_SIN_GRUPO,
   TEXTO_SIN_PROMEDIOS_PONDERADOS,
   TEXTO_SIN_SEGUNDA_NOTA,
@@ -609,6 +611,13 @@ describe('Legajo: historial teórico', () => {
     expect(await historial.findByText(TEXTO_PREVALECE_LA_PRIMERA_NOTA)).toBeInTheDocument()
     const desaprobada = within(historial.getByText('10.00 / mínimo 16').closest('tr') as HTMLElement)
     expect(desaprobada.getByText(/Subsanada con 17\.00/)).toBeInTheDocument()
+    expect(desaprobada.getByText(TEXTO_NOTA_QUE_PREVALECE)).toBeInTheDocument()
+    const subsanacion = within(historial.getByText('17.00 / mínimo 16').closest('tr') as HTMLElement)
+    expect(subsanacion.getByText(TEXTO_NO_REEMPLAZA_LA_NOTA)).toBeInTheDocument()
+    expect(subsanacion.queryByText(TEXTO_NOTA_QUE_PREVALECE)).not.toBeInTheDocument()
+    const filas = within(historial.getByRole('table', { name: 'Exámenes del alumno' })).getAllByRole('row').slice(1)
+    expect(within(filas[0]!).getByText(TEXTO_NO_REEMPLAZA_LA_NOTA)).toBeInTheDocument()
+    expect(within(filas[1]!).getByText(TEXTO_NOTA_QUE_PREVALECE)).toBeInTheDocument()
   })
 
   it('CA-LEG-11 la fila de la subsanación muestra su turno de origen', async () => {

@@ -24,6 +24,9 @@ export const TEXTO_INDICES_SIN_SERVIDOR = 'El servidor todavía no calcula los �
 export const TEXTO_HISTORIAL_TEORICO_SIN_SERVIDOR =
   'El historial de exámenes teóricos todavía no existe en el servidor.'
 export const TEXTO_ESTADO_TEORICO_SIN_SERVIDOR = 'El estado teórico y sus causales todavía no existen en el servidor.'
+export const TEXTO_NOTA_QUE_PREVALECE = 'Esta nota es la que cuenta'
+export const TEXTO_NO_REEMPLAZA_LA_NOTA = 'No reemplaza la nota anterior'
+
 export const TEXTO_PREVALECE_LA_PRIMERA_NOTA =
   'Prevalece la primera nota: es la que entra en el promedio. La subsanación levanta el bloqueo para volar y queda como evidencia.'
 export const TEXTO_DESEMPATE = 'Desempate: mayor NIA y, si persiste, menor código.'
