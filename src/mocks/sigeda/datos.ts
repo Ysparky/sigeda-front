@@ -692,8 +692,8 @@ export function crearDatos(hoy: string = hoyIso()): DatosMock {
       materia: 12,
       pregunta: 25,
       alternativa: 101,
-      turnoTeorico: 6,
-      cuestionario: 4,
+      turnoTeorico: 8,
+      cuestionario: 6,
     },
   }
 }

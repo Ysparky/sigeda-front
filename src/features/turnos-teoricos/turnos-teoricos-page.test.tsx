@@ -27,9 +27,9 @@ describe('Turnos teóricos', () => {
     for (const columna of ['Nombre', 'Materia', 'Tipo de examen', 'Grupo', 'Fecha', 'Horario', 'Estado', 'Rindieron']) {
       expect(tabla.getByText(columna)).toBeInTheDocument()
     }
-    expect(filas()).toHaveLength(5)
-    expect(screen.getByText('Página 1 de 1 · 5 registros')).toBeInTheDocument()
-    const primera = within(filas()[0]!)
+    expect(filas()).toHaveLength(7)
+    expect(screen.getByText('Página 1 de 1 · 7 registros')).toBeInTheDocument()
+    const primera = within(screen.getByRole('link', { name: 'Mensual Adoctrinamiento de Vuelo' }).closest('tr') as HTMLElement)
     expect(primera.getByRole('link', { name: 'Mensual Adoctrinamiento de Vuelo' })).toHaveAttribute(
       'href',
       '/teoria/turnos/1',
@@ -46,7 +46,8 @@ describe('Turnos teóricos', () => {
     const nombre = screen.getByTitle('Mensual Adoctrinamiento de Vuelo')
     expect(nombre).toHaveClass('truncate')
     expect(nombre).toHaveAttribute('href', '/teoria/turnos/1')
-    expect(within(filas()[0]!).getAllByTitle('Adoctrinamiento de Vuelo')[0]).toHaveClass('truncate')
+    const primera = within(screen.getByRole('link', { name: 'Mensual Adoctrinamiento de Vuelo' }).closest('tr') as HTMLElement)
+    expect(primera.getAllByTitle('Adoctrinamiento de Vuelo')[0]).toHaveClass('truncate')
   })
 
   it('CA-TUT-02 filtra por grupo, materia, estado y tipo y todo viaja en la URL', async () => {
@@ -60,7 +61,7 @@ describe('Turnos teóricos', () => {
     await screen.findByText('Página 1 de 1 · 1 registro')
     expect(router.state.location.search).toMatchObject({ idGrupo: 3, estado: 'PROGRAMADO', tipoExamen: 'SUBSANACION' })
     await usuario.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
-    await screen.findByText('Página 1 de 1 · 5 registros')
+    await screen.findByText('Página 1 de 1 · 7 registros')
     await usuario.selectOptions(screen.getByLabelText('Materia'), 'Procedimientos de Emergencias')
     await screen.findByText('Página 1 de 1 · 1 registro')
   })
@@ -74,7 +75,7 @@ describe('Turnos teóricos', () => {
     expect(screen.getByLabelText('Desde')).toHaveValue(desde)
     expect(screen.getByLabelText('Hasta')).toHaveValue(hasta)
     await usuario.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
-    expect(await screen.findByText('Página 1 de 1 · 5 registros')).toBeInTheDocument()
+    expect(await screen.findByText('Página 1 de 1 · 7 registros')).toBeInTheDocument()
     expect(screen.getByLabelText('Desde')).toHaveValue('')
     expect(screen.getByLabelText('Hasta')).toHaveValue('')
   })
@@ -94,7 +95,7 @@ describe('Turnos teóricos', () => {
   it('CA-TUT-01 el orden lo resuelve el servidor y viaja en la URL', async () => {
     const { router, usuario } = await abrirTurnos()
     await usuario.click(screen.getByRole('button', { name: 'Nombre' }))
-    await screen.findByText('Página 1 de 1 · 5 registros')
+    await screen.findByText('Página 1 de 1 · 7 registros')
     expect(router.state.location.search).toMatchObject({ property: 'nombre', direction: 'ASC' })
     expect(within(filas()[0]!).getByRole('link', { name: 'Mensual Adoctrinamiento de Vuelo' })).toBeInTheDocument()
   })
@@ -117,7 +118,7 @@ describe('Turnos teóricos', () => {
     expect(aviso.getByText('¿Eliminar el turno teórico?')).toBeInTheDocument()
     await usuario.click(aviso.getByRole('button', { name: 'Eliminar' }))
     expect(await screen.findByText('Turno teórico eliminado con éxito.')).toBeInTheDocument()
-    expect(await screen.findByText('Página 1 de 1 · 4 registros')).toBeInTheDocument()
+    expect(await screen.findByText('Página 1 de 1 · 6 registros')).toBeInTheDocument()
   })
 
   it('CA-TUT-11 una eliminación que el servidor rechaza muestra D7', async () => {
@@ -128,7 +129,7 @@ describe('Turnos teóricos', () => {
     await usuario.click(screen.getByRole('button', { name: 'Eliminar Quincenal Límites de Operación' }))
     await usuario.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Eliminar' }))
     expect(await screen.findByText(D7_VENTANA_COMENZADA)).toBeInTheDocument()
-    expect(screen.getByText('Página 1 de 1 · 5 registros')).toBeInTheDocument()
+    expect(screen.getByText('Página 1 de 1 · 7 registros')).toBeInTheDocument()
   })
 
   it('CA-TUT-13 un fallo en la primera carga de la lista ofrece Reintentar', async () => {

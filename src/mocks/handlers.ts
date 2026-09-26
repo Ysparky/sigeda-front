@@ -5,7 +5,9 @@ import { handlersDocumentos } from './ia/documentos'
 import { handlersAlumnos } from './sigeda/alumnos'
 import { handlersAuth } from './sigeda/auth'
 import { handlersCatalogos } from './sigeda/catalogos'
+import { handlersChequeos } from './sigeda/chequeos'
 import { handlersCuentas } from './sigeda/cuentas'
+import { handlersCuestionariosHistorial } from './sigeda/cuestionarios-historial'
 import { handlersCuestionariosTeoria } from './sigeda/cuestionarios-teoria'
 import { handlersDesaprobados } from './sigeda/desaprobados'
 import { handlersEstadoTeorico } from './sigeda/estado-teorico'
@@ -35,11 +37,13 @@ export const handlers: RequestHandler[] = [
   ...handlersTurnos,
   ...handlersTurnosTeoricos,
   ...handlersCuestionariosTeoria,
+  ...handlersCuestionariosHistorial,
   ...handlersEstadoTeorico,
   ...handlersEvaluaciones,
   ...handlersReportesSubfase,
   ...handlersIndices,
   ...handlersDesaprobados,
+  ...handlersChequeos,
   ...handlersDocumentos,
   ...handlersCuestionarios,
   ...handlersConsultas,

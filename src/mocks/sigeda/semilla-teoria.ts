@@ -337,12 +337,15 @@ const SEMILLA_TURNOS: [
   idGrupo: number,
   preguntas: number[],
   idTurnoOrigen: number | null,
+  puntajes?: number[],
 ][] = [
   [1, 'Mensual Adoctrinamiento de Vuelo', 3, 'MENSUAL', -7, '08:00', '09:00', 3, [1, 2, 3, 4, 5], null],
   [2, 'Test Procedimientos de Emergencias', 6, 'TEST', -5, '10:00', '10:30', 2, [11, 12, 13, 14, 15], null],
   [3, 'Semanal Adoctrinamiento de Vuelo', 3, 'SEMANAL', 0, '00:00', '23:59', 1, [1, 2, 3, 4, 5], null],
   [4, 'Quincenal Límites de Operación', 4, 'QUINCENAL', 3, '09:00', '10:00', 3, [17, 18, 19, 20, 21], null],
   [5, 'Subsanación Adoctrinamiento de Vuelo', 3, 'SUBSANACION', 1, '08:00', '09:00', 3, [6, 7, 8, 9, 10], 1],
+  [6, 'Test Aerodinámica Aplicada a Helicópteros', 1, 'TEST', -12, '08:00', '09:00', 6, [22, 23, 24], null, [10, 7, 3]],
+  [7, 'Subsanación Aerodinámica Aplicada a Helicópteros', 1, 'SUBSANACION', -11, '08:00', '09:00', 6, [22, 23, 24], 6, [10, 7, 3]],
 ]
 
 export function crearTeoria(hoy: string): DatosTeoria {
@@ -382,7 +385,7 @@ export function crearTeoria(hoy: string): DatosTeoria {
       idTurnoTeorico: fila[0],
       idPregunta,
       orden: indice + 1,
-      puntajeMaximo: PUNTAJE_POR_PREGUNTA,
+      puntajeMaximo: fila[10]?.[indice] ?? PUNTAJE_POR_PREGUNTA,
     })),
   )
 
@@ -460,6 +463,34 @@ export function crearTeoria(hoy: string): DatosTeoria {
       orden: preguntasTurno.filter((fila) => fila.idTurnoTeorico === ID_TURNO_ABIERTO).map((fila) => fila.idPregunta),
       respuestas: { 1: idsDeAlternativa(1, correcta(1)), 3: idsDeAlternativa(3, 'Falso') },
       calificaciones: [],
+    },
+    {
+      id: 4,
+      idTurnoTeorico: 6,
+      codAlumno: '999999',
+      estado: 'ENTREGADO',
+      fechaEntrega: sumarDias(hoy, -12),
+      horaEntrega: '08:35',
+      nota: 10,
+      notaMinimaAplicada: minimoAplicado(16, 'TEST'),
+      aprobado: false,
+      orden: preguntasTurno.filter((fila) => fila.idTurnoTeorico === 6).map((fila) => fila.idPregunta),
+      respuestas: {},
+      calificaciones: calificar(6, [22]),
+    },
+    {
+      id: 5,
+      idTurnoTeorico: 7,
+      codAlumno: '999999',
+      estado: 'ENTREGADO',
+      fechaEntrega: sumarDias(hoy, -11),
+      horaEntrega: '08:28',
+      nota: 17,
+      notaMinimaAplicada: minimoAplicado(16, 'SUBSANACION'),
+      aprobado: true,
+      orden: preguntasTurno.filter((fila) => fila.idTurnoTeorico === 7).map((fila) => fila.idPregunta),
+      respuestas: {},
+      calificaciones: calificar(7, [22, 23]),
     },
   ]
 

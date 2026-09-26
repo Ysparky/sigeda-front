@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { TEXTO_PREGUNTA_EN_USO } from '@/lib/dominio/teoria'
@@ -22,24 +22,25 @@ describe('Eliminar pregunta', () => {
   })
 
   it('CA-BAN-11 eliminar pide confirmación y quita la fila', async () => {
-    const { usuario } = await abrirBanco('/banco?idMateria=1')
-    expect(screen.getByText('Página 1 de 1 · 3 registros')).toBeInTheDocument()
-    await usuario.click(screen.getByRole('button', { name: 'Eliminar la pregunta 22' }))
+    const { usuario } = await abrirBanco('/banco?idMateria=6')
+    expect(screen.getByText('Página 1 de 1 · 6 registros')).toBeInTheDocument()
+    await usuario.click(screen.getByRole('button', { name: 'Eliminar la pregunta 16' }))
     const aviso = within(await screen.findByRole('alertdialog'))
     expect(aviso.getByText('¿Eliminar la pregunta?')).toBeInTheDocument()
     await usuario.click(aviso.getByRole('button', { name: 'Eliminar' }))
     expect(await screen.findByText('Pregunta eliminado con éxito.')).toBeInTheDocument()
-    expect(await screen.findByText('Página 1 de 1 · 2 registros')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Eliminar la pregunta 22' })).not.toBeInTheDocument()
+    expect(await screen.findByText('Página 1 de 1 · 5 registros')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Eliminar la pregunta 16' })).not.toBeInTheDocument()
   })
 
   it('CA-BAN-11 una eliminación que el servidor rechaza muestra D3', async () => {
     server.use(http.delete(`${API}/api/preguntas/:id`, () => HttpResponse.text(D3_PREGUNTA_EN_USO, { status: 409 })))
-    const { usuario } = await abrirBanco('/banco?idMateria=1')
-    await usuario.click(screen.getByRole('button', { name: 'Eliminar la pregunta 22' }))
+    const { usuario } = await abrirBanco('/banco?idMateria=6')
+    const antes = screen.getAllByText(D3_PREGUNTA_EN_USO).length
+    await usuario.click(screen.getByRole('button', { name: 'Eliminar la pregunta 16' }))
     await usuario.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Eliminar' }))
-    expect(await screen.findByText(D3_PREGUNTA_EN_USO)).toBeInTheDocument()
-    expect(screen.getByText('Página 1 de 1 · 3 registros')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getAllByText(D3_PREGUNTA_EN_USO)).toHaveLength(antes + 1))
+    expect(screen.getByText('Página 1 de 1 · 6 registros')).toBeInTheDocument()
   })
 
   it('CA-BAN-11 eliminar una pregunta actualiza la lista de la materia filtrada', async () => {

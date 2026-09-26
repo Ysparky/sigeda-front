@@ -94,7 +94,7 @@ describe('Registrar y modificar turno teórico', () => {
     await agregarPregunta(usuario, 2, '18', '10')
     await usuario.click(screen.getByRole('button', { name: 'Guardar turno teórico' }))
     expect(await screen.findByText('Turno teórico guardado con éxito.')).toBeInTheDocument()
-    expect(router.state.location.pathname).toBe('/teoria/turnos/6')
+    expect(router.state.location.pathname).toBe('/teoria/turnos/8')
   })
 
   it('CA-TUT-12 un error de un campo que el formulario no dibuja se muestra en el aviso del formulario', async () => {
@@ -171,7 +171,7 @@ describe('Registrar y modificar turno teórico', () => {
     await agregarPregunta(usuario, 2, '18', '10')
     await usuario.click(screen.getByRole('button', { name: 'Guardar turno teórico' }))
     expect(await screen.findByText('Turno teórico guardado con éxito.')).toBeInTheDocument()
-    expect(router.state.location.pathname).toBe('/teoria/turnos/6')
+    expect(router.state.location.pathname).toBe('/teoria/turnos/8')
   })
 
   it('CA-TUT-08 el turno de origen solo aparece en subsanación o rezagado', async () => {
@@ -218,7 +218,7 @@ describe('Registrar y modificar turno teórico', () => {
     await agregarPregunta(usuario, 1, '1', '20')
     await usuario.click(screen.getByRole('button', { name: 'Guardar turno teórico' }))
     expect(await screen.findByText('Turno teórico guardado con éxito.')).toBeInTheDocument()
-    expect(router.state.location.pathname).toBe('/teoria/turnos/6')
+    expect(router.state.location.pathname).toBe('/teoria/turnos/8')
   })
 
   it('CA-TUT-13 un fallo del catálogo de turnos de origen avisa bajo su selector sin bloquear el formulario', async () => {

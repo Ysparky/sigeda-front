@@ -11,7 +11,9 @@ import { iniciarComo } from '@/test/render'
 import {
   estadoTeoricoEnLote,
   fuenteDeSeguimiento,
+  listarChequeos,
   listarDesaprobados,
+  listarHistorialTeorico,
   listarSeguimiento,
   obtenerAlumno,
   obtenerReporteDeSubfase,
@@ -243,5 +245,23 @@ describe('lo que el legajo lee sin pedir nada nuevo', () => {
     const reporte = await obtenerReporteDeSubfase(3, '777777')
     expect(reporte?.notas[0]?.promedio).toBe(12)
     expect(reporte?.maniobras).toHaveLength(2)
+  })
+})
+
+describe('chequeos e historial teórico desde la capa de API', () => {
+  it('contrato §6.2 los chequeos llegan como una línea de tiempo por fecha', async () => {
+    await iniciarComo('instructor.perez')
+    const chequeos = await listarChequeos('999999')
+    expect(chequeos.map((chequeo) => chequeo.codigo)).toEqual(['999999-2'])
+    expect(chequeos[0]?.contadores.evaluaciones).toBe(7)
+    await expect(listarChequeos('777777')).resolves.toEqual([])
+  })
+
+  it('contrato §5.2 el historial teórico conserva los dos punteros de la subsanación', async () => {
+    await iniciarComo('instructor.perez')
+    const pagina = await listarHistorialTeorico('999999', { page: 0, size: 10, direction: 'DESC' })
+    expect(pagina.items.map((fila) => fila.nota)).toEqual([17, 10])
+    expect(pagina.items[1]?.subsanadoPor?.nota).toBe(17)
+    expect(pagina.items[0]?.idTurnoOrigen).toBe(6)
   })
 })

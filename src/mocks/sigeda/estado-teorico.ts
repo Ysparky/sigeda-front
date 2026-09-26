@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw'
+import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
 import { API, autorizar, erroresDeCampo, textoNoEncontrado, textoProhibido } from './comun'
 import {
   alumnosHabilitados,
@@ -17,6 +18,61 @@ import { estadoDelTurno } from './turnos-teoricos'
 
 export const D15_AL_MENOS_UN_CODIGO = 'Debe enviar al menos un código de alumno.'
 export const D16_MAXIMO_CIEN = 'No se pueden consultar más de 100 alumnos a la vez.'
+
+const GRUPO_PERIODICOS_GENERALES = [
+  'Ingeniería del Helicóptero',
+  'Adoctrinamiento de Vuelo',
+  'Aerodinámica Aplicada a Helicópteros',
+  'Meteorología',
+  'Fraseología Aeronáutica en Inglés',
+]
+
+type CausalMock = {
+  codigo: string
+  idMateria: number | null
+  materia: string | null
+  grupo: string[] | null
+  detalle: string
+  fecha: string
+}
+
+function causalesDe(cod: string, hoy: string): CausalMock[] {
+  if (cod !== '111111') return []
+  return [
+    {
+      codigo: 'PROMEDIO_ASIGNATURA',
+      idMateria: 3,
+      materia: buscarMateria(3)?.nombre ?? '',
+      grupo: null,
+      detalle: 'Nota de asignatura 12.50 en Adoctrinamiento de Vuelo, por debajo de 13.',
+      fecha: sumarDias(hoy, -7),
+    },
+    {
+      codigo: 'PROMEDIO_ASIGNATURA',
+      idMateria: 2,
+      materia: buscarMateria(2)?.nombre ?? '',
+      grupo: null,
+      detalle: 'Nota de asignatura 11.80 en Ingeniería del Helicóptero, por debajo de 13.',
+      fecha: sumarDias(hoy, -7),
+    },
+    {
+      codigo: 'PERIODICOS_GENERALES',
+      idMateria: 2,
+      materia: buscarMateria(2)?.nombre ?? '',
+      grupo: GRUPO_PERIODICOS_GENERALES,
+      detalle: '3 desaprobados consecutivos en periódicos de Ingeniería del Helicóptero.',
+      fecha: sumarDias(hoy, -5),
+    },
+    {
+      codigo: 'TRES_ASIGNATURAS',
+      idMateria: null,
+      materia: null,
+      grupo: null,
+      detalle: '3 asignaturas desaprobadas.',
+      fecha: sumarDias(hoy, -5),
+    },
+  ]
+}
 
 export function motivoDeBloqueo(codAlumno: string): string | null {
   const desaprobado = desaprobadosSinSubsanar(codAlumno)[0]
@@ -89,6 +145,6 @@ export const handlersEstadoTeorico = [
     if (!persona) return textoNoEncontrado(D27_PERSONA_NO_EXISTE)
     const esAlumno = rolPorId(usuarioDePersona(permitido.codPersona)?.idRol ?? null)?.nombre === 'Alumno'
     if (esAlumno && permitido.codPersona !== cod) return textoProhibido(D15_SOLO_LO_PROPIO)
-    return HttpResponse.json(resumenDeEstadoTeorico(cod, persona))
+    return HttpResponse.json({ ...resumenDeEstadoTeorico(cod, persona), causales: causalesDe(cod, hoyIso()) })
   }),
 ]

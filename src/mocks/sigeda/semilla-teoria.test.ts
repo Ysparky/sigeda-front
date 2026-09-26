@@ -50,9 +50,9 @@ describe('contrato §9.1 preguntas de la semilla', () => {
     }
   })
 
-  it('CA-BAN-11 solo las preguntas 16, 22, 23 y 24 se pueden eliminar', () => {
+  it('CA-BAN-11 solo la pregunta 16 sigue sin usarse tras sembrar los turnos 6 y 7', () => {
     const borrables = datos().preguntas.filter((pregunta) => !preguntaEnUso(pregunta.id)).map((pregunta) => pregunta.id)
-    expect(borrables).toEqual([16, 22, 23, 24])
+    expect(borrables).toEqual([16])
   })
 
   it('M4-18 el 409 de materias queda derivado de las preguntas y los turnos', () => {
@@ -62,17 +62,20 @@ describe('contrato §9.1 preguntas de la semilla', () => {
 })
 
 describe('contrato §9.2 turnos teóricos de la semilla', () => {
-  it('siembra cinco turnos del instructor 444444 con 20 puntos cada uno', () => {
-    expect(datos().turnosTeoricos.map((turno) => turno.id)).toEqual([1, 2, 3, 4, 5])
-    expect(datos().secuencias.turnoTeorico).toBe(6)
+  it('siembra siete turnos del instructor 444444 con 20 puntos cada uno', () => {
+    expect(datos().turnosTeoricos.map((turno) => turno.id)).toEqual([1, 2, 3, 4, 5, 6, 7])
+    expect(datos().secuencias.turnoTeorico).toBe(8)
     for (const turno of datos().turnosTeoricos) {
       expect(turno.codInstructor).toBe('444444')
       const preguntas = preguntasDelTurno(turno.id)
+      expect(preguntas.reduce((total, fila) => total + fila.puntajeMaximo, 0)).toBe(20)
+    }
+    for (const turno of datos().turnosTeoricos.filter((turno) => turno.id <= 5)) {
+      const preguntas = preguntasDelTurno(turno.id)
       expect(preguntas).toHaveLength(5)
       expect(preguntas.map((fila) => fila.orden)).toEqual([1, 2, 3, 4, 5])
-      expect(preguntas.reduce((total, fila) => total + fila.puntajeMaximo, 0)).toBe(20)
-      expect(PUNTAJE_POR_PREGUNTA).toBe(4)
     }
+    expect(PUNTAJE_POR_PREGUNTA).toBe(4)
   })
 
   it('M4-19 el turno 3 abre todo el día con 00:00–23:59 y los demás quedan en su estado', () => {
@@ -80,7 +83,15 @@ describe('contrato §9.2 turnos teóricos de la semilla', () => {
     expect([turno3?.horaInicio, turno3?.horaFin]).toEqual(['00:00', '23:59'])
     expect(estadoDeVentana(turno3?.fechaExamen ?? '', '00:00', '23:59')).toBe('EN_CURSO')
     const estados = datos().turnosTeoricos.map((turno) => estadoDeVentana(turno.fechaExamen, turno.horaInicio, turno.horaFin))
-    expect(estados).toEqual(['FINALIZADO', 'FINALIZADO', 'EN_CURSO', 'PROGRAMADO', 'PROGRAMADO'])
+    expect(estados).toEqual([
+      'FINALIZADO',
+      'FINALIZADO',
+      'EN_CURSO',
+      'PROGRAMADO',
+      'PROGRAMADO',
+      'FINALIZADO',
+      'FINALIZADO',
+    ])
   })
 
   it('el turno 5 es una subsanación del turno 1 sobre la misma materia y grupo', () => {
@@ -93,13 +104,15 @@ describe('contrato §9.2 turnos teóricos de la semilla', () => {
 })
 
 describe('contrato §9.3 exámenes de la semilla', () => {
-  it('siembra tres exámenes con las notas exactas 20.00, 12.00 y ninguna', () => {
+  it('siembra cinco exámenes con las notas exactas 20.00, 12.00, ninguna, 10.00 y 17.00', () => {
     expect(datos().cuestionarios.map((cuestionario) => [cuestionario.id, cuestionario.codAlumno, cuestionario.nota])).toEqual([
       [1, '555555', 20],
       [2, '666666', 12],
       [3, '111111', null],
+      [4, '999999', 10],
+      [5, '999999', 17],
     ])
-    expect(datos().secuencias.cuestionario).toBe(4)
+    expect(datos().secuencias.cuestionario).toBe(6)
   })
 
   it('CA-RES-13 el mínimo aplicado es el de la materia salvo en un Pre-Solo', () => {

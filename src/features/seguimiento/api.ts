@@ -27,6 +27,62 @@ export type EstadoTeoricoResumen = {
   motivo: string | null
 }
 
+export type ChequeoFinal = {
+  codigo: string
+  fecha: string
+  tipo: string
+  resultado: string
+  contadores: { chequeo: number; evaluaciones: number; malos: number; regulares: number }
+  codEvaluacion: string
+  idSubfase: number
+  subfase: string
+}
+
+export type Causal = {
+  codigo: string
+  idMateria: number | null
+  materia: string | null
+  grupo: string[] | null
+  detalle: string
+  fecha: string
+}
+
+export type EstadoTeoricoDelAlumno = EstadoTeoricoResumen & {
+  desaprobados: {
+    idCuestionario: number
+    idTurnoTeorico: number
+    turnoTeorico: string
+    idMateria: number
+    materia: string
+    tipoExamen: string
+    fechaExamen: string
+    nota: number | null
+    notaMinimaAplicada: number
+  }[]
+  causales: Causal[]
+}
+
+export type ExamenDelHistorial = {
+  id: number
+  idTurnoTeorico: number
+  turnoTeorico: string
+  idMateria: number
+  materia: string
+  tipoExamen: string
+  fechaExamen: string
+  estado: string
+  fechaEntrega: string | null
+  horaEntrega: string | null
+  nota: number | null
+  notaMinimaAplicada: number
+  aprobado: boolean | null
+  idTurnoOrigen: number | null
+  turnoOrigen: string | null
+  subsanadoPor: { idTurnoTeorico: number; turnoTeorico: string; fechaExamen: string; estado: string; nota: number | null } | null
+}
+
+export type FiltrosHistorialTeorico = ParametrosPagina & { idMateria?: number; estado?: string }
+
 type AlumnoApi = {
   codigo: string
   nombre: string
@@ -136,6 +192,29 @@ export function paginarAlumnos(
 export async function estadoTeoricoEnLote(codigos: readonly string[]): Promise<EstadoTeoricoResumen[]> {
   if (codigos.length === 0) return []
   return sigeda.lista<EstadoTeoricoResumen>('/api/estado-teorico', { codAlumnos: [...codigos].join(',') })
+}
+
+export function listarChequeos(codPersona: string): Promise<ChequeoFinal[]> {
+  return sigeda.lista<ChequeoFinal>(`/api/personas/${encodeURIComponent(codPersona)}/chequeos`)
+}
+
+export function obtenerEstadoTeorico(codPersona: string): Promise<EstadoTeoricoDelAlumno> {
+  return sigeda.get<EstadoTeoricoDelAlumno>(`/api/personas/${encodeURIComponent(codPersona)}/estado-teorico`)
+}
+
+export function listarHistorialTeorico(
+  codAlumno: string,
+  filtros: FiltrosHistorialTeorico,
+): Promise<Pagina<ExamenDelHistorial>> {
+  return sigeda.pagina<ExamenDelHistorial>('/api/cuestionarios', {
+    codAlumno,
+    idMateria: filtros.idMateria,
+    estado: filtros.estado,
+    page: filtros.page,
+    size: filtros.size,
+    property: filtros.property ?? 'fechaExamen',
+    direction: filtros.direction,
+  })
 }
 
 export const MENSAJE_CODIGO_INVALIDO = 'El código de la persona debe tener seis caracteres.'
@@ -254,6 +333,10 @@ export const clavesSeguimiento = {
     [...clavesSeguimiento.todo, 'alumnos', fuente, programa, codPersona] as const,
   estadoTeorico: (codigos: readonly string[]) =>
     [...clavesSeguimiento.todo, 'estado-teorico', [...codigos].sort()] as const,
+  estadoTeoricoDe: (codPersona: string) => [...clavesSeguimiento.todo, 'estado-teorico-de', codPersona] as const,
+  chequeos: (codPersona: string) => [...clavesSeguimiento.todo, 'chequeos', codPersona] as const,
+  historialTeorico: (codAlumno: string, filtros: FiltrosHistorialTeorico) =>
+    [...clavesSeguimiento.todo, 'historial-teorico', codAlumno, filtros] as const,
   desaprobados: (codPersona: string) => [...clavesSeguimiento.todo, 'desaprobados', codPersona] as const,
   alumno: (codPersona: string) => [...clavesSeguimiento.todo, 'alumno', codPersona] as const,
   legajo: (codPersona: string) => [...clavesSeguimiento.todo, 'legajo', codPersona] as const,
@@ -275,6 +358,24 @@ export const consultasSeguimiento = {
       queryKey: clavesSeguimiento.estadoTeorico(codigos),
       queryFn: () => estadoTeoricoEnLote(codigos),
       retry: false,
+    }),
+  estadoTeoricoDe: (codPersona: string) =>
+    queryOptions({
+      queryKey: clavesSeguimiento.estadoTeoricoDe(codPersona),
+      queryFn: () => obtenerEstadoTeorico(codPersona),
+      enabled: codPersona !== '',
+    }),
+  chequeos: (codPersona: string) =>
+    queryOptions({
+      queryKey: clavesSeguimiento.chequeos(codPersona),
+      queryFn: () => listarChequeos(codPersona),
+      enabled: codPersona !== '',
+    }),
+  historialTeorico: (codAlumno: string, filtros: FiltrosHistorialTeorico) =>
+    queryOptions({
+      queryKey: clavesSeguimiento.historialTeorico(codAlumno, filtros),
+      queryFn: () => listarHistorialTeorico(codAlumno, filtros),
+      enabled: codAlumno !== '',
     }),
   desaprobados: (codPersona: string) =>
     queryOptions({

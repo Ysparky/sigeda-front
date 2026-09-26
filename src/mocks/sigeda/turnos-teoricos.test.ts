@@ -83,15 +83,17 @@ describe('contrato §3.1 lista de turnos teóricos', () => {
   it('CA-TUT-01 devuelve la fila plana con el estado derivado y cuántos rindieron', async () => {
     await comoInstructor()
     const pagina = await listarTurnosTeoricos(PARAMETROS)
-    expect(pagina.total).toBe(5)
+    expect(pagina.total).toBe(7)
     expect(pagina.items.map((fila) => [fila.id, fila.estado, fila.rindieron, fila.cantAlumnos])).toEqual([
+      [6, 'FINALIZADO', 1, 1],
+      [7, 'FINALIZADO', 1, 1],
       [1, 'FINALIZADO', 2, 2],
       [2, 'FINALIZADO', 0, 1],
       [3, 'EN_CURSO', 0, 1],
       [5, 'PROGRAMADO', 0, 1],
       [4, 'PROGRAMADO', 0, 2],
     ])
-    expect(pagina.items[0]).toMatchObject({
+    expect(pagina.items.find((fila) => fila.id === 1)).toMatchObject({
       nombre: 'Mensual Adoctrinamiento de Vuelo',
       materia: 'Adoctrinamiento de Vuelo',
       tipoExamen: 'MENSUAL',
@@ -106,9 +108,9 @@ describe('contrato §3.1 lista de turnos teóricos', () => {
     expect((await listarTurnosTeoricos({ ...PARAMETROS, idGrupo: 3 })).total).toBe(3)
     expect((await listarTurnosTeoricos({ ...PARAMETROS, idMateria: 6 })).total).toBe(1)
     expect((await listarTurnosTeoricos({ ...PARAMETROS, estado: 'PROGRAMADO' })).total).toBe(2)
-    expect((await listarTurnosTeoricos({ ...PARAMETROS, tipoExamen: 'SUBSANACION' })).total).toBe(1)
+    expect((await listarTurnosTeoricos({ ...PARAMETROS, tipoExamen: 'SUBSANACION' })).total).toBe(2)
     expect((await listarTurnosTeoricos({ ...PARAMETROS, fechaPre: hoyIso() })).total).toBe(3)
-    expect((await listarTurnosTeoricos({ ...PARAMETROS, fechaPost: sumarDias(hoyIso(), -6) })).total).toBe(1)
+    expect((await listarTurnosTeoricos({ ...PARAMETROS, fechaPost: sumarDias(hoyIso(), -6) })).total).toBe(3)
     expect((await listarTurnosTeoricos({ ...PARAMETROS, idGrupo: 5 })).items).toEqual([])
   })
 
@@ -190,11 +192,11 @@ describe('contrato §3.2 detalle del turno', () => {
 describe('contrato §3.3 registrar turno teórico', () => {
   it('CA-TUT-06 CA-TUT-07 guarda el turno con el orden de las preguntas y devuelve D22', async () => {
     await comoInstructor()
-    expect(await crearTurnoTeorico(nuevoTurno())).toEqual({ mensaje: 'Turno teórico guardado con éxito.', id: 6 })
-    const turno = await obtenerTurnoTeorico(6)
+    expect(await crearTurnoTeorico(nuevoTurno())).toEqual({ mensaje: 'Turno teórico guardado con éxito.', id: 8 })
+    const turno = await obtenerTurnoTeorico(8)
     expect(turno.preguntas.map((pregunta) => pregunta.idPregunta)).toEqual([17, 18, 19, 20, 21])
     expect(turno.estado).toBe('PROGRAMADO')
-    expect(datos().secuencias.turnoTeorico).toBe(7)
+    expect(datos().secuencias.turnoTeorico).toBe(9)
   })
 
   it('CA-TUT-03 valida nombre, fecha futura y ventana mínima de 10 minutos', async () => {
@@ -261,8 +263,8 @@ describe('contrato §3.3 registrar turno teórico', () => {
   it('CA-TUT-04 con Manage Groups basta que el grupo pertenezca al programa', async () => {
     await iniciarComo('admin.sistema')
     const cuerpo = { ...nuevoTurno(), codInstructor: '000001', idGrupo: 4 }
-    expect(await crearTurnoTeorico(cuerpo)).toEqual({ mensaje: 'Turno teórico guardado con éxito.', id: 6 })
-    expect((await obtenerTurnoTeorico(6)).grupo).toEqual({ id: 4, nombre: 'Grupo 4', programa: 'PDI' })
+    expect(await crearTurnoTeorico(cuerpo)).toEqual({ mensaje: 'Turno teórico guardado con éxito.', id: 8 })
+    expect((await obtenerTurnoTeorico(8)).grupo).toEqual({ id: 4, nombre: 'Grupo 4', programa: 'PDI' })
     const sinAlumnos = await errorDe(crearTurnoTeorico({ ...cuerpo, idGrupo: 5 }))
     expect(sinAlumnos.erroresDeCampo.idGrupo).toBe('El grupo no tiene alumnos.')
   })
