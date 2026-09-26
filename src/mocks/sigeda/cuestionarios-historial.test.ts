@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { sigeda } from '@/lib/api/sigeda'
 import { iniciarComo } from '@/test/render'
 import { D14_SIN_EXAMENES } from './cuestionarios-historial'
+import { datos } from './datos'
 
 type Fila = {
   id: number
@@ -35,6 +36,18 @@ describe('GET /api/cuestionarios', () => {
     expect(origen).toMatchObject({ notaMinimaAplicada: 16, materia: 'Aerodinámica Aplicada a Helicópteros' })
     expect(origen?.subsanadoPor).toMatchObject({ idTurnoTeorico: 7, nota: 17, estado: 'FINALIZADO' })
     expect(pagina.content.find((fila) => fila.idTurnoTeorico === 7)?.idTurnoOrigen).toBe(6)
+  })
+
+  it('contrato §5.2 una subsanación desaprobada no es su propia subsanación', async () => {
+    await iniciarComo('instructor.perez')
+    const subsanacion = datos().cuestionarios.find((cuestionario) => cuestionario.idTurnoTeorico === 7)
+    expect(subsanacion).toBeDefined()
+    subsanacion!.nota = 9
+    subsanacion!.aprobado = false
+    const pagina = await historial('999999')
+    const fila = pagina.content.find((candidata) => candidata.idTurnoTeorico === 7)
+    expect(fila).toMatchObject({ tipoExamen: 'SUBSANACION', aprobado: false, idTurnoOrigen: 6 })
+    expect(fila?.subsanadoPor).toBeNull()
   })
 
   it('contrato §5.2 sin direction el historial llega del último hacia atrás y un paginado inválido es 400', async () => {

@@ -674,6 +674,50 @@ describe('Legajo: historial teórico', () => {
     expect(within(filas[1]!).getByText(TEXTO_NOTA_QUE_PREVALECE)).toBeInTheDocument()
   })
 
+  it('CA-LEG-11 una subsanación desaprobada lleva exactamente un marcador', async () => {
+    server.use(
+      http.get(`${API}/api/cuestionarios`, () =>
+        HttpResponse.json({
+          content: [
+            {
+              id: 5,
+              idTurnoTeorico: 7,
+              turnoTeorico: 'Subsanación Aerodinámica Aplicada a Helicópteros',
+              idMateria: 1,
+              materia: 'Aerodinámica Aplicada a Helicópteros',
+              tipoExamen: 'SUBSANACION',
+              fechaExamen: '2026-09-15',
+              estado: 'ENTREGADO',
+              fechaEntrega: '2026-09-15',
+              horaEntrega: '09:10',
+              nota: 9,
+              notaMinimaAplicada: 16,
+              aprobado: false,
+              idTurnoOrigen: 6,
+              turnoOrigen: 'Test Aerodinámica Aplicada a Helicópteros',
+              subsanadoPor: {
+                idTurnoTeorico: 7,
+                turnoTeorico: 'Subsanación Aerodinámica Aplicada a Helicópteros',
+                fechaExamen: '2026-09-15',
+                estado: 'FINALIZADO',
+                nota: 9,
+              },
+            },
+          ],
+          totalElements: 1,
+          totalPages: 1,
+          size: 10,
+          number: 0,
+        }),
+      ),
+    )
+    await abrirLegajo('999999', '?tab=teorico')
+    const historial = panel('Historial de exámenes')
+    const fila = within((await historial.findByText('9.00 / mínimo 16')).closest('tr') as HTMLElement)
+    expect(fila.getByText(TEXTO_NO_REEMPLAZA_LA_NOTA)).toBeInTheDocument()
+    expect(fila.queryByText(TEXTO_NOTA_QUE_PREVALECE)).not.toBeInTheDocument()
+  })
+
   it('CA-LEG-11 la fila de la subsanación muestra su turno de origen', async () => {
     await abrirLegajo('999999', '?tab=teorico')
     const historial = panel('Historial de exámenes')

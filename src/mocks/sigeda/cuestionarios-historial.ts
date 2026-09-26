@@ -2,18 +2,19 @@ import { http, HttpResponse } from 'msw'
 import { API, autorizar, numero, textoNoEncontrado, textoProhibido } from './comun'
 import { D15_SOLO_LO_PROPIO } from './cuestionarios-teoria'
 import { buscarMateria, buscarTurnoTeorico, datos, rolPorId, usuarioDePersona } from './datos'
-import type { CuestionarioMock } from './semilla-teoria'
+import type { CuestionarioMock, TurnoTeoricoMock } from './semilla-teoria'
 import { estadoDelTurno } from './turnos-teoricos'
 
 export const D14_SIN_EXAMENES = 'No existen exámenes disponibles.'
 
-function subsanadoPor(idMateria: number, fechaExamen: string, codAlumno: string) {
+function subsanadoPor(propio: TurnoTeoricoMock, codAlumno: string) {
   const turno = datos()
     .turnosTeoricos.filter(
       (candidato) =>
         candidato.tipoExamen === 'SUBSANACION' &&
-        candidato.idMateria === idMateria &&
-        candidato.fechaExamen >= fechaExamen,
+        candidato.id !== propio.id &&
+        candidato.idMateria === propio.idMateria &&
+        candidato.fechaExamen >= propio.fechaExamen,
     )
     .toSorted((izquierda, derecha) => izquierda.fechaExamen.localeCompare(derecha.fechaExamen))
     .at(0)
@@ -50,8 +51,7 @@ function filaDe(cuestionario: CuestionarioMock) {
     aprobado: cuestionario.aprobado,
     idTurnoOrigen: origen?.id ?? null,
     turnoOrigen: origen?.nombre ?? null,
-    subsanadoPor:
-      cuestionario.aprobado === false ? subsanadoPor(turno.idMateria, turno.fechaExamen, cuestionario.codAlumno) : null,
+    subsanadoPor: cuestionario.aprobado === false ? subsanadoPor(turno, cuestionario.codAlumno) : null,
   }
 }
 
