@@ -13,7 +13,7 @@ describe('capa de API de reportes', () => {
   })
 
   it('contrato §4.1 el orden de mérito se pide por programa y grupo, paginado', async () => {
-    await iniciarComo('instructor.perez')
+    await iniciarComo('comandante.aguirre')
     const pagina = await listarOrdenDeMerito({ programa: 'PDI', page: 0, size: 2, direction: 'ASC' })
     expect(pagina.items.map((fila) => fila.codigo)).toEqual(['222222', '555555'])
     expect(pagina.total).toBe(6)

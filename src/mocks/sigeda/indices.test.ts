@@ -90,8 +90,8 @@ describe('GET /api/personas/{cod}/indices', () => {
 })
 
 describe('GET /api/reportes/orden-merito', () => {
-  it('contrato §9.6 da cinco puestos y un alumno sin puesto al final', async () => {
-    await iniciarComo('instructor.perez')
+  it('contrato §9.6 con View All Groups da cinco puestos y un alumno sin puesto al final', async () => {
+    await iniciarComo('comandante.aguirre')
     const pagina = await sigeda.get<Merito>('/api/reportes/orden-merito?programa=PDI&page=0&size=10')
     expect(pagina.content.map((fila) => [fila.puesto, fila.codigo])).toEqual([
       [1, '222222'],
@@ -110,13 +110,27 @@ describe('GET /api/reportes/orden-merito', () => {
   })
 
   it('contrato §9.6 el empate de NFPI se rompe por NIA', async () => {
-    await iniciarComo('instructor.perez')
+    await iniciarComo('comandante.aguirre')
     const pagina = await sigeda.get<Merito>('/api/reportes/orden-merito?programa=PDI&page=0&size=10')
     const empatados = pagina.content.filter((fila) => fila.nfpi === 15.28)
     expect(empatados.map((fila) => [fila.codigo, fila.nia, fila.puesto])).toEqual([
       ['999999', 15.4, 3],
       ['111111', 15.15, 4],
     ])
+  })
+
+  it('contrato §4.1 sin View All Groups el alcance se limita a los grupos del instructor', async () => {
+    await iniciarComo('instructor.perez')
+    const pagina = await sigeda.get<Merito>('/api/reportes/orden-merito?programa=PDI&page=0&size=10')
+    expect(pagina.content.map((fila) => [fila.puesto, fila.codigo])).toEqual([
+      [1, '222222'],
+      [2, '555555'],
+      [3, '111111'],
+      [null, '666666'],
+    ])
+    expect(pagina.totalElements).toBe(4)
+    expect(pagina.content.map((fila) => fila.codigo)).not.toContain('999999')
+    expect(pagina.content.map((fila) => fila.codigo)).not.toContain('777777')
   })
 
   it('contrato §9.6 con idGrupo los puestos empiezan en 1 dentro del alcance pedido', async () => {
@@ -128,8 +142,24 @@ describe('GET /api/reportes/orden-merito', () => {
     ])
   })
 
-  it('contrato §9.6 el puesto no se reinicia por página', async () => {
+  it('contrato §4.1 un idGrupo fuera del alcance del instructor responde 403 D17', async () => {
     await iniciarComo('instructor.perez')
+    await expect(sigeda.get('/api/reportes/orden-merito?programa=PDI&idGrupo=4')).rejects.toMatchObject({
+      status: 403,
+      message: 'No tiene permiso para ver este grupo.',
+    })
+  })
+
+  it('contrato §4.1 un idGrupo inexistente responde 404 D18', async () => {
+    await iniciarComo('instructor.perez')
+    await expect(sigeda.get('/api/reportes/orden-merito?programa=PDI&idGrupo=999')).rejects.toMatchObject({
+      status: 404,
+      message: 'Grupo especificada no existe.',
+    })
+  })
+
+  it('contrato §9.6 el puesto no se reinicia por página', async () => {
+    await iniciarComo('comandante.aguirre')
     const segunda = await sigeda.get<Merito>('/api/reportes/orden-merito?programa=PDI&page=1&size=2')
     expect(segunda.content.map((fila) => fila.puesto)).toEqual([3, 4])
     expect(segunda.totalPages).toBe(3)
@@ -145,6 +175,22 @@ describe('GET /api/reportes/orden-merito', () => {
     await expect(sigeda.get('/api/reportes/orden-merito?programa=PDI')).rejects.toMatchObject({
       status: 403,
       message: MENSAJE_SIN_PERMISO,
+    })
+  })
+
+  it('contrato §4.1 un paginado con argumentos inválidos responde 400', async () => {
+    await iniciarComo('instructor.perez')
+    await expect(sigeda.get('/api/reportes/orden-merito?programa=PDI&page=-1')).rejects.toMatchObject({
+      status: 400,
+      message: 'Argumento incorrecto',
+    })
+  })
+
+  it('contrato §4.1 una propiedad de orden inválida responde 400', async () => {
+    await iniciarComo('instructor.perez')
+    await expect(sigeda.get('/api/reportes/orden-merito?programa=PDI&property=grupo')).rejects.toMatchObject({
+      status: 400,
+      message: 'Argumento incorrecto',
     })
   })
 })

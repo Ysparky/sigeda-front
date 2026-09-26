@@ -1,9 +1,12 @@
 import { http, HttpResponse } from 'msw'
-import { API, autorizar, paginarOrdenado, textoNoEncontrado } from './comun'
+import { permisosDeRol } from '@/lib/auth/permisos'
+import { API, autorizar, paginarOrdenado, textoNoEncontrado, textoProhibido } from './comun'
 import { D2_PERSONA_NO_EXISTE } from './alumnos'
-import { buscarPersona, datos, nombreCompleto, type PersonaMock } from './datos'
+import { buscarPersona, datos, nombreCompleto, rolPorId, type PersonaMock } from './datos'
 
 export const D12_SIN_ALUMNOS_CON_INDICES = 'No existen alumnos con índices disponibles.'
+export const D17_FUERA_DE_ALCANCE = 'No tiene permiso para ver este grupo.'
+export const D18_GRUPO_NO_EXISTE = 'Grupo especificada no existe.'
 
 const MOTIVO_SIN_FASES = 'Sin nota en Operaciones HeliTransportadas ni en Operaciones AeroTácticas.'
 const MOTIVO_SIN_DATOS = 'No tiene evaluaciones registradas.'
@@ -139,12 +142,30 @@ type FilaMerito = {
   motivoSinNfpi: string | null
 }
 
-function filasDeMerito(programa: string, idGrupo: number | null): FilaMerito[] {
+function gruposDelInstructor(codInstructor: string): number[] {
+  const codigos = datos()
+    .turnos.filter((turno) => turno.codInstructor === codInstructor)
+    .flatMap((turno) => turno.alumnos.map((alumno) => alumno.codAlumno))
+  const ids = codigos.flatMap((codigo) => {
+    const idGrupo = buscarPersona(codigo)?.idGrupo
+    return idGrupo === null || idGrupo === undefined ? [] : [idGrupo]
+  })
+  return [...new Set(ids)]
+}
+
+function tieneVistaTotal(idRol: number | null): boolean {
+  return permisosDeRol(rolPorId(idRol)?.nombre ?? '').has('View All Groups')
+}
+
+function filasDeMerito(programa: string, idGrupo: number | null, alcance: ReadonlySet<number> | null): FilaMerito[] {
   const alumnos = datos()
     .personas.filter((persona) => persona.tipo === 'Alumno' && persona.idGrupo !== null)
     .filter((persona) => {
       const grupo = datos().grupos.find((candidato) => candidato.id === persona.idGrupo)
-      return grupo !== undefined && grupo.programa === programa && (idGrupo === null || grupo.id === idGrupo)
+      if (grupo === undefined || grupo.programa !== programa) return false
+      if (idGrupo !== null && grupo.id !== idGrupo) return false
+      if (alcance !== null && !alcance.has(grupo.id)) return false
+      return true
     })
   const filas = alumnos.map((persona) => {
     const fijacion = FIJACIONES[persona.codigo] ?? SIN_DATOS
@@ -205,11 +226,22 @@ export const handlersIndices = [
     const url = new URL(request.url)
     const programa = (url.searchParams.get('programa') ?? 'PDI').toUpperCase() === 'PDE' ? 'PDE' : 'PDI'
     const idGrupoCrudo = url.searchParams.get('idGrupo')
+    const idGrupoPedido = idGrupoCrudo === null || idGrupoCrudo === '' ? null : Number(idGrupoCrudo)
+    const alcance = tieneVistaTotal(permitido.idRol) ? null : new Set(gruposDelInstructor(permitido.codPersona))
+    if (idGrupoPedido !== null) {
+      const grupoExiste = datos().grupos.some((grupo) => grupo.id === idGrupoPedido)
+      if (!grupoExiste) return textoNoEncontrado(D18_GRUPO_NO_EXISTE)
+      if (alcance !== null && !alcance.has(idGrupoPedido)) return textoProhibido(D17_FUERA_DE_ALCANCE)
+    }
     const filas = ordenar(
-      filasDeMerito(programa, idGrupoCrudo === null || idGrupoCrudo === '' ? null : Number(idGrupoCrudo)),
+      filasDeMerito(programa, idGrupoPedido, alcance),
       url.searchParams.get('property') ?? 'puesto',
       (url.searchParams.get('direction') ?? 'ASC').toUpperCase(),
     )
-    return paginarOrdenado(filas, url, { nombreLista: 'alumnos con índices' })
+    return paginarOrdenado(filas, url, {
+      nombreLista: 'alumnos con índices',
+      ordenables: [...ORDENABLES],
+      propiedadPorDefecto: 'puesto',
+    })
   }),
 ]

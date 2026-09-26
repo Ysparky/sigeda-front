@@ -112,9 +112,27 @@ export function paginar<T extends object>(
   })
 }
 
-export function paginarOrdenado<T extends object>(ordenados: readonly T[], url: URL, opciones: { nombreLista: string }) {
+export function paginarOrdenado<T extends object>(
+  ordenados: readonly T[],
+  url: URL,
+  opciones: { nombreLista: string; ordenables: readonly string[]; propiedadPorDefecto: string },
+) {
   const page = numero(url, 'page', 0)
   const size = numero(url, 'size', 6)
+  const direccion = (url.searchParams.get('direction') ?? 'ASC').toUpperCase()
+  const propiedad = url.searchParams.get('property') ?? opciones.propiedadPorDefecto
+  if (page < 0 || size < 1 || (direccion !== 'ASC' && direccion !== 'DESC')) {
+    return HttpResponse.json({ error: 'Argumento incorrecto', mensaje: 'Paginado inválido.' }, { status: 400 })
+  }
+  if (!opciones.ordenables.includes(propiedad)) {
+    return HttpResponse.json(
+      {
+        error: 'Argumento incorrecto',
+        mensaje: `No se encontró atributo '${propiedad}' para ordenar ${opciones.nombreLista}.`,
+      },
+      { status: 400 },
+    )
+  }
   const pagina = ordenados.slice(page * size, page * size + size)
   if (pagina.length === 0) return textoNoEncontrado(`No existen ${opciones.nombreLista} disponibles.`)
   const totalPages = Math.ceil(ordenados.length / size)
