@@ -807,6 +807,17 @@ export function alumnosDeGrupo(idGrupo: number): PersonaMock[] {
     .sort((a, b) => a.aPaterno.localeCompare(b.aPaterno, 'es'))
 }
 
+export function gruposDeInstructor(codInstructor: string, programa: string): Set<number> {
+  const ids = datosActuales.turnos
+    .filter((turno) => turno.codInstructor === codInstructor && turno.programa === programa)
+    .flatMap((turno) => turno.alumnos.map((alumno) => alumno.codAlumno))
+    .flatMap((codigo) => {
+      const idGrupo = datosActuales.personas.find((persona) => persona.codigo === codigo)?.idGrupo
+      return idGrupo === null || idGrupo === undefined ? [] : [idGrupo]
+    })
+  return new Set(ids)
+}
+
 export function cuestionarioDe(idTurnoTeorico: number, codAlumno: string): CuestionarioMock | undefined {
   return datosActuales.cuestionarios.find(
     (cuestionario) => cuestionario.idTurnoTeorico === idTurnoTeorico && cuestionario.codAlumno === codAlumno,

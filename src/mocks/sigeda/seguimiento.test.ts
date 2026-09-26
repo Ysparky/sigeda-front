@@ -94,6 +94,13 @@ describe('GET /api/seguimiento/alertas', () => {
     expect(pagina.content.map((alerta) => alerta.codAlumno)).not.toContain('777777')
   })
 
+  it('contrato §2.1 cada alerta lleva el nombre real del grupo, no uno armado con su id', async () => {
+    await iniciarComo('comandante.aguirre')
+    const pagina = await alertas('programa=PDI&idGrupo=6&page=0&size=20')
+    expect(pagina.content.map((alerta) => alerta.grupo)).toContain('Promoción 2026-A')
+    expect(pagina.content.map((alerta) => alerta.grupo)).not.toContain('Grupo 6')
+  })
+
   it('contrato §2.1 filtra por grupo, por tipo y por rango de fechas', async () => {
     await iniciarComo('comandante.aguirre')
     expect((await alertas('programa=PDI&idGrupo=4&page=0&size=20')).totalElements).toBe(4)
@@ -112,6 +119,7 @@ describe('GET /api/seguimiento/alertas', () => {
       status: 403,
       message: D17_GRUPO_FUERA_DE_ALCANCE,
     })
+    await expect(alertas('programa=PDI&idGrupo=2')).rejects.toMatchObject({ status: 404, message: D10_SIN_ALERTAS })
   })
 
   it('contrato §2.1 una lista vacía responde 404 D10 y el endpoint pide View Disapproved', async () => {

@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { permisosDeRol } from '@/lib/auth/permisos'
 import { API, autorizar, paginarOrdenado, textoNoEncontrado, textoProhibido } from './comun'
 import { D2_PERSONA_NO_EXISTE } from './alumnos'
-import { buscarPersona, datos, nombreCompleto, rolPorId, type PersonaMock } from './datos'
+import { buscarPersona, datos, gruposDeInstructor, nombreCompleto, rolPorId, type PersonaMock } from './datos'
 
 export const D12_SIN_ALUMNOS_CON_INDICES = 'No existen alumnos con índices disponibles.'
 export const D17_FUERA_DE_ALCANCE = 'No tiene permiso para ver este grupo.'
@@ -142,17 +142,6 @@ type FilaMerito = {
   motivoSinNfpi: string | null
 }
 
-function gruposDelInstructor(codInstructor: string): number[] {
-  const codigos = datos()
-    .turnos.filter((turno) => turno.codInstructor === codInstructor)
-    .flatMap((turno) => turno.alumnos.map((alumno) => alumno.codAlumno))
-  const ids = codigos.flatMap((codigo) => {
-    const idGrupo = buscarPersona(codigo)?.idGrupo
-    return idGrupo === null || idGrupo === undefined ? [] : [idGrupo]
-  })
-  return [...new Set(ids)]
-}
-
 function tieneVistaTotal(idRol: number | null): boolean {
   return permisosDeRol(rolPorId(idRol)?.nombre ?? '').has('View All Groups')
 }
@@ -227,7 +216,7 @@ export const handlersIndices = [
     const programa = (url.searchParams.get('programa') ?? 'PDI').toUpperCase() === 'PDE' ? 'PDE' : 'PDI'
     const idGrupoCrudo = url.searchParams.get('idGrupo')
     const idGrupoPedido = idGrupoCrudo === null || idGrupoCrudo === '' ? null : Number(idGrupoCrudo)
-    const alcance = tieneVistaTotal(permitido.idRol) ? null : new Set(gruposDelInstructor(permitido.codPersona))
+    const alcance = tieneVistaTotal(permitido.idRol) ? null : gruposDeInstructor(permitido.codPersona, programa)
     if (idGrupoPedido !== null) {
       const grupoExiste = datos().grupos.some((grupo) => grupo.id === idGrupoPedido)
       if (!grupoExiste) return textoNoEncontrado(D18_GRUPO_NO_EXISTE)

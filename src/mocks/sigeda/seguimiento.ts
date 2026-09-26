@@ -3,15 +3,7 @@ import { permisosDeRol } from '@/lib/auth/permisos'
 import { hoyIso } from '@/lib/dominio/calendario'
 import { criterioDeFase, ordinalDeSeveridad, TIPOS_ALERTA } from '@/lib/dominio/seguimiento'
 import { API, autorizar, paginarOrdenado, textoNoEncontrado, textoProhibido } from './comun'
-import {
-  bloqueadoPorSubsanacion,
-  buscarTurnoTeorico,
-  datos,
-  desaprobadosSinSubsanar,
-  nombreCompleto,
-  rolPorId,
-  type PersonaMock,
-} from './datos'
+import { bloqueadoPorSubsanacion, buscarTurnoTeorico, datos, desaprobadosSinSubsanar, gruposDeInstructor, nombreCompleto, rolPorId, type PersonaMock } from './datos'
 import { criterioCumplido, ramaCumplida, replayDeResultados } from './desaprobados'
 import { causalesDe, motivoDeBloqueo } from './estado-teorico'
 
@@ -142,17 +134,6 @@ function alertasDe(persona: PersonaMock): Alerta[] {
   return filas
 }
 
-function gruposDelInstructor(codInstructor: string, programa: string): Set<number> {
-  const codigos = datos()
-    .turnos.filter((turno) => turno.codInstructor === codInstructor && turno.programa === programa)
-    .flatMap((turno) => turno.alumnos.map((alumno) => alumno.codAlumno))
-  const ids = codigos.flatMap((codigo) => {
-    const idGrupo = datos().personas.find((persona) => persona.codigo === codigo)?.idGrupo
-    return idGrupo === null || idGrupo === undefined ? [] : [idGrupo]
-  })
-  return new Set(ids)
-}
-
 function tieneVistaTotal(idRol: number | null): boolean {
   return permisosDeRol(rolPorId(idRol)?.nombre ?? '').has('View All Groups')
 }
@@ -169,7 +150,7 @@ export const handlersSeguimiento = [
     const programa = (url.searchParams.get('programa') ?? 'PDI').toUpperCase() === 'PDE' ? 'PDE' : 'PDI'
     const alcance = tieneVistaTotal(permitido.idRol)
       ? new Set(datos().grupos.filter((grupo) => grupo.programa === programa).map((grupo) => grupo.id))
-      : gruposDelInstructor(permitido.codPersona, programa)
+      : gruposDeInstructor(permitido.codPersona, programa)
     const idGrupoCrudo = url.searchParams.get('idGrupo')
     if (idGrupoCrudo !== null && idGrupoCrudo !== '') {
       const idGrupo = Number(idGrupoCrudo)
