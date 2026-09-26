@@ -36,8 +36,8 @@ describe('catálogos para turnos y evaluaciones', () => {
   it('CA-TUR-08 trae el estado de cada aeronave', async () => {
     await iniciarComo('jefe.operaciones')
     expect(await listarAeronaves()).toEqual([
-      { id: 1, nombre: 'Robinson R22', estado: 'Disponible' },
       { id: 2, nombre: 'Enstrom 280FX', estado: 'En_Mantenimiento' },
+      { id: 1, nombre: 'Robinson R22', estado: 'Disponible' },
       { id: 3, nombre: 'Schweizer S-300C', estado: 'No_Disponible' },
     ])
   })

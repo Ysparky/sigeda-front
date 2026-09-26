@@ -312,6 +312,8 @@ GET /api/aeronaves   Read
 
 No paginado (catálogo pequeño, igual criterio que `GET /api/materias` del contrato de teoría). Prefiere la convención `Response.java` (§A): 404 texto plano `"No existen aeronaves disponibles."` si la tabla está vacía; 200 con el arreglo si hay datos.
 
+**Orden: por `nombre` ascendente.** Igual criterio que `GET /api/materias`, que ordena por `parte` y luego por `nombre`: el catálogo alimenta un desplegable, así que el orden tiene que ser el alfabético y no el del id. El ejemplo de abajo va en orden de id sólo por legibilidad de la tabla `aeronaves`; **no** fija el orden de la respuesta. Nota de implementación: un orden por `id` no es demostrable con una prueba sobre H2, porque H2 devuelve el orden de la clave primaria incluso sin `ORDER BY` — el alfabético sí se distingue.
+
 200:
 ```json
 [

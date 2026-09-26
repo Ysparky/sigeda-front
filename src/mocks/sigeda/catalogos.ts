@@ -56,7 +56,7 @@ export const handlersCatalogos = [
   http.get(`${API}/api/aeronaves`, ({ request }) => {
     const permitido = autorizar(request, 'Read')
     if (permitido instanceof Response) return permitido
-    const aeronaves = datos().aeronaves
+    const aeronaves = [...datos().aeronaves].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
     if (aeronaves.length === 0) return textoNoEncontrado('No existen aeronaves disponibles.')
     return HttpResponse.json(aeronaves)
   }),
