@@ -39,6 +39,7 @@ export const TEXTO_SIN_DESAPROBADOS = 'No tiene vuelos desaprobados.'
 export const TEXTO_SIN_TURNOS_DEL_ALUMNO = 'Todavía no tiene turnos de vuelo registrados.'
 export const TEXTO_SIN_EXAMENES_DEL_ALUMNO = 'Todavía no rindió exámenes teóricos.'
 export const TEXTO_SIN_EVALUACIONES_EN_LA_SUBFASE = 'No tiene evaluaciones en esta sub fase.'
+export const TEXTO_SIN_SUBFASE_ELEGIDA = 'Elija una sub fase para ver su reporte y sus promedios.'
 export const TEXTO_SIN_SEGUNDA_NOTA = 'Sin segunda nota: la subsanación está pendiente.'
 
 export function etiquetaDeGrupo(idGrupo: number | null): string {

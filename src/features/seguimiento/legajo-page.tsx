@@ -9,6 +9,9 @@ import { CabeceraDelLegajo } from './components/cabecera-del-legajo'
 import { HistorialPractico } from './components/historial-practico'
 import { PanelDeEstadoTeorico } from './components/panel-de-estado-teorico'
 import { PanelDeIndices } from './components/panel-de-indices'
+import { PanelDePromedios } from './components/panel-de-promedios'
+import { PanelDeSubfase } from './components/panel-de-subfase'
+import { PanelDeTurnos } from './components/panel-de-turnos'
 import { consultasSeguimiento } from './api'
 import { PESTANAS } from './schemas'
 
@@ -47,7 +50,14 @@ export function LegajoPage({ codAlumno }: { codAlumno: string }) {
           <PanelDeEstadoTeorico codAlumno={codAlumno} />
         </>
       )}
-      {busqueda.tab === 'practico' && <HistorialPractico codAlumno={codAlumno} busqueda={busqueda} />}
+      {busqueda.tab === 'practico' && (
+        <>
+          <HistorialPractico codAlumno={codAlumno} busqueda={busqueda} />
+          <PanelDeSubfase codAlumno={codAlumno} idSubfase={busqueda.idSubfase} />
+          <PanelDePromedios codAlumno={codAlumno} idSubfase={busqueda.idSubfase} />
+          <PanelDeTurnos codAlumno={codAlumno} />
+        </>
+      )}
       {busqueda.tab === 'teorico' && null}
     </div>
   )

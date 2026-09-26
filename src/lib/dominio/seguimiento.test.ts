@@ -36,6 +36,7 @@ import {
   TEXTO_SIN_ALUMNOS_EN_PROGRAMA,
   TEXTO_SIN_DATOS_SUFICIENTES,
   TEXTO_SIN_GRUPO,
+  TEXTO_SIN_SUBFASE_ELEGIDA,
   TEXTO_TURNO_SIN_CANTIDAD,
   textoCriterioCumplido,
   textoOrdenDeMeritoConsultado,
@@ -191,6 +192,7 @@ describe('textos fijos de la spec §17.3', () => {
     expect(TEXTO_DESEMPATE).toBe('Desempate: mayor NIA y, si persiste, menor código.')
     expect(TEXTO_REQUIERE_ATENCION).toBe('Requiere atención')
     expect(TEXTO_DESAPROBADOS_LOS_VE_SU_INSTRUCTOR).toBe('Los vuelos desaprobados los consulta su instructor.')
+    expect(TEXTO_SIN_SUBFASE_ELEGIDA).toBe('Elija una sub fase para ver su reporte y sus promedios.')
   })
 
   it('M5-9 los cuatro textos con parámetros los interpolan como la spec los escribe', () => {

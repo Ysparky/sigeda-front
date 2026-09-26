@@ -8,9 +8,15 @@ import {
   TEXTO_ESTADO_TEORICO_SIN_SERVIDOR,
   TEXTO_EVALUADOR_SIN_CODIGO,
   TEXTO_INDICES_SIN_SERVIDOR,
+  TEXTO_MEDIA_SIMPLE_SUBFASE,
   TEXTO_SIN_CAUSALES,
   TEXTO_SIN_DATOS_SUFICIENTES,
+  TEXTO_SIN_EVALUACIONES_EN_LA_SUBFASE,
   TEXTO_SIN_GRUPO,
+  TEXTO_SIN_PROMEDIOS_PONDERADOS,
+  TEXTO_SIN_SUBFASE_ELEGIDA,
+  TEXTO_SIN_TURNOS_DEL_ALUMNO,
+  TEXTO_TURNO_SIN_CANTIDAD,
 } from '@/lib/dominio/seguimiento'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
@@ -288,6 +294,156 @@ describe('Legajo: estado teórico y causales', () => {
     await abrirLegajo('666666')
     expect(await panel('Estado teórico').findByText(TEXTO_ESTADO_TEORICO_SIN_SERVIDOR)).toBeInTheDocument()
     vi.unstubAllEnvs()
+  })
+})
+
+describe('Legajo: reporte de sub fase', () => {
+  it('CA-LEG-05 elegida una sub fase, el reporte muestra su cabecera, sus maniobras y sus notas', async () => {
+    await abrirLegajo('777777', '?tab=practico&idSubfase=3')
+    const reporte = panel('Reporte de sub fase')
+    expect(await reporte.findByText('Instrumentos')).toBeInTheDocument()
+    expect(reporte.getByText('Adaptación')).toBeInTheDocument()
+    expect(reporte.getByText('Carlos Ramirez Sanchez')).toBeInTheDocument()
+    expect(reporte.getByText('Maniobra 9')).toBeInTheDocument()
+    expect(reporte.getByText('Maniobra 10')).toBeInTheDocument()
+    expect(reporte.getAllByRole('article')).toHaveLength(5)
+  })
+
+  it('CA-LEG-05 cada evaluación muestra su categoría, clasificación, promedio, recomendación y sus calificaciones', async () => {
+    await abrirLegajo('777777', '?tab=practico&idSubfase=3')
+    const reporte = panel('Reporte de sub fase')
+    const primera = within((await reporte.findAllByRole('article'))[0]!)
+    expect(primera.getByText('777777-1')).toBeInTheDocument()
+    expect(primera.getByText('Ponderada')).toBeInTheDocument()
+    expect(primera.getByText('Malo')).toBeInTheDocument()
+    expect(primera.getByText('12.00')).toBeInTheDocument()
+    const calificaciones = within(primera.getByRole('table', { name: 'Calificaciones de 777777-1' }))
+    expect(calificaciones.getAllByRole('row').slice(1)).toHaveLength(2)
+    const fila = within(calificaciones.getAllByRole('row')[1]!)
+    expect(fila.getByText('B')).toBeInTheDocument()
+    expect(fila.getByText('I')).toBeInTheDocument()
+  })
+
+  it('CA-LEG-05 una sub fase sin evaluaciones muestra el panel vacío, nunca el texto del servidor', async () => {
+    await abrirLegajo('555555', '?tab=practico&idSubfase=2')
+    const reporte = panel('Reporte de sub fase')
+    expect(await reporte.findByText(TEXTO_SIN_EVALUACIONES_EN_LA_SUBFASE)).toBeInTheDocument()
+    expect(screen.queryByText(/especificada no existe/)).not.toBeInTheDocument()
+  })
+
+  it('CA-LEG-05 sin elegir una sub fase el panel lo dice y no pide el reporte', async () => {
+    const pedidas: string[] = []
+    server.events.on('request:start', ({ request }) => pedidas.push(new URL(request.url).pathname))
+    await abrirLegajo('777777', '?tab=practico')
+    await screen.findByRole('table', { name: 'Turnos del alumno' })
+    server.events.removeAllListeners('request:start')
+    expect(panel('Reporte de sub fase').getByText(TEXTO_SIN_SUBFASE_ELEGIDA)).toBeInTheDocument()
+    expect(pedidas.some((ruta) => ruta.startsWith('/api/evaluaciones/subfase/'))).toBe(false)
+  })
+
+  it('CA-LEG-05 si las calificaciones no calzan con las maniobras la fila cae al índice', async () => {
+    server.use(
+      http.get(`${API}/api/evaluaciones/subfase/:id/persona/:cod`, () =>
+        HttpResponse.json({
+          cabecera: { fase: 'Adaptación', subFase: 'Instrumentos', programa: 'PDI', alumno: 'Carlos Ramirez Sanchez' },
+          maniobras: [
+            { id: 9, nombre: 'Maniobra 9' },
+            { id: 10, nombre: 'Maniobra 10' },
+          ],
+          notas: [
+            {
+              codigo: '777777-1',
+              categoria: 'Ponderada',
+              clasificacion: 'Malo',
+              promedio: '12.0',
+              recomendacion: null,
+              calificaciones: [
+                { notaMin: 'B', nota: 'I' },
+                { notaMin: 'B', nota: 'R' },
+                { notaMin: 'B', nota: 'B' },
+              ],
+            },
+          ],
+        }),
+      ),
+    )
+    await abrirLegajo('777777', '?tab=practico&idSubfase=3')
+    const reporte = panel('Reporte de sub fase')
+    const tabla = within(await reporte.findByRole('table', { name: 'Calificaciones de 777777-1' }))
+    const filas = tabla.getAllByRole('row').slice(1)
+    expect(filas).toHaveLength(3)
+    expect(within(filas[0]!).getByText('1')).toBeInTheDocument()
+    expect(within(filas[1]!).getByText('2')).toBeInTheDocument()
+    expect(within(filas[2]!).getByText('3')).toBeInTheDocument()
+    expect(tabla.queryByText('Maniobra 9')).not.toBeInTheDocument()
+    expect(tabla.queryByText('Maniobra 10')).not.toBeInTheDocument()
+  })
+})
+
+describe('Legajo: promedios de la sub fase', () => {
+  it('CA-LEG-06 lista los promedios del servidor y su media simple con dos decimales bajo S9', async () => {
+    await abrirLegajo('777777', '?tab=practico&idSubfase=3')
+    const promedios = panel('Promedios de la sub fase')
+    expect(await promedios.findByText(TEXTO_MEDIA_SIMPLE_SUBFASE)).toBeInTheDocument()
+    expect(promedios.getAllByText('12.00')).toHaveLength(4)
+    expect(promedios.getByText('17.00')).toBeInTheDocument()
+    expect(promedios.getByText('13.00')).toBeInTheDocument()
+  })
+
+  it('CA-LEG-06 el filtro del servidor excluye el Chequeo e incluye el Chequeo Sub Fase', async () => {
+    await abrirLegajo('555555', '?tab=practico&idSubfase=1')
+    const deCinco = panel('Promedios de la sub fase')
+    expect(await deCinco.findByText('14.50')).toBeInTheDocument()
+    expect(deCinco.queryByText('555555-2')).not.toBeInTheDocument()
+    await reabrirLegajo('999999', '?tab=practico&idSubfase=1')
+    const deNueve = panel('Promedios de la sub fase')
+    expect(await deNueve.findByText('16.00')).toBeInTheDocument()
+    expect(deNueve.getByText('999999-2')).toBeInTheDocument()
+  })
+
+  it('CA-LEG-06 con un solo promedio la media es ese promedio y sin ninguno el panel lo dice', async () => {
+    server.use(
+      http.get(`${API}/api/evaluaciones/promedio/subfase/:id/persona/:cod`, () =>
+        HttpResponse.json([{ codigo: '777777-1', promedio: '12.0' }]),
+      ),
+    )
+    await abrirLegajo('777777', '?tab=practico&idSubfase=3')
+    expect(await panel('Promedios de la sub fase').findAllByText('12.00')).toHaveLength(2)
+    server.resetHandlers()
+    await reabrirLegajo('555555', '?tab=practico&idSubfase=2')
+    expect(await panel('Promedios de la sub fase').findByText(TEXTO_SIN_PROMEDIOS_PONDERADOS)).toBeInTheDocument()
+  })
+
+  it('CA-LEG-06 sin elegir una sub fase el panel lo dice y no pide los promedios', async () => {
+    const pedidas: string[] = []
+    server.events.on('request:start', ({ request }) => pedidas.push(new URL(request.url).pathname))
+    await abrirLegajo('777777', '?tab=practico')
+    await screen.findByRole('table', { name: 'Turnos del alumno' })
+    server.events.removeAllListeners('request:start')
+    expect(panel('Promedios de la sub fase').getByText(TEXTO_SIN_SUBFASE_ELEGIDA)).toBeInTheDocument()
+    expect(pedidas.some((ruta) => ruta.startsWith('/api/evaluaciones/promedio/subfase/'))).toBe(false)
+  })
+})
+
+describe('Legajo: turnos realizados', () => {
+  it('CA-LEG-08 lista los turnos del alumno y muestra S11 en lugar de la cantidad de alumnos', async () => {
+    await abrirLegajo('777777', '?tab=practico')
+    const turnos = panel('Turnos realizados')
+    const tabla = within(await turnos.findByRole('table', { name: 'Turnos del alumno' }))
+    for (const columna of ['Turno', 'Sub fase', 'Programa', 'Fecha']) {
+      expect(tabla.getByText(columna)).toBeInTheDocument()
+    }
+    expect(tabla.getByText('Instrumentos Avanzados')).toBeInTheDocument()
+    expect(turnos.getByText(TEXTO_TURNO_SIN_CANTIDAD)).toBeInTheDocument()
+    expect(tabla.queryByText('Alumnos')).not.toBeInTheDocument()
+  })
+
+  it('CA-LEG-08 sin turnos el panel lo dice en vez de una tabla vacía', async () => {
+    await abrirLegajo('654321', '?tab=practico')
+    const turnos = panel('Turnos realizados')
+    expect(await turnos.findByText(TEXTO_SIN_TURNOS_DEL_ALUMNO)).toBeInTheDocument()
+    expect(turnos.queryByRole('table')).not.toBeInTheDocument()
+    expect(turnos.queryByText(TEXTO_TURNO_SIN_CANTIDAD)).not.toBeInTheDocument()
   })
 })
 
