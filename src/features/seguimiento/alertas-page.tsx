@@ -6,6 +6,7 @@ import { DataTable } from '@/components/data-table'
 import { EmptyState } from '@/components/empty-state'
 import { PageHeader } from '@/components/page-header'
 import { PANTALLAS } from '@/lib/auth/pantallas'
+import { accionDisponible } from '@/lib/dependencias'
 import { TEXTO_ALERTAS_SIN_SERVIDOR, TEXTO_SIN_ALERTAS } from '@/lib/dominio/seguimiento'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasSeguimiento } from './api'
@@ -18,7 +19,8 @@ const ruta = getRouteApi('/_app/seguimiento/alertas')
 export function AlertasPage() {
   const busqueda = ruta.useSearch()
   const navegar = ruta.useNavigate()
-  const alertas = useQuery(consultasSeguimiento.alertas(busqueda))
+  const disponible = accionDisponible('verAlertas')
+  const alertas = useQuery({ ...consultasSeguimiento.alertas(busqueda), enabled: disponible })
   const error = errorDePrimeraCarga(alertas)
 
   function cambiar(cambios: Partial<BusquedaAlertas>) {
@@ -29,9 +31,8 @@ export function AlertasPage() {
     <div className="grid gap-4">
       <PageHeader titulo={PANTALLAS.alertas.titulo} descripcion={PANTALLAS.alertas.descripcion} />
       <AvisoDeDependencia accion="verAlertas" texto={TEXTO_ALERTAS_SIN_SERVIDOR} />
-      {error !== null ? (
-        <AvisoDeError error={error} alReintentar={() => void alertas.refetch()} />
-      ) : (
+      {disponible && error !== null && <AvisoDeError error={error} alReintentar={() => void alertas.refetch()} />}
+      {disponible && error === null && (
         <>
           <FiltrosAlertas busqueda={busqueda} alCambiar={cambiar} />
           <DataTable

@@ -1,10 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { MENSAJE_SIN_CONEXION } from '@/lib/api/errors'
 import { config } from '@/lib/config'
 import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
-import { TEXTO_SIN_ALERTAS } from '@/lib/dominio/seguimiento'
+import { TEXTO_ALERTAS_SIN_SERVIDOR, TEXTO_SIN_ALERTAS } from '@/lib/dominio/seguimiento'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
 
@@ -110,5 +110,170 @@ describe('Alertas', () => {
     server.resetHandlers()
     await usuario.click(screen.getByRole('button', { name: 'Reintentar' }))
     expect(await screen.findByRole('table', { name: 'Alertas del escuadrón' })).toBeInTheDocument()
+  })
+})
+
+describe('Alertas: tipos y destinos', () => {
+  it('CA-ALE-03 los cinco tipos se muestran con su etiqueta y su tono', async () => {
+    await abrirAlertas()
+    const tabla = within(screen.getByRole('table', { name: 'Alertas del escuadrón' }))
+    const esperados: [string, string][] = [
+      ['Subsanación pendiente', 'alerta'],
+      ['Estado crítico', 'peligro'],
+      ['Chequeo pendiente', 'aviso'],
+      ['Causal teórico', 'violeta'],
+      ['Vuelo desaprobado', 'info'],
+    ]
+    for (const [etiqueta, tono] of esperados) {
+      expect(tabla.getAllByText(etiqueta)[0]).toHaveAttribute('data-tono', tono)
+    }
+    for (const [etiqueta, tono] of [
+      ['Alta', 'peligro'],
+      ['Media', 'aviso'],
+      ['Baja', 'neutro'],
+    ] as const) {
+      expect(tabla.getAllByText(etiqueta)[0]).toHaveAttribute('data-tono', tono)
+    }
+  })
+
+  it('CA-ALE-03 el orden por defecto es Alta, Media, Baja y luego fecha descendente', async () => {
+    await abrirAlertas()
+    const severidades = filas().map((fila) =>
+      within(fila)
+        .getAllByRole('cell')
+        .at(-1)!
+        .textContent?.trim(),
+    )
+    expect(severidades).toEqual([
+      'Alta',
+      'Media',
+      'Media',
+      'Media',
+      'Media',
+      'Media',
+      'Media',
+      'Baja',
+      'Baja',
+      'Baja',
+      'Baja',
+      'Baja',
+      'Baja',
+    ])
+  })
+
+  it('CA-ALE-03 una alerta sin fecha queda al final de su severidad', async () => {
+    server.use(
+      http.get(`${API}/api/seguimiento/alertas`, () =>
+        HttpResponse.json({
+          content: [
+            {
+              id: 'ESTADO_CRITICO:111111',
+              tipo: 'ESTADO_CRITICO',
+              severidad: 'MEDIA',
+              codAlumno: '111111',
+              alumno: 'Oscar Lopez Chaparro',
+              idGrupo: 1,
+              grupo: 'Grupo 1',
+              programa: 'PDI',
+              fecha: null,
+              detalle: 'El alumno está En Observación.',
+              codEvaluacion: null,
+              idSubfase: null,
+              idMateria: null,
+              idCuestionario: null,
+              causal: null,
+            },
+          ],
+          totalElements: 1,
+          totalPages: 1,
+          size: 10,
+          number: 0,
+        }),
+      ),
+    )
+    await abrirAlertas()
+    expect(within(filas()[0]!).getByText('—')).toBeInTheDocument()
+  })
+
+  it('CA-ALE-04 una alerta de vuelo desaprobado abre su evaluación', async () => {
+    await abrirAlertas()
+    expect(screen.getByRole('link', { name: 'Abrir Vuelo desaprobado de Pedro Rodriguez Garcia' })).toHaveAttribute(
+      'href',
+      '/evaluaciones/555555-1',
+    )
+  })
+
+  it('CA-ALE-04 un vuelo desaprobado sin código de evaluación abre el legajo en vez de una URL rota', async () => {
+    server.use(
+      http.get(`${API}/api/seguimiento/alertas`, () =>
+        HttpResponse.json({
+          content: [
+            {
+              id: 'VUELO_DESAPROBADO:555555-1',
+              tipo: 'VUELO_DESAPROBADO',
+              severidad: 'BAJA',
+              codAlumno: '555555',
+              alumno: 'Pedro Rodriguez Garcia',
+              idGrupo: 3,
+              grupo: 'Grupo 3',
+              programa: 'PDI',
+              fecha: '2024-03-01',
+              detalle: 'Vuelo Regular en Contacto.',
+              codEvaluacion: null,
+              idSubfase: 1,
+              idMateria: null,
+              idCuestionario: null,
+              causal: null,
+            },
+          ],
+          totalElements: 1,
+          totalPages: 1,
+          size: 10,
+          number: 0,
+        }),
+      ),
+    )
+    await abrirAlertas()
+    expect(screen.getByRole('link', { name: 'Abrir Vuelo desaprobado de Pedro Rodriguez Garcia' })).toHaveAttribute(
+      'href',
+      '/seguimiento/555555',
+    )
+  })
+
+  it('CA-ALE-04 una causal y una subsanación pendiente abren la pestaña Teórico del legajo', async () => {
+    await abrirAlertas()
+    expect(screen.getByRole('link', { name: 'Abrir Subsanación pendiente de Ana Torres Martinez' })).toHaveAttribute(
+      'href',
+      '/seguimiento/666666?tab=teorico',
+    )
+    expect(screen.getAllByRole('link', { name: 'Abrir Causal teórico de Oscar Lopez Chaparro' })[0]).toHaveAttribute(
+      'href',
+      '/seguimiento/111111?tab=teorico',
+    )
+  })
+
+  it('CA-ALE-04 el chequeo pendiente abre el panel de chequeo y el estado crítico el legajo', async () => {
+    await abrirAlertas()
+    expect(screen.getByRole('link', { name: 'Abrir Chequeo pendiente de Luis Diaz Castro' })).toHaveAttribute(
+      'href',
+      '/seguimiento/999999?tab=practico#chequeo',
+    )
+    expect(screen.getByRole('link', { name: 'Abrir Estado crítico de Carlos Ramirez Sanchez' })).toHaveAttribute(
+      'href',
+      '/seguimiento/777777',
+    )
+  })
+
+  it('CA-ALE-07 fuera del modo mock y sin la dependencia 66 muestra S8 y no pide el listado', async () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    const pedidas: string[] = []
+    server.events.on('request:start', ({ request }) => pedidas.push(new URL(request.url).pathname))
+    await iniciarComo('comandante.aguirre')
+    renderApp('/seguimiento/alertas')
+    expect(await screen.findByText(TEXTO_ALERTAS_SIN_SERVIDOR)).toBeInTheDocument()
+    server.events.removeAllListeners('request:start')
+    expect(pedidas).not.toContain('/api/seguimiento/alertas')
+    expect(screen.queryByRole('table', { name: 'Alertas del escuadrón' })).not.toBeInTheDocument()
+    expect(screen.queryByText(TEXTO_SIN_ALERTAS)).not.toBeInTheDocument()
   })
 })
