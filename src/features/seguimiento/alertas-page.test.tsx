@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { MENSAJE_SIN_CONEXION } from '@/lib/api/errors'
 import { config } from '@/lib/config'
 import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
-import { TEXTO_ALERTAS_SIN_SERVIDOR, TEXTO_SIN_ALERTAS } from '@/lib/dominio/seguimiento'
+import { TEXTO_ALERTAS_SIN_SERVIDOR, TEXTO_SIN_ALERTAS, TEXTO_SIN_GRUPO } from '@/lib/dominio/seguimiento'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
 
@@ -50,6 +50,52 @@ describe('Alertas', () => {
     expect(primera.getByText('Grupo 3')).toBeInTheDocument()
     expect(primera.getByText('Alta')).toBeInTheDocument()
     expect(primera.getByText(/Subsanación pendiente\./)).toBeInTheDocument()
+  })
+
+  it('CA-ALE-01 la columna Grupo lleva la misma etiqueta con que filtra el desplegable', async () => {
+    await abrirAlertas()
+    const filtro = within(screen.getByLabelText('Grupo'))
+    expect(filtro.getByRole('option', { name: 'Grupo 6' })).toBeInTheDocument()
+    expect(filtro.queryByRole('option', { name: /Promoción 2026-A/ })).not.toBeInTheDocument()
+    const fila = within(
+      screen.getByRole('link', { name: 'Abrir Chequeo pendiente de Luis Diaz Castro' }).closest('tr') as HTMLElement,
+    )
+    expect(fila.getByText('Grupo 6 · Promoción 2026-A')).toBeInTheDocument()
+    expect(celdas('Grupo')).toContain('Grupo 6 · Promoción 2026-A')
+  })
+
+  it('CA-ALE-01 una alerta sin grupo muestra S3 en vez de una celda vacía', async () => {
+    server.use(
+      http.get(`${API}/api/seguimiento/alertas`, () =>
+        HttpResponse.json({
+          content: [
+            {
+              id: 'ESTADO_CRITICO:654321',
+              tipo: 'ESTADO_CRITICO',
+              severidad: 'MEDIA',
+              codAlumno: '654321',
+              alumno: 'Lucía Mendoza Ríos',
+              idGrupo: null,
+              grupo: '',
+              programa: 'PDI',
+              fecha: '2026-08-26',
+              detalle: 'El alumno está En Observación.',
+              codEvaluacion: null,
+              idSubfase: null,
+              idMateria: null,
+              idCuestionario: null,
+              causal: null,
+            },
+          ],
+          totalElements: 1,
+          totalPages: 1,
+          size: 10,
+          number: 0,
+        }),
+      ),
+    )
+    await abrirAlertas()
+    expect(celdas('Grupo')).toEqual([TEXTO_SIN_GRUPO])
   })
 
   it('CA-ALE-01 pagina de 10 en 10 con las páginas del servidor', async () => {

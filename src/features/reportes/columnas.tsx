@@ -1,5 +1,5 @@
 import { ayudanteDeColumnas } from '@/components/columnas-tabla'
-import { TEXTO_SIN_DATOS_SUFICIENTES, textoSinNfpi } from '@/lib/dominio/seguimiento'
+import { etiquetaDeGrupoConNombre, TEXTO_SIN_DATOS_SUFICIENTES, textoSinNfpi } from '@/lib/dominio/seguimiento'
 import { formatearNota } from '@/lib/formato'
 import type { FilaDeMerito } from './api'
 
@@ -39,7 +39,17 @@ export const COLUMNAS_MERITO = ayudante.columns([
       </span>
     ),
   }),
-  ayudante.accessor('grupo', { header: 'Grupo' }),
+  ayudante.accessor('grupo', {
+    header: 'Grupo',
+    cell: (contexto) => {
+      const etiqueta = etiquetaDeGrupoConNombre(contexto.row.original.idGrupo, contexto.getValue())
+      return (
+        <span className="block max-w-[12rem] truncate" title={etiqueta}>
+          {etiqueta}
+        </span>
+      )
+    },
+  }),
   ayudante.accessor('nfpi', { header: 'NFPI', enableSorting: true, cell: nota }),
   ayudante.accessor('nit', { header: 'NIT', enableSorting: true, cell: nota }),
   ayudante.accessor('nia', { header: 'NIA', enableSorting: true, cell: nota }),

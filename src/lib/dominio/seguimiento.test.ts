@@ -33,6 +33,7 @@ import {
   criterioDeFase,
   etiquetaDeCausal,
   etiquetaDeGrupo,
+  etiquetaDeGrupoConNombre,
   etiquetaDeSeveridad,
   etiquetaDeTipoAlerta,
   formulaDeIndice,
@@ -212,5 +213,13 @@ describe('textos fijos de la spec §17.3', () => {
       'Orden de mérito consultado el 26/09/2026 a las 09:15. El servidor lo calcula en cada consulta.',
     )
     expect(textoSinNfpi('Sin nota en Operaciones AeroTácticas')).toBe('Sin NFPI: Sin nota en Operaciones AeroTácticas.')
+  })
+
+  it('M5-9 la etiqueta de grupo con nombre lleva siempre el id con que filtra la pantalla', () => {
+    expect(etiquetaDeGrupoConNombre(6, 'Promoción 2026-A')).toBe('Grupo 6 · Promoción 2026-A')
+    expect(etiquetaDeGrupoConNombre(3, 'Grupo 3')).toBe('Grupo 3')
+    expect(etiquetaDeGrupoConNombre(4, '  ')).toBe('Grupo 4')
+    expect(etiquetaDeGrupoConNombre(4, null)).toBe('Grupo 4')
+    expect(etiquetaDeGrupoConNombre(null, 'Promoción 2026-A')).toBe(TEXTO_SIN_GRUPO)
   })
 })

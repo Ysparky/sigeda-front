@@ -1,7 +1,7 @@
 import { ayudanteDeColumnas } from '@/components/columnas-tabla'
 import { Enlace } from '@/components/enlace'
 import { StatusBadge } from '@/components/status-badge'
-import { etiquetaDeTipoAlerta } from '@/lib/dominio/seguimiento'
+import { etiquetaDeGrupoConNombre, etiquetaDeTipoAlerta } from '@/lib/dominio/seguimiento'
 import { formatearFecha } from '@/lib/formato'
 import type { Alerta } from './api'
 
@@ -38,7 +38,14 @@ export function columnasAlertas() {
     }),
     ayudante.accessor('grupo', {
       header: 'Grupo',
-      cell: (contexto) => contexto.getValue(),
+      cell: (contexto) => {
+        const etiqueta = etiquetaDeGrupoConNombre(contexto.row.original.idGrupo, contexto.getValue())
+        return (
+          <span className="block max-w-[12rem] truncate" title={etiqueta}>
+            {etiqueta}
+          </span>
+        )
+      },
     }),
     ayudante.accessor('fecha', {
       header: 'Fecha',

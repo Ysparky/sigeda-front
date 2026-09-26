@@ -49,6 +49,13 @@ export function etiquetaDeGrupo(idGrupo: number | null): string {
   return idGrupo === null ? TEXTO_SIN_GRUPO : `Grupo ${idGrupo}`
 }
 
+export function etiquetaDeGrupoConNombre(idGrupo: number | null, nombre: string | null): string {
+  const derivada = etiquetaDeGrupo(idGrupo)
+  if (idGrupo === null) return derivada
+  const limpio = (nombre ?? '').trim()
+  return limpio === '' || limpio === derivada ? derivada : `${derivada} · ${limpio}`
+}
+
 export function textoCriterioCumplido(fase: string, detalle: string): string {
   return `Alcanzó el criterio de chequeo de ${fase}: ${detalle}.`
 }

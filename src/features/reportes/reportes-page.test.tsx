@@ -53,6 +53,15 @@ describe('Reportes y orden de mérito', () => {
     expect(filas()).toHaveLength(6)
   })
 
+  it('CA-REP-01 la columna Grupo lleva la misma etiqueta con que filtra el desplegable', async () => {
+    await abrirReportes()
+    const filtro = within(screen.getByLabelText('Grupo'))
+    expect(filtro.getByRole('option', { name: 'Grupo 6' })).toBeInTheDocument()
+    expect(filtro.queryByRole('option', { name: /Promoción 2026-A/ })).not.toBeInTheDocument()
+    expect(celdas(2)[3]).toBe('Grupo 6 · Promoción 2026-A')
+    expect(celdas(0)[3]).toBe('Grupo 2')
+  })
+
   it('CA-REP-01 pagina de 10 en 10 y el servidor es quien ordena', async () => {
     const { usuario, router } = await abrirReportes('/reportes?size=2')
     expect(screen.getByText('Página 1 de 3 · 6 registros')).toBeInTheDocument()
@@ -125,7 +134,15 @@ describe('Reportes y orden de mérito', () => {
 
   it('CA-REP-04 el empate se rompe por NIA y el puesto no cambia al reordenar la tabla', async () => {
     const { usuario } = await abrirReportes()
-    expect(celdas(2)).toEqual(['3', '999999', 'Luis Diaz Castro', 'Promoción 2026-A', '15.28', '14.80', '15.40'])
+    expect(celdas(2)).toEqual([
+      '3',
+      '999999',
+      'Luis Diaz Castro',
+      'Grupo 6 · Promoción 2026-A',
+      '15.28',
+      '14.80',
+      '15.40',
+    ])
     expect(celdas(3)).toEqual(['4', '111111', 'Oscar Lopez Chaparro', 'Grupo 1', '15.28', '15.80', '15.15'])
     await usuario.click(screen.getByRole('button', { name: 'NIT' }))
     await waitFor(() => expect(celdas(0)[1]).toBe('555555'))
