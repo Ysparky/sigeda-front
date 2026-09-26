@@ -162,3 +162,5 @@ export function mediaSimple(valores: readonly number[]): number | null {
   if (valores.length === 0) return null
   return valores.reduce((suma, valor) => suma + valor, 0) / valores.length
 }
+
+export const ETIQUETAS_PESTANA = { resumen: 'Resumen', practico: 'Práctico', teorico: 'Teórico' } as const
