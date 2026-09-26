@@ -181,9 +181,6 @@ describe('textos fijos de la spec §17.3', () => {
     expect(TEXTO_HISTORIAL_TEORICO_SIN_SERVIDOR).toBe(
       'El historial de exámenes teóricos todavía no existe en el servidor.',
     )
-    expect(TEXTO_ESTADO_TEORICO_SIN_SERVIDOR).toBe(
-      'El estado teórico y sus causales todavía no existen en el servidor.',
-    )
     expect(TEXTO_SIN_ALUMNOS_CON_INDICES).toBe('Todavía no hay alumnos con índices calculados en este programa.')
     expect(TEXTO_ORDEN_MERITO_SIN_SERVIDOR).toBe('El servidor todavía no calcula el orden de mérito.')
     expect(TEXTO_PREVALECE_LA_PRIMERA_NOTA).toBe(
@@ -192,6 +189,12 @@ describe('textos fijos de la spec §17.3', () => {
     expect(TEXTO_DESEMPATE).toBe('Desempate: mayor NIA y, si persiste, menor código.')
     expect(TEXTO_REQUIERE_ATENCION).toBe('Requiere atención')
     expect(TEXTO_DESAPROBADOS_LOS_VE_SU_INSTRUCTOR).toBe('Los vuelos desaprobados los consulta su instructor.')
+  })
+
+  it('M5-9 los dos textos que la spec no fija quedan igual de anclados, con su origen dicho', () => {
+    expect(TEXTO_ESTADO_TEORICO_SIN_SERVIDOR).toBe(
+      'El estado teórico y sus causales todavía no existen en el servidor.',
+    )
     expect(TEXTO_SIN_SUBFASE_ELEGIDA).toBe('Elija una sub fase para ver su reporte y sus promedios.')
   })
 

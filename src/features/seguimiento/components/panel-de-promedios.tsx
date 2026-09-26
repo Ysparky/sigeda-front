@@ -8,13 +8,13 @@ import {
 } from '@/lib/dominio/seguimiento'
 import { formatearNota } from '@/lib/formato'
 import { errorDePrimeraCarga } from '@/lib/query'
-import { consultasSeguimiento } from '../api'
+import { consultasSeguimiento, subfaseElegida } from '../api'
 import { Panel } from './panel'
 
 type Props = { codAlumno: string; idSubfase: number | undefined }
 
 export function PanelDePromedios({ codAlumno, idSubfase }: Props) {
-  const elegida = (idSubfase ?? 0) > 0
+  const elegida = subfaseElegida(idSubfase)
   const promedios = useQuery(consultasSeguimiento.promediosDeSubfase(idSubfase ?? 0, codAlumno))
   const error = errorDePrimeraCarga(promedios)
   const cargando = elegida && promedios.data === undefined && error === null

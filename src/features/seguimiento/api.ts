@@ -367,6 +367,10 @@ export function listarAlertas(filtros: FiltrosAlertas): Promise<Pagina<Alerta>> 
   })
 }
 
+export function subfaseElegida(idSubfase: number | undefined): boolean {
+  return (idSubfase ?? 0) > 0
+}
+
 export const clavesSeguimiento = {
   todo: ['seguimiento'] as const,
   alumnos: (fuente: FuenteSeguimiento, programa: Programa, codPersona: string | null) =>
@@ -439,13 +443,13 @@ export const consultasSeguimiento = {
     queryOptions({
       queryKey: clavesSeguimiento.reporteDeSubfase(idSubfase, codPersona),
       queryFn: () => obtenerReporteDeSubfase(idSubfase, codPersona),
-      enabled: idSubfase > 0 && codPersona !== '',
+      enabled: subfaseElegida(idSubfase) && codPersona !== '',
     }),
   promediosDeSubfase: (idSubfase: number, codPersona: string) =>
     queryOptions({
       queryKey: clavesSeguimiento.promediosDeSubfase(idSubfase, codPersona),
       queryFn: () => listarPromediosDeSubfase(idSubfase, codPersona),
-      enabled: idSubfase > 0 && codPersona !== '',
+      enabled: subfaseElegida(idSubfase) && codPersona !== '',
     }),
   alertas: (filtros: FiltrosAlertas) =>
     queryOptions({

@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { TEXTO_SIN_EVALUACIONES_EN_LA_SUBFASE, TEXTO_SIN_SUBFASE_ELEGIDA } from '@/lib/dominio/seguimiento'
 import { formatearNota } from '@/lib/formato'
 import { errorDePrimeraCarga } from '@/lib/query'
-import { consultasSeguimiento } from '../api'
+import { consultasSeguimiento, subfaseElegida } from '../api'
 import { Panel } from './panel'
 
 function Dato({ etiqueta, children }: { etiqueta: string; children: ReactNode }) {
@@ -21,7 +21,7 @@ function Dato({ etiqueta, children }: { etiqueta: string; children: ReactNode })
 type Props = { codAlumno: string; idSubfase: number | undefined }
 
 export function PanelDeSubfase({ codAlumno, idSubfase }: Props) {
-  const elegida = (idSubfase ?? 0) > 0
+  const elegida = subfaseElegida(idSubfase)
   const reporte = useQuery(consultasSeguimiento.reporteDeSubfase(idSubfase ?? 0, codAlumno))
   const error = errorDePrimeraCarga(reporte)
   const cargando = elegida && reporte.data === undefined && error === null
@@ -80,8 +80,8 @@ export function PanelDeSubfase({ codAlumno, idSubfase }: Props) {
                       <TableBody>
                         {nota.calificaciones.map((calificacion, indice) => (
                           <TableRow key={indice}>
-                            <TableCell title={maniobraAlineada ? datos.maniobras[indice].nombre : undefined}>
-                              {maniobraAlineada ? datos.maniobras[indice].id : indice + 1}
+                            <TableCell>
+                              {maniobraAlineada ? datos.maniobras[indice].nombre : `Maniobra ${indice + 1}`}
                             </TableCell>
                             <TableCell>{calificacion.notaMin}</TableCell>
                             <TableCell>{calificacion.nota}</TableCell>
