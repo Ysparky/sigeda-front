@@ -7,6 +7,7 @@ export const TEXTO_SIN_ALUMNOS_ASIGNADOS =
 export const TEXTO_SIN_GRUPO = 'Sin grupo'
 export const TEXTO_ESTADO_TEORICO_EN_LOTE = 'No se pudo comprobar el estado teórico de estos alumnos.'
 export const TEXTO_SIN_ALUMNOS_EN_PROGRAMA = 'Todavía no hay alumnos en este programa.'
+export const TEXTO_ALUMNOS_SIN_COINCIDENCIAS = 'Ningún alumno coincide con los filtros.'
 export const TEXTO_SIN_ALERTAS = 'No hay alertas abiertas en los grupos que usted ve.'
 export const TEXTO_ALERTAS_SIN_SERVIDOR =
   'El listado de alertas del escuadrón todavía no existe en el servidor. Consulte los vuelos desaprobados de cada alumno en su legajo.'

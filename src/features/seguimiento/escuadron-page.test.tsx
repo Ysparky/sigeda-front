@@ -1,19 +1,31 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { MENSAJE_SIN_CONEXION } from '@/lib/api/errors'
 import { config } from '@/lib/config'
-import { TEXTO_SIN_GRUPO } from '@/lib/dominio/seguimiento'
+import { TEXTO_SIN_ALUMNOS_ASIGNADOS, TEXTO_SIN_ALUMNOS_EN_PROGRAMA, TEXTO_SIN_GRUPO } from '@/lib/dominio/seguimiento'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
+import { relojFalso } from '@/test/tiempo'
 
 const API = config.sigedaApiUrl
 
+let vistaActual: ReturnType<typeof renderApp> | null = null
+
 async function abrirEscuadron(ruta = '/seguimiento', username = 'comandante.aguirre') {
   await iniciarComo(username)
-  const vista = renderApp(ruta)
+  vistaActual = renderApp(ruta)
   await screen.findByRole('heading', { name: 'Escuadrón' })
   await screen.findByRole('table', { name: 'Alumnos del escuadrón' })
-  return vista
+  return vistaActual
+}
+
+async function reabrir(ruta: string, username: string) {
+  vistaActual?.unmount()
+  await iniciarComo(username)
+  vistaActual = renderApp(ruta)
+  await screen.findByRole('heading', { name: 'Escuadrón' })
+  return vistaActual
 }
 
 function filas() {
@@ -110,5 +122,83 @@ describe('Escuadrón', () => {
     await abrirEscuadron()
     expect(screen.getByRole('link', { name: '777777' })).toHaveAttribute('href', '/seguimiento/777777')
     expect(screen.getByRole('link', { name: '111111' })).toHaveAttribute('href', '/seguimiento/111111')
+  })
+})
+
+describe('Escuadrón: filtros', () => {
+  it('CA-SEG-02 el programa se envía al servidor y elige el catálogo', async () => {
+    const pedidas: string[] = []
+    server.events.on('request:start', ({ request }) => pedidas.push(new URL(request.url).pathname))
+    const { usuario, router } = await abrirEscuadron()
+    await usuario.selectOptions(screen.getByLabelText('Programa'), 'PDE')
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ programa: 'PDE' }))
+    await waitFor(() => expect(pedidas.filter((ruta) => ruta === '/api/grupos/programa/PDE')).toHaveLength(1))
+    server.events.removeAllListeners('request:start')
+    expect(pedidas.filter((ruta) => ruta === '/api/grupos/programa/PDI')).toHaveLength(1)
+  })
+
+  it('CA-SEG-02 grupo, estado y texto se aplican en el navegador y quedan en la URL', async () => {
+    const { usuario, router } = await abrirEscuadron()
+    await usuario.selectOptions(screen.getByLabelText('Grupo'), '3')
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ idGrupo: 3 }))
+    expect(screen.getByText('Página 1 de 1 · 2 registros')).toBeInTheDocument()
+    await usuario.selectOptions(screen.getByLabelText('Estado'), 'Apto')
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ idGrupo: 3, estado: 'Apto' }))
+    await usuario.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    await waitFor(() => expect(screen.getByText('Página 1 de 1 · 6 registros')).toBeInTheDocument())
+    expect(router.state.location.search).not.toHaveProperty('idGrupo')
+  })
+
+  it('CA-SEG-02 el filtro de texto espera 300 ms tras la última tecla antes de navegar', async () => {
+    const { usuario, avanzar } = relojFalso()
+    await iniciarComo('comandante.aguirre')
+    const { router } = renderApp('/seguimiento', usuario)
+    await screen.findByRole('table', { name: 'Alumnos del escuadrón' })
+    await usuario.type(screen.getByLabelText('Alumno'), 'ram')
+    expect(router.state.location.search).not.toHaveProperty('texto')
+    await avanzar(1_000)
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ texto: 'ram' }))
+    await waitFor(() =>
+      expect(within(screen.getByRole('table', { name: 'Alumnos del escuadrón' })).getAllByRole('row')).toHaveLength(2),
+    )
+  })
+
+  it('CA-SEG-02 una URL mal escrita vuelve a los valores por defecto', async () => {
+    await iniciarComo('comandante.aguirre')
+    const { router } = renderApp('/seguimiento?page=-1&size=0&programa=XX&idGrupo=cero&direction=NO')
+    await screen.findByRole('table', { name: 'Alumnos del escuadrón' })
+    expect(router.state.location.search).toEqual({ page: 0, size: 10, direction: 'ASC', programa: 'PDI' })
+  })
+
+  it('CA-SEG-03 con View All Groups trae los alumnos de todos los grupos del programa', async () => {
+    await abrirEscuadron()
+    expect(filas()).toHaveLength(6)
+    expect(screen.getByRole('link', { name: '777777' })).toBeInTheDocument()
+  })
+
+  it('CA-SEG-03 sin View All Groups solo los alumnos con los que voló, y sin ninguno muestra S2', async () => {
+    await abrirEscuadron('/seguimiento', 'instructor.perez')
+    expect(filas()).toHaveLength(4)
+    expect(screen.queryByRole('link', { name: '777777' })).not.toBeInTheDocument()
+    await reabrir('/seguimiento', 'jefe.operaciones')
+    expect(await screen.findByText(TEXTO_SIN_ALUMNOS_ASIGNADOS)).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Alumnos del escuadrón' })).not.toBeInTheDocument()
+  })
+
+  it('CA-SEG-03 un programa sin alumnos muestra S6', async () => {
+    await abrirEscuadron('/seguimiento?programa=PDE')
+    expect(await screen.findByText(TEXTO_SIN_ALUMNOS_EN_PROGRAMA)).toBeInTheDocument()
+  })
+
+  it('CA-SEG-09 un fallo en la primera carga muestra el aviso con Reintentar, no una lista vacía', async () => {
+    server.use(http.get(`${API}/api/grupos/programa/:nombre`, () => HttpResponse.error()))
+    await iniciarComo('comandante.aguirre')
+    const { usuario } = renderApp('/seguimiento')
+    expect(await screen.findByText(MENSAJE_SIN_CONEXION)).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Alumnos del escuadrón' })).not.toBeInTheDocument()
+    expect(screen.queryByText(TEXTO_SIN_ALUMNOS_EN_PROGRAMA)).not.toBeInTheDocument()
+    server.resetHandlers()
+    await usuario.click(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByRole('table', { name: 'Alumnos del escuadrón' })).toBeInTheDocument()
   })
 })
