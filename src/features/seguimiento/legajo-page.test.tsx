@@ -486,6 +486,27 @@ describe('Legajo: turnos realizados', () => {
     expect(tabla.queryByText('Alumnos')).not.toBeInTheDocument()
   })
 
+  it('CA-LEG-08 el panel pagina y declara cuántos turnos hay en total', async () => {
+    const { usuario, router } = await abrirLegajo('777777', '?tab=practico&sizeTurnos=1')
+    const turnos = panel('Turnos realizados')
+    const tabla = within(await turnos.findByRole('table', { name: 'Turnos del alumno' }))
+    expect(await turnos.findByText('Página 1 de 2 · 2 registros')).toBeInTheDocument()
+    expect(tabla.getAllByRole('row').slice(1)).toHaveLength(1)
+    expect(tabla.getByText('Instrumentos Avanzados')).toBeInTheDocument()
+    await usuario.click(turnos.getByRole('button', { name: 'Siguiente' }))
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ pageTurnos: 1 }))
+    expect(await turnos.findByText('Página 2 de 2 · 2 registros')).toBeInTheDocument()
+    expect(within(turnos.getByRole('table', { name: 'Turnos del alumno' })).getByText('Instrumentos Básicos')).toBeInTheDocument()
+  })
+
+  it('CA-LEG-08 paginar los turnos no mueve el historial práctico', async () => {
+    const { usuario, router } = await abrirLegajo('777777', '?tab=practico&size=2&sizeTurnos=1')
+    await panel('Turnos realizados').findByText('Página 1 de 2 · 2 registros')
+    await usuario.click(panel('Turnos realizados').getByRole('button', { name: 'Siguiente' }))
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ pageTurnos: 1, page: 0 }))
+    expect(panel('Historial de evaluaciones').getByText('Página 1 de 3 · 5 registros')).toBeInTheDocument()
+  })
+
   it('CA-LEG-08 sin turnos el panel lo dice en vez de una tabla vacía', async () => {
     await abrirLegajo('654321', '?tab=practico')
     const turnos = panel('Turnos realizados')
@@ -665,6 +686,19 @@ describe('Legajo: historial teórico', () => {
     const historial = panel('Historial de exámenes')
     expect(await historial.findByText(TEXTO_SIN_SEGUNDA_NOTA)).toBeInTheDocument()
     expect(historial.getByText('12.00 / mínimo 18')).toBeInTheDocument()
+  })
+
+  it('CA-LEG-11 el panel pagina y declara cuántos exámenes hay en total', async () => {
+    const { usuario, router } = await abrirLegajo('999999', '?tab=teorico&size=1')
+    const historial = panel('Historial de exámenes')
+    const tabla = within(await historial.findByRole('table', { name: 'Exámenes del alumno' }))
+    expect(await historial.findByText('Página 1 de 2 · 2 registros')).toBeInTheDocument()
+    expect(tabla.getAllByRole('row').slice(1)).toHaveLength(1)
+    expect(tabla.getByText('17.00 / mínimo 16')).toBeInTheDocument()
+    await usuario.click(historial.getByRole('button', { name: 'Siguiente' }))
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ page: 1 }))
+    expect(await historial.findByText('Página 2 de 2 · 2 registros')).toBeInTheDocument()
+    expect(within(historial.getByRole('table', { name: 'Exámenes del alumno' })).getByText('10.00 / mínimo 16')).toBeInTheDocument()
   })
 
   it('CA-LEG-11 sin exámenes el panel lo dice en vez de una tabla vacía', async () => {

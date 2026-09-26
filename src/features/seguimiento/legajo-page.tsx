@@ -61,7 +61,7 @@ export function LegajoPage({ codAlumno }: { codAlumno: string }) {
           <HistorialPractico codAlumno={cod} busqueda={busqueda} />
           <PanelDeSubfase codAlumno={cod} idSubfase={busqueda.idSubfase} />
           <PanelDePromedios codAlumno={cod} idSubfase={busqueda.idSubfase} />
-          <PanelDeTurnos codAlumno={cod} />
+          <PanelDeTurnos codAlumno={cod} busqueda={busqueda} />
           <PanelDeDesaprobados codAlumno={cod} />
           <PanelDeChequeo codAlumno={cod} />
         </>
