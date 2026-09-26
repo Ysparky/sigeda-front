@@ -124,6 +124,20 @@ describe('GET /api/seguimiento/alertas', () => {
     expect(medias.slice(0, -1).every((alerta) => alerta.fecha !== null)).toBe(true)
   })
 
+  it('contrato §2.1 un rango de fechas deja fuera la alerta sin fecha por los dos extremos', async () => {
+    const sinEvaluaciones = datos().personas.find((persona) => persona.codigo === '222222')
+    if (!sinEvaluaciones) throw new Error('la persona 222222 no está en los datos de prueba')
+    sinEvaluaciones.estado = 'En Complementación'
+    await iniciarComo('comandante.aguirre')
+    const sinFiltro = await alertas('programa=PDI&page=0&size=20')
+    const conFecha = (pagina: { content: Alerta[] }) => pagina.content.some((alerta) => alerta.codAlumno === '222222')
+    expect(conFecha(sinFiltro)).toBe(true)
+    const desde = await alertas(`programa=PDI&fechaPre=${sumarDias(hoyIso(), -15)}&page=0&size=20`)
+    const hasta = await alertas(`programa=PDI&fechaPost=${hoyIso()}&page=0&size=20`)
+    expect(conFecha(desde)).toBe(false)
+    expect(conFecha(hasta)).toBe(false)
+  })
+
   it('contrato §2.1 un grupo inexistente responde 404 D18 y uno fuera de alcance 403 D17', async () => {
     await iniciarComo('instructor.perez')
     await expect(alertas('programa=PDI&idGrupo=99')).rejects.toMatchObject({ status: 404, message: D18_GRUPO_NO_EXISTE })

@@ -198,10 +198,15 @@ describe('Legajo: historial práctico', () => {
     expect(await screen.findByRole('table', { name: 'Historial de evaluaciones' })).toBeInTheDocument()
   })
 
-  it('CA-LEG-01 sin la dependencia del ciclo de chequeo la cabecera lo dice en lugar del grupo', async () => {
+  it('CA-LEG-01 sin la dependencia del ciclo de chequeo la cabecera lo dice en el Tipo y en el Grupo', async () => {
     vi.stubEnv('VITE_MOCK_API', 'false')
     await abrirLegajo()
-    expect(await screen.findByText(TEXTO_CHEQUEO_SIN_SERVIDOR)).toBeInTheDocument()
+    const cabecera = panel('Cabecera')
+    await cabecera.findByText('Carlos Ramirez Sanchez')
+    expect(cabecera.getAllByText(TEXTO_CHEQUEO_SIN_SERVIDOR)).toHaveLength(2)
+    expect(dato(cabecera, 'Tipo').getByText(TEXTO_CHEQUEO_SIN_SERVIDOR)).toBeInTheDocument()
+    expect(dato(cabecera, 'Grupo').getByText(TEXTO_CHEQUEO_SIN_SERVIDOR)).toBeInTheDocument()
+    expect(cabecera.queryByText('—')).not.toBeInTheDocument()
     vi.unstubAllEnvs()
   })
 })
@@ -644,6 +649,13 @@ describe('Legajo: ciclo de chequeo', () => {
     expect(await chequeo.findByRole('link', { name: '777777-6' })).toHaveAttribute('href', '/evaluaciones/777777-6')
     expect(chequeo.getByText('En Chequeo')).toBeInTheDocument()
     expect(chequeo.getByRole('link', { name: '777777-4' })).toHaveAttribute('href', '/evaluaciones/777777-4')
+    for (const [etiqueta, valor] of [
+      ['Última evaluación', '777777-6'],
+      ['Estado en esa evaluación', 'En Chequeo'],
+      ['Evaluación previa', '777777-4'],
+    ] as const) {
+      expect(dato(chequeo, etiqueta).getByText(valor)).toBeInTheDocument()
+    }
   })
 
   it('el ancla #chequeo de las alertas cae sobre el panel de chequeo', async () => {

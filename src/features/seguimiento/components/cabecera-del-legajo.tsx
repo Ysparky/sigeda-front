@@ -32,7 +32,9 @@ export function CabeceraDelLegajo({ codAlumno, alumno }: Props) {
           <Dato etiqueta="Nombre">{`${alumno.data.nombre} ${alumno.data.aPaterno} ${alumno.data.aMaterno}`.trim()}</Dato>
           <Dato etiqueta="DNI">{alumno.data.dni}</Dato>
           <Dato etiqueta="Rango">{alumno.data.rango ?? '—'}</Dato>
-          <Dato etiqueta="Tipo">{legajo.data?.tipo ?? '—'}</Dato>
+          <Dato etiqueta="Tipo">
+            {!disponibleChequeo ? TEXTO_CHEQUEO_SIN_SERVIDOR : (legajo.data?.tipo ?? '—')}
+          </Dato>
           <Dato etiqueta="Estado">
             <StatusBadge vocabulario="estado" valor={alumno.data.estado} />
           </Dato>

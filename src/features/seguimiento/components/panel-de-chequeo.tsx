@@ -72,21 +72,34 @@ export function PanelDeChequeo({ codAlumno }: Props) {
             )}
             <p className="text-sm text-muted-foreground">{textoRegularAlternado(legajo.data.chequeo.regularAlternado)}</p>
             {detalle.data && (
-              <p className="flex flex-wrap items-center gap-2 text-sm">
-                <Enlace to="/evaluaciones/$cod" params={{ cod: detalle.data.codigo }} className="font-mono text-xs">
-                  {detalle.data.codigo}
-                </Enlace>
-                <span>{detalle.data.estadoAlumno}</span>
+              <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <dt className="text-muted-foreground">Última evaluación</dt>
+                  <dd>
+                    <Enlace to="/evaluaciones/$cod" params={{ cod: detalle.data.codigo }} className="font-mono text-xs">
+                      {detalle.data.codigo}
+                    </Enlace>
+                  </dd>
+                </div>
+                <div className="flex items-center gap-2">
+                  <dt className="text-muted-foreground">Estado en esa evaluación</dt>
+                  <dd>{detalle.data.estadoAlumno}</dd>
+                </div>
                 {detalle.data.codEvalPrevia !== null && (
-                  <Enlace
-                    to="/evaluaciones/$cod"
-                    params={{ cod: detalle.data.codEvalPrevia }}
-                    className="font-mono text-xs"
-                  >
-                    {detalle.data.codEvalPrevia}
-                  </Enlace>
+                  <div className="flex items-center gap-2">
+                    <dt className="text-muted-foreground">Evaluación previa</dt>
+                    <dd>
+                      <Enlace
+                        to="/evaluaciones/$cod"
+                        params={{ cod: detalle.data.codEvalPrevia }}
+                        className="font-mono text-xs"
+                      >
+                        {detalle.data.codEvalPrevia}
+                      </Enlace>
+                    </dd>
+                  </div>
                 )}
-              </p>
+              </dl>
             )}
             {chequeos.data &&
               (chequeos.data.length === 0 ? (

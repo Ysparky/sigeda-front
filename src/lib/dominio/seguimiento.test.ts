@@ -3,6 +3,7 @@ import {
   INDICES,
   SEVERIDADES,
   TEXTO_ALERTAS_SIN_SERVIDOR,
+  TEXTO_ALUMNOS_SIN_COINCIDENCIAS,
   TEXTO_CHEQUEO_LO_DECIDE_EL_SERVIDOR,
   TEXTO_CHEQUEO_SIN_SERVIDOR,
   TEXTO_DESAPROBADOS_LOS_VE_SU_INSTRUCTOR,
@@ -15,6 +16,8 @@ import {
   TEXTO_INDICES_SIN_SERVIDOR,
   TEXTO_INDICES_SOLO_MOCK,
   TEXTO_MEDIA_SIMPLE_SUBFASE,
+  TEXTO_MITAD_PRACTICA,
+  TEXTO_MITAD_TEORICA,
   TEXTO_NOTA_QUE_NO_CUENTA,
   TEXTO_NOTA_QUE_PREVALECE,
   TEXTO_ORDEN_MERITO_SIN_SERVIDOR,
@@ -24,9 +27,18 @@ import {
   TEXTO_SIN_ALUMNOS_ASIGNADOS,
   TEXTO_SIN_ALUMNOS_CON_INDICES,
   TEXTO_SIN_ALUMNOS_EN_PROGRAMA,
+  TEXTO_SIN_CAUSALES,
+  TEXTO_SIN_CHEQUEOS,
+  TEXTO_SIN_COEFICIENTE_APLICADO,
   TEXTO_SIN_DATOS_SUFICIENTES,
+  TEXTO_SIN_DESAPROBADOS,
+  TEXTO_SIN_EVALUACIONES_EN_LA_SUBFASE,
+  TEXTO_SIN_EXAMENES_DEL_ALUMNO,
   TEXTO_SIN_GRUPO,
+  TEXTO_SIN_PROMEDIOS_PONDERADOS,
+  TEXTO_SIN_SEGUNDA_NOTA,
   TEXTO_SIN_SUBFASE_ELEGIDA,
+  TEXTO_SIN_TURNOS_DEL_ALUMNO,
   TEXTO_TURNO_SIN_CANTIDAD,
   TIPOS_ALERTA,
   coincideTexto,
@@ -194,13 +206,28 @@ describe('textos fijos de la spec §17.3', () => {
     expect(TEXTO_DESAPROBADOS_LOS_VE_SU_INSTRUCTOR).toBe('Los vuelos desaprobados los consulta su instructor.')
   })
 
-  it('M5-9 los dos textos que la spec no fija quedan igual de anclados, con su origen dicho', () => {
+  it('M5-9 los textos que la spec no fija quedan igual de anclados, con su origen dicho', () => {
     expect(TEXTO_ESTADO_TEORICO_SIN_SERVIDOR).toBe(
       'El estado teórico y sus causales todavía no existen en el servidor.',
     )
     expect(TEXTO_SIN_SUBFASE_ELEGIDA).toBe('Elija una sub fase para ver su reporte y sus promedios.')
     expect(TEXTO_NOTA_QUE_PREVALECE).toBe('Esta nota es la que cuenta')
     expect(TEXTO_NOTA_QUE_NO_CUENTA).toBe('Esta nota no cuenta para el promedio')
+    expect(TEXTO_MITAD_TEORICA).toBe('Mitad teórica (NIT)')
+    expect(TEXTO_MITAD_PRACTICA).toBe('Mitad práctica (NIA)')
+    expect(TEXTO_SIN_COEFICIENTE_APLICADO).toBe('Sin coeficiente aplicado por falta de nota:')
+  })
+
+  it('M5-9 los nueve textos que ninguna S-id nombra también quedan anclados byte a byte', () => {
+    expect(TEXTO_ALUMNOS_SIN_COINCIDENCIAS).toBe('Ningún alumno coincide con los filtros.')
+    expect(TEXTO_SIN_PROMEDIOS_PONDERADOS).toBe('Esta sub fase no tiene evaluaciones ponderadas.')
+    expect(TEXTO_SIN_CHEQUEOS).toBe('Todavía no rindió ningún chequeo.')
+    expect(TEXTO_SIN_CAUSALES).toBe('No tiene causales de bajo rendimiento académico.')
+    expect(TEXTO_SIN_DESAPROBADOS).toBe('No tiene vuelos desaprobados.')
+    expect(TEXTO_SIN_TURNOS_DEL_ALUMNO).toBe('Todavía no tiene turnos de vuelo registrados.')
+    expect(TEXTO_SIN_EXAMENES_DEL_ALUMNO).toBe('Todavía no rindió exámenes teóricos.')
+    expect(TEXTO_SIN_EVALUACIONES_EN_LA_SUBFASE).toBe('No tiene evaluaciones en esta sub fase.')
+    expect(TEXTO_SIN_SEGUNDA_NOTA).toBe('Sin segunda nota: la subsanación está pendiente.')
   })
 
   it('M5-9 los cuatro textos con parámetros los interpolan como la spec los escribe', () => {

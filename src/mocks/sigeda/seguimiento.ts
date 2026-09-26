@@ -166,8 +166,8 @@ export const handlersSeguimiento = [
       .filter((alerta) => alerta.programa === programa)
       .filter((alerta) => idGrupoCrudo === null || idGrupoCrudo === '' || alerta.idGrupo === Number(idGrupoCrudo))
       .filter((alerta) => tipo === '' || alerta.tipo === tipo || !esTipoConocido(tipo))
-      .filter((alerta) => fechaPre === '' || (alerta.fecha ?? '') >= fechaPre)
-      .filter((alerta) => fechaPost === '' || (alerta.fecha ?? '') <= fechaPost)
+      .filter((alerta) => fechaPre === '' || (alerta.fecha !== null && alerta.fecha >= fechaPre))
+      .filter((alerta) => fechaPost === '' || (alerta.fecha !== null && alerta.fecha <= fechaPost))
       .toSorted(
         (izquierda, derecha) =>
           ordinalDeSeveridad(izquierda.severidad) - ordinalDeSeveridad(derecha.severidad) ||
