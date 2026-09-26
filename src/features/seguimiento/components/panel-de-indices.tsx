@@ -44,14 +44,16 @@ export function PanelDeIndices({ codAlumno }: Props) {
               <Dato etiqueta="NEI" valor={indices.data.nit.nei} ayuda={formulaDeIndice('NEI')} />
               <Dato etiqueta="NIA" valor={indices.data.nia.valor} ayuda={formulaDeIndice('NIA')} />
             </dl>
-            <div className="grid gap-1 text-sm text-muted-foreground">
-              <p>Sin coeficiente aplicado por falta de nota:</p>
-              <ul className="list-disc pl-5">
-                {indices.data.nit.asignaturasSinNota.map((materia) => (
-                  <li key={materia}>{materia}</li>
-                ))}
-              </ul>
-            </div>
+            {indices.data.nit.asignaturasSinNota.length > 0 && (
+              <div className="grid gap-1 text-sm text-muted-foreground">
+                <p>Sin coeficiente aplicado por falta de nota:</p>
+                <ul className="list-disc pl-5">
+                  {indices.data.nit.asignaturasSinNota.map((materia) => (
+                    <li key={materia}>{materia}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="grid gap-4">
               {indices.data.nia.fases.map((fase) => (
                 <div key={fase.sigla} className="grid gap-3 border-t pt-4 first:border-t-0 first:pt-0">

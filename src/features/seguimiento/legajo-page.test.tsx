@@ -210,12 +210,39 @@ describe('Legajo: índices del PDI', () => {
     expect(indices.getByText('Sin nota en Operaciones HeliTransportadas ni en Operaciones AeroTácticas.')).toBeInTheDocument()
   })
 
-  it('CA-LEG-13 sin la dependencia el panel de índices lo dice y no pide nada', async () => {
+  it('CA-LEG-13 sin asignaturas pendientes no queda el encabezado de la lista suelto', async () => {
+    server.use(
+      http.get(`${API}/api/personas/:cod/indices`, () =>
+        HttpResponse.json({
+          codigo: '555555',
+          alumno: 'Pedro Rodriguez Garcia',
+          programa: 'PDI',
+          nfpi: 16.44,
+          nit: {
+            valor: 17.6,
+            nct: 18,
+            nei: 16,
+            neiEvaluaciones: 4,
+            asignaturas: [],
+            asignaturasSinNota: [],
+            reduccionPorRezagadoAplicada: false,
+          },
+          nia: { valor: 16.15, fases: [], motivo: null },
+        }),
+      ),
+    )
+    await abrirLegajo('555555')
+    const indices = panel('Índices del PDI')
+    expect(await indices.findByText('16.44')).toBeInTheDocument()
+    expect(indices.queryByText('Sin coeficiente aplicado por falta de nota:')).not.toBeInTheDocument()
+  })
+
+  it('M5-22 con la dependencia de índices cerrada la pantalla no pide los índices', async () => {
     vi.stubEnv('VITE_MOCK_API', 'false')
     const pedidas: string[] = []
     server.events.on('request:start', ({ request }) => pedidas.push(new URL(request.url).pathname))
     await abrirLegajo('555555')
-    expect(await panel('Índices del PDI').findByText(TEXTO_INDICES_SIN_SERVIDOR)).toBeInTheDocument()
+    await panel('Índices del PDI').findByText(TEXTO_INDICES_SIN_SERVIDOR)
     expect(pedidas.some((ruta) => ruta.includes('/indices'))).toBe(false)
     server.events.removeAllListeners('request:start')
     vi.unstubAllEnvs()
