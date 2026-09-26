@@ -687,7 +687,7 @@ describe('Legajo: historial teórico', () => {
     const historial = panel('Historial de exámenes')
     expect(await historial.findByText(TEXTO_PREVALECE_LA_PRIMERA_NOTA)).toBeInTheDocument()
     const desaprobada = within(historial.getByText('10.00 / mínimo 16').closest('tr') as HTMLElement)
-    expect(desaprobada.getByText(/Subsanada con 17\.00/)).toBeInTheDocument()
+    expect(desaprobada.getByText(/Subsanada con 17\.00/)).toHaveAttribute('title', 'Subsanada con 17.00')
     expect(desaprobada.getByText(TEXTO_NOTA_QUE_PREVALECE)).toBeInTheDocument()
     const subsanacion = within(historial.getByText('17.00 / mínimo 16').closest('tr') as HTMLElement)
     expect(subsanacion.getByText(TEXTO_NOTA_QUE_NO_CUENTA)).toBeInTheDocument()
@@ -764,7 +764,7 @@ describe('Legajo: historial teórico', () => {
   it('CA-LEG-11 una subsanación pendiente muestra que no hay segunda nota', async () => {
     await abrirLegajo('666666', '?tab=teorico')
     const historial = panel('Historial de exámenes')
-    expect(await historial.findByText(TEXTO_SIN_SEGUNDA_NOTA)).toBeInTheDocument()
+    expect(await historial.findByText(TEXTO_SIN_SEGUNDA_NOTA)).toHaveAttribute('title', TEXTO_SIN_SEGUNDA_NOTA)
     expect(historial.getByText('12.00 / mínimo 18')).toBeInTheDocument()
   })
 
