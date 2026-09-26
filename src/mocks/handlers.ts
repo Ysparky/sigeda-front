@@ -2,6 +2,7 @@ import type { RequestHandler } from 'msw'
 import { handlersConsultas } from './ia/consultas'
 import { handlersCuestionarios } from './ia/cuestionarios'
 import { handlersDocumentos } from './ia/documentos'
+import { handlersAlumnos } from './sigeda/alumnos'
 import { handlersAuth } from './sigeda/auth'
 import { handlersCatalogos } from './sigeda/catalogos'
 import { handlersCuentas } from './sigeda/cuentas'
@@ -15,6 +16,7 @@ import { handlersManiobras } from './sigeda/maniobras'
 import { handlersMaterias } from './sigeda/materias'
 import { handlersPersonas } from './sigeda/personas'
 import { handlersPreguntas } from './sigeda/preguntas'
+import { handlersReportesSubfase } from './sigeda/reportes-subfase'
 import { handlersTurnos } from './sigeda/turnos'
 import { handlersTurnosTeoricos } from './sigeda/turnos-teoricos'
 
@@ -23,6 +25,7 @@ export const handlers: RequestHandler[] = [
   ...handlersCatalogos,
   ...handlersCuentas,
   ...handlersPersonas,
+  ...handlersAlumnos,
   ...handlersGrupos,
   ...handlersFases,
   ...handlersManiobras,
@@ -33,6 +36,7 @@ export const handlers: RequestHandler[] = [
   ...handlersCuestionariosTeoria,
   ...handlersEstadoTeorico,
   ...handlersEvaluaciones,
+  ...handlersReportesSubfase,
   ...handlersDesaprobados,
   ...handlersDocumentos,
   ...handlersCuestionarios,

@@ -1,5 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 import { nombreCompleto, type Programa } from '@/features/catalogos/api'
+import { aNota } from '@/features/evaluaciones/api'
+import { ApiError } from '@/lib/api/errors'
 import type { Pagina, ParametrosPagina } from '@/lib/api/pagina'
 import { sigeda } from '@/lib/api/sigeda'
 import type { Permiso } from '@/lib/auth/permisos'
@@ -152,6 +154,100 @@ export async function listarDesaprobados(codPersona: string): Promise<Desaprobad
   return sigeda.lista<Desaprobado>(`/api/desaprobados/persona/${encodeURIComponent(codPersona)}`)
 }
 
+export type CuentaDeAlumno = { nombre: string; correo: string | null } | null
+
+export type DetalleAlumno = {
+  dni: string
+  nombre: string
+  aPaterno: string
+  aMaterno: string
+  rango: string | null
+  estado: string
+  usuario: CuentaDeAlumno
+}
+
+export type BloqueDeChequeo = {
+  fase: string
+  criterio: number
+  criterioCumplido: boolean
+  detalle: string
+  regularAlternado: boolean
+  cuentaConEsteEstado: boolean
+}
+
+export type Legajo = {
+  codigo: string
+  nombre: string
+  aPaterno: string
+  aMaterno: string
+  dni: string
+  rango: string | null
+  tipo: string | null
+  estado: string
+  grupo: { id: number; nombre: string; programa: string } | null
+  usuario: CuentaDeAlumno
+  contadores: { chequeo: number; evaluaciones: number; malos: number; regulares: number }
+  chequeo: BloqueDeChequeo
+  ultimaEvaluacion: { codigo: string; fecha: string; clasificacion: string | null; estadoAlumno: string } | null
+}
+
+export type NotaDeSubfase = {
+  codigo: string
+  categoria: string
+  clasificacion: string | null
+  promedio: number | null
+  recomendacion: string | null
+  calificaciones: { notaMin: string; nota: string }[]
+}
+
+export type ReporteDeSubfase = {
+  cabecera: { fase: string; subFase: string; programa: string; alumno: string }
+  maniobras: { id: number; nombre: string }[]
+  notas: NotaDeSubfase[]
+}
+
+export type PromedioDeSubfase = { codigo: string; promedio: number | null }
+
+type DetalleAlumnoApi = Omit<DetalleAlumno, 'aPaterno' | 'aMaterno'> & { APaterno: string; AMaterno: string }
+
+type NotaApi = Omit<NotaDeSubfase, 'promedio'> & { promedio: string | number | null }
+
+export async function obtenerAlumno(codPersona: string): Promise<DetalleAlumno> {
+  const detalle = await sigeda.get<DetalleAlumnoApi>(`/api/personas/${encodeURIComponent(codPersona)}/alumno`)
+  return {
+    dni: detalle.dni,
+    nombre: detalle.nombre,
+    aPaterno: detalle.APaterno,
+    aMaterno: detalle.AMaterno,
+    rango: detalle.rango,
+    estado: detalle.estado,
+    usuario: detalle.usuario ?? null,
+  }
+}
+
+export function obtenerLegajo(codPersona: string): Promise<Legajo> {
+  return sigeda.get<Legajo>(`/api/personas/${encodeURIComponent(codPersona)}/legajo`)
+}
+
+export async function obtenerReporteDeSubfase(idSubfase: number, codPersona: string): Promise<ReporteDeSubfase | null> {
+  try {
+    const reporte = await sigeda.get<Omit<ReporteDeSubfase, 'notas'> & { notas: NotaApi[] }>(
+      `/api/evaluaciones/subfase/${encodeURIComponent(idSubfase)}/persona/${encodeURIComponent(codPersona)}`,
+    )
+    return { ...reporte, notas: reporte.notas.map((nota) => ({ ...nota, promedio: aNota(nota.promedio) })) }
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null
+    throw error
+  }
+}
+
+export async function listarPromediosDeSubfase(idSubfase: number, codPersona: string): Promise<PromedioDeSubfase[]> {
+  const promedios = await sigeda.lista<{ codigo: string; promedio: string | number | null }>(
+    `/api/evaluaciones/promedio/subfase/${encodeURIComponent(idSubfase)}/persona/${encodeURIComponent(codPersona)}`,
+  )
+  return promedios.map((fila) => ({ codigo: fila.codigo, promedio: aNota(fila.promedio) }))
+}
+
 export const clavesSeguimiento = {
   todo: ['seguimiento'] as const,
   alumnos: (fuente: FuenteSeguimiento, programa: Programa, codPersona: string | null) =>
@@ -159,6 +255,12 @@ export const clavesSeguimiento = {
   estadoTeorico: (codigos: readonly string[]) =>
     [...clavesSeguimiento.todo, 'estado-teorico', [...codigos].sort()] as const,
   desaprobados: (codPersona: string) => [...clavesSeguimiento.todo, 'desaprobados', codPersona] as const,
+  alumno: (codPersona: string) => [...clavesSeguimiento.todo, 'alumno', codPersona] as const,
+  legajo: (codPersona: string) => [...clavesSeguimiento.todo, 'legajo', codPersona] as const,
+  reporteDeSubfase: (idSubfase: number, codPersona: string) =>
+    [...clavesSeguimiento.todo, 'reporte-subfase', idSubfase, codPersona] as const,
+  promediosDeSubfase: (idSubfase: number, codPersona: string) =>
+    [...clavesSeguimiento.todo, 'promedios-subfase', idSubfase, codPersona] as const,
 }
 
 export const consultasSeguimiento = {
@@ -178,5 +280,29 @@ export const consultasSeguimiento = {
     queryOptions({
       queryKey: clavesSeguimiento.desaprobados(codPersona),
       queryFn: () => listarDesaprobados(codPersona),
+    }),
+  alumno: (codPersona: string) =>
+    queryOptions({
+      queryKey: clavesSeguimiento.alumno(codPersona),
+      queryFn: () => obtenerAlumno(codPersona),
+      enabled: codPersona !== '',
+    }),
+  legajo: (codPersona: string) =>
+    queryOptions({
+      queryKey: clavesSeguimiento.legajo(codPersona),
+      queryFn: () => obtenerLegajo(codPersona),
+      enabled: codPersona !== '',
+    }),
+  reporteDeSubfase: (idSubfase: number, codPersona: string) =>
+    queryOptions({
+      queryKey: clavesSeguimiento.reporteDeSubfase(idSubfase, codPersona),
+      queryFn: () => obtenerReporteDeSubfase(idSubfase, codPersona),
+      enabled: idSubfase > 0 && codPersona !== '',
+    }),
+  promediosDeSubfase: (idSubfase: number, codPersona: string) =>
+    queryOptions({
+      queryKey: clavesSeguimiento.promediosDeSubfase(idSubfase, codPersona),
+      queryFn: () => listarPromediosDeSubfase(idSubfase, codPersona),
+      enabled: idSubfase > 0 && codPersona !== '',
     }),
 }

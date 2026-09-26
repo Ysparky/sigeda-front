@@ -1,9 +1,11 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { listarEvaluaciones } from '@/features/evaluaciones/api'
 import { ApiError } from '@/lib/api/errors'
 import { sigeda } from '@/lib/api/sigeda'
 import { permisosDeRol } from '@/lib/auth/permisos'
 import { config } from '@/lib/config'
+import { mediaSimple } from '@/lib/dominio/seguimiento'
 import { server } from '@/mocks/server'
 import { iniciarComo } from '@/test/render'
 import {
@@ -11,7 +13,10 @@ import {
   fuenteDeSeguimiento,
   listarDesaprobados,
   listarSeguimiento,
+  obtenerAlumno,
+  obtenerReporteDeSubfase,
   paginarAlumnos,
+  listarPromediosDeSubfase,
   MENSAJE_CODIGO_INVALIDO,
   type AlumnoSeguimiento,
   type FiltrosEscuadron,
@@ -197,5 +202,46 @@ describe('el agujero de desaprobados se expone, nunca se explota', () => {
       )
     expect(referencias.length).toBeGreaterThan(0)
     expect(referencias.filter(([, ruta]) => !ruta.startsWith('/api/desaprobados/persona/'))).toEqual([])
+  })
+})
+
+describe('lo que el legajo lee sin pedir nada nuevo', () => {
+  it('contrato §6.1 el legajo normaliza las claves raras de DetallePersona', async () => {
+    await iniciarComo('instructor.perez')
+    await expect(obtenerAlumno('777777')).resolves.toEqual({
+      dni: '78901234',
+      nombre: 'Carlos',
+      aPaterno: 'Ramirez',
+      aMaterno: 'Sanchez',
+      rango: 'Mayor',
+      estado: 'En Chequeo',
+      usuario: { nombre: 'alumno.ramirez', correo: 'alumno5@sigeda.com' },
+    })
+  })
+
+  it('contrato §6.3 el historial práctico se lee con el reader de M1, sin uno nuevo', async () => {
+    await iniciarComo('instructor.perez')
+    const pagina = await listarEvaluaciones('777777', { programa: 'PDI', page: 0, size: 10, direction: 'ASC' })
+    expect(pagina.items).toHaveLength(5)
+    expect(pagina.items[0]).toMatchObject({ codigo: '777777-1', promedio: 12, clasificacion: 'Malo' })
+  })
+
+  it('contrato §9.9 las tres medias simples del contrato son 13.00, 14.50 y 16.00', async () => {
+    await iniciarComo('instructor.perez')
+    const media = async (idSubfase: number, cod: string) =>
+      mediaSimple(
+        (await listarPromediosDeSubfase(idSubfase, cod)).flatMap((fila) => (fila.promedio === null ? [] : [fila.promedio])),
+      )
+    expect(await media(3, '777777')).toBe(13)
+    expect(await media(1, '555555')).toBe(14.5)
+    expect(await media(1, '999999')).toBe(16)
+  })
+
+  it('contrato §9.9 un reporte sin evaluaciones llega como null y su texto no se muestra', async () => {
+    await iniciarComo('instructor.perez')
+    await expect(obtenerReporteDeSubfase(2, '555555')).resolves.toBeNull()
+    const reporte = await obtenerReporteDeSubfase(3, '777777')
+    expect(reporte?.notas[0]?.promedio).toBe(12)
+    expect(reporte?.maniobras).toHaveLength(2)
   })
 })
