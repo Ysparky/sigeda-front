@@ -213,7 +213,7 @@ export function listarHistorialTeorico(
     page: filtros.page,
     size: filtros.size,
     property: filtros.property ?? 'fechaExamen',
-    direction: filtros.direction,
+    direction: filtros.direction ?? 'DESC',
   })
 }
 

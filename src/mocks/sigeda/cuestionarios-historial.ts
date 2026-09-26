@@ -58,8 +58,20 @@ function filaDe(cuestionario: CuestionarioMock) {
 function paginarExamenes(filas: readonly NonNullable<ReturnType<typeof filaDe>>[], url: URL) {
   const page = numero(url, 'page', 0)
   const size = numero(url, 'size', 6)
-  const direccion = (url.searchParams.get('direction') ?? 'ASC').toUpperCase()
+  const direccion = (url.searchParams.get('direction') ?? 'DESC').toUpperCase()
   const propiedad = url.searchParams.get('property') ?? 'fechaExamen'
+  if (page < 0 || size < 1 || (direccion !== 'ASC' && direccion !== 'DESC')) {
+    return HttpResponse.json({ error: 'Argumento incorrecto', mensaje: 'Paginado inválido.' }, { status: 400 })
+  }
+  if (filas.length > 0 && !(propiedad in filas[0])) {
+    return HttpResponse.json(
+      {
+        error: 'Argumento incorrecto',
+        mensaje: `No se encontró atributo '${propiedad}' para ordenar cuestionarios.`,
+      },
+      { status: 400 },
+    )
+  }
   const ordenados = [...filas].sort((a, b) => {
     const izquierda = String((a as Record<string, unknown>)[propiedad] ?? '')
     const derecha = String((b as Record<string, unknown>)[propiedad] ?? '')

@@ -37,6 +37,16 @@ describe('GET /api/cuestionarios', () => {
     expect(pagina.content.find((fila) => fila.idTurnoTeorico === 7)?.idTurnoOrigen).toBe(6)
   })
 
+  it('contrato §5.2 sin direction el historial llega del último hacia atrás y un paginado inválido es 400', async () => {
+    await iniciarComo('instructor.perez')
+    const pagina = await sigeda.get<{ content: Fila[] }>('/api/cuestionarios?codAlumno=999999&page=0&size=10')
+    expect(pagina.content.map((fila) => fila.idTurnoTeorico)).toEqual([7, 6])
+    await expect(sigeda.get('/api/cuestionarios?codAlumno=999999&page=0&size=0')).rejects.toMatchObject({ status: 400 })
+    await expect(
+      sigeda.get('/api/cuestionarios?codAlumno=999999&page=0&size=10&property=inventada'),
+    ).rejects.toMatchObject({ status: 400 })
+  })
+
   it('contrato §9.8 666666 tiene su desaprobado con la subsanación pendiente y sin segunda nota', async () => {
     await iniciarComo('instructor.perez')
     const pagina = await historial('666666')
