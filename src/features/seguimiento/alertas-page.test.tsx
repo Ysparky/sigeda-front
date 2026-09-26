@@ -19,6 +19,18 @@ async function abrirAlertas(ruta = '/seguimiento/alertas?size=20', username = 'c
   return vista
 }
 
+function ordenable(fecha: string): string {
+  const partes = fecha.split('/')
+  return partes.length === 3 ? `${partes[2]}-${partes[1]}-${partes[0]}` : ''
+}
+
+function celdas(nombre: string) {
+  const tabla = within(screen.getByRole('table', { name: 'Alertas del escuadrón' }))
+  const indice = tabla.getAllByRole('columnheader').findIndex((cabecera) => cabecera.textContent?.trim() === nombre)
+  expect(indice).toBeGreaterThanOrEqual(0)
+  return filas().map((fila) => within(fila).getAllByRole('cell')[indice]!.textContent?.trim() ?? '')
+}
+
 function filas() {
   return within(screen.getByRole('table', { name: 'Alertas del escuadrón' }))
     .getAllByRole('row')
@@ -138,12 +150,7 @@ describe('Alertas: tipos y destinos', () => {
 
   it('CA-ALE-03 el orden por defecto es Alta, Media, Baja y luego fecha descendente', async () => {
     await abrirAlertas()
-    const severidades = filas().map((fila) =>
-      within(fila)
-        .getAllByRole('cell')
-        .at(-1)!
-        .textContent?.trim(),
-    )
+    const severidades = celdas('Severidad')
     expect(severidades).toEqual([
       'Alta',
       'Media',
@@ -159,9 +166,14 @@ describe('Alertas: tipos y destinos', () => {
       'Baja',
       'Baja',
     ])
+    const fechas = celdas('Fecha').map(ordenable)
+    for (const banda of ['Alta', 'Media', 'Baja']) {
+      const deLaBanda = fechas.filter((_, indice) => severidades[indice] === banda)
+      expect([...deLaBanda].sort((a, b) => b.localeCompare(a))).toEqual(deLaBanda)
+    }
   })
 
-  it('CA-ALE-03 una alerta sin fecha queda al final de su severidad', async () => {
+  it('CA-ALE-03 una alerta sin fecha muestra un guion en su columna', async () => {
     server.use(
       http.get(`${API}/api/seguimiento/alertas`, () =>
         HttpResponse.json({
@@ -192,7 +204,7 @@ describe('Alertas: tipos y destinos', () => {
       ),
     )
     await abrirAlertas()
-    expect(within(filas()[0]!).getByText('—')).toBeInTheDocument()
+    expect(celdas('Fecha')).toEqual(['—'])
   })
 
   it('CA-ALE-04 una alerta de vuelo desaprobado abre su evaluación', async () => {

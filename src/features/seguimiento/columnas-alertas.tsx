@@ -24,18 +24,6 @@ export function destinoDeAlerta(alerta: Alerta): Destino {
 
 export function columnasAlertas() {
   return ayudante.columns([
-    ayudante.display({
-      id: 'acciones',
-      header: () => <span className="sr-only">Acciones</span>,
-      cell: (contexto) => (
-        <Enlace
-          {...destinoDeAlerta(contexto.row.original)}
-          aria-label={`Abrir ${etiquetaDeTipoAlerta(contexto.row.original.tipo)} de ${contexto.row.original.alumno}`}
-        >
-          Abrir
-        </Enlace>
-      ),
-    }),
     ayudante.accessor('tipo', {
       header: 'Tipo',
       cell: (contexto) => <StatusBadge vocabulario="tipoAlerta" valor={contexto.getValue()} />,
@@ -67,6 +55,18 @@ export function columnasAlertas() {
     ayudante.accessor('severidad', {
       header: 'Severidad',
       cell: (contexto) => <StatusBadge vocabulario="severidad" valor={contexto.getValue()} />,
+    }),
+    ayudante.display({
+      id: 'acciones',
+      header: () => <span className="sr-only">Acciones</span>,
+      cell: (contexto) => (
+        <Enlace
+          {...destinoDeAlerta(contexto.row.original)}
+          aria-label={`Abrir ${etiquetaDeTipoAlerta(contexto.row.original.tipo)} de ${contexto.row.original.alumno}`}
+        >
+          Abrir
+        </Enlace>
+      ),
     }),
   ])
 }

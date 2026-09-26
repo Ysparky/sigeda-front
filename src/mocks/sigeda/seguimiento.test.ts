@@ -3,6 +3,7 @@ import { MENSAJE_SIN_PERMISO } from '@/lib/api/errors'
 import { sigeda } from '@/lib/api/sigeda'
 import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
 import { iniciarComo } from '@/test/render'
+import { datos } from './datos'
 import { D10_SIN_ALERTAS, D17_GRUPO_FUERA_DE_ALCANCE, D18_GRUPO_NO_EXISTE } from './seguimiento'
 
 type Alerta = {
@@ -110,6 +111,17 @@ describe('GET /api/seguimiento/alertas', () => {
       (await alertas(`programa=PDI&fechaPost=${sumarDias(hoyIso(), -25)}&page=0&size=20`)).totalElements,
     ).toBe(3)
     expect((await alertas('programa=PDI&tipo=NO_EXISTE&page=0&size=20')).totalElements).toBe(13)
+  })
+
+  it('contrato §2.1 una alerta sin fecha queda al final de su banda de severidad', async () => {
+    const sinEvaluaciones = datos().personas.find((persona) => persona.codigo === '222222')
+    if (!sinEvaluaciones) throw new Error('la persona 222222 no está en los datos de prueba')
+    sinEvaluaciones.estado = 'En Complementación'
+    await iniciarComo('comandante.aguirre')
+    const pagina = await alertas('programa=PDI&page=0&size=20')
+    const medias = pagina.content.filter((alerta) => alerta.severidad === 'MEDIA')
+    expect(medias.at(-1)).toMatchObject({ codAlumno: '222222', fecha: null })
+    expect(medias.slice(0, -1).every((alerta) => alerta.fecha !== null)).toBe(true)
   })
 
   it('contrato §2.1 un grupo inexistente responde 404 D18 y uno fuera de alcance 403 D17', async () => {
