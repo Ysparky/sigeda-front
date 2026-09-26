@@ -145,6 +145,11 @@ describe('Reportes: el alumno sin NFPI y los estados de la pantalla', () => {
     )
     expect(fila.getAllByText(TEXTO_SIN_DATOS_SUFICIENTES)).toHaveLength(2)
     expect(fila.getByText('12.80')).toBeInTheDocument()
+    const marcador = fila.getByText('Sin puesto')
+    const soloLectores = marcador.querySelector('.sr-only')
+    expect(soloLectores?.textContent?.trim()).toBe(
+      textoSinNfpi('Sin nota en Operaciones HeliTransportadas ni en Operaciones AeroTácticas.'),
+    )
   })
 
   it('CA-REP-05 los puestos van 1..n sobre los rankeables y el que no lo es no desplaza a nadie', async () => {
@@ -157,6 +162,8 @@ describe('Reportes: el alumno sin NFPI y los estados de la pantalla', () => {
     renderApp('/reportes?programa=PDE')
     expect(await screen.findByText(TEXTO_SIN_ALUMNOS_CON_INDICES)).toBeInTheDocument()
     expect(screen.queryByRole('table', { name: 'Orden de mérito' })).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Grupo')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Limpiar filtros' })).toBeInTheDocument()
   })
 
   it('CA-REP-08 un fallo en la primera carga muestra el aviso con Reintentar', async () => {
@@ -170,7 +177,7 @@ describe('Reportes: el alumno sin NFPI y los estados de la pantalla', () => {
     expect(await screen.findByRole('table', { name: 'Orden de mérito' })).toBeInTheDocument()
   })
 
-  it('CA-REP-08 fuera del modo mock y sin las dependencias 6 y 63 muestra S1 y S26 y no pide la tabla', async () => {
+  it('CA-REP-08 fuera del modo mock y sin las dependencias 6, 62 y 63 muestra S1 y S26 y no pide la tabla', async () => {
     vi.stubEnv('VITE_MOCK_API', 'false')
     const pedidas: string[] = []
     server.events.on('request:start', ({ request }) => pedidas.push(new URL(request.url).pathname))
