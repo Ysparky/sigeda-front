@@ -90,9 +90,15 @@ describe('GET /api/personas/{cod}/legajo', () => {
   it('contrato §6.1 los dos endpoints piden Read y un código inexistente da 404 D2', async () => {
     await iniciarComo('alumno.ramirez')
     await expect(sigeda.get('/api/personas/777777/legajo')).resolves.toBeTruthy()
+    await expect(sigeda.get('/api/personas/777777/alumno')).resolves.toBeTruthy()
     await expect(sigeda.get('/api/personas/000000/legajo')).rejects.toMatchObject({ status: 404 })
+    await expect(sigeda.get('/api/personas/000000/alumno')).rejects.toMatchObject({ status: 404 })
     tokens.guardar(jwtDePrueba('raul.paredes'), '')
     await expect(sigeda.get('/api/personas/777777/legajo')).rejects.toMatchObject({
+      status: 403,
+      message: MENSAJE_SIN_PERMISO,
+    })
+    await expect(sigeda.get('/api/personas/777777/alumno')).rejects.toMatchObject({
       status: 403,
       message: MENSAJE_SIN_PERMISO,
     })
