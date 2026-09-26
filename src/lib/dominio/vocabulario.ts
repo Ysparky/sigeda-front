@@ -74,6 +74,11 @@ export const RESULTADOS_EXAMEN = {
   desaprobado: { etiqueta: 'Desaprobado', tono: 'peligro' },
 } as const satisfies Record<string, Termino>
 
+export const NOTAS_DEL_PROMEDIO = {
+  cuenta: { etiqueta: 'Esta nota es la que cuenta', tono: 'info' },
+  noCuenta: { etiqueta: 'Esta nota no cuenta para el promedio', tono: 'neutro' },
+} as const satisfies Record<string, Termino>
+
 export const ESTADOS_AERONAVE = {
   Disponible: { etiqueta: 'Disponible', tono: 'exito' },
   En_Mantenimiento: { etiqueta: 'En mantenimiento', tono: 'aviso' },
@@ -95,6 +100,7 @@ const VOCABULARIOS = {
   turnoTeorico: ESTADOS_TURNO_TEORICO,
   rendicion: ESTADOS_RENDICION,
   examen: RESULTADOS_EXAMEN,
+  notaDelPromedio: NOTAS_DEL_PROMEDIO,
   subsanacion: SUBSANACION,
   severidad: SEVERIDADES_ALERTA,
   tipoAlerta: TIPOS_DE_ALERTA,

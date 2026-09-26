@@ -1,4 +1,4 @@
-import { ESTADOS_ALUMNO } from './vocabulario'
+import { ESTADOS_ALUMNO, NOTAS_DEL_PROMEDIO } from './vocabulario'
 
 export const TEXTO_INDICES_SOLO_MOCK =
   'Los índices del PDI y el orden de mérito todavía no existen en el servidor: se muestran solo en modo mock.'
@@ -24,8 +24,8 @@ export const TEXTO_INDICES_SIN_SERVIDOR = 'El servidor todavía no calcula los �
 export const TEXTO_HISTORIAL_TEORICO_SIN_SERVIDOR =
   'El historial de exámenes teóricos todavía no existe en el servidor.'
 export const TEXTO_ESTADO_TEORICO_SIN_SERVIDOR = 'El estado teórico y sus causales todavía no existen en el servidor.'
-export const TEXTO_NOTA_QUE_PREVALECE = 'Esta nota es la que cuenta'
-export const TEXTO_NO_REEMPLAZA_LA_NOTA = 'No reemplaza la nota anterior'
+export const TEXTO_NOTA_QUE_PREVALECE = NOTAS_DEL_PROMEDIO.cuenta.etiqueta
+export const TEXTO_NOTA_QUE_NO_CUENTA = NOTAS_DEL_PROMEDIO.noCuenta.etiqueta
 
 export const TEXTO_PREVALECE_LA_PRIMERA_NOTA =
   'Prevalece la primera nota: es la que entra en el promedio. La subsanación levanta el bloqueo para volar y queda como evidencia.'

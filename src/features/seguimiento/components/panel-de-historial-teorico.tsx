@@ -8,8 +8,6 @@ import type { ParametrosPagina } from '@/lib/api/pagina'
 import { accionDisponible } from '@/lib/dependencias'
 import {
   TEXTO_HISTORIAL_TEORICO_SIN_SERVIDOR,
-  TEXTO_NOTA_QUE_PREVALECE,
-  TEXTO_NO_REEMPLAZA_LA_NOTA,
   TEXTO_PREVALECE_LA_PRIMERA_NOTA,
   TEXTO_SIN_EXAMENES_DEL_ALUMNO,
   TEXTO_SIN_SEGUNDA_NOTA,
@@ -86,10 +84,10 @@ const columnas = ayudante.columns([
         <div className="grid gap-1">
           <span className="tabular-nums">{textoConMinimo(fila.nota, fila.notaMinimaAplicada)}</span>
           {fila.subsanadoPor !== null && fila.tipoExamen !== 'SUBSANACION' && (
-            <span className="text-xs font-medium text-foreground">{TEXTO_NOTA_QUE_PREVALECE}</span>
+            <StatusBadge vocabulario="notaDelPromedio" valor="cuenta" />
           )}
           {fila.tipoExamen === 'SUBSANACION' && fila.idTurnoOrigen !== null && (
-            <span className="text-xs font-medium text-foreground">{TEXTO_NO_REEMPLAZA_LA_NOTA}</span>
+            <StatusBadge vocabulario="notaDelPromedio" valor="noCuenta" />
           )}
         </div>
       )

@@ -15,8 +15,8 @@ import {
   TEXTO_INDICES_SIN_SERVIDOR,
   TEXTO_INDICES_SOLO_MOCK,
   TEXTO_MEDIA_SIMPLE_SUBFASE,
+  TEXTO_NOTA_QUE_NO_CUENTA,
   TEXTO_NOTA_QUE_PREVALECE,
-  TEXTO_NO_REEMPLAZA_LA_NOTA,
   TEXTO_ORDEN_MERITO_SIN_SERVIDOR,
   TEXTO_PREVALECE_LA_PRIMERA_NOTA,
   TEXTO_REQUIERE_ATENCION,
@@ -200,7 +200,7 @@ describe('textos fijos de la spec §17.3', () => {
     )
     expect(TEXTO_SIN_SUBFASE_ELEGIDA).toBe('Elija una sub fase para ver su reporte y sus promedios.')
     expect(TEXTO_NOTA_QUE_PREVALECE).toBe('Esta nota es la que cuenta')
-    expect(TEXTO_NO_REEMPLAZA_LA_NOTA).toBe('No reemplaza la nota anterior')
+    expect(TEXTO_NOTA_QUE_NO_CUENTA).toBe('Esta nota no cuenta para el promedio')
   })
 
   it('M5-9 los cuatro textos con parámetros los interpolan como la spec los escribe', () => {
