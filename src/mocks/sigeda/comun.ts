@@ -112,6 +112,25 @@ export function paginar<T extends object>(
   })
 }
 
+export function paginarOrdenado<T extends object>(ordenados: readonly T[], url: URL, opciones: { nombreLista: string }) {
+  const page = numero(url, 'page', 0)
+  const size = numero(url, 'size', 6)
+  const pagina = ordenados.slice(page * size, page * size + size)
+  if (pagina.length === 0) return textoNoEncontrado(`No existen ${opciones.nombreLista} disponibles.`)
+  const totalPages = Math.ceil(ordenados.length / size)
+  return HttpResponse.json({
+    content: pagina,
+    totalElements: ordenados.length,
+    totalPages,
+    size,
+    number: page,
+    first: page === 0,
+    last: page >= totalPages - 1,
+    numberOfElements: pagina.length,
+    empty: false,
+  })
+}
+
 const PROPIEDADES_VALIDAS = ['id', 'nombre']
 
 export function paginarConOrden<T extends { id: number; nombre: string }>(
