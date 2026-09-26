@@ -1,8 +1,11 @@
 import { screen, waitFor, within } from '@testing-library/react'
+import { delay, http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
+import { config } from '@/lib/config'
 import { momento, hoyIso } from '@/lib/dominio/calendario'
 import { TEXTO_DESEMPATE, textoOrdenDeMeritoConsultado } from '@/lib/dominio/seguimiento'
 import { formatearFecha } from '@/lib/formato'
+import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
 import { relojFalso } from '@/test/tiempo'
 
@@ -70,6 +73,41 @@ describe('Reportes y orden de mérito', () => {
     await screen.findByRole('table', { name: 'Orden de mérito' })
     await screen.findByText(textoOrdenDeMeritoConsultado(formatearFecha(hoyIso()), '09:15'))
     expect(screen.getByText(TEXTO_DESEMPATE)).toBeInTheDocument()
+  })
+
+  it('CA-REP-03 al cambiar de página el sello nunca muestra una fecha de 1970', async () => {
+    const { usuario } = await abrirReportes('/reportes?size=2')
+    let pedidas = 0
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/reportes/orden-merito`, async () => {
+        pedidas += 1
+        await delay(80)
+        return HttpResponse.json({
+          content: [
+            {
+              puesto: 3,
+              codigo: '111111',
+              alumno: 'Oscar Lopez Chaparro',
+              idGrupo: 1,
+              grupo: 'Grupo 1',
+              nfpi: 15.28,
+              nit: 15.8,
+              nia: 15.15,
+              motivoSinNfpi: null,
+            },
+          ],
+          totalElements: 6,
+          totalPages: 3,
+          size: 2,
+          number: 1,
+        })
+      }),
+    )
+    await usuario.click(screen.getByRole('button', { name: 'Siguiente' }))
+    expect(screen.queryByText(/1970/)).not.toBeInTheDocument()
+    await waitFor(() => expect(pedidas).toBe(1))
+    expect(screen.queryByText(/1970/)).not.toBeInTheDocument()
+    expect(await screen.findByText(/Orden de mérito consultado el/)).toBeInTheDocument()
   })
 
   it('CA-REP-04 el empate se rompe por NIA y el puesto no cambia al reordenar la tabla', async () => {
