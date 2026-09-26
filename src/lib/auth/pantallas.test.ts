@@ -71,6 +71,7 @@ describe('menuPara', () => {
       'Mis turnos',
       'Mis evaluaciones',
       'Mis exámenes',
+      'Mi legajo',
       'Documentos',
       'Cuestionario de práctica',
       'Consultas',
@@ -88,6 +89,9 @@ describe('menuPara', () => {
       'Evaluaciones',
       'Banco de preguntas',
       'Turnos teóricos',
+      'Escuadrón',
+      'Alertas',
+      'Reportes y orden de mérito',
       'Documentos',
       'Cuestionario de práctica',
       'Consultas',
@@ -113,12 +117,34 @@ describe('menuPara', () => {
       'Operaciones de vuelo',
       'Evaluaciones',
       'Teoría',
+      'Seguimiento',
       'Aprendizaje',
     ])
     expect(secciones[2]?.pantallas.map((pantalla) => pantalla.titulo)).toEqual([
       'Fases y subfases',
       'Maniobras',
       'Materias',
+    ])
+  })
+})
+
+describe('PANTALLAS de seguimiento', () => {
+  it('M5-10 las cinco pantallas de M5 están registradas tal como §17.3 las declara', () => {
+    const pantallasM5: Pantalla[] = [
+      PANTALLAS.escuadron,
+      PANTALLAS.alertas,
+      PANTALLAS.legajo,
+      PANTALLAS.miLegajo,
+      PANTALLAS.reportes,
+    ]
+    expect(
+      pantallasM5.map((pantalla) => [pantalla.ruta, pantalla.permiso, pantalla.roles, pantalla.padre, pantalla.enMenu, pantalla.grupo]),
+    ).toEqual([
+      ['/seguimiento', 'View My Group', undefined, undefined, true, 'Seguimiento'],
+      ['/seguimiento/alertas', 'View Disapproved', undefined, '/seguimiento', true, 'Seguimiento'],
+      ['/seguimiento/$alumno', 'Read', undefined, '/seguimiento', false, 'Seguimiento'],
+      ['/mi-legajo', 'Read', ['Alumno'], undefined, true, 'Seguimiento'],
+      ['/reportes', 'Create Reports', undefined, undefined, true, 'Seguimiento'],
     ])
   })
 })
@@ -197,6 +223,18 @@ describe('migasPara', () => {
   it('no agrega migas en Inicio ni en rutas desconocidas', () => {
     expect(migasPara('/', perfilDe('Alumno'), false)).toEqual([])
     expect(migasPara('/no-existe', perfilDe('Alumno'), false)).toEqual([])
+  })
+
+  it('M5-9 arma las migas de las pantallas de seguimiento', () => {
+    expect(migasPara('/seguimiento/$alumno', perfilDe('Instructor'), false)).toEqual([
+      PANTALLAS.escuadron,
+      PANTALLAS.legajo,
+    ])
+    expect(migasPara('/seguimiento/alertas', perfilDe('Comandante de Escuadrón'), false)).toEqual([
+      PANTALLAS.escuadron,
+      PANTALLAS.alertas,
+    ])
+    expect(migasPara('/seguimiento/$alumno', perfilDe('Alumno'), false)).toEqual([PANTALLAS.legajo])
   })
 })
 

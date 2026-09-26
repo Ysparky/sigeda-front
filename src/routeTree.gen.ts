@@ -14,8 +14,10 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppCuentaRouteImport } from './routes/_app/cuenta'
 import { Route as AppGuiaRouteImport } from './routes/_app/guia'
+import { Route as AppMiLegajoRouteImport } from './routes/_app/mi-legajo'
 import { Route as AppMisEvaluacionesRouteImport } from './routes/_app/mis-evaluaciones'
 import { Route as AppMisTurnosRouteImport } from './routes/_app/mis-turnos'
+import { Route as AppReportesRouteImport } from './routes/_app/reportes'
 import { Route as AppAprendizajeIndexRouteImport } from './routes/_app/aprendizaje/index'
 import { Route as AppAprendizajeConsultasRouteImport } from './routes/_app/aprendizaje/consultas'
 import { Route as AppAprendizajeCuestionarioRouteImport } from './routes/_app/aprendizaje/cuestionario'
@@ -29,6 +31,9 @@ import { Route as AppPersonasIndexRouteImport } from './routes/_app/personas/ind
 import { Route as AppPersonasCodRouteImport } from './routes/_app/personas/$cod'
 import { Route as AppPersonasNuevaRouteImport } from './routes/_app/personas/nueva'
 import { Route as AppProgramaMateriasRouteImport } from './routes/_app/programa/materias'
+import { Route as AppSeguimientoIndexRouteImport } from './routes/_app/seguimiento/index'
+import { Route as AppSeguimientoAlumnoRouteImport } from './routes/_app/seguimiento/$alumno'
+import { Route as AppSeguimientoAlertasRouteImport } from './routes/_app/seguimiento/alertas'
 import { Route as AppTurnosIndexRouteImport } from './routes/_app/turnos/index'
 import { Route as AppTurnosNuevoRouteImport } from './routes/_app/turnos/nuevo'
 import { Route as AppEvaluacionesCodIndexRouteImport } from './routes/_app/evaluaciones/$cod/index'
@@ -81,6 +86,11 @@ const AppGuiaRoute = AppGuiaRouteImport.update({
   path: '/guia',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMiLegajoRoute = AppMiLegajoRouteImport.update({
+  id: '/mi-legajo',
+  path: '/mi-legajo',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMisEvaluacionesRoute = AppMisEvaluacionesRouteImport.update({
   id: '/mis-evaluaciones',
   path: '/mis-evaluaciones',
@@ -89,6 +99,11 @@ const AppMisEvaluacionesRoute = AppMisEvaluacionesRouteImport.update({
 const AppMisTurnosRoute = AppMisTurnosRouteImport.update({
   id: '/mis-turnos',
   path: '/mis-turnos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReportesRoute = AppReportesRouteImport.update({
+  id: '/reportes',
+  path: '/reportes',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAprendizajeIndexRoute = AppAprendizajeIndexRouteImport.update({
@@ -155,6 +170,21 @@ const AppPersonasNuevaRoute = AppPersonasNuevaRouteImport.update({
 const AppProgramaMateriasRoute = AppProgramaMateriasRouteImport.update({
   id: '/programa/materias',
   path: '/programa/materias',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSeguimientoIndexRoute = AppSeguimientoIndexRouteImport.update({
+  id: '/seguimiento/',
+  path: '/seguimiento/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSeguimientoAlumnoRoute = AppSeguimientoAlumnoRouteImport.update({
+  id: '/seguimiento/$alumno',
+  path: '/seguimiento/$alumno',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSeguimientoAlertasRoute = AppSeguimientoAlertasRouteImport.update({
+  id: '/seguimiento/alertas',
+  path: '/seguimiento/alertas',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTurnosIndexRoute = AppTurnosIndexRouteImport.update({
@@ -307,8 +337,10 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/cuenta': typeof AppCuentaRoute
   '/guia': typeof AppGuiaRoute
+  '/mi-legajo': typeof AppMiLegajoRoute
   '/mis-evaluaciones': typeof AppMisEvaluacionesRoute
   '/mis-turnos': typeof AppMisTurnosRoute
+  '/reportes': typeof AppReportesRoute
   '/aprendizaje/consultas': typeof AppAprendizajeConsultasRoute
   '/aprendizaje/cuestionario': typeof AppAprendizajeCuestionarioRoute
   '/banco/importar': typeof AppBancoImportarRoute
@@ -316,6 +348,8 @@ export interface FileRoutesByFullPath {
   '/personas/$cod': typeof AppPersonasCodRoute
   '/personas/nueva': typeof AppPersonasNuevaRoute
   '/programa/materias': typeof AppProgramaMateriasRoute
+  '/seguimiento/$alumno': typeof AppSeguimientoAlumnoRoute
+  '/seguimiento/alertas': typeof AppSeguimientoAlertasRoute
   '/turnos/nuevo': typeof AppTurnosNuevoRoute
   '/aprendizaje/': typeof AppAprendizajeIndexRoute
   '/banco/': typeof AppBancoIndexRoute
@@ -323,6 +357,7 @@ export interface FileRoutesByFullPath {
   '/examenes/': typeof AppExamenesIndexRoute
   '/grupos/': typeof AppGruposIndexRoute
   '/personas/': typeof AppPersonasIndexRoute
+  '/seguimiento/': typeof AppSeguimientoIndexRoute
   '/turnos/': typeof AppTurnosIndexRoute
   '/evaluaciones/$cod/editar': typeof AppEvaluacionesCodEditarRoute
   '/examenes/$id/resultado': typeof AppExamenesIdResultadoRoute
@@ -354,8 +389,10 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/cuenta': typeof AppCuentaRoute
   '/guia': typeof AppGuiaRoute
+  '/mi-legajo': typeof AppMiLegajoRoute
   '/mis-evaluaciones': typeof AppMisEvaluacionesRoute
   '/mis-turnos': typeof AppMisTurnosRoute
+  '/reportes': typeof AppReportesRoute
   '/': typeof AppIndexRoute
   '/aprendizaje/consultas': typeof AppAprendizajeConsultasRoute
   '/aprendizaje/cuestionario': typeof AppAprendizajeCuestionarioRoute
@@ -364,6 +401,8 @@ export interface FileRoutesByTo {
   '/personas/$cod': typeof AppPersonasCodRoute
   '/personas/nueva': typeof AppPersonasNuevaRoute
   '/programa/materias': typeof AppProgramaMateriasRoute
+  '/seguimiento/$alumno': typeof AppSeguimientoAlumnoRoute
+  '/seguimiento/alertas': typeof AppSeguimientoAlertasRoute
   '/turnos/nuevo': typeof AppTurnosNuevoRoute
   '/aprendizaje': typeof AppAprendizajeIndexRoute
   '/banco': typeof AppBancoIndexRoute
@@ -371,6 +410,7 @@ export interface FileRoutesByTo {
   '/examenes': typeof AppExamenesIndexRoute
   '/grupos': typeof AppGruposIndexRoute
   '/personas': typeof AppPersonasIndexRoute
+  '/seguimiento': typeof AppSeguimientoIndexRoute
   '/turnos': typeof AppTurnosIndexRoute
   '/evaluaciones/$cod/editar': typeof AppEvaluacionesCodEditarRoute
   '/examenes/$id/resultado': typeof AppExamenesIdResultadoRoute
@@ -404,8 +444,10 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/cuenta': typeof AppCuentaRoute
   '/_app/guia': typeof AppGuiaRoute
+  '/_app/mi-legajo': typeof AppMiLegajoRoute
   '/_app/mis-evaluaciones': typeof AppMisEvaluacionesRoute
   '/_app/mis-turnos': typeof AppMisTurnosRoute
+  '/_app/reportes': typeof AppReportesRoute
   '/_app/': typeof AppIndexRoute
   '/_app/aprendizaje/consultas': typeof AppAprendizajeConsultasRoute
   '/_app/aprendizaje/cuestionario': typeof AppAprendizajeCuestionarioRoute
@@ -414,6 +456,8 @@ export interface FileRoutesById {
   '/_app/personas/$cod': typeof AppPersonasCodRoute
   '/_app/personas/nueva': typeof AppPersonasNuevaRoute
   '/_app/programa/materias': typeof AppProgramaMateriasRoute
+  '/_app/seguimiento/$alumno': typeof AppSeguimientoAlumnoRoute
+  '/_app/seguimiento/alertas': typeof AppSeguimientoAlertasRoute
   '/_app/turnos/nuevo': typeof AppTurnosNuevoRoute
   '/_app/aprendizaje/': typeof AppAprendizajeIndexRoute
   '/_app/banco/': typeof AppBancoIndexRoute
@@ -421,6 +465,7 @@ export interface FileRoutesById {
   '/_app/examenes/': typeof AppExamenesIndexRoute
   '/_app/grupos/': typeof AppGruposIndexRoute
   '/_app/personas/': typeof AppPersonasIndexRoute
+  '/_app/seguimiento/': typeof AppSeguimientoIndexRoute
   '/_app/turnos/': typeof AppTurnosIndexRoute
   '/_app/evaluaciones/$cod/editar': typeof AppEvaluacionesCodEditarRoute
   '/_app/examenes/$id/resultado': typeof AppExamenesIdResultadoRoute
@@ -455,8 +500,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/cuenta'
     | '/guia'
+    | '/mi-legajo'
     | '/mis-evaluaciones'
     | '/mis-turnos'
+    | '/reportes'
     | '/aprendizaje/consultas'
     | '/aprendizaje/cuestionario'
     | '/banco/importar'
@@ -464,6 +511,8 @@ export interface FileRouteTypes {
     | '/personas/$cod'
     | '/personas/nueva'
     | '/programa/materias'
+    | '/seguimiento/$alumno'
+    | '/seguimiento/alertas'
     | '/turnos/nuevo'
     | '/aprendizaje/'
     | '/banco/'
@@ -471,6 +520,7 @@ export interface FileRouteTypes {
     | '/examenes/'
     | '/grupos/'
     | '/personas/'
+    | '/seguimiento/'
     | '/turnos/'
     | '/evaluaciones/$cod/editar'
     | '/examenes/$id/resultado'
@@ -502,8 +552,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/cuenta'
     | '/guia'
+    | '/mi-legajo'
     | '/mis-evaluaciones'
     | '/mis-turnos'
+    | '/reportes'
     | '/'
     | '/aprendizaje/consultas'
     | '/aprendizaje/cuestionario'
@@ -512,6 +564,8 @@ export interface FileRouteTypes {
     | '/personas/$cod'
     | '/personas/nueva'
     | '/programa/materias'
+    | '/seguimiento/$alumno'
+    | '/seguimiento/alertas'
     | '/turnos/nuevo'
     | '/aprendizaje'
     | '/banco'
@@ -519,6 +573,7 @@ export interface FileRouteTypes {
     | '/examenes'
     | '/grupos'
     | '/personas'
+    | '/seguimiento'
     | '/turnos'
     | '/evaluaciones/$cod/editar'
     | '/examenes/$id/resultado'
@@ -551,8 +606,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/cuenta'
     | '/_app/guia'
+    | '/_app/mi-legajo'
     | '/_app/mis-evaluaciones'
     | '/_app/mis-turnos'
+    | '/_app/reportes'
     | '/_app/'
     | '/_app/aprendizaje/consultas'
     | '/_app/aprendizaje/cuestionario'
@@ -561,6 +618,8 @@ export interface FileRouteTypes {
     | '/_app/personas/$cod'
     | '/_app/personas/nueva'
     | '/_app/programa/materias'
+    | '/_app/seguimiento/$alumno'
+    | '/_app/seguimiento/alertas'
     | '/_app/turnos/nuevo'
     | '/_app/aprendizaje/'
     | '/_app/banco/'
@@ -568,6 +627,7 @@ export interface FileRouteTypes {
     | '/_app/examenes/'
     | '/_app/grupos/'
     | '/_app/personas/'
+    | '/_app/seguimiento/'
     | '/_app/turnos/'
     | '/_app/evaluaciones/$cod/editar'
     | '/_app/examenes/$id/resultado'
@@ -638,6 +698,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGuiaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/mi-legajo': {
+      id: '/_app/mi-legajo'
+      path: '/mi-legajo'
+      fullPath: '/mi-legajo'
+      preLoaderRoute: typeof AppMiLegajoRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/mis-evaluaciones': {
       id: '/_app/mis-evaluaciones'
       path: '/mis-evaluaciones'
@@ -650,6 +717,13 @@ declare module '@tanstack/react-router' {
       path: '/mis-turnos'
       fullPath: '/mis-turnos'
       preLoaderRoute: typeof AppMisTurnosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/reportes': {
+      id: '/_app/reportes'
+      path: '/reportes'
+      fullPath: '/reportes'
+      preLoaderRoute: typeof AppReportesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/aprendizaje/': {
@@ -741,6 +815,27 @@ declare module '@tanstack/react-router' {
       path: '/programa/materias'
       fullPath: '/programa/materias'
       preLoaderRoute: typeof AppProgramaMateriasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/seguimiento/': {
+      id: '/_app/seguimiento/'
+      path: '/seguimiento'
+      fullPath: '/seguimiento/'
+      preLoaderRoute: typeof AppSeguimientoIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/seguimiento/$alumno': {
+      id: '/_app/seguimiento/$alumno'
+      path: '/seguimiento/$alumno'
+      fullPath: '/seguimiento/$alumno'
+      preLoaderRoute: typeof AppSeguimientoAlumnoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/seguimiento/alertas': {
+      id: '/_app/seguimiento/alertas'
+      path: '/seguimiento/alertas'
+      fullPath: '/seguimiento/alertas'
+      preLoaderRoute: typeof AppSeguimientoAlertasRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/turnos/': {
@@ -938,8 +1033,10 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppCuentaRoute: typeof AppCuentaRoute
   AppGuiaRoute: typeof AppGuiaRoute
+  AppMiLegajoRoute: typeof AppMiLegajoRoute
   AppMisEvaluacionesRoute: typeof AppMisEvaluacionesRoute
   AppMisTurnosRoute: typeof AppMisTurnosRoute
+  AppReportesRoute: typeof AppReportesRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAprendizajeConsultasRoute: typeof AppAprendizajeConsultasRoute
   AppAprendizajeCuestionarioRoute: typeof AppAprendizajeCuestionarioRoute
@@ -948,6 +1045,8 @@ interface AppRouteChildren {
   AppPersonasCodRoute: typeof AppPersonasCodRoute
   AppPersonasNuevaRoute: typeof AppPersonasNuevaRoute
   AppProgramaMateriasRoute: typeof AppProgramaMateriasRoute
+  AppSeguimientoAlumnoRoute: typeof AppSeguimientoAlumnoRoute
+  AppSeguimientoAlertasRoute: typeof AppSeguimientoAlertasRoute
   AppTurnosNuevoRoute: typeof AppTurnosNuevoRoute
   AppAprendizajeIndexRoute: typeof AppAprendizajeIndexRoute
   AppBancoIndexRoute: typeof AppBancoIndexRoute
@@ -955,6 +1054,7 @@ interface AppRouteChildren {
   AppExamenesIndexRoute: typeof AppExamenesIndexRoute
   AppGruposIndexRoute: typeof AppGruposIndexRoute
   AppPersonasIndexRoute: typeof AppPersonasIndexRoute
+  AppSeguimientoIndexRoute: typeof AppSeguimientoIndexRoute
   AppTurnosIndexRoute: typeof AppTurnosIndexRoute
   AppEvaluacionesCodEditarRoute: typeof AppEvaluacionesCodEditarRoute
   AppExamenesIdResultadoRoute: typeof AppExamenesIdResultadoRoute
@@ -986,8 +1086,10 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppCuentaRoute: AppCuentaRoute,
   AppGuiaRoute: AppGuiaRoute,
+  AppMiLegajoRoute: AppMiLegajoRoute,
   AppMisEvaluacionesRoute: AppMisEvaluacionesRoute,
   AppMisTurnosRoute: AppMisTurnosRoute,
+  AppReportesRoute: AppReportesRoute,
   AppIndexRoute: AppIndexRoute,
   AppAprendizajeConsultasRoute: AppAprendizajeConsultasRoute,
   AppAprendizajeCuestionarioRoute: AppAprendizajeCuestionarioRoute,
@@ -996,6 +1098,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppPersonasCodRoute: AppPersonasCodRoute,
   AppPersonasNuevaRoute: AppPersonasNuevaRoute,
   AppProgramaMateriasRoute: AppProgramaMateriasRoute,
+  AppSeguimientoAlumnoRoute: AppSeguimientoAlumnoRoute,
+  AppSeguimientoAlertasRoute: AppSeguimientoAlertasRoute,
   AppTurnosNuevoRoute: AppTurnosNuevoRoute,
   AppAprendizajeIndexRoute: AppAprendizajeIndexRoute,
   AppBancoIndexRoute: AppBancoIndexRoute,
@@ -1003,6 +1107,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppExamenesIndexRoute: AppExamenesIndexRoute,
   AppGruposIndexRoute: AppGruposIndexRoute,
   AppPersonasIndexRoute: AppPersonasIndexRoute,
+  AppSeguimientoIndexRoute: AppSeguimientoIndexRoute,
   AppTurnosIndexRoute: AppTurnosIndexRoute,
   AppEvaluacionesCodEditarRoute: AppEvaluacionesCodEditarRoute,
   AppExamenesIdResultadoRoute: AppExamenesIdResultadoRoute,

@@ -64,4 +64,28 @@ describe('dependencias resueltas', () => {
     expect(accionDisponible('subirDocumento')).toBe(true)
     expect(accionDisponible('eliminarDocumento')).toBe(true)
   })
+
+  it('M5-22 las siete puertas de seguimiento esperan los números de la spec', () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    vi.stubEnv('VITE_DEPENDENCIAS_RESUELTAS', '')
+    expect(dependenciasPendientes('verIndices')).toEqual([61, 62])
+    expect(dependenciasPendientes('verOrdenMerito')).toEqual([6, 62, 63])
+    expect(dependenciasPendientes('verAlertas')).toEqual([66])
+    expect(dependenciasPendientes('verCicloChequeo')).toEqual([64, 65])
+    expect(dependenciasPendientes('verHistorialTeorico')).toEqual([6, 67])
+    expect(dependenciasPendientes('verCausalesTeoricos')).toEqual([7, 68])
+    expect(dependenciasPendientes('verBloqueoTeoricoLote')).toEqual([7, 56])
+    vi.stubEnv('VITE_DEPENDENCIAS_RESUELTAS', '6,7,56,61,62,63,64,65,66,67,68')
+    for (const accion of [
+      'verIndices',
+      'verOrdenMerito',
+      'verAlertas',
+      'verCicloChequeo',
+      'verHistorialTeorico',
+      'verCausalesTeoricos',
+      'verBloqueoTeoricoLote',
+    ] as const) {
+      expect(accionDisponible(accion)).toBe(true)
+    }
+  })
 })

@@ -17,6 +17,11 @@ export const DEPENDENCIAS = {
   bloqueoSubsanacion: [7],
   verIndices: [61, 62],
   verAlertas: [66],
+  verOrdenMerito: [6, 62, 63],
+  verCicloChequeo: [64, 65],
+  verHistorialTeorico: [6, 67],
+  verCausalesTeoricos: [7, 68],
+  verBloqueoTeoricoLote: [7, 56],
 } as const
 
 export type AccionConDependencia = keyof typeof DEPENDENCIAS
