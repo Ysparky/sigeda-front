@@ -1,9 +1,18 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import { delay, http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
+import { MENSAJE_SIN_CONEXION } from '@/lib/api/errors'
 import { config } from '@/lib/config'
 import { momento, hoyIso } from '@/lib/dominio/calendario'
-import { TEXTO_DESEMPATE, textoOrdenDeMeritoConsultado } from '@/lib/dominio/seguimiento'
+import {
+  TEXTO_DESEMPATE,
+  TEXTO_INDICES_SOLO_MOCK,
+  TEXTO_ORDEN_MERITO_SIN_SERVIDOR,
+  TEXTO_SIN_ALUMNOS_CON_INDICES,
+  TEXTO_SIN_DATOS_SUFICIENTES,
+  textoOrdenDeMeritoConsultado,
+  textoSinNfpi,
+} from '@/lib/dominio/seguimiento'
 import { formatearFecha } from '@/lib/formato'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
@@ -26,7 +35,11 @@ function filas() {
 function celdas(indice: number) {
   return within(filas()[indice]!)
     .getAllByRole('cell')
-    .map((celda) => celda.textContent?.trim() ?? '')
+    .map((celda) => {
+      const visible = celda.cloneNode(true) as HTMLElement
+      visible.querySelectorAll('.sr-only').forEach((nodo) => nodo.remove())
+      return visible.textContent?.trim() ?? ''
+    })
 }
 
 describe('Reportes y orden de mérito', () => {
@@ -117,5 +130,57 @@ describe('Reportes y orden de mérito', () => {
     await usuario.click(screen.getByRole('button', { name: 'NIT' }))
     await waitFor(() => expect(celdas(0)[1]).toBe('555555'))
     expect(celdas(0)[0]).not.toBe('1')
+  })
+})
+
+describe('Reportes: el alumno sin NFPI y los estados de la pantalla', () => {
+  it('CA-REP-05 un alumno sin NFPI completo aparece al final, sin puesto, con S14 y S24', async () => {
+    await abrirReportes()
+    const ultima = filas().at(-1)!
+    const fila = within(ultima)
+    expect(fila.getByText('666666')).toBeInTheDocument()
+    expect(fila.getByText('Sin puesto')).toHaveAttribute(
+      'title',
+      textoSinNfpi('Sin nota en Operaciones HeliTransportadas ni en Operaciones AeroTácticas.'),
+    )
+    expect(fila.getAllByText(TEXTO_SIN_DATOS_SUFICIENTES)).toHaveLength(2)
+    expect(fila.getByText('12.80')).toBeInTheDocument()
+  })
+
+  it('CA-REP-05 los puestos van 1..n sobre los rankeables y el que no lo es no desplaza a nadie', async () => {
+    await abrirReportes()
+    expect(filas().map((_, indice) => celdas(indice)[0])).toEqual(['1', '2', '3', '4', '5', 'Sin puesto'])
+  })
+
+  it('CA-REP-06 sin alumnos con índices se muestra S25 y ninguna tabla vacía', async () => {
+    await iniciarComo('comandante.aguirre')
+    renderApp('/reportes?programa=PDE')
+    expect(await screen.findByText(TEXTO_SIN_ALUMNOS_CON_INDICES)).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Orden de mérito' })).not.toBeInTheDocument()
+  })
+
+  it('CA-REP-08 un fallo en la primera carga muestra el aviso con Reintentar', async () => {
+    server.use(http.get(`${config.sigedaApiUrl}/api/reportes/orden-merito`, () => HttpResponse.error()))
+    await iniciarComo('comandante.aguirre')
+    const { usuario } = renderApp('/reportes')
+    expect(await screen.findByText(MENSAJE_SIN_CONEXION)).toBeInTheDocument()
+    expect(screen.queryByText(TEXTO_SIN_ALUMNOS_CON_INDICES)).not.toBeInTheDocument()
+    server.resetHandlers()
+    await usuario.click(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByRole('table', { name: 'Orden de mérito' })).toBeInTheDocument()
+  })
+
+  it('CA-REP-08 fuera del modo mock y sin las dependencias 6 y 63 muestra S1 y S26 y no pide la tabla', async () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    const pedidas: string[] = []
+    server.events.on('request:start', ({ request }) => pedidas.push(new URL(request.url).pathname))
+    await iniciarComo('comandante.aguirre')
+    renderApp('/reportes')
+    expect(await screen.findByText(TEXTO_ORDEN_MERITO_SIN_SERVIDOR)).toBeInTheDocument()
+    expect(screen.getByText(TEXTO_INDICES_SOLO_MOCK)).toBeInTheDocument()
+    server.events.removeAllListeners('request:start')
+    expect(pedidas).not.toContain('/api/reportes/orden-merito')
+    expect(screen.queryByRole('table', { name: 'Orden de mérito' })).not.toBeInTheDocument()
+    expect(screen.queryByText(TEXTO_SIN_ALUMNOS_CON_INDICES)).not.toBeInTheDocument()
   })
 })
