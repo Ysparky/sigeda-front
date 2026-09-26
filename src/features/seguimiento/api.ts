@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query'
+import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 import { nombreCompleto, type Programa } from '@/features/catalogos/api'
 import { aNota } from '@/features/evaluaciones/api'
 import { ApiError } from '@/lib/api/errors'
@@ -327,6 +327,46 @@ export async function listarPromediosDeSubfase(idSubfase: number, codPersona: st
   return promedios.map((fila) => ({ codigo: fila.codigo, promedio: aNota(fila.promedio) }))
 }
 
+export type Alerta = {
+  id: string
+  tipo: string
+  severidad: string
+  codAlumno: string
+  alumno: string
+  idGrupo: number | null
+  grupo: string
+  programa: string
+  fecha: string | null
+  detalle: string
+  codEvaluacion: string | null
+  idSubfase: number | null
+  idMateria: number | null
+  idCuestionario: number | null
+  causal: string | null
+}
+
+export type FiltrosAlertas = ParametrosPagina & {
+  programa: Programa
+  idGrupo?: number
+  tipo?: string
+  fechaPre?: string
+  fechaPost?: string
+}
+
+export function listarAlertas(filtros: FiltrosAlertas): Promise<Pagina<Alerta>> {
+  return sigeda.pagina<Alerta>('/api/seguimiento/alertas', {
+    programa: filtros.programa,
+    idGrupo: filtros.idGrupo,
+    tipo: filtros.tipo,
+    fechaPre: filtros.fechaPre,
+    fechaPost: filtros.fechaPost,
+    page: filtros.page,
+    size: filtros.size,
+    property: filtros.property,
+    direction: filtros.direction,
+  })
+}
+
 export const clavesSeguimiento = {
   todo: ['seguimiento'] as const,
   alumnos: (fuente: FuenteSeguimiento, programa: Programa, codPersona: string | null) =>
@@ -344,6 +384,7 @@ export const clavesSeguimiento = {
     [...clavesSeguimiento.todo, 'reporte-subfase', idSubfase, codPersona] as const,
   promediosDeSubfase: (idSubfase: number, codPersona: string) =>
     [...clavesSeguimiento.todo, 'promedios-subfase', idSubfase, codPersona] as const,
+  alertas: (filtros: FiltrosAlertas) => [...clavesSeguimiento.todo, 'alertas', filtros] as const,
 }
 
 export const consultasSeguimiento = {
@@ -405,5 +446,11 @@ export const consultasSeguimiento = {
       queryKey: clavesSeguimiento.promediosDeSubfase(idSubfase, codPersona),
       queryFn: () => listarPromediosDeSubfase(idSubfase, codPersona),
       enabled: idSubfase > 0 && codPersona !== '',
+    }),
+  alertas: (filtros: FiltrosAlertas) =>
+    queryOptions({
+      queryKey: clavesSeguimiento.alertas(filtros),
+      queryFn: () => listarAlertas(filtros),
+      placeholderData: keepPreviousData,
     }),
 }

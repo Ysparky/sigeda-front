@@ -20,6 +20,7 @@ import { handlersMaterias } from './sigeda/materias'
 import { handlersPersonas } from './sigeda/personas'
 import { handlersPreguntas } from './sigeda/preguntas'
 import { handlersReportesSubfase } from './sigeda/reportes-subfase'
+import { handlersSeguimiento } from './sigeda/seguimiento'
 import { handlersTurnos } from './sigeda/turnos'
 import { handlersTurnosTeoricos } from './sigeda/turnos-teoricos'
 
@@ -44,6 +45,7 @@ export const handlers: RequestHandler[] = [
   ...handlersIndices,
   ...handlersDesaprobados,
   ...handlersChequeos,
+  ...handlersSeguimiento,
   ...handlersDocumentos,
   ...handlersCuestionarios,
   ...handlersConsultas,

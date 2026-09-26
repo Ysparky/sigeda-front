@@ -36,7 +36,7 @@ type CausalMock = {
   fecha: string
 }
 
-function causalesDe(cod: string, hoy: string): CausalMock[] {
+export function causalesDe(cod: string, hoy: string): CausalMock[] {
   if (cod !== '111111') return []
   return [
     {

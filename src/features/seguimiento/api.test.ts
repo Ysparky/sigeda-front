@@ -11,6 +11,7 @@ import { iniciarComo } from '@/test/render'
 import {
   estadoTeoricoEnLote,
   fuenteDeSeguimiento,
+  listarAlertas,
   listarChequeos,
   listarDesaprobados,
   listarHistorialTeorico,
@@ -263,5 +264,24 @@ describe('chequeos e historial teórico desde la capa de API', () => {
     expect(pagina.items.map((fila) => fila.nota)).toEqual([17, 10])
     expect(pagina.items[1]?.subsanadoPor?.nota).toBe(17)
     expect(pagina.items[0]?.idTurnoOrigen).toBe(6)
+  })
+})
+
+describe('capa de API de alertas', () => {
+  it('contrato §2.1 pagina las alertas y conserva sus punteros', async () => {
+    await iniciarComo('comandante.aguirre')
+    const pagina = await listarAlertas({ programa: 'PDI', page: 0, size: 10, direction: 'ASC' })
+    expect(pagina.total).toBe(13)
+    expect(pagina.totalPages).toBe(2)
+    expect(pagina.items[0]).toMatchObject({ tipo: 'SUBSANACION_PENDIENTE', severidad: 'ALTA' })
+    const segunda = await listarAlertas({ programa: 'PDI', page: 1, size: 10, direction: 'ASC' })
+    expect(segunda.items).toHaveLength(3)
+  })
+
+  it('contrato §2.1 una lista vacía llega como página vacía, no como error', async () => {
+    await iniciarComo('comandante.aguirre')
+    const pagina = await listarAlertas({ programa: 'PDE', page: 0, size: 10, direction: 'ASC' })
+    expect(pagina.items).toEqual([])
+    expect(pagina.total).toBe(0)
   })
 })
