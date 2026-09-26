@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { criterioDeFase } from '@/lib/dominio/seguimiento'
 import { API, autorizar, textoNoEncontrado } from './comun'
 import { buscarPersona, datos, usuarioDePersona, type PersonaMock } from './datos'
-import { criterioCumplido, ramaCumplida } from './desaprobados'
+import { criterioCumplido, esRegularAlternado, ramaCumplida } from './desaprobados'
 
 export const D2_PERSONA_NO_EXISTE = 'Persona especificada no existe.'
 
@@ -41,7 +41,7 @@ function bloqueDeChequeo(persona: PersonaMock) {
     detalle:
       ramaCumplida(criterio, persona.contMalo, persona.contRegular) ??
       `Lleva ${plural(persona.contMalo, 'Malo', 'Malos')} y ${plural(persona.contRegular, 'Regular', 'Regulares')}`,
-    regularAlternado: persona.contRegular === 0 || persona.contRegular % 2 === 0,
+    regularAlternado: esRegularAlternado(persona.contRegular),
     cuentaConEsteEstado: persona.estado === 'Apto',
   }
 }

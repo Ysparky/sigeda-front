@@ -1,6 +1,10 @@
 import { queryOptions } from '@tanstack/react-query'
+import { todasLasPaginas } from '@/lib/api/pagina'
 import { sigeda } from '@/lib/api/sigeda'
 import type { Permiso } from '@/lib/auth/permisos'
+
+const TAMANO_SUBFASES = 10
+const TAMANO_CATALOGO = 100
 
 export const PROGRAMAS = ['PDI', 'PDE'] as const
 
@@ -38,14 +42,8 @@ export const clavesCatalogos = {
     [...clavesCatalogos.todo, 'alumnos', fuente, programa, codPersona] as const,
 }
 
-export async function listarSubfases(): Promise<Subfase[]> {
-  const primera = await sigeda.pagina<Subfase>('/api/subfases', { page: 0, size: 10 })
-  const restantes = await Promise.all(
-    Array.from({ length: Math.max(primera.totalPages - 1, 0) }, (_, indice) =>
-      sigeda.pagina<Subfase>('/api/subfases', { page: indice + 1, size: 10 }),
-    ),
-  )
-  return [primera, ...restantes].flatMap((pagina) => pagina.items)
+export function listarSubfases(): Promise<Subfase[]> {
+  return todasLasPaginas<Subfase>((parametros) => sigeda.pagina<Subfase>('/api/subfases', parametros), TAMANO_SUBFASES)
 }
 
 export function listarManiobrasDeSubfase(idSubfase: number): Promise<Maniobra[]> {
@@ -74,14 +72,8 @@ function aOpcion(persona: NombreAlumno, grupo: string | null): OpcionAlumno {
   return { codigo: persona.codigo, nombreCompleto: nombreCompleto(persona), grupo }
 }
 
-async function todasLasFilas<T>(ruta: string): Promise<T[]> {
-  const primera = await sigeda.pagina<T>(ruta, { page: 0, size: 100 })
-  const restantes = await Promise.all(
-    Array.from({ length: Math.max(primera.totalPages - 1, 0) }, (_, indice) =>
-      sigeda.pagina<T>(ruta, { page: indice + 1, size: 100 }),
-    ),
-  )
-  return [primera, ...restantes].flatMap((pagina) => pagina.items)
+function todasLasFilas<T>(ruta: string): Promise<T[]> {
+  return todasLasPaginas<T>((parametros) => sigeda.pagina<T>(ruta, parametros), TAMANO_CATALOGO)
 }
 
 function sinRepetidos(opciones: OpcionAlumno[]): OpcionAlumno[] {

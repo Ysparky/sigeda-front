@@ -1,6 +1,6 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 import { z } from 'zod'
-import type { Pagina, ParametrosPagina } from '@/lib/api/pagina'
+import { todasLasPaginas, type Pagina, type ParametrosPagina } from '@/lib/api/pagina'
 import { sigeda } from '@/lib/api/sigeda'
 
 export type FaseFila = { id: number; nombre: string; descripcion: string | null }
@@ -16,6 +16,8 @@ export type CuerpoFase = {
   descripcion: string
   subfases: { id: number; nombre: string; descripcion: string }[]
 }
+
+const TAMANO_FASES = 10
 
 const esquemaFila = z.object({ id: z.number(), nombre: z.string(), descripcion: z.string().nullish() })
 
@@ -52,14 +54,8 @@ export async function listarFases(parametros: ParametrosPagina): Promise<Pagina<
   return { ...pagina, items: pagina.items.map((fila) => aFila(esquemaFila.parse(fila))) }
 }
 
-export async function listarTodasLasFases(): Promise<FaseFila[]> {
-  const primera = await listarFases({ page: 0, size: 10, direction: 'ASC' })
-  const restantes = await Promise.all(
-    Array.from({ length: Math.max(primera.totalPages - 1, 0) }, (_, indice) =>
-      listarFases({ page: indice + 1, size: 10, direction: 'ASC' }),
-    ),
-  )
-  return [primera, ...restantes].flatMap((pagina) => pagina.items)
+export function listarTodasLasFases(): Promise<FaseFila[]> {
+  return todasLasPaginas<FaseFila>((parametros) => listarFases({ ...parametros, direction: 'ASC' }), TAMANO_FASES)
 }
 
 export async function obtenerFase(id: number): Promise<FaseDetalle> {

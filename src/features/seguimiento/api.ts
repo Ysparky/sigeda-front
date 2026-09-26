@@ -2,12 +2,12 @@ import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 import { nombreCompleto, type Programa } from '@/features/catalogos/api'
 import { aNota } from '@/features/evaluaciones/api'
 import { ApiError } from '@/lib/api/errors'
-import type { Pagina, ParametrosPagina } from '@/lib/api/pagina'
+import { todasLasPaginas, type Pagina, type ParametrosPagina } from '@/lib/api/pagina'
 import { sigeda } from '@/lib/api/sigeda'
 import type { Permiso } from '@/lib/auth/permisos'
 import { coincideTexto } from '@/lib/dominio/seguimiento'
 
-const TAMANO_CATALOGO = 10
+const TAMANO_CATALOGO = 100
 
 export type AlumnoSeguimiento = { codigo: string; nombreCompleto: string; idGrupo: number | null; estado: string }
 
@@ -116,14 +116,8 @@ function sinRepetidos(alumnos: readonly AlumnoSeguimiento[]): AlumnoSeguimiento[
   })
 }
 
-async function todasLasPaginas<T>(ruta: string): Promise<T[]> {
-  const primera = await sigeda.pagina<T>(ruta, { page: 0, size: TAMANO_CATALOGO })
-  const restantes = await Promise.all(
-    Array.from({ length: Math.max(primera.totalPages - 1, 0) }, (_, indice) =>
-      sigeda.pagina<T>(ruta, { page: indice + 1, size: TAMANO_CATALOGO }),
-    ),
-  )
-  return [primera, ...restantes].flatMap((pagina) => pagina.items)
+function todasLasFilas<T>(ruta: string): Promise<T[]> {
+  return todasLasPaginas<T>((parametros) => sigeda.pagina<T>(ruta, parametros), TAMANO_CATALOGO)
 }
 
 export async function listarSeguimiento(
@@ -132,13 +126,13 @@ export async function listarSeguimiento(
   codPersona: string | null,
 ): Promise<AlumnoSeguimiento[]> {
   if (fuente === 'todos') {
-    const grupos = await todasLasPaginas<{ personas: AlumnoApi[] }>(
+    const grupos = await todasLasFilas<{ personas: AlumnoApi[] }>(
       `/api/grupos/programa/${encodeURIComponent(programa)}`,
     )
     return sinRepetidos(grupos.flatMap((grupo) => grupo.personas.map(aAlumnoSeguimiento)))
   }
   if (!codPersona) return []
-  const filas = await todasLasPaginas<{ persona: AlumnoApi[] | AlumnoApi }>(
+  const filas = await todasLasFilas<{ persona: AlumnoApi[] | AlumnoApi }>(
     `/api/grupos/instructor/${encodeURIComponent(codPersona)}/programa/${encodeURIComponent(programa)}`,
   )
   return sinRepetidos(

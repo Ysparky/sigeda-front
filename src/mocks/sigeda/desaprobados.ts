@@ -31,7 +31,7 @@ export type ChequeoDerivado = {
 
 type EstadoReplay = { estado: string; chequeo: number; malos: number; regulares: number }
 
-function esRegularAlternado(regulares: number): boolean {
+export function esRegularAlternado(regulares: number): boolean {
   return regulares === 0 || regulares % 2 === 0
 }
 

@@ -106,6 +106,18 @@ describe('catálogo de seguimiento', () => {
     expect(alumnos.map((alumno) => alumno.codigo)).toEqual(['111111', '999999'])
   })
 
+  it('M5-6 recorre el catálogo del instructor de a 100, como el picker de M1', async () => {
+    await iniciarComo('instructor.perez')
+    const tamanos: (string | null)[] = []
+    server.events.on('request:start', ({ request }) => {
+      const url = new URL(request.url)
+      if (url.pathname.startsWith('/api/grupos/instructor/')) tamanos.push(url.searchParams.get('size'))
+    })
+    await listarSeguimiento('instructor', 'PDI', '444444')
+    server.events.removeAllListeners('request:start')
+    expect(tamanos).toEqual(['100'])
+  })
+
   it('contrato §1.2 un instructor sin alumnos recibe una lista vacía, no un error', async () => {
     await iniciarComo('jefe.operaciones')
     await expect(listarSeguimiento('instructor', 'PDI', '333333')).resolves.toEqual([])

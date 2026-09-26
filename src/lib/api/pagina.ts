@@ -25,3 +25,14 @@ export function paginaVacia<T>(page = 0, size = 0): Pagina<T> {
 export type DireccionOrden = 'ASC' | 'DESC'
 
 export type ParametrosPagina = { page: number; size: number; property?: string; direction: DireccionOrden }
+
+export async function todasLasPaginas<T>(
+  traer: (parametros: { page: number; size: number }) => Promise<Pagina<T>>,
+  size: number,
+): Promise<T[]> {
+  const primera = await traer({ page: 0, size })
+  const restantes = await Promise.all(
+    Array.from({ length: Math.max(primera.totalPages - 1, 0) }, (_, indice) => traer({ page: indice + 1, size })),
+  )
+  return [primera, ...restantes].flatMap((pagina) => pagina.items)
+}
