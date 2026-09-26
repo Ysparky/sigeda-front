@@ -5,7 +5,7 @@ import { DataTable } from '@/components/data-table'
 import { Enlace } from '@/components/enlace'
 import { EmptyState } from '@/components/empty-state'
 import { StatusBadge } from '@/components/status-badge'
-import { Field, FieldLabel } from '@/components/ui/field'
+import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { consultasCatalogos } from '@/features/catalogos/api'
 import { consultasEvaluaciones, type EvaluacionResumen } from '@/features/evaluaciones/api'
@@ -73,7 +73,7 @@ export function HistorialPractico({ codAlumno, busqueda }: Props) {
     }),
   )
   const error = errorDePrimeraCarga(evaluaciones)
-  const cargando = evaluaciones.data === undefined && error === null
+  const primeraCarga = evaluaciones.data === undefined && error === null
 
   function cambiarFiltro(cambios: Partial<Pick<BusquedaLegajo, 'idSubfase' | 'clasificacion'>>) {
     void navegar({ search: (previa) => ({ ...previa, ...cambios, page: 0 }) })
@@ -94,7 +94,7 @@ export function HistorialPractico({ codAlumno, busqueda }: Props) {
       titulo="Historial de evaluaciones"
       error={error}
       alReintentar={() => void evaluaciones.refetch()}
-      cargando={cargando}
+      cargando={primeraCarga}
     >
       <div className="grid gap-3">
         <div className="grid gap-3 sm:grid-cols-2">
@@ -115,6 +115,7 @@ export function HistorialPractico({ codAlumno, busqueda }: Props) {
                 </NativeSelectOption>
               ))}
             </NativeSelect>
+            {errorDePrimeraCarga(subfases) !== null && <FieldError>No se pudieron cargar las sub fases.</FieldError>}
           </Field>
           <Field>
             <FieldLabel htmlFor="legajo-clasificacion">Clasificación</FieldLabel>

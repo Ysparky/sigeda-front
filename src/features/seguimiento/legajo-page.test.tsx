@@ -1,8 +1,8 @@
 import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { config } from '@/lib/config'
-import { TEXTO_EVALUADOR_SIN_CODIGO, TEXTO_SIN_GRUPO } from '@/lib/dominio/seguimiento'
+import { TEXTO_CHEQUEO_SIN_SERVIDOR, TEXTO_EVALUADOR_SIN_CODIGO, TEXTO_SIN_GRUPO } from '@/lib/dominio/seguimiento'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
 
@@ -120,5 +120,20 @@ describe('Legajo: historial práctico', () => {
     expect(evaluador.closest('a')).toBeNull()
     expect(screen.getByText(TEXTO_EVALUADOR_SIN_CODIGO)).toBeInTheDocument()
     expect(tabla.queryByText(/cod.*evaluador/i)).not.toBeInTheDocument()
+  })
+
+  it('CA-LEG-04 si el catálogo de sub fases falla lo avisa bajo su propio selector y la tabla sigue', async () => {
+    server.use(http.get(`${API}/api/subfases`, () => HttpResponse.error()))
+    await abrirLegajo('777777', '?tab=practico')
+    expect(await screen.findByText('No se pudieron cargar las sub fases.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Sub fase')).toBeInTheDocument()
+    expect(await screen.findByRole('table', { name: 'Historial de evaluaciones' })).toBeInTheDocument()
+  })
+
+  it('CA-LEG-01 sin la dependencia del ciclo de chequeo la cabecera lo dice en lugar del grupo', async () => {
+    vi.stubEnv('VITE_MOCK_API', 'false')
+    await abrirLegajo()
+    expect(await screen.findByText(TEXTO_CHEQUEO_SIN_SERVIDOR)).toBeInTheDocument()
+    vi.unstubAllEnvs()
   })
 })
