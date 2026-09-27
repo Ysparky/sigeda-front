@@ -113,7 +113,13 @@ export function aTurnoDetalle(turno: DetalleTurnoApi): TurnoDetalle {
       horaFin: alumno.horaFin,
     })),
     maniobras: (turno.maniobrasTurno ?? []).flatMap((item) => {
-      const notaMin = item.nota_min.toUpperCase()
+      // `?? ''` NO ES DEFENSIVO DE MÁS: `maniobras_turno.nota_min` es nulable en la base y el
+      // servidor manda `"nota_min": null` si lo es (comprobado poniendo la columna en NULL). El tipo
+      // la declara `string`, así que sin esto `.toUpperCase()` lanza un TypeError — y un TypeError no
+      // es un ApiError, así que no pasa por `normalizarError` ni llega a `AvisoDeError`: la pantalla
+      // de detalle y el formulario quedan en un error crudo. Con `''` la fila se descarta como
+      // cualquier nota que no sea DIRBE, que es la degradación correcta.
+      const notaMin = (item.nota_min ?? '').toUpperCase()
       if (!esNotaDirbe(notaMin)) return []
       return [
         {

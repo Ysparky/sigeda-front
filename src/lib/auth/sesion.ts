@@ -40,7 +40,21 @@ const esquemaPersona = z.object({
   }),
 })
 
-type RespuestaLogin = { token: string; refresh_token: string; username: string }
+/**
+ * EL ÚNICO SITIO DONDE UN DESAJUSTE DE FORMA NO DA UNA PANTALLA VACÍA SINO UNA SESIÓN INCONSISTENTE:
+ * si `token` llegara ausente, `tokens.guardar(undefined, …)` guardaría basura y la aplicación quedaría
+ * «con sesión» pero sin poder autenticar una sola petición. Por eso las tres claves se comprueban de
+ * verdad y no con un genérico —`sigeda.post<T>` hace `return datos as T`, sin validar nada—, y se
+ * exige que no vengan vacías, que es tan malo como que falten. Comprobado contra el servidor real: las
+ * tres llegan y son texto.
+ */
+const esquemaLogin = z.object({
+  token: z.string().min(1),
+  refresh_token: z.string().min(1),
+  username: z.string().min(1),
+})
+
+type RespuestaLogin = z.infer<typeof esquemaLogin>
 
 let actual: Sesion | null = null
 let aviso: string | null = null
@@ -87,7 +101,15 @@ export const sesion = {
   async iniciar(username: string, password: string): Promise<Sesion> {
     let respuesta: RespuestaLogin
     try {
-      respuesta = await sigeda.post<RespuestaLogin>('/auth/login', { username, password })
+      const cuerpo = await sigeda.post<unknown>('/auth/login', { username, password })
+      const validado = esquemaLogin.safeParse(cuerpo)
+      // safeParse y no parse: un ZodError NO es un ApiError, así que no pasaría por `normalizarError`
+      // ni llegaría a la pantalla como un aviso — saldría como error crudo. Es el mismo problema que
+      // tenía `nota_min.toUpperCase()` sobre un null.
+      if (!validado.success) {
+        throw new ApiError(0, 'El servidor respondió al login con una forma inesperada.')
+      }
+      respuesta = validado.data
     } catch (error) {
       if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
         throw new ApiError(401, MENSAJE_CREDENCIALES)

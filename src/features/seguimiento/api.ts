@@ -59,9 +59,11 @@ export type EstadoTeoricoDelAlumno = EstadoTeoricoResumen & {
     nota: number | null
     notaMinimaAplicada: number
   }[]
-  // Opcional a propósito: el contrato de teoría deja `causales[]` fuera de M4 y la agrega la
-  // dependencia 68, así que el backend real NO la manda todavía. El mock sí la emite, de modo que
-  // sin esto la pantalla funciona contra el mock y estalla contra el servidor.
+  // Opcional a propósito, y el motivo cambió: cuando se escribió esto el backend NO mandaba
+  // `causales[]` y la pantalla estallaba contra el servidor real haciendo `.length` sobre `undefined`.
+  // **Hoy SÍ las manda**, con la forma exacta de `Causal` (verificado contra el servidor el 27 sep
+  // 2026, dependencia 68 ya cerrada). Se deja opcional porque la ruta responde sin el campo cuando el
+  // alumno no tiene ninguna, no porque el servidor no sepa mandarlo.
   causales?: Causal[]
 }
 

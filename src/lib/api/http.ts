@@ -1,5 +1,5 @@
 import { ApiError, CanceladoError, MENSAJE_SIN_CONEXION, normalizarError } from './errors'
-import { aPagina, paginaVacia, type Pagina, type PaginaSpring } from './pagina'
+import { aPagina, paginaVacia, validarEnvoltorio, type Pagina } from './pagina'
 
 export type Parametros = Record<string, string | number | boolean | null | undefined>
 
@@ -137,7 +137,7 @@ export function crearCliente(base: string, autenticacion: Autenticacion) {
 
   async function pagina<T>(ruta: string, parametros?: Parametros): Promise<Pagina<T>> {
     try {
-      return aPagina(await get<PaginaSpring<T>>(ruta, parametros))
+      return aPagina(validarEnvoltorio<T>(ruta, await get<unknown>(ruta, parametros)))
     } catch (error) {
       if (esNoEncontrado(error)) return paginaVacia(Number(parametros?.page ?? 0), Number(parametros?.size ?? 0))
       throw error
