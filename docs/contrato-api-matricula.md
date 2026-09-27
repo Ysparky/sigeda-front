@@ -756,7 +756,9 @@ Request — `ManiobraDetail`, con la lista completa de estándares:
 
   > El 410 es el código que este backend ya usa para «no se puede en este estado»
   > (`ActionExpiredException`), y el que §4.4 y §5.6 responden en estas mismas rutas; **no se
-  > introdujo ningún 409**, que sigue sin existir en el código (ver la dependencia 60). Esta ruta
+  > > introdujo ningún 409**. (Ojo: el 409 **sí** existe en el código, en `utils/Response.isConflict`, y el
+  > módulo de teoría lo usa; lo que no corresponde es usarlo *acá*, porque `contrato-api-turnos.md:25`
+  > fija 410 para este módulo. Ver la dependencia 60, ya cerrada.) Esta ruta
   > **no tenía ninguna prueba** en toda la suite del backend antes de esto.
 - Un estándar guardado que **no** viene en la lista **no se elimina ni se desvincula**: sigue apuntando a la maniobra y reaparece en §5.2 (`Maniobra.estandares` no tiene orphan removal). El frontend no ofrece quitar estándares guardados. **[Opcional — dependencia 36]** Activar orphan removal para que un omitido se elimine.
 - Validación → 400 §B: `'estandares'` con `"La asignación de estandares es requerida"` (sin punto ni tilde; al menos uno); `'estandares[i].nombre'` y `'estandares[i].descripcion'` como en §4.3.
