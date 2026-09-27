@@ -872,6 +872,7 @@ Los mensajes de validación de campo (400 arreglo) están en la tabla de cada en
 | `cuestionarios` | `id`, `id_turno_teorico` FK, `cod_alumno` FK, `estado` (**solo `EN_CURSO` o `ENTREGADO`**), `fecha_entrega` date null, `hora_entrega` varchar(5) null, `nota` numeric(4,2) null, `nota_minima_aplicada` int, `aprobado` bool null; único `(id_turno_teorico, cod_alumno)` | `cuestionarios_seq` desde 6 |
 | `calificaciones_teoricas` | `id_cuestionario` FK, `id_pregunta` FK, `orden` int, `enunciado` varchar(500), `respuesta_correcta` varchar(200), `respuesta_alumno` varchar(200) null, `correcto` bool, `puntaje_maximo` int, `puntaje_obtenido` int; PK compuesta | — |
 | `respuestas_cuestionario` (**nueva, 27 sep 2026**) | `id_cuestionario` FK, `id_pregunta` FK, `orden` int, `respuesta` varchar(200) **null**; PK compuesta | — |
+| `inasistencias_teoricas` (**nueva, 27 sep 2026**) | `id_turno_teorico` FK, `cod_alumno` FK, `justificada` bool; PK compuesta | — |
 
 El bloque de secuencias actual está en `schema_prod.sql:100-115` y los valores de arranque de arriba son los de la §9, para que la semilla del backend y los mocks no se pisen.
 
@@ -879,6 +880,15 @@ Dos decisiones del esquema que conviene no perder:
 
 - **`cuestionarios` solo tiene filas de alumnos que empezaron.** `NO_RINDIO` es un estado **derivado de la ausencia de fila** (§Enumeraciones) y nunca se escribe: `cuestionarios.estado` tiene el dominio de `EstadoCuestionario`, que no lo incluye. Una fila por (alumno, turno) para los que no rindieron llegaría con las inasistencias, que son de M5 (spec §16.6).
 - **`calificaciones_teoricas` copia `enunciado` y `respuesta_correcta`.** Sin esas dos columnas, editar una pregunta reescribiría resultados ya emitidos (§2.4). `explicacion` no se copia: se lee en vivo, porque mejorarla debe beneficiar a todos.
+
+- **`inasistencias_teoricas` también es una tabla aparte, y por mecánica antes que por gusto
+  (dependencia 70).** La columna en `cuestionarios` no falla por estilo: **cuatro consultas que ya
+  existen definen «rindió» por la EXISTENCIA de la fila** — la que habilita el rezagado, la que
+  calcula `rindieron` y el resumen del turno, la que habilita la subsanación, y la que busca los
+  exámenes vencidos de §4.7. Un alumno que **no rindió** no tiene fila (`NO_RINDIO` es la ausencia
+  de fila), así que inventar una para marcar su ausencia **descompone esas cuatro a la vez**.
+  Hay una prueba con una aserción **negativa** que lo vigila: `cuestionarios` no puede ganar
+  ninguna columna cuyo nombre contenga «inasistencia».
 
 - **`respuestas_cuestionario` existe porque un examen EN CURSO no tenía dónde guardarse, y es
   una tabla aparte a propósito.** Lo encontró la tanda C3: §4.3 define la respuesta cruda como
