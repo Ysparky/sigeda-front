@@ -284,21 +284,18 @@ export type ReporteDeSubfase = {
 
 export type PromedioDeSubfase = { codigo: string; promedio: number | null }
 
-type DetalleAlumnoApi = Omit<DetalleAlumno, 'aPaterno' | 'aMaterno'> & { APaterno: string; AMaterno: string }
-
 type NotaApi = Omit<NotaDeSubfase, 'promedio'> & { promedio: string | number | null }
 
+/**
+ * Esta ruta serializaba sus apellidos como `apaterno`/`amaterno` en minúscula —no como `APaterno`,
+ * que es lo que el contrato decía y lo que este adaptador remapeaba—, así que la cabecera del legajo
+ * mostraba «Pedro undefined undefined» para TODOS los alumnos contra el servidor real. Se corrigió
+ * en el backend renombrando los getters de `DetallePersona`, y el remapeo sobra: ahora llegan
+ * `aPaterno` y `aMaterno` como en todas las demás rutas.
+ */
 export async function obtenerAlumno(codPersona: string): Promise<DetalleAlumno> {
-  const detalle = await sigeda.get<DetalleAlumnoApi>(`/api/personas/${encodeURIComponent(codPersona)}/alumno`)
-  return {
-    dni: detalle.dni,
-    nombre: detalle.nombre,
-    aPaterno: detalle.APaterno,
-    aMaterno: detalle.AMaterno,
-    rango: detalle.rango,
-    estado: detalle.estado,
-    usuario: detalle.usuario ?? null,
-  }
+  const detalle = await sigeda.get<DetalleAlumno>(`/api/personas/${encodeURIComponent(codPersona)}/alumno`)
+  return { ...detalle, usuario: detalle.usuario ?? null }
 }
 
 export function obtenerLegajo(codPersona: string): Promise<Legajo> {

@@ -604,7 +604,7 @@ GET /api/personas/{cod}/chequeos   Read   [NUEVO, dep. 65 — y es cambio de esq
 
 ### 6.1 `GET /api/personas/{cod}/legajo` — **nuevo**
 
-**Por qué no sirve lo que hay.** `GET /api/personas/{cod}/alumno` devuelve `DetallePersona` (`grupo/projections/DetallePersona.java:5-20`), que **no trae `codigo`, ni `tipo`, ni `idGrupo`, ni el nombre del grupo, ni los contadores**, y además nombra sus apellidos `APaterno`/`AMaterno` (`:11,13`), distinto de `aPaterno`/`aMaterno` en todas las demás proyecciones (`projections/NombreAlumno.java:9,11`). Los cuatro contadores del ciclo de chequeo (`grupo/entities/Persona.java:41-44`, `schema_prod.sql:220-223`) están hoy solo en dos sitios: `GET /api/grupos/{id}` (`Manage Groups`, `GrupoController.java:87-89`) y el cuerpo 201 de una escritura de persona (`Manage Users`).
+**Por qué no sirve lo que hay.** `GET /api/personas/{cod}/alumno` devuelve `DetallePersona` (`grupo/projections/DetallePersona.java:5-20`), que **no trae `codigo`, ni `tipo`, ni `idGrupo`, ni el nombre del grupo, ni los contadores**, (nombraba además sus apellidos distinto del resto; eso ya se corrigió, ver §9.9). Los cuatro contadores del ciclo de chequeo (`grupo/entities/Persona.java:41-44`, `schema_prod.sql:220-223`) están hoy solo en dos sitios: `GET /api/grupos/{id}` (`Manage Groups`, `GrupoController.java:87-89`) y el cuerpo 201 de una escritura de persona (`Manage Users`).
 
 **Precisión sobre los permisos, porque es fácil equivocarse aquí:** el **Jefe de Operaciones sí tiene `Manage Groups`** (`security/entities/Role.java:33`), y también tiene `View My Group`, así que es un rol de Seguimiento que **ya puede** leer los cuatro contadores por `GET /api/grupos/{id}`. Quienes no pueden son el **Instructor** y el **Comandante de Escuadrón** (`Role.java:25-29` y `:18-23`), que son precisamente la audiencia del panel de chequeo. Y aun para el Jefe de Operaciones, la forma de `GET /api/grupos/{id}` es la entidad `Grupo` completa con todas sus personas — no una cabecera de legajo —, y responde **200 con cuerpo vacío** para un id inexistente (`GrupoController.java:99-100`, dependencia 18). La dependencia 64 sobrevive por esas dos razones, no por una falta de permiso universal.
 
@@ -1008,12 +1008,29 @@ Las dos filas de `999999` son las que prueban CA-LEG-11 y S17: la nota **10.00 e
 
 ### 9.9 Los tres endpoints que no tenían handler
 
-**`GET /api/personas/{cod}/alumno`** (`alumnos.ts`) devuelve `DetallePersona` tal como el backend la serializa, **con sus claves raras incluidas** — `APaterno` y `AMaterno` en mayúscula (`grupo/projections/DetallePersona.java:11,13`) —, para que el adaptador del frontend tenga que tratarlas y CA-LEG-01 lo pruebe:
+**`GET /api/personas/{cod}/alumno`** (`alumnos.ts`) devuelve `DetallePersona` con **las mismas claves que las demás rutas**, `aPaterno` y `aMaterno`:
 
 ```json
-{ "dni": "78901234", "nombre": "Carlos", "APaterno": "Ramirez", "AMaterno": "Sanchez", "rango": "Mayor", "estado": "En Chequeo",
+{ "dni": "78901234", "nombre": "Carlos", "aPaterno": "Ramirez", "aMaterno": "Sanchez", "rango": "Mayor", "estado": "En Chequeo",
   "usuario": { "nombre": "alumno.ramirez", "correo": "alumno.ramirez@fap.mil.pe" } }
 ```
+
+> **CORREGIDO EL 27 SEP 2026, Y VALE COMO ADVERTENCIA DE MÉTODO.** Este apartado decía que la ruta
+> mandaba `APaterno`/`AMaterno` en mayúscula «tal como el backend la serializa», y pedía que el
+> adaptador del frontend las tratara. **Era falso, y lo era por haberse escrito leyendo el código Java
+> en vez de una respuesta real:** los getters se llamaban `getAPaterno()`, pero Jackson colapsa la
+> racha de mayúsculas inicial (`USE_STD_BEAN_NAMING` está apagado por omisión) y el servidor mandaba
+> **`apaterno`**, en minúscula. Ni `APaterno` ni `aPaterno`.
+>
+> El costo: el frontend remapeaba `APaterno` siguiendo este contrato, el mock lo emitía siguiendo este
+> contrato, CA-LEG-01 lo probaba contra el mock — y contra el servidor real la cabecera del legajo
+> mostraba **«Pedro undefined undefined» para todos los alumnos**. Las dos suites en verde, 1093 y
+> 1114 pruebas, y el defecto visible en la primera pantalla de la demostración. Lo encontró la primera
+> corrida de Playwright contra el backend vivo.
+>
+> Se arregló en el backend renombrando los getters a `getaPaterno`/`getaMaterno`, que además pone esta
+> ruta de acuerdo con todas las demás. **Una forma de respuesta no se documenta desde el código que la
+> produce: se documenta desde la respuesta.**
 
 `654321` no tiene cuenta → `usuario: null`. Un código inexistente → **404** D2.
 

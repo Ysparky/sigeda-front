@@ -62,8 +62,8 @@ export const handlersAlumnos = [
     return HttpResponse.json({
       dni: persona.dni,
       nombre: persona.nombre,
-      APaterno: persona.aPaterno,
-      AMaterno: persona.aMaterno,
+      aPaterno: persona.aPaterno,
+      aMaterno: persona.aMaterno,
       rango: persona.rango,
       estado: persona.estado,
       usuario: cuenta(persona.codigo),

@@ -80,7 +80,7 @@ describe('Legajo: cabecera y pestañas', () => {
     expect(cabecera.getByText('alumno.ramirez')).toBeInTheDocument()
   })
 
-  it('CA-LEG-01 los apellidos llegan con las claves APaterno y AMaterno y se muestran igual', async () => {
+  it('CA-LEG-01 los apellidos llegan con las claves aPaterno y aMaterno y se muestran completos', async () => {
     let pedido = false
     server.use(
       http.get(`${API}/api/personas/:cod/alumno`, () => {
@@ -88,8 +88,8 @@ describe('Legajo: cabecera y pestañas', () => {
         return HttpResponse.json({
           dni: '99999999',
           nombre: 'Prueba',
-          APaterno: 'Mayúscula',
-          AMaterno: 'Rara',
+          aPaterno: 'Paterno',
+          aMaterno: 'Materno',
           rango: 'Cadete',
           estado: 'Apto',
           usuario: null,
@@ -97,7 +97,10 @@ describe('Legajo: cabecera y pestañas', () => {
       }),
     )
     await abrirLegajo()
-    expect(await panel('Cabecera').findByText('Prueba Mayúscula Rara')).toBeInTheDocument()
+    expect(await panel('Cabecera').findByText('Prueba Paterno Materno')).toBeInTheDocument()
+    // La regresión concreta que esto cierra: con la clave equivocada el nombre salía
+    // «Prueba undefined undefined» y la pantalla no se caía, así que pasaba desapercibido.
+    expect(panel('Cabecera').queryByText(/undefined/)).not.toBeInTheDocument()
     expect(pedido).toBe(true)
     expect(panel('Cabecera').getByText('Sin cuenta')).toBeInTheDocument()
   })

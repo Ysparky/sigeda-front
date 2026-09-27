@@ -6,19 +6,20 @@ import { jwtDePrueba } from '@/mocks/sigeda/auth'
 import { iniciarComo } from '@/test/render'
 
 describe('GET /api/personas/{cod}/alumno', () => {
-  it('contrato §9.9 devuelve DetallePersona con las claves raras del backend', async () => {
+  it('contrato §9.9 devuelve DetallePersona con las mismas claves que las demás rutas', async () => {
     await iniciarComo('instructor.perez')
     const detalle = await sigeda.get<Record<string, unknown>>('/api/personas/777777/alumno')
     expect(detalle).toEqual({
       dni: '78901234',
       nombre: 'Carlos',
-      APaterno: 'Ramirez',
-      AMaterno: 'Sanchez',
+      aPaterno: 'Ramirez',
+      aMaterno: 'Sanchez',
       rango: 'Mayor',
       estado: 'En Chequeo',
       usuario: { nombre: 'alumno.ramirez', correo: 'alumno5@sigeda.com' },
     })
-    expect(detalle).not.toHaveProperty('aPaterno')
+    expect(detalle).not.toHaveProperty('apaterno')
+    expect(detalle).not.toHaveProperty('APaterno')
     expect(detalle).not.toHaveProperty('codigo')
   })
 
