@@ -604,7 +604,7 @@ El nombre del grupo, además, solo existe en `GET /api/grupos` (`Manage Groups`)
     "fase": "Adaptación",
     "criterio": 1,
     "criterioCumplido": true,
-    "detalle": "3 vuelos Malos.",
+    "detalle": "3 vuelos Malos",
     "regularAlternado": true,
     "cuentaConEsteEstado": false
   },
@@ -621,7 +621,7 @@ El nombre del grupo, además, solo existe en `GET /api/grupos` (`Manage Groups`)
 | `fase` | la `fase` de la última evaluación del alumno (`EvaluacionPractica.fase`) |
 | `criterio` | `1` para `Adaptación` y `Operaciones HeliTransportadas`, `2` para `Operaciones AeroTácticas` (`EvaluacionPractica.java:239-246`) |
 | `criterioCumplido` | `comprobarCriterio1(contMalo, contRegular)` = `3M · 2M+2R · 1M+4R · 6R` (`TurnoDesaprobado.java:16-21`), o `comprobarCriterio2` = `2M · 1M+2R · 4R` (`:24-28`) |
-| `detalle` | qué rama del criterio se cumplió, o qué falta para cumplirlo |
+| `detalle` | qué rama del criterio se cumplió, o qué falta para cumplirlo. **Sin punto final** (corregido el 27 sep 2026: el ejemplo de arriba lo traía): el punto lo pone S12 en el frontend, que compara la cadena exacta, y el mock ya lo emite sin punto |
 | `regularAlternado` | `esRegularAlternado` = `contRegular == 0 || contRegular % 2 == 0` (`:8-13`): si el próximo `Regular` contará |
 | `cuentaConEsteEstado` | **si el estado actual del alumno permite que los contadores se muevan**: `true` solo cuando `estado == "Apto"` |
 
