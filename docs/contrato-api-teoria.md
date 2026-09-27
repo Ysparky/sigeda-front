@@ -774,7 +774,7 @@ GET /api/personas/{cod}/estado-teorico      Read (alumno: solo el propio, depend
 ```
 
 - `bloqueadoPorSubsanacion` es verdadero mientras exista un examen desaprobado **sin una subsanación aprobada posterior** de la misma materia. Mientras lo sea, el alumno **no debe programarse en turnos prácticos** (PDI, spec §3.4): el frontend lo marca en la fila del alumno con su motivo e impide guardar, y `POST`/`PUT /api/turnos` debe rechazarlo (dependencia 57).
-- Aprobar la subsanación **levanta el bloqueo y no borra la nota desaprobada**, que sigue en `desaprobados` y en su propio examen (§4.4, "prevalece la primera nota").
+- Aprobar la subsanación **levanta el bloqueo y no borra la nota desaprobada**, que sigue en su propio examen (§4.6) y en el legajo de M5 (§4.4, «prevalece la primera nota»). **Corrección, 27 sep 2026:** antes esta línea decía que la nota seguía en `desaprobados`, lo que contradecía la regla de más abajo («`desaprobados` son los exámenes desaprobados **sin subsanar**»). Manda el mock, que es el spec ejecutable: usa `desaprobadosSinSubsanar(cod)` y calcula `bloqueadoPorSubsanacion` como `desaprobados.length > 0`, o sea que **las dos cosas son la misma lista** y un examen ya subsanado sale de ella. La nota desaprobada se sigue viendo en su examen, no acá.
 - `motivo` es `null` cuando no está bloqueado; es el texto que la interfaz muestra y por eso lo arma el servidor, con el nombre del turno, la nota con 2 decimales y el mínimo aplicado.
 - `desaprobados` son los exámenes desaprobados sin subsanar; `pendientes` son los turnos `PROGRAMADO` o `EN_CURSO` de tipo `SUBSANACION` o `REZAGADO` en los que está habilitado.
 
@@ -864,6 +864,7 @@ Los mensajes de validación de campo (400 arreglo) están en la tabla de cada en
 | `preguntas_turno` | `id_turno_teorico` FK, `id_pregunta` FK, `orden` int, `puntaje_maximo` int; PK compuesta | — |
 | `cuestionarios` | `id`, `id_turno_teorico` FK, `cod_alumno` FK, `estado` (**solo `EN_CURSO` o `ENTREGADO`**), `fecha_entrega` date null, `hora_entrega` varchar(5) null, `nota` numeric(4,2) null, `nota_minima_aplicada` int, `aprobado` bool null; único `(id_turno_teorico, cod_alumno)` | `cuestionarios_seq` desde 6 |
 | `calificaciones_teoricas` | `id_cuestionario` FK, `id_pregunta` FK, `orden` int, `enunciado` varchar(500), `respuesta_correcta` varchar(200), `respuesta_alumno` varchar(200) null, `correcto` bool, `puntaje_maximo` int, `puntaje_obtenido` int; PK compuesta | — |
+| `respuestas_cuestionario` (**nueva, 27 sep 2026**) | `id_cuestionario` FK, `id_pregunta` FK, `orden` int, `respuesta` varchar(200) **null**; PK compuesta | — |
 
 El bloque de secuencias actual está en `schema_prod.sql:100-115` y los valores de arranque de arriba son los de la §9, para que la semilla del backend y los mocks no se pisen.
 
@@ -871,6 +872,36 @@ Dos decisiones del esquema que conviene no perder:
 
 - **`cuestionarios` solo tiene filas de alumnos que empezaron.** `NO_RINDIO` es un estado **derivado de la ausencia de fila** (§Enumeraciones) y nunca se escribe: `cuestionarios.estado` tiene el dominio de `EstadoCuestionario`, que no lo incluye. Una fila por (alumno, turno) para los que no rindieron llegaría con las inasistencias, que son de M5 (spec §16.6).
 - **`calificaciones_teoricas` copia `enunciado` y `respuesta_correcta`.** Sin esas dos columnas, editar una pregunta reescribiría resultados ya emitidos (§2.4). `explicacion` no se copia: se lee en vivo, porque mejorarla debe beneficiar a todos.
+
+- **`respuestas_cuestionario` existe porque un examen EN CURSO no tenía dónde guardarse, y es
+  una tabla aparte a propósito.** Lo encontró la tanda C3: §4.3 define la respuesta cruda como
+  **el id de la alternativa** (texto en `COMPLETAR`), mientras `calificaciones_teoricas.respuesta_alumno`
+  guarda **el texto** de la respuesta; y `enunciado`, `respuesta_correcta`, `correcto`,
+  `puntaje_maximo` y `puntaje_obtenido` son `not null`. Así que ni el orden congelado de §4.2 ni
+  las respuestas guardadas de §4.3 eran representables.
+
+  Se evaluó agregar una columna `respuesta_enviada` a `calificaciones_teoricas` y crear sus filas
+  al iniciar. **Se descartó**, por dos razones concretas:
+  1. Obligaría a escribir valores provisionales (`correcto = false`, `puntaje_obtenido = 0`) en la
+     tabla cuyo único propósito es ser el registro inmutable de un resultado **ya emitido**. Y §4.6
+     dice que una pregunta **sin responder** de un examen entregado devuelve exactamente
+     `respuestaAlumno: null`, `correcto: false`, `puntajeObtenido: 0` — o sea que una fila sin
+     calificar y una calificada-y-en-blanco quedarían **idénticas**, y el único modo de
+     distinguirlas sería mirar el `estado` del padre. La tabla dejaría de poder leerse sola.
+  2. La respuesta cruda y la calificada **son datos distintos**: un **id** de alternativa contra su
+     **texto**. La regla de §2.4 de actualizar las alternativas en su lugar conservando el id
+     existe justamente porque la respuesta del alumno es un id que tiene que seguir apuntando a la
+     fila correcta. Meter las dos cosas en una tabla invita a la confusión que produjo este
+     bloqueo.
+
+  Semántica: `POST /api/turnos-teoricos/{id}/iniciar` inserta **una fila por pregunta del turno**,
+  con el `orden` de `preguntas_turno` y `respuesta` nula — eso **congela el orden del examen**
+  (§4.2) y a la vez es el almacén de respuestas. `PUT /api/cuestionarios/{id}/respuestas` reemplaza
+  el conjunto completo: pone `respuesta` en los pares que llegan y **nula** el resto.
+  `POST /api/cuestionarios/{id}/entregar` lee estas filas, califica y escribe
+  `calificaciones_teoricas` **con sus `not null` intactos**; las filas en curso **se conservan**,
+  porque son el registro a nivel de id, mientras §4.6 sirve el texto desde
+  `calificaciones_teoricas`.
 
 | Entidad del diagrama | Contrato |
 |---|---|
@@ -924,7 +955,9 @@ Consecuencias buscadas:
 
 ### 9.2 Turnos teóricos — 7 filas, ids 1 a 7
 
-Todas con `codInstructor: "444444"` y `programa: "PDI"`. Es el único instructor que alcanza los grupos 1, 2 y 3 por el camino `turnos.cod_instructor` → `alumnos_turno` → `personas.id_grupo`. Las fechas son relativas a `hoy`, el argumento de `crearDatos(hoy)`.
+Todas con `codInstructor: "444444"` y `programa: "PDI"`. Por el camino `turnos.cod_instructor` → `alumnos_turno` → `personas.id_grupo`, **444444 alcanza los grupos 1, 2 y 3**, y 888888 alcanza el 4 y el 6. Las fechas son relativas a `hoy`, el argumento de `crearDatos(hoy)`.
+
+> **Aviso, 27 sep 2026 — la semilla contiene un par que su propio `POST` rechazaría.** Los turnos **6 y 7 son del grupo 6 con `codInstructor: "444444"`**, y 444444 no alcanza el grupo 6: un `POST` de §3.3 con ese par recibe `'codInstructor': El grupo no corresponde al instructor.`, salvo que el llamador tenga `Manage Groups`. La semilla se dejó así **a propósito**, para que el mock y el backend coincidan mientras se decide de qué lado se arregla: cambiar esos dos turnos a `888888`, o darle el grupo 6 a 444444. Es una línea en cualquiera de los dos lados.
 
 | Id | Estado | Materia | Grupo | Tipo | Fecha | Horario | Preguntas | Para |
 |---|---|---|---|---|---|---|---|---|
@@ -933,6 +966,8 @@ Todas con `codInstructor: "444444"` y `programa: "PDI"`. Es el único instructor
 | 3 | **abierto por la prueba** | 3 | 1 (`111111`) | `SEMANAL` | `hoy` | `00:00`–`23:59` por defecto | 1–5, 4 puntos | Rendir examen, autoguardado y auto-entrega |
 | 4 | `PROGRAMADO` | 4 | 3 | `QUINCENAL` | `hoy + 3` | 09:00–10:00 | 17–21, 4 puntos | Modificar y eliminar; pendiente que todavía no abre |
 | 5 | `PROGRAMADO` | 3 | 3 | **`SUBSANACION`**, origen 1 | `hoy + 1` | 08:00–09:00 | 6–10, 4 puntos | Cadena de subsanación y `estado-teorico` |
+| 6 | `FINALIZADO` | 1 (mín. 16) | 6 (`999999`) | `TEST` | `hoy − 12` | 08:00–09:00 | 22 · 10, 23 · 7, 24 · 3 | Fixture de M5: el examen desaprobado de la cadena «prevalece la primera nota» |
+| 7 | `FINALIZADO` | 1 | 6 | **`SUBSANACION`**, origen 6 | `hoy − 11` | 08:00–09:00 | 22 · 10, 23 · 7, 24 · 3 | Fixture de M5: la subsanación **aprobada** que levanta el bloqueo sin borrar la nota |
 
 **El horario del turno 3 no se deriva del reloj: lo abre un ayudante de pruebas.** `crearDatos` le da `00:00`–`23:59`, que lo deja `EN_CURSO` cualquier hora del día real, y M4 agrega a `src/test/tiempo.ts`:
 
@@ -956,6 +991,8 @@ Lo demás de la §9.2:
 | 1 | `555555` | 1 | `ENTREGADO` | **20.00**, aprobado | Las 5 correctas; entrega `hoy − 7` 08:41 |
 | 2 | `666666` | 1 | `ENTREGADO` | **12.00**, desaprobado (mínimo aplicado 18) | Correctas las preguntas 1, 2 y 4; entrega `hoy − 7` 08:52 |
 | 3 | `111111` | 3 | `EN_CURSO` | `null` | Dos respuestas guardadas (preguntas 1 y 3); `calificaciones: []` |
+| 4 | `999999` | 6 | `ENTREGADO` | **10.00**, desaprobado (mínimo aplicado 16) | Correcta solo la 22; entrega `hoy − 12` 08:35 |
+| 5 | `999999` | 7 | `ENTREGADO` | **17.00**, aprobado (mínimo aplicado 16) | Correctas la 22 y la 23; entrega `hoy − 11` 08:28 |
 
 Resumen del turno 1: `{"habilitados":2,"rindieron":2,"aprobados":1,"notaPromedio":16.00}`. Turno 2: `{"habilitados":1,"rindieron":0,"aprobados":0,"notaPromedio":null}`, con `222222` en `NO_RINDIO` **por no tener fila**.
 
@@ -966,7 +1003,8 @@ Con 4 puntos por pregunta las notas posibles son 0, 4, 8, 12, 16 y 20: las dos n
 | Alumno | `bloqueadoPorSubsanacion` | Contenido |
 |---|---|---|
 | `666666` | **`true`** | `motivo` con el turno 1, la nota 12.00 y el mínimo 18; `desaprobados: [2]`; `pendientes: [5]` |
-| `111111`, `222222`, `555555`, `777777`, `999999`, `654321` | `false` | `motivo: null` y los dos arreglos vacíos |
+| `111111`, `222222`, `555555`, `777777`, `654321` | `false` | `motivo: null` y los dos arreglos vacíos |
+| `999999` | `false`, **y no por no tener desaprobados** | Desaprobó el turno 6 (10.00 / mínimo 16) **y aprobó su subsanación**, el turno 7 (17.00). Así que su examen 4 **sale de `desaprobados`** y el bloqueo se levanta: los dos arreglos quedan vacíos y `motivo` es `null`. La nota 10.00 sigue viéndose en su propio examen (§4.6) — es la cadena con que M5 prueba «prevalece la primera nota», y el único caso de la semilla que ejercita la rama «subsanación aprobada posterior» |
 | cualquier otra persona existente, alumno o no | `false` | igual |
 | un código inexistente | — | **404** D27 |
 
