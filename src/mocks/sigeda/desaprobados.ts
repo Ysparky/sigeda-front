@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { criterioDeFase, ramasDeCriterio } from '@/lib/dominio/seguimiento'
-import { API, autorizar, textoEliminado, textoNoEncontrado } from './comun'
+import { API, autorizar, textoNoEncontrado } from './comun'
 import { buscarPersona, datos, type EvaluacionMock } from './datos'
 
 export const D3_SIN_DESAPROBADOS = 'No existen desaprobados disponibles.'
@@ -154,11 +154,5 @@ export const handlersDesaprobados = [
     return HttpResponse.json(
       replayDeResultados().desaprobados.some((desaprobado) => desaprobado.codigo === String(params.cod)),
     )
-  }),
-  http.delete(`${API}/api/desaprobados/:cod`, ({ request, params }) => {
-    const permitido = autorizar(request, 'Modify Evaluations')
-    if (permitido instanceof Response) return permitido
-    const existe = replayDeResultados().desaprobados.some((desaprobado) => desaprobado.codigo === String(params.cod))
-    return existe ? textoEliminado('Desaprobado') : textoNoEncontrado(D4_DESAPROBADO_NO_EXISTE)
   }),
 ]

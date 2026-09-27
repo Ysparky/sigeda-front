@@ -126,15 +126,12 @@ describe('los cinco endpoints de desaprobados', () => {
     await expect(sigeda.get('/api/desaprobados/alumno/777777/subfase/3')).rejects.toBeInstanceOf(ApiError)
   })
 
-  it('contrato §2.5 el DELETE pide Modify Evaluations y responde 404 cuando el código no existe', async () => {
-    await iniciarComo('alumno.ramirez')
-    await expect(sigeda.eliminar('/api/desaprobados/777777-1')).rejects.toMatchObject({ status: 403 })
+  // §2.5 SE RETIRÓ DEL SERVIDOR. Borrar un `Desaprobado` por su cuenta desincronizaba los contadores
+  // del alumno, porque la contabilidad completa vive en `revertAll` y sólo es correcta para la ÚLTIMA
+  // evaluación. El mock no la sirve más, y esto lo fija: si alguien la reintroduce, esta prueba falla.
+  it('contrato §2.5 el DELETE ya no existe: el servidor retiró la ruta', async () => {
     await iniciarComo('comandante.aguirre')
-    await expect(sigeda.eliminar('/api/desaprobados/no-existe')).rejects.toMatchObject({
-      status: 404,
-      message: 'Desaprobado especificada no existe.',
-    })
-    await expect(sigeda.eliminar('/api/desaprobados/777777-1')).resolves.toBe('Desaprobado eliminado con éxito.')
+    await expect(sigeda.eliminar('/api/desaprobados/777777-1')).rejects.toBeInstanceOf(ApiError)
   })
 
   it('contrato §2.6 exist responde true o false crudos', async () => {

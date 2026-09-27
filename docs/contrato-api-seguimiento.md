@@ -57,7 +57,7 @@ Lo que **no** está en este contrato y nadie hereda, porque M5 es la última eta
   Cómo lo lee el frontend (`src/lib/api/errors.ts:83-105`): un texto plano por debajo de 500 se muestra tal cual (`:91`), un 403 de texto también (`:89`), un arreglo de textos se reparte por campo (`:90`), y la rama de 5xx (`:84`) **no** muestra el texto, solo lo manda a la consola.
 - **Listas vacías.** 404 con texto. `sigeda.pagina` lo convierte en una página vacía (`src/lib/api/http.ts:138-145`) y `sigeda.lista` en `[]` (`:147-154`), **en cualquier endpoint de lista**. Ese es justamente el motivo por el que M5 necesita los avisos de dependencia: un endpoint que todavía no existe se ve *simplemente vacío* (spec M5-22).
 - **`409` no existe en este backend.** `grep -rn CONFLICT src/main/java` no devuelve nada; el caso equivalente es **410 Gone** vía `ActionExpiredException` → `exception/GlobalExceptionHandler.java:131-140`, lanzado en tres lugares (`maniobra/services/ManiobraService.java:129`, `turno/services/TurnoService.java:138`, `turno/controllers/TurnoController.java:208`). **M5 no necesita ninguno de los dos:** es un módulo de solo lectura, sin ninguna regla de estado que rechazar. Se anota para que el contrato no parezca incompleto.
-- **M5 no escribe nada.** Ningún endpoint de este contrato es `POST`, `PUT` o `DELETE`, con una sola excepción que **el frontend no llama**: `DELETE /api/desaprobados/{cod}` (§2.5), documentado porque existe, no tiene permiso y cualquier usuario autenticado lo alcanza.
+- **M5 no escribe nada.** Ningún endpoint de este contrato es `POST`, `PUT` o `DELETE`. (Había una excepción que el frontend no llamaba, `DELETE /api/desaprobados/{cod}`; **se retiró del servidor** — ver §2.5.)
 - **Fechas y horas.** Fechas `yyyy-MM-dd`, leídas con `DateTimeFormatter.ofPattern("uuuu-MM-dd")` (`utils/CustomDateDeserializer.java:15`). Horas `"HH:mm"`. **Este contrato no tiene ningún instante y ningún sello de tiempo.** La primera versión ponía un `calculadoEn` en §3.1 y §4.1 partido en dos campos; se retiró, porque describía un lote que no existe: no hay ningún `@Scheduled` en `sigeda-back` ni infraestructura para uno (dependencia 55), así que los dos endpoints **se calculan en cada lectura** y el momento del cálculo es el de la consulta, que el navegador ya tiene.
 - **Números.** Todos los índices (`nfpi`, `nit`, `nia`, `nct`, `nei`, `na`, `pe`, `pt`, `nsf`, y el valor de cada fase) son **números JSON con 2 decimales o `null`**, nunca texto y nunca `0` para «no se pudo calcular». Los promedios prácticos que devuelven los endpoints que ya existen siguen llegando **como texto** (`evaluaciones_practicas.promedio varchar(255)`, `schema_prod.sql:176`, escrito con `String.format("%.1f", total)`, `evaluacion/utils/CalculoNota.java:85`) y el frontend los tolera con `aNota` (`src/features/evaluaciones/api.ts:111-115`). **La dependencia 62 pide que esa columna pase a numérica**, porque ordenarla o promediarla en SQL es lexicográfico sin un cast, y las §3 y §4 hacen las dos cosas.
 - **Paginación.** `utils/Page_Sort.java` (`page` def. `0`, `size` def. `6`, `direction` def. **`ASC`**, `property` **uno**, sin tope de tamaño, `:10-12,29-41`), con el `Page` de Spring serializado directo. El frontend lee `content`, `totalElements`, `totalPages`, `size` y `number`, y pide `size=10`. Los cuatro mensajes de paginado inválido son los de `contrato-api-matricula.md` › Paginación, byte a byte.
@@ -152,7 +152,7 @@ GET    /api/seguimiento/alertas?programa=&idGrupo=&tipo=&fechaPre=&fechaPost=&pa
 GET    /api/desaprobados/persona/{codPersona}                        View Disapproved   [existe]
 GET    /api/desaprobados/alumno/{cod}/subfase/{id}                   View Disapproved   [existe, HOY SIN PERMISO]
 GET    /api/desaprobados/regular/alumno/{cod}/subfase/{id}           View Disapproved   [existe, HOY SIN PERMISO]
-DELETE /api/desaprobados/{cod}                                       Modify Evaluations [existe, HOY SIN PERMISO]
+DELETE /api/desaprobados/{cod}                                       [RETIRADA DEL SERVIDOR, ver §2.5]
 GET    /api/desaprobados/exist/{cod}                                 View Disapproved   [existe, HOY SIN PERMISO]
 ```
 
@@ -263,9 +263,24 @@ El último `Desaprobado` del alumno en esa subfase (`:56-71`, `findFirstByCodigo
 
 Igual que §2.3 pero filtrado a `clasificacion = Regular` (`:73-89`). `null` → **404** D4. Sin permiso hoy. M5 no lo llama.
 
-### 2.5 `DELETE /api/desaprobados/{cod}` — **necesita `@PreAuthorize`, y es el peor de los cinco**
+### 2.5 `DELETE /api/desaprobados/{cod}` — **RETIRADA DEL SERVIDOR (27 sep 2026)**
 
-`deleteByCodigo` **sin comprobación de existencia**, y responde siempre **200** D5 aunque el código no exista (`:91-102` → `Response.java:63-66`). Hoy, **cualquier usuario autenticado — incluido el Alumno cuyo vuelo desaprobado es — puede borrar el registro de su propio fallo**, y el sistema contesta que fue bien. Este contrato pide `Modify Evaluations` (el permiso que ya gobierna modificar y eliminar una evaluación, `EvaluacionController.java:402-404`) y un **404** D4 cuando el código no existe. **M5 nunca lo llama**; está aquí porque existe.
+**La ruta ya no existe.** Este contrato pedía ponerle `Modify Evaluations` y un 404, porque tal como
+estaba **cualquier usuario autenticado —incluido el Alumno cuyo vuelo desaprobado es— podía borrar
+el registro de su propio fallo** y el sistema contestaba que fue bien. Al ir a arreglarla se vio que
+el problema era más profundo que el permiso: **no se puede borrar un `Desaprobado` por separado sin
+desincronizar los contadores del alumno.**
+
+La contabilidad completa incluye deshacer el estado, y el estado no se deduce de la fila de
+`desaprobados`: `revertAll` decide con la **categoría** y la **clasificación** de la
+`EvaluacionPractica` y con el estado del alumno en ese momento. Y `revertAll` **sólo es correcta
+para la última evaluación del alumno** —por eso `DELETE /api/evaluaciones/{cod}` exige
+`cod == alumno.codEvalRealizada` antes de llamarla—, mientras que un `Desaprobado` puede ser de
+cualquier evaluación histórica. Hacerla correcta la habría vuelto un alias de
+`DELETE /api/evaluaciones/{cod}` con una guardia más débil y un nombre que promete otra cosa.
+
+**Quien necesite deshacer un desaprobado usa `DELETE /api/evaluaciones/{cod}`**, que hace la
+contabilidad completa. El mock ya no sirve esta ruta y una prueba fija que no vuelva.
 
 ### 2.6 `GET /api/desaprobados/exist/{cod}` — **necesita `@PreAuthorize`**
 
@@ -717,8 +732,8 @@ Cualquier otro texto del servidor se reemplaza por el genérico y solo va a la c
 | D1 | 404 | No existen grupos disponibles. | §1.1, §1.2 (el frontend lo trata como lista vacía; en §1.2 lo muestra como S2) |
 | D2 | 404 | Persona especificada no existe. | §3.1, §5.1, §5.2, §6.1, §6.2 |
 | D3 | 404 | No existen desaprobados disponibles. | §2.2 (lista vacía) |
-| D4 | 404 | Desaprobado especificada no existe. | §2.3, §2.4, y §2.5 después de la corrección |
-| D5 | 200 | Desaprobado eliminado con éxito. | §2.5 (plantilla `Response.wasDeleted`). **M5 no llama ese endpoint** |
+| D4 | 404 | Desaprobado especificada no existe. | §2.3, §2.4 |
+| D5 | — | ~~Desaprobado eliminado con éxito.~~ | §2.5 se retiró del servidor; este mensaje ya no se emite |
 | D6 | 404 | evaluaciones especificada no existe. | §6.3, reporte de subfase sin evaluaciones. **Verbatim y mal formado** (`isNull(nombreLista)`, `EvaluacionController.java:114-115,76`); el frontend **no lo muestra** y lo trata como subfase sin evaluaciones |
 | D7 | 404 | No existen evaluaciones disponibles. | §6.3, historial práctico con página vacía |
 | D8 | 404 | Evaluación especificada no existe. | §6.3, detalle de evaluación |
