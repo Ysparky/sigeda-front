@@ -1,94 +1,70 @@
 # Correr SIGEDA de punta a punta — guion de demostración
 
-> **Estado: BORRADOR SIN VERIFICAR.** Cada comando de aquí se verifica ejecutándolo antes de la
-> demostración; lo que no esté marcado como comprobado puede estar mal. (Se verifica en cuanto la
-> tanda D5 libere el árbol del backend.)
+**Todos los comandos de aquí se ejecutaron y funcionaron el 27 sep 2026.** No incluye el backend
+de IA (`sigeda_chat_status`): sus dependencias 39–50 no están hechas.
 
-Esto levanta el sistema real: PostgreSQL, el backend Spring y el frontend apuntando al backend en
-vez de a los mocks. **No** incluye el backend de IA (`sigeda_chat_status`), cuyas dependencias
-39–50 no están hechas.
+## 1. PostgreSQL
 
-## 1. La base de datos
-
-El perfil `dev` apunta a `localhost:5432/sigeda`, pero **ese puerto puede estar ocupado** por los
-contenedores de otro proyecto que Docker Desktop arranca solo (`learning-module-postgres`). Por eso
-la base de la demo va en el **5544** y el backend se sobrescribe por variable de entorno, sin
-tocar ninguna configuración ni los contenedores ajenos.
+El perfil `dev` apunta a `localhost:5432/sigeda`, pero **ese puerto puede estar ocupado** por
+contenedores de otros proyectos que Docker Desktop arranca solo. La base de la demo va en el
+**5544** y el backend se sobrescribe por variable de entorno, sin tocar configuración ni
+contenedores ajenos.
 
 ```sh
-# el binario de docker necesita su helper de credenciales en el PATH
+# el cliente docker necesita su helper de credenciales en el PATH
 export PATH="$PATH:/Applications/Docker.app/Contents/Resources/bin"
 
 docker run -d --name sigeda-pg \
   -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=sigeda \
   -p 5544:5432 postgres:16
 
-# esperar a que acepte conexiones
-until docker exec sigeda-pg pg_isready -U postgres -d sigeda >/dev/null 2>&1; do sleep 1; done
+docker exec sigeda-pg psql -U postgres -c 'create database sigeda_demo'
+until docker exec sigeda-pg pg_isready -U postgres -d sigeda_demo >/dev/null 2>&1; do sleep 1; done
 ```
 
-**No hace falta cargar el esquema a mano.** Con el perfil `dev`,
-`spring.sql.init.mode=always` hace que el backend ejecute `schema_prod.sql` y `data_prod.sql` en
-cada arranque — y `schema_prod.sql` **empieza borrando las tablas**, así que cada arranque deja la
-base como recién sembrada. Es reproducible, pero **lo que se cargue durante la demo se pierde al
-reiniciar**.
+**El esquema no se carga a mano.** Con el perfil `dev`, `spring.sql.init.mode=always` hace que el
+backend ejecute `schema_prod.sql` y `data_prod.sql` en **cada arranque**, y `schema_prod.sql`
+**empieza borrando las tablas**. Es reproducible, pero **lo que se cargue durante la demo se pierde
+al reiniciar**.
 
 ## 2. El backend
 
 ```sh
 cd sigeda-back
-SPRING_DATASOURCE_URL='jdbc:postgresql://localhost:5544/sigeda?prepareThreshold=0' \
+SPRING_DATASOURCE_URL='jdbc:postgresql://localhost:5544/sigeda_demo?prepareThreshold=0' \
   sh ./mvnw -o spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-El wrapper **no es ejecutable** en este clon: siempre `sh ./mvnw`. Queda en
-`http://localhost:8080`.
+El wrapper **no es ejecutable** en este clon: siempre `sh ./mvnw`. Arranca en ~4.3 s en
+`http://localhost:8080`. Comprobación rápida:
+
+```sh
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8080/api/materias        # 401 sin token
+curl -s -X POST http://localhost:8080/auth/login -H 'Content-Type: application/json' \
+     -d '{"username":"admin.sistema","password":"123"}'                            # 200 + token
+```
 
 ## 3. El frontend
 
-Crear `sigeda-web/.env` (está en `.gitignore`, así que no se commitea):
+Crear `sigeda-web/.env` (está en `.gitignore`):
 
 ```
 VITE_SIGEDA_API_URL=http://localhost:8080
+VITE_IA_API_URL=http://localhost:3000
 VITE_MOCK_API=false
-VITE_DEPENDENCIAS_RESUELTAS=<la lista de abajo>
+VITE_DEPENDENCIAS_RESUELTAS=1,2,5,6,7,12,13,14,15,16,17,18,19,20,21,22,24,52,53,54,55,58,61,63,64,65,66,67,68,70
 ```
 
 ```sh
-cd sigeda-web && pnpm dev
+cd sigeda-web && pnpm dev     # http://localhost:5173
 ```
 
-`pnpm dev:mock` es lo contrario: usa `.env.mock` y no toca el servidor.
+`pnpm dev:mock` es lo contrario: usa `.env.mock` y no toca el servidor. El CORS del backend ya
+permite `http://localhost:5173` (comprobado).
 
-## 4. Qué poner en `VITE_DEPENDENCIAS_RESUELTAS`
+## 4. Las cuentas
 
-El frontend deshabilita una acción mientras su dependencia no figure aquí. Esta es la lista de las
-que **están hechas y verificadas**:
-
-```
-1,2,5,6,7,12,13,14,15,16,17,18,19,20,21,22,24,52,53,54,55,58,61,63,64,65,66,67,68
-```
-
-Con eso se habilitan: gestionar materias, gestionar e importar preguntas, programar turnos
-teóricos, rendir exámenes, el bloqueo por subsanación, las alertas, el ciclo de chequeo, el
-historial teórico y las causales, y registrar personas.
-
-**Deliberadamente NO se incluyen**, y las pantallas lo van a decir en pantalla:
-
-| Dependencia | Por qué no |
-|---|---|
-| **62** | La tabla de coeficientes de misión **no existe en el PDI ni en su libro de trabajo**. Sin ella `NSF`, `NIA` y `NFPI` no son calculables **por nadie**. Deja fuera los índices y el orden de mérito. |
-| 30 | El borrado de persona falla con FK si el usuario **alguna vez inició sesión** (`refresh_tokens` no tiene cascada). |
-| 32, 33, 37 | Modificar maniobra y eliminar fase; la 37 es **pérdida de datos**. |
-| 39 | Todo el módulo de IA, en otro repositorio. |
-| 56 | La consulta en lote del estado teórico. |
-
-Incluir la 62 no arregla nada: haría que la pantalla pidiera datos que el servidor devuelve nulos,
-en vez de explicar por qué faltan.
-
-## 5. Cuentas
-
-Todas con contraseña `123` (semilla de `data_prod.sql`).
+Todas con contraseña **`123`**.
 
 | Usuario | Rol | Para ver |
 |---|---|---|
@@ -98,14 +74,54 @@ Todas con contraseña `123` (semilla de `data_prod.sql`).
 | `instructor.perez` | Instructor | banco de preguntas, turnos teóricos, evaluar |
 | `alumno.lopez` | Alumno | sus turnos, sus exámenes, su legajo |
 
-## 6. Recorrido sugerido
+## 5. Lo que funciona, comprobado ruta por ruta
 
-_(por completar y verificar corriendo el sistema)_
+Las 22 rutas que se probaron con `curl` contra la base real devolvieron lo esperado, **incluidas
+las cinco de turnos que estaban caídas antes de la tanda E1**:
 
-## 7. Lo que NO se puede demostrar, y por qué
+- Turnos: la lista con sus cuatro ramas de filtro, el detalle, `/turnos/alumno`, aeronaves.
+- Teoría: materias, banco de preguntas, turnos teóricos, el catálogo de grupos, el detalle de
+  turno, los exámenes pendientes, el estado teórico.
+- Seguimiento: índices, orden de mérito, legajo, alertas, historial teórico.
+- Matrícula: personas, grupos, maniobras, fases, subfases, roles.
+- Seguridad: 401 sin token; **403 al pedir los datos de otro alumno** y 200 con los propios.
 
-- **`NFPI` y el orden de mérito**: falta un dato de la norma (dependencia 62), no código.
-- **Las causales teóricas y el `NCT`**: la semilla **no tiene ni un turno de tipo `EXAMEN`**, y
-  `PE` solo se alimenta de ese tipo, así que ningún `NA` es calculable y las causales que dependen
-  de él no pueden dispararse. **Se arregla con datos**, y hay una propuesta escrita.
-- **El módulo de aprendizaje con IA**: dependencias 39–50, sin empezar.
+## 6. Cinco cosas que conviene saber antes de demostrar
+
+1. **Al registrar un turno, elegir la sub fase 2, 3 o 4.** La semilla enlaza maniobras solo a esas
+   tres; las sub fases **1 (Contacto) y 5 (Formación) no tienen ninguna**, así que el selector de
+   maniobras sale vacío y `GET /api/maniobras/subfase/1` responde 404. No es un defecto: es la
+   semilla. (Y los siete turnos sembrados usan justamente la sub fase 1.)
+2. **El panel de chequeos sale vacío.** `GET /api/personas/{cod}/chequeos` responde 404, que el
+   frontend muestra como panel vacío, porque **la semilla no tiene ninguna fila en
+   `chequeos_finales`**.
+3. **`NFPI` y el orden de mérito muestran «no calculable», a propósito.** Falta la tabla de
+   coeficientes de misión del PDI (dependencia 62), que **no está en el documento ni en su libro de
+   trabajo**. La pantalla dice cuál es el dato que falta en vez de inventar un número — y eso es
+   defendible, no un defecto.
+4. **`NCT` y las causales salen vacíos.** La semilla **no tiene ni un turno de tipo `EXAMEN`**, y
+   `PE` solo se alimenta de ese tipo, así que ningún `NA` es calculable. `NEI` **sí** se calcula
+   (`555555` da 20.00). Se arregla con datos: hay una propuesta escrita en las notas.
+5. **Cada reinicio del backend re-siembra la base.** Ideal para repetir la demo, fatal si se quiere
+   conservar lo que se cargó en vivo.
+
+## 7. Lo que no se puede demostrar
+
+- **El módulo de aprendizaje con IA**: dependencias 39–50, en otro repositorio, sin empezar.
+- **Eliminar persona**: dependencia 30 incompleta — falla con FK si el usuario **alguna vez inició
+  sesión**, porque `refresh_tokens` no tiene cascada.
+- **Modificar maniobra** (32, 33) y **eliminar fase** (37, que es **pérdida de datos**): siguen
+  deshabilitadas por el propio frontend.
+- **El `NFPI`**: ver el punto 3.
+
+## 8. Un defecto que esta preparación encontró y arregló
+
+`GET /api/preguntas` devolvía **500 contra PostgreSQL** siempre que el filtro `texto` viniera
+ausente o vacío — o sea **en la vista por defecto del banco de preguntas**. PostgreSQL no puede
+inferir el tipo de un parámetro nulo dentro de `concat()`, lo bindea como `bytea` y rechaza la
+comparación (`operator does not exist: text ~~ bytea`). **Ninguna prueba de las 900 podía
+atraparlo: H2 infiere el tipo y responde 200.** Arreglado con un `cast(:texto as String)`, y la
+razón quedó escrita sobre la consulta.
+
+Es el argumento de por qué este paso existe: **una suite verde sobre H2 no dice que el sistema
+funcione sobre PostgreSQL.**
