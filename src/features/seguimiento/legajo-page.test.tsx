@@ -348,6 +348,27 @@ describe('Legajo: estado teórico y causales', () => {
     expect(teorico.getByText('Nota de asignatura 11.80 en Ingeniería del Helicóptero, por debajo de 13.')).toBeInTheDocument()
   })
 
+  // El contrato de teoría deja causales[] fuera de M4 y la agrega la dependencia 68, así que el
+  // backend real NO manda el campo todavía. El mock sí lo emite, de modo que esta pantalla pasaba
+  // contra el mock y habría estallado contra el servidor al leer .length de undefined.
+  it('CA-LEG-12 sin causales en la respuesta la pantalla no estalla y dice que no hay', async () => {
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/personas/:cod/estado-teorico`, () =>
+        HttpResponse.json({
+          codAlumno: '111111',
+          alumno: 'Oscar Lopez Chaparro',
+          bloqueadoPorSubsanacion: false,
+          motivo: null,
+          desaprobados: [],
+          pendientes: [],
+        }),
+      ),
+    )
+    await abrirLegajo('111111')
+    const teorico = panel('Estado teórico')
+    expect(await teorico.findByText(TEXTO_SIN_CAUSALES)).toBeInTheDocument()
+  })
+
   it('CA-LEG-12 una causal sin materia se muestra sin ella y no como un hueco', async () => {
     await abrirLegajo('111111')
     const teorico = panel('Estado teórico')

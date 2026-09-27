@@ -38,11 +38,11 @@ export function PanelDeEstadoTeorico({ codAlumno }: Props) {
                 ))}
               </ul>
             )}
-            {estado.data.causales.length === 0 ? (
+            {(estado.data.causales ?? []).length === 0 ? (
               <p className="text-sm text-muted-foreground">{TEXTO_SIN_CAUSALES}</p>
             ) : (
               <ul className="grid gap-2">
-                {estado.data.causales.map((causal, indice) => (
+                {(estado.data.causales ?? []).map((causal, indice) => (
                   <li
                     key={`${causal.codigo}-${causal.idMateria ?? indice}`}
                     className="grid gap-1 border-t pt-2 first:border-t-0 first:pt-0"

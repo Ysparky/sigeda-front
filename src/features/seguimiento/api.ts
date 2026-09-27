@@ -59,7 +59,10 @@ export type EstadoTeoricoDelAlumno = EstadoTeoricoResumen & {
     nota: number | null
     notaMinimaAplicada: number
   }[]
-  causales: Causal[]
+  // Opcional a propósito: el contrato de teoría deja `causales[]` fuera de M4 y la agrega la
+  // dependencia 68, así que el backend real NO la manda todavía. El mock sí la emite, de modo que
+  // sin esto la pantalla funciona contra el mock y estalla contra el servidor.
+  causales?: Causal[]
 }
 
 export type ExamenDelHistorial = {
