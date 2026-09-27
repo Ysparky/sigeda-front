@@ -68,7 +68,10 @@ export function textoOrdenDeMeritoConsultado(fecha: string, hora: string): strin
 }
 
 export function textoSinNfpi(detalle: string): string {
-  return `Sin NFPI: ${detalle}.`
+  // Los motivos que manda el servidor ya terminan en punto, así que agregar otro producía
+  // 'Sin NFPI: …AeroTácticas..'. Se recorta el punto final y se pone exactamente uno.
+  const limpio = detalle.trim().replace(/\.+$/, '')
+  return limpio === '' ? 'Sin NFPI.' : `Sin NFPI: ${limpio}.`
 }
 
 export function textoRegularAlternado(alternado: boolean): string {

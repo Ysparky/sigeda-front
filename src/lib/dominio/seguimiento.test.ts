@@ -250,3 +250,21 @@ describe('textos fijos de la spec §17.3', () => {
     expect(etiquetaDeGrupoConNombre(null, 'Promoción 2026-A')).toBe(TEXTO_SIN_GRUPO)
   })
 })
+
+describe('textoSinNfpi', () => {
+  // Las pruebas de pantalla llaman a textoSinNfpi en los dos lados de la aserción, así que el
+  // punto doble les pasaba inadvertido. Acá se fija el literal.
+  it('no duplica el punto cuando el motivo ya termina en uno', () => {
+    expect(textoSinNfpi('Sin nota en Operaciones HeliTransportadas ni en Operaciones AeroTácticas.')).toBe(
+      'Sin NFPI: Sin nota en Operaciones HeliTransportadas ni en Operaciones AeroTácticas.',
+    )
+  })
+
+  it('agrega el punto cuando el motivo no lo trae', () => {
+    expect(textoSinNfpi('No tiene evaluaciones registradas')).toBe('Sin NFPI: No tiene evaluaciones registradas.')
+  })
+
+  it('sin motivo no deja un punto huérfano', () => {
+    expect(textoSinNfpi('')).toBe('Sin NFPI.')
+  })
+})
