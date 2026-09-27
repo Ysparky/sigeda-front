@@ -31,6 +31,21 @@ const ESPERADOS: Record<string, [nfpi: number | null, nit: number | null, nia: n
   '654321': [null, null, null],
 }
 
+describe('contrato §3.1: el legajo ajeno', () => {
+  // §3.1 restringe el legajo ajeno con 403 D11. El mock no lo comprobaba y el servidor sí lo hace
+  // desde la tanda D1, así que este caso pasaba de 200 contra el mock a 403 contra el servidor.
+  it('un alumno no puede pedir los índices de otro', async () => {
+    await iniciarComo('alumno.lopez')
+    await expect(sigeda.get<Indices>('/api/personas/666666/indices')).rejects.toThrow()
+  })
+
+  it('un alumno sí puede pedir los propios', async () => {
+    await iniciarComo('alumno.lopez')
+    const propios = await sigeda.get<Indices>('/api/personas/111111/indices')
+    expect(propios.nia.fases).toHaveLength(3)
+  })
+})
+
 describe('GET /api/personas/{cod}/indices', () => {
   it('contrato §9.5 las siete fijaciones son exactamente las del contrato', async () => {
     await iniciarComo('instructor.perez')

@@ -2,7 +2,8 @@ import { http, HttpResponse } from 'msw'
 import { permisosDeRol } from '@/lib/auth/permisos'
 import { API, autorizar, paginarOrdenado, textoNoEncontrado, textoProhibido } from './comun'
 import { D2_PERSONA_NO_EXISTE } from './alumnos'
-import { buscarPersona, datos, gruposDeInstructor, nombreCompleto, rolPorId, type PersonaMock } from './datos'
+import { buscarPersona, datos, gruposDeInstructor, nombreCompleto, rolPorId, usuarioDePersona, type PersonaMock } from './datos'
+import { D15_SOLO_LO_PROPIO } from './cuestionarios-teoria'
 
 export const D12_SIN_ALUMNOS_CON_INDICES = 'No existen alumnos con índices disponibles.'
 export const D17_FUERA_DE_ALCANCE = 'No tiene permiso para ver este grupo.'
@@ -205,8 +206,14 @@ export const handlersIndices = [
   http.get(`${API}/api/personas/:cod/indices`, ({ request, params }) => {
     const permitido = autorizar(request, 'Read')
     if (permitido instanceof Response) return permitido
-    const persona = buscarPersona(String(params.cod))
+    const cod = String(params.cod)
+    const persona = buscarPersona(cod)
     if (!persona) return textoNoEncontrado(D2_PERSONA_NO_EXISTE)
+    // §3.1 restringe el legajo ajeno con 403 D11. El mock no lo comprobaba y el servidor sí lo
+    // hace desde la tanda D1, así que pedir el legajo de otro pasaba de 200 a 403 solo contra el
+    // servidor. Misma forma que estado-teorico.ts, que es la ruta hermana.
+    const esAlumno = rolPorId(usuarioDePersona(permitido.codPersona)?.idRol ?? null)?.nombre === 'Alumno'
+    if (esAlumno && permitido.codPersona !== cod) return textoProhibido(D15_SOLO_LO_PROPIO)
     return HttpResponse.json(indicesDe(persona))
   }),
   http.get(`${API}/api/reportes/orden-merito`, ({ request }) => {
