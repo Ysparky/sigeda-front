@@ -426,6 +426,25 @@ Lo que hay que decidir: (a) las cinco sub fases sembradas son **exactamente** la
 
 ## 4. Orden de mérito — la otra mitad de la dependencia 8
 
+> ## ⛔ FUERA DE ALCANCE POR AHORA — decidido el 27 sep 2026
+>
+> **El endpoint está implementado y probado** (dependencia 63, tanda D2: el orden, el desempate
+> determinista, el alcance por grupo y el paginado). **Lo que queda fuera de alcance es el
+> entregable**: mientras falte la **dependencia 62** —la tabla de coeficientes de misión del PDI,
+> que **no está en el documento ni en su libro de trabajo**— ningún alumno tiene un `NFPI`
+> calculable, así que el reporte devuelve **todas las filas con `puesto: null`** y su
+> `motivoSinNfpi`. Un orden de mérito sin puestos no es un orden de mérito.
+>
+> Por eso **no se demuestra ni se presenta como funcionalidad terminada**, y su dependencia no
+> entra en `VITE_DEPENDENCIAS_RESUELTAS` (la acción `verOrdenMerito` exige la 62 además de la 63,
+> así que la pantalla ya queda deshabilitada sola y explica por qué).
+>
+> **No es una carencia del software.** El día que la institución entregue esa tabla, esto vuelve al
+> alcance sin escribir código nuevo: lo único que falta es el dato. Lo que sí queda pendiente del
+> lado del software cuando eso pase es el paso de `evaluaciones_practicas.promedio` a numérico, que
+> la propia 62 pide.
+
+
 ```
 GET /api/reportes/orden-merito?programa=&idGrupo=&page=&size=&direction=&property=   Create Reports   [NUEVO, deps. 62 y 63]
 ```

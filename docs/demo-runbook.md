@@ -95,10 +95,14 @@ las cinco de turnos que estaban caídas antes de la tanda E1**:
 2. **El panel de chequeos sale vacío.** `GET /api/personas/{cod}/chequeos` responde 404, que el
    frontend muestra como panel vacío, porque **la semilla no tiene ninguna fila en
    `chequeos_finales`**.
-3. **`NFPI` y el orden de mérito muestran «no calculable», a propósito.** Falta la tabla de
-   coeficientes de misión del PDI (dependencia 62), que **no está en el documento ni en su libro de
-   trabajo**. La pantalla dice cuál es el dato que falta en vez de inventar un número — y eso es
-   defendible, no un defecto.
+3. **El orden de mérito está FUERA DE ALCANCE por ahora, y no se demuestra.** El endpoint está
+   implementado y probado, pero falta la tabla de coeficientes de misión del PDI (dependencia 62),
+   que **no está en el documento ni en su libro de trabajo**, así que ningún alumno tiene `NFPI`
+   calculable y el reporte devolvería todas las filas sin puesto. **Un orden de mérito sin puestos
+   no es un orden de mérito**, así que no se presenta como funcionalidad terminada. La pantalla
+   queda deshabilitada sola (la acción exige la 62) y explica cuál es el dato que falta. El
+   `NFPI` del legajo dice lo mismo. **No es una carencia del software**: el día que llegue la tabla,
+   vuelve al alcance sin código nuevo.
 4. **`NCT` y las causales salen vacíos.** La semilla **no tiene ni un turno de tipo `EXAMEN`**, y
    `PE` solo se alimenta de ese tipo, así que ningún `NA` es calculable. `NEI` **sí** se calcula
    (`555555` da 20.00). Se arregla con datos: hay una propuesta escrita en las notas.
