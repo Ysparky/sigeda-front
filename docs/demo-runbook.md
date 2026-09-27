@@ -86,7 +86,35 @@ las cinco de turnos que estaban caídas antes de la tanda E1**:
 - Matrícula: personas, grupos, maniobras, fases, subfases, roles.
 - Seguridad: 401 sin token; **403 al pedir los datos de otro alumno** y 200 con los propios.
 
-## 6. Cinco cosas que conviene saber antes de demostrar
+## 6. El recorrido, con las cifras que va a mostrar
+
+Los dos alumnos del **grupo 3** son la historia, y son deliberadamente opuestos:
+
+| | `555555` Pedro | `666666` Ana |
+|---|---|---|
+| Materia 3 (mínimo 18) | `PT` 18.00 · `PE` 18.00 → **`NA` 18.00**, aprueba | `PT` 12.00 · `PE` 12.00 → **`NA` 12.00**, desaprueba |
+| `NCT` · `NEI` | 18.00 · 20.00 | 12.00 · 12.00 |
+| **`NIT`** | **18.40** | **12.00** |
+| Causales | ninguna | **`PROMEDIO_ASIGNATURA`** en Adoctrinamiento de Vuelo (12.00 < 13) |
+| Bloqueo por subsanación | no | **sí**, con 3 exámenes desaprobados sin subsanar |
+| `NIA` · `NFPI` | `null` · `null` | `null` · `null` |
+
+Las diez asignaturas restantes salen en `asignaturasSinNota`, así que **la renormalización del
+`NCT` se ve funcionando**: se calcula sobre la única materia con nota, no sobre las once.
+
+Recorrido sugerido:
+
+1. **Entrar como `instructor.perez`** → banco de preguntas (24 preguntas, filtros, importar desde
+   IA deshabilitado porque es otro backend), y programar un turno teórico.
+2. **Entrar como `alumno.lopez`** → sus exámenes pendientes, rendir uno (autoguardado, cuenta
+   atrás), y ver el resultado. Intentar ver el legajo de otro alumno → **403**.
+3. **Entrar como `comandante.aguirre`** → materias (CRUD completo), y el **legajo de `666666`**:
+   el ciclo de chequeo, el estado teórico con su bloqueo y su causal, y los índices con el `NIT`
+   calculado y el `NIA` explicando qué falta.
+4. **Entrar como `jefe.operaciones`** → registrar un turno práctico. **Elegir la sub fase 2, 3 o 4**
+   (ver el punto 1 de abajo), y probar el cruce de horarios poniendo al mismo alumno dos veces.
+
+## 7. Cuatro cosas que conviene saber antes de demostrar
 
 1. **Al registrar un turno, elegir la sub fase 2, 3 o 4.** La semilla enlaza maniobras solo a esas
    tres; las sub fases **1 (Contacto) y 5 (Formación) no tienen ninguna**, así que el selector de
@@ -103,13 +131,14 @@ las cinco de turnos que estaban caídas antes de la tanda E1**:
    queda deshabilitada sola (la acción exige la 62) y explica cuál es el dato que falta. El
    `NFPI` del legajo dice lo mismo. **No es una carencia del software**: el día que llegue la tabla,
    vuelve al alcance sin código nuevo.
-4. **`NCT` y las causales salen vacíos.** La semilla **no tiene ni un turno de tipo `EXAMEN`**, y
-   `PE` solo se alimenta de ese tipo, así que ningún `NA` es calculable. `NEI` **sí** se calcula
-   (`555555` da 20.00). Se arregla con datos: hay una propuesta escrita en las notas.
+4. **~~`NCT` y las causales salen vacíos.~~ ARREGLADO el 27 sep 2026.** Faltaba que la semilla
+   tuviera un turno de tipo **`EXAMEN`** — `PE` solo se alimenta de ese tipo, así que ningún `NA`
+   era calculable. Se sembraron un `TEST` y un `EXAMEN` de la materia 3 para el grupo 3
+   (migración `010`), y **la mitad teórica ya se puede demostrar**, comprobado contra PostgreSQL.
 5. **Cada reinicio del backend re-siembra la base.** Ideal para repetir la demo, fatal si se quiere
    conservar lo que se cargó en vivo.
 
-## 7. Lo que no se puede demostrar
+## 8. Lo que no se puede demostrar
 
 - **El módulo de aprendizaje con IA**: dependencias 39–50, en otro repositorio, sin empezar.
 - **Eliminar persona**: dependencia 30 incompleta — falla con FK si el usuario **alguna vez inició
@@ -118,7 +147,7 @@ las cinco de turnos que estaban caídas antes de la tanda E1**:
   deshabilitadas por el propio frontend.
 - **El `NFPI`**: ver el punto 3.
 
-## 8. Un defecto que esta preparación encontró y arregló
+## 9. Dos defectos que esta preparación encontró y arregló
 
 `GET /api/preguntas` devolvía **500 contra PostgreSQL** siempre que el filtro `texto` viniera
 ausente o vacío — o sea **en la vista por defecto del banco de preguntas**. PostgreSQL no puede
@@ -126,6 +155,17 @@ inferir el tipo de un parámetro nulo dentro de `concat()`, lo bindea como `byte
 comparación (`operator does not exist: text ~~ bytea`). **Ninguna prueba de las 900 podía
 atraparlo: H2 infiere el tipo y responde 200.** Arreglado con un `cast(:texto as String)`, y la
 razón quedó escrita sobre la consulta.
+
+**Y antes de arrancar nada, leyendo:** el panel de estado teórico del legajo hacía
+`estado.data.causales.length` y `.map(...)` sobre un campo que **el backend real no manda** —
+`causales[]` es la dependencia 68 y el contrato la deja fuera de M4, pero **el mock sí la emite**.
+El tipo decía `causales: Causal[]`, o sea **TypeScript mintiendo**, porque `sigeda.get<T>` es un
+genérico sin validación en runtime. Esa pantalla pasaba contra el mock y **habría estallado la
+primera vez que tocara el servidor**. Arreglado con el campo opcional y una prueba que manda la
+respuesta real del backend.
+
+Las dos comparten una moraleja: **el frontend no valida las respuestas en runtime**, así que una
+diferencia de forma entre el mock y el servidor no se ve hasta que se conectan de verdad.
 
 Es el argumento de por qué este paso existe: **una suite verde sobre H2 no dice que el sistema
 funcione sobre PostgreSQL.**
