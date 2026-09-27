@@ -176,7 +176,7 @@ describe('api de turnos', () => {
       status: 400,
       erroresDeCampo: {
         nombre: 'Nombre debe tener de 10 a 30 caracteres.',
-        'alumnosTurno[0].codAlumno': 'El alumno 111111 tiene un horario que se cruza con otro turno de la aeronave.',
+        'alumnosTurno[0].codAlumno': 'El alumno 111111 tiene un horario que se cruza con otro turno del mismo día.',
       },
     })
   })

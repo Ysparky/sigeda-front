@@ -155,9 +155,11 @@ describe('Registrar turno', () => {
     await guardar(usuario)
     const dialogo = await screen.findByRole('alertdialog', { name: '¿Guardar con horarios superpuestos?' })
     await usuario.click(within(dialogo).getByRole('button', { name: 'Guardar de todos modos' }))
-    expect(
-      await screen.findByText('El alumno 222222 tiene un horario que se cruza con otro turno de la aeronave.'),
-    ).toBeInTheDocument()
+    // El solape de AERONAVE avisa y deja guardar (decisión M1-10), así que confirmar guarda de
+    // verdad. Antes esta prueba esperaba un 400 del servidor, porque el mock rechazaba el solape
+    // de aeronave: era más estricto que su propia decisión documentada y que el servidor real.
+    // El rechazo con 400 es para el solape del ALUMNO, y lo cubre `api.test.ts`.
+    expect(await screen.findByText('Turno guardado con éxito.')).toBeInTheDocument()
   })
 
   it('si no carga un catálogo lo indica bajo su campo y conserva el formulario', async () => {

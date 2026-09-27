@@ -121,15 +121,22 @@ function validarCampos(cuerpo: CuerpoTurno, conProgramaYSubfase: boolean): strin
   return errores
 }
 
-function erroresDeSolape(alumnos: AlumnoTurnoMock[], fechaEval: string, idAeronave: number, idPropio: number | null) {
+// La regla es del ALUMNO, no de la aeronave: un alumno no puede estar en dos turnos a la vez,
+// cualquiera sea la aeronave. Filtrar por aeronave —como hacía este mock— dejaba pasar justo el
+// caso que justifica la regla: el mismo alumno en DOS aeronaves distintas a la misma hora. El
+// solape de aeronave, en cambio, es un aviso del frontend que deja guardar (decisión M1-10), y el
+// servidor no lo rechaza.
+function erroresDeSolape(alumnos: AlumnoTurnoMock[], fechaEval: string, idPropio: number | null) {
   const ocupados = datos()
-    .turnos.filter((turno) => turno.id !== idPropio && turno.fechaEval === fechaEval && turno.idAeronave === idAeronave)
+    .turnos.filter((turno) => turno.id !== idPropio && turno.fechaEval === fechaEval)
     .flatMap((turno) => turno.alumnos)
   return alumnos
     .map((alumno, indice) => {
       if (!esHora(alumno.horaInicio) || !esHora(alumno.horaFin)) return null
-      return ocupados.some((ocupado) => seSuperponen(alumno, ocupado))
-        ? `'alumnosTurno[${indice}].codAlumno': El alumno ${alumno.codAlumno} tiene un horario que se cruza con otro turno de la aeronave.`
+      const choca = ocupados.some((ocupado) => ocupado.codAlumno === alumno.codAlumno && seSuperponen(alumno, ocupado))
+      const repetido = alumnos.some((otro, j) => j < indice && otro.codAlumno === alumno.codAlumno && seSuperponen(alumno, otro))
+      return choca || repetido
+        ? `'alumnosTurno[${indice}].codAlumno': El alumno ${alumno.codAlumno} tiene un horario que se cruza con otro turno del mismo día.`
         : null
     })
     .filter((mensaje): mensaje is string => mensaje !== null)
@@ -156,7 +163,7 @@ function validarGuardado(cuerpo: CuerpoTurno, idSubfase: number | null, idPropio
     const aeronave = datos().aeronaves.find((candidata) => candidata.id === Number(cuerpo.aeronave?.id))
     if (!aeronave) return errorResponse(404, 'Recurso no encontrado', 'No existe información de aeronave.')
     if (aeronave.estado !== 'Disponible') return errorResponse(400, 'Error al validar el modelo', 'Asignar aeronave disponible.')
-    errores.push(...erroresDeSolape(aAlumnos(cuerpo), texto(cuerpo.fechaEval), aeronave.id, idPropio))
+    errores.push(...erroresDeSolape(aAlumnos(cuerpo), texto(cuerpo.fechaEval), idPropio))
   }
   return errores.length > 0 ? HttpResponse.json(errores, { status: 400 }) : null
 }
