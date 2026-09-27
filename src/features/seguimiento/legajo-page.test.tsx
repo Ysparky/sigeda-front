@@ -12,7 +12,6 @@ import {
   TEXTO_EVALUADOR_SIN_CODIGO,
   TEXTO_HISTORIAL_TEORICO_SIN_SERVIDOR,
   TEXTO_INDICES_SIN_SERVIDOR,
-  TEXTO_INDICES_SOLO_MOCK,
   TEXTO_MEDIA_SIMPLE_SUBFASE,
   TEXTO_MITAD_PRACTICA,
   TEXTO_MITAD_TEORICA,
@@ -849,7 +848,6 @@ describe('Legajo: propiedad y modo vivo', () => {
   it('CA-LEG-17 fuera del modo mock cada panel muestra su propio aviso y el encabezado S1', async () => {
     vi.stubEnv('VITE_MOCK_API', 'false')
     const { usuario } = await abrirLegajo('777777')
-    expect(screen.getByText(TEXTO_INDICES_SOLO_MOCK)).toBeInTheDocument()
     expect(await panel('Índices del PDI').findByText(TEXTO_INDICES_SIN_SERVIDOR)).toBeInTheDocument()
     await usuario.click(screen.getByRole('link', { name: 'Práctico' }))
     expect(await panel('Ciclo de chequeo').findByText(TEXTO_CHEQUEO_SIN_SERVIDOR)).toBeInTheDocument()

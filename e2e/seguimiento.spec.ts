@@ -13,15 +13,16 @@ test.describe('Seguimiento contra el backend real', () => {
     await expect(page.getByText('Promedio de asignatura bajo 13').first()).toBeVisible()
   })
 
-  // Los índices del PDI no los calcula el servidor todavía (dependencia 62, la tabla de coeficientes
-  // que el PDI no publica). La pantalla tiene que DECIRLO, no mostrar un cero. El texto es el que la
-  // pantalla renderiza de verdad, leído de una corrida contra el servidor real.
-  test('la mitad práctica dice que el servidor no calcula los índices', async ({ page }) => {
+  // La mitad TEÓRICA sí la calcula el servidor, con los coeficientes reales de las materias. La
+  // práctica no, porque falta la tabla de coeficientes de misión del PDI, y la pantalla tiene que
+  // decir eso en vez de tapar las dos mitades o mostrar un cero.
+  test('el legajo muestra el NIT real y explica por qué falta el índice final', async ({ page }) => {
     await entrarComo(page, CUENTAS.comandante)
-    await page.goto('/seguimiento/666666')
-    await expect(page.getByText('El servidor todavía no calcula los índices del PDI.').first()).toBeVisible({
-      timeout: 15_000,
-    })
+    await page.goto('/seguimiento/555555')
+    await expect(page.getByRole('heading', { level: 1, name: 'Legajo del alumno' })).toBeVisible()
+    // 18.40 es el NIT que el servidor calcula para 555555 a partir de sus notas 20, 18 y 18.
+    await expect(page.getByText('18.40').first()).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText(/coeficientes de misión/).first()).toBeVisible()
   })
 
   // 555555 aprobó todo lo teórico (notas 20, 18 y 18 en la semilla), así que la mitad teórica no

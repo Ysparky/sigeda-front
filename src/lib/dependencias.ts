@@ -15,7 +15,14 @@ export const DEPENDENCIAS = {
   programarTurnoTeorico: [6],
   rendirExamen: [6],
   bloqueoSubsanacion: [7],
-  verIndices: [61, 62],
+  // LA 62 NO VA ACÁ, Y ES UNA DISTINCIÓN DE FONDO: el servidor **sí** calcula la mitad teórica
+  // (NIT, NCT, NEI) con los coeficientes reales de las materias, que son dato institucional
+  // publicado. Lo que la 62 traba es la tabla de coeficientes de MISIÓN, que el PDI nunca publicó, y
+  // sin ella el servidor devuelve `nfpi` y `nia` en `null` diciendo por qué. Tenerlas juntas tapaba
+  // el NIT con un aviso que además afirmaba algo falso («el servidor todavía no calcula los
+  // índices»). El orden de mérito sí sigue pidiendo la 62, porque no se puede ordenar por un índice
+  // que no se puede calcular.
+  verIndices: [61],
   verAlertas: [66],
   verOrdenMerito: [6, 62, 63],
   verCicloChequeo: [64, 65],

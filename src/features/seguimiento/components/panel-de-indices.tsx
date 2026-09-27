@@ -5,6 +5,7 @@ import { consultasReportes } from '@/features/reportes/api'
 import { accionDisponible } from '@/lib/dependencias'
 import {
   TEXTO_INDICES_SIN_SERVIDOR,
+  TEXTO_SIN_COEFICIENTES_DE_MISION,
   TEXTO_MITAD_PRACTICA,
   TEXTO_MITAD_TEORICA,
   TEXTO_SIN_COEFICIENTE_APLICADO,
@@ -45,7 +46,13 @@ export function PanelDeIndices({ codAlumno }: Props) {
         indices.data && (
           <div className="grid gap-6">
             <dl className="grid gap-4 sm:grid-cols-2">
-              <Dato etiqueta="NFPI" valor={indices.data.nfpi} ayuda={formulaDeIndice('NFPI')} />
+              <Dato
+                etiqueta="NFPI"
+                valor={indices.data.nfpi}
+                // Texto propio y NO el `nia.motivo`: ése ya se muestra en la mitad práctica, y
+                // repetirlo dejaba la misma frase dos veces en el panel. Cada índice explica lo suyo.
+                ayuda={indices.data.nfpi === null ? TEXTO_SIN_COEFICIENTES_DE_MISION : formulaDeIndice('NFPI')}
+              />
             </dl>
             <div className="grid gap-4 border-t pt-4">
               <h3 className="text-sm font-semibold">{TEXTO_MITAD_TEORICA}</h3>

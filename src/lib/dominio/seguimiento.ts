@@ -1,7 +1,7 @@
 import { ESTADOS_ALUMNO, NOTAS_DEL_PROMEDIO } from './vocabulario'
 
-export const TEXTO_INDICES_SOLO_MOCK =
-  'Los índices del PDI y el orden de mérito todavía no existen en el servidor: se muestran solo en modo mock.'
+export const TEXTO_ORDEN_MERITO_SIN_COEFICIENTES =
+  'El orden de mérito necesita el índice final del PDI, y ése depende de la tabla de coeficientes de misión que el PDI no publica. Se muestra solo en modo mock.'
 export const TEXTO_SIN_ALUMNOS_ASIGNADOS =
   'No tiene alumnos asignados en este programa: aparecen aquí cuando haya volado un turno con ellos.'
 export const TEXTO_SIN_GRUPO = 'Sin grupo'
@@ -21,6 +21,9 @@ export const TEXTO_ESTADO_YA_CAMBIO = 'El estado ya cambió: los contadores no s
 export const TEXTO_CHEQUEO_SIN_SERVIDOR = 'El historial de chequeos y los contadores todavía no existen en el servidor.'
 export const TEXTO_SIN_DATOS_SUFICIENTES = 'Sin datos suficientes'
 export const TEXTO_INDICES_SIN_SERVIDOR = 'El servidor todavía no calcula los índices del PDI.'
+/** El motivo lo manda el servidor en `nia.motivo`; esto es el respaldo si no lo mandara. */
+export const TEXTO_SIN_COEFICIENTES_DE_MISION =
+  'Falta la tabla de coeficientes de misión del PDI: sin ella no se puede calcular el índice final.'
 export const TEXTO_HISTORIAL_TEORICO_SIN_SERVIDOR =
   'El historial de exámenes teóricos todavía no existe en el servidor.'
 export const TEXTO_ESTADO_TEORICO_SIN_SERVIDOR = 'El estado teórico y sus causales todavía no existen en el servidor.'

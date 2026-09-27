@@ -14,7 +14,7 @@ import {
   TEXTO_EVALUADOR_SIN_CODIGO,
   TEXTO_HISTORIAL_TEORICO_SIN_SERVIDOR,
   TEXTO_INDICES_SIN_SERVIDOR,
-  TEXTO_INDICES_SOLO_MOCK,
+  TEXTO_ORDEN_MERITO_SIN_COEFICIENTES,
   TEXTO_MEDIA_SIMPLE_SUBFASE,
   TEXTO_MITAD_PRACTICA,
   TEXTO_MITAD_TEORICA,
@@ -168,8 +168,12 @@ describe('la única cifra derivada de M5', () => {
 
 describe('textos fijos de la spec §17.3', () => {
   it('M5-9 los textos sin parámetros son los de la spec, byte a byte', () => {
-    expect(TEXTO_INDICES_SOLO_MOCK).toBe(
-      'Los índices del PDI y el orden de mérito todavía no existen en el servidor: se muestran solo en modo mock.',
+    // CAMBIÓ RESPECTO DE LA SPEC §17.3, a propósito: el texto viejo decía que los índices del PDI
+    // «todavía no existen en el servidor», y es falso — el servidor calcula la mitad teórica (NIT) con
+    // los coeficientes reales de las materias. Lo que falta es la tabla de coeficientes de MISIÓN, que
+    // sólo traba el índice final y el orden de mérito, y ahora el aviso nombra exactamente eso.
+    expect(TEXTO_ORDEN_MERITO_SIN_COEFICIENTES).toBe(
+      'El orden de mérito necesita el índice final del PDI, y ése depende de la tabla de coeficientes de misión que el PDI no publica. Se muestra solo en modo mock.',
     )
     expect(TEXTO_SIN_ALUMNOS_ASIGNADOS).toBe(
       'No tiene alumnos asignados en este programa: aparecen aquí cuando haya volado un turno con ellos.',

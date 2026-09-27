@@ -68,7 +68,11 @@ describe('dependencias resueltas', () => {
   it('M5-22 las siete puertas de seguimiento esperan los números de la spec', () => {
     vi.stubEnv('VITE_MOCK_API', 'false')
     vi.stubEnv('VITE_DEPENDENCIAS_RESUELTAS', '')
-    expect(dependenciasPendientes('verIndices')).toEqual([61, 62])
+    // La 62 salió de `verIndices` a propósito: el servidor SÍ calcula la mitad teórica (NIT) con los
+    // coeficientes reales de las materias, y la 62 es la tabla de coeficientes de MISIÓN, que sólo
+    // traba el índice final y el orden de mérito. Taparlas juntas escondía un dato real detrás de un
+    // aviso que además afirmaba algo falso.
+    expect(dependenciasPendientes('verIndices')).toEqual([61])
     expect(dependenciasPendientes('verOrdenMerito')).toEqual([6, 62, 63])
     expect(dependenciasPendientes('verAlertas')).toEqual([66])
     expect(dependenciasPendientes('verCicloChequeo')).toEqual([64, 65])

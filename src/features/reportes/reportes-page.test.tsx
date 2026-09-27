@@ -6,7 +6,7 @@ import { config } from '@/lib/config'
 import { momento, hoyIso } from '@/lib/dominio/calendario'
 import {
   TEXTO_DESEMPATE,
-  TEXTO_INDICES_SOLO_MOCK,
+  TEXTO_ORDEN_MERITO_SIN_COEFICIENTES,
   TEXTO_ORDEN_MERITO_SIN_SERVIDOR,
   TEXTO_SIN_ALUMNOS_CON_INDICES,
   TEXTO_SIN_DATOS_SUFICIENTES,
@@ -201,7 +201,7 @@ describe('Reportes: el alumno sin NFPI y los estados de la pantalla', () => {
     await iniciarComo('comandante.aguirre')
     renderApp('/reportes')
     expect(await screen.findByText(TEXTO_ORDEN_MERITO_SIN_SERVIDOR)).toBeInTheDocument()
-    expect(screen.getByText(TEXTO_INDICES_SOLO_MOCK)).toBeInTheDocument()
+    expect(screen.getByText(TEXTO_ORDEN_MERITO_SIN_COEFICIENTES)).toBeInTheDocument()
     server.events.removeAllListeners('request:start')
     expect(pedidas).not.toContain('/api/reportes/orden-merito')
     expect(screen.queryByRole('table', { name: 'Orden de mérito' })).not.toBeInTheDocument()

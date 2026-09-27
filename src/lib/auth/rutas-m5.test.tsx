@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { MENSAJE_SIN_PERMISO } from '@/lib/api/errors'
 import {
   TEXTO_ALERTAS_SIN_SERVIDOR,
-  TEXTO_INDICES_SOLO_MOCK,
+  TEXTO_INDICES_SIN_SERVIDOR,
+  TEXTO_ORDEN_MERITO_SIN_COEFICIENTES,
   TEXTO_ORDEN_MERITO_SIN_SERVIDOR,
 } from '@/lib/dominio/seguimiento'
 import { crearRouter } from '@/router'
@@ -94,7 +95,7 @@ describe('rutas de seguimiento', () => {
     await router.navigate({ to: '/reportes' })
     await screen.findByRole('heading', { level: 1, name: 'Reportes y orden de mérito' })
     expect(screen.queryByText(TEXTO_ORDEN_MERITO_SIN_SERVIDOR)).not.toBeInTheDocument()
-    expect(screen.queryByText(TEXTO_INDICES_SOLO_MOCK)).not.toBeInTheDocument()
+    expect(screen.queryByText(TEXTO_ORDEN_MERITO_SIN_COEFICIENTES)).not.toBeInTheDocument()
   })
 
   it('M5-22 fuera del modo mock cada pantalla muestra el aviso de su dependencia', async () => {
@@ -105,11 +106,14 @@ describe('rutas de seguimiento', () => {
     expect(screen.getByText(TEXTO_ALERTAS_SIN_SERVIDOR)).toBeInTheDocument()
     await router.navigate({ to: '/reportes' })
     await screen.findByRole('heading', { level: 1, name: 'Reportes y orden de mérito' })
-    expect(screen.getByText(TEXTO_INDICES_SOLO_MOCK)).toBeInTheDocument()
+    expect(screen.getByText(TEXTO_ORDEN_MERITO_SIN_COEFICIENTES)).toBeInTheDocument()
     expect(screen.getByText(TEXTO_ORDEN_MERITO_SIN_SERVIDOR)).toBeInTheDocument()
     await router.navigate({ to: '/seguimiento/$alumno', params: { alumno: '777777' } })
     await screen.findByRole('heading', { level: 1, name: /Legajo/ })
-    expect(screen.getByText(TEXTO_INDICES_SOLO_MOCK)).toBeInTheDocument()
+    // El legajo ya NO lleva aviso de página para los índices: la mitad teórica (NIT) sí la calcula el
+    // servidor, así que taparla con «todavía no existen» afirmaba algo falso. El aviso que queda es el
+    // del propio panel, y sale cuando su dependencia no está resuelta.
+    expect(await screen.findByText(TEXTO_INDICES_SIN_SERVIDOR)).toBeInTheDocument()
   })
 
   it('M5-22 con las dependencias resueltas los avisos desaparecen', async () => {

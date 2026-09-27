@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
-import { AvisoDeDependencia } from '@/components/aviso-de-dependencia'
+
 import { Enlace } from '@/components/enlace'
 import { PageHeader } from '@/components/page-header'
 import { PANTALLAS } from '@/lib/auth/pantallas'
 import { useSesion } from '@/lib/auth/use-sesion'
-import { ETIQUETAS_PESTANA, TEXTO_INDICES_SOLO_MOCK } from '@/lib/dominio/seguimiento'
+import { ETIQUETAS_PESTANA } from '@/lib/dominio/seguimiento'
 import { codigoQueSeConsulta } from './cargar'
 import { CabeceraDelLegajo } from './components/cabecera-del-legajo'
 import { HistorialPractico } from './components/historial-practico'
@@ -34,7 +34,6 @@ export function LegajoPage({ codAlumno }: { codAlumno: string }) {
         titulo={PANTALLAS.legajo.titulo}
         descripcion={nombre === '' ? PANTALLAS.legajo.descripcion : `${nombre} · ${cod}`}
       />
-      <AvisoDeDependencia accion="verIndices" texto={TEXTO_INDICES_SOLO_MOCK} />
       <nav aria-label="Secciones del legajo" className="flex flex-wrap gap-1 border-b">
         {PESTANAS.map((pestana) => (
           <Enlace
