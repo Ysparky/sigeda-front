@@ -860,9 +860,9 @@ Los mensajes de validación de campo (400 arreglo) están en la tabla de cada en
 | `materias` | `id`, `nombre` único, `nota_minima` int, `coeficiente` numeric(3,2), `parte` | `materias_seq` desde 12 |
 | `preguntas` | `id`, `id_materia` FK, `enunciado` varchar(500), `tipo_pregunta`, `dificultad`, `explicacion` varchar(1000) null, `origen`, `cod_instructor` FK `personas` | `preguntas_seq` desde 25 |
 | `alternativas` | `id`, `id_pregunta` FK, `respuesta` varchar(200), `correcto` bool | `alternativas_seq` desde 101 |
-| `turnos_teoricos` | `id`, `nombre`, `id_materia` FK, `tipo_examen`, `fecha_examen` date, `hora_inicio` varchar(5), `hora_fin` varchar(5), `id_grupo` FK, `cod_instructor` FK, `id_turno_origen` FK a sí misma null | `turnos_teoricos_seq` desde 6 |
+| `turnos_teoricos` | `id`, `nombre`, `id_materia` FK, `tipo_examen`, `fecha_examen` date, `hora_inicio` varchar(5), `hora_fin` varchar(5), `id_grupo` FK, `cod_instructor` FK, `id_turno_origen` FK a sí misma null | `turnos_teoricos_seq` desde 8 |
 | `preguntas_turno` | `id_turno_teorico` FK, `id_pregunta` FK, `orden` int, `puntaje_maximo` int; PK compuesta | — |
-| `cuestionarios` | `id`, `id_turno_teorico` FK, `cod_alumno` FK, `estado` (**solo `EN_CURSO` o `ENTREGADO`**), `fecha_entrega` date null, `hora_entrega` varchar(5) null, `nota` numeric(4,2) null, `nota_minima_aplicada` int, `aprobado` bool null; único `(id_turno_teorico, cod_alumno)` | `cuestionarios_seq` desde 4 |
+| `cuestionarios` | `id`, `id_turno_teorico` FK, `cod_alumno` FK, `estado` (**solo `EN_CURSO` o `ENTREGADO`**), `fecha_entrega` date null, `hora_entrega` varchar(5) null, `nota` numeric(4,2) null, `nota_minima_aplicada` int, `aprobado` bool null; único `(id_turno_teorico, cod_alumno)` | `cuestionarios_seq` desde 6 |
 | `calificaciones_teoricas` | `id_cuestionario` FK, `id_pregunta` FK, `orden` int, `enunciado` varchar(500), `respuesta_correcta` varchar(200), `respuesta_alumno` varchar(200) null, `correcto` bool, `puntaje_maximo` int, `puntaje_obtenido` int; PK compuesta | — |
 
 El bloque de secuencias actual está en `schema_prod.sql:100-115` y los valores de arranque de arriba son los de la §9, para que la semilla del backend y los mocks no se pisen.
@@ -884,6 +884,15 @@ Dos decisiones del esquema que conviene no perder:
 ---
 
 ## 9. Datos de los mocks
+
+> **Reconciliación, 27 sep 2026.** Esta sección y la §8 habían quedado atrás respecto de los
+> mocks: decían 5 turnos teóricos y `cuestionarios_seq` en 4, cuando el mock siembra **7
+> turnos** (ids 1–7) y **5 cuestionarios** (ids 1–5), con las secuencias en **8** y **6**.
+> Los turnos 6 y 7 y los cuestionarios 4 y 5 son la fixture de M5 —un examen desaprobado del
+> alumno `999999` y su subsanación— sobre la que descansa la regla «prevalece la primera
+> nota» en el legajo. **Manda el mock**, porque es el artefacto más nuevo, las 1105 pruebas
+> del frontend corren contra él, y sembrar solo 5 turnos dejaría a `dev` sin poder reproducir
+> las pantallas de M5. Los números de arriba ya están corregidos.
 
 Los mocks parten de la semilla (`data_prod.sql`) más lo que agregaron M1 y M2 (`src/mocks/sigeda/datos.ts`, `crearDatos`) y se reinician por prueba con `reiniciarDatosMock()`, que `src/mocks/reiniciar.ts` llama y `src/test/setup.ts` ejecuta en cada `afterEach`. M4 agrega los handlers `preguntas.ts`, `turnos-teoricos.ts`, **`cuestionarios-teoria.ts`** (exportando `handlersCuestionariosTeoria`, porque `src/mocks/ia/cuestionarios.ts` ya existe y `handlers.ts` ya importa `handlersCuestionarios`) y `estado-teorico.ts`, y cuatro secuencias: `pregunta` 25, `alternativa` 101, `turnoTeorico` 6, `cuestionario` 4.
 
@@ -907,13 +916,13 @@ Consecuencias buscadas:
 
 - Materia 3 tiene **10** preguntas: pagina en 2 páginas con `size=6` y en 1 con `size=10`, y el filtro por materia cambia el total.
 - Hay al menos una pregunta de cada tipo en las materias 3, 6, 4 y 1, así que cualquier turno puede armarse con los tres tipos.
-- **`DELETE` responde 409 (D3)** para las ids 1–15 y 17–21, y `200` para 16, 22, 23 y 24. Hay cuatro preguntas borrables, una por si una prueba borra y no reinicia.
+- **`DELETE` responde 409 (D3)** para las ids 1–15 y 17–24, y `200` solo para la 16. **Corregido:** las preguntas 22, 23 y 24 **sí están en uso** — las usan los turnos 6 y 7 de §9.2 —, así que responden 409 y `enUso` es verdadero en las tres. Queda una sola pregunta borrable, la 16.
 - Las dificultades se reparten `BAJA`/`MEDIA`/`ALTA` de modo que cada filtro devuelva al menos dos filas en la materia 3.
 - Las ids 9 y 10 son `IA`, así que el filtro por origen y la columna Origen tienen las dos caras.
 - **El 409 de `DELETE /api/materias/{id}` queda derivado:** las materias 1, 3, 4 y 6 tienen preguntas y responden 409; las 2, 5 y 7–11 se pueden eliminar. `MateriaMock.conPreguntas` desaparece.
 - Las alternativas se crean en orden y ocupan las ids 1 a 71; la siguiente es 101, para que un id creado en una prueba no colisione con uno de la semilla.
 
-### 9.2 Turnos teóricos — 5 filas, ids 1 a 5
+### 9.2 Turnos teóricos — 7 filas, ids 1 a 7
 
 Todas con `codInstructor: "444444"` y `programa: "PDI"`. Es el único instructor que alcanza los grupos 1, 2 y 3 por el camino `turnos.cod_instructor` → `alumnos_turno` → `personas.id_grupo`. Las fechas son relativas a `hoy`, el argumento de `crearDatos(hoy)`.
 
