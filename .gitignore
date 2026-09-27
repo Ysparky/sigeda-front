@@ -6,3 +6,6 @@ coverage
 test-results
 playwright-report
 .DS_Store
+
+# worktrees que crean los agentes: son repos git aparte, no parte del proyecto
+.claude/worktrees/
