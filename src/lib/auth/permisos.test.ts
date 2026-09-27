@@ -26,8 +26,9 @@ describe('permisosDeRol replica Role.java', () => {
     expect(permisos.has('Modify Evaluations')).toBe(false)
   })
 
-  it('Administrador Web tiene los 17 permisos del backend y los 4 del contrato', () => {
-    expect(permisosDeRol('Administrador Web').size).toBe(21)
+  it('Administrador Web tiene los 17 permisos del backend y 3 de los 4 del contrato: no rinde examenes', () => {
+    expect(permisosDeRol('Administrador Web').size).toBe(20)
+    expect(permisosDeRol('Administrador Web').has('Take Exams')).toBe(false)
   })
 
   it('M2-9 los permisos del contrato de teoría se reparten según su documento', () => {
@@ -37,6 +38,7 @@ describe('permisosDeRol replica Role.java', () => {
     expect(permisosDeRol('Instructor').has('Manage Questions')).toBe(true)
     expect(permisosDeRol('Instructor').has('Manage Subjects')).toBe(false)
     expect(permisosDeRol('Alumno').has('Take Exams')).toBe(true)
+    expect(permisosDeRol('Administrador Web').has('Take Exams')).toBe(false)
   })
 
   it('un rol desconocido no tiene permisos', () => {

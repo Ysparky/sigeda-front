@@ -34,7 +34,7 @@ function erroresDeMateria(cuerpo: CuerpoMateria, idPropia: number | null): strin
     typeof coeficiente !== 'number' ||
     coeficiente < 0 ||
     coeficiente > 1 ||
-    Math.round(coeficiente * 100) !== coeficiente * 100
+    Math.round(coeficiente * 100) !== Math.round(coeficiente * 10000) / 100
   ) {
     errores.push("'coeficiente': El coeficiente debe estar entre 0 y 1, con hasta 2 decimales.")
   }

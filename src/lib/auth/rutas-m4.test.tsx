@@ -55,7 +55,7 @@ describe('rutas de teoría', () => {
     expect(await screen.findByText(MENSAJE_SIN_PERMISO)).toBeInTheDocument()
   })
 
-  it('M4-14 el Administrador Web tiene Take Exams pero no las pantallas del alumno', async () => {
+  it('M4-14 el Administrador Web no alcanza las pantallas del alumno', async () => {
     await iniciarComo('admin.sistema')
     renderApp('/examenes')
     expect(await screen.findByText(MENSAJE_SIN_PERMISO)).toBeInTheDocument()

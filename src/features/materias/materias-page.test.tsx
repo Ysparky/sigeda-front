@@ -65,6 +65,18 @@ describe('Materias', () => {
     expect(dialogo.getByText('El coeficiente debe estar entre 0 y 1, con hasta 2 decimales.')).toBeInTheDocument()
   })
 
+  it('CA-MAT-02 un coeficiente de dos decimales no se rechaza por aritmetica de punto flotante', async () => {
+    const { usuario } = await abrirMaterias()
+    await usuario.click(screen.getByRole('button', { name: 'Registrar materia' }))
+    const dialogo = within(await screen.findByRole('dialog'))
+    await usuario.type(dialogo.getByLabelText('Nombre'), 'Coeficiente Flotante')
+    await usuario.type(dialogo.getByLabelText('Nota mínima'), '16')
+    await usuario.type(dialogo.getByLabelText('Coeficiente'), '0.07')
+    await usuario.click(dialogo.getByRole('button', { name: 'Guardar materia' }))
+    expect(await screen.findByText('Materia guardada con éxito.')).toBeInTheDocument()
+    expect(screen.queryByText('El coeficiente debe estar entre 0 y 1, con hasta 2 decimales.')).not.toBeInTheDocument()
+  })
+
   it('CA-MAT-03 un nombre repetido se muestra bajo su campo', async () => {
     const { usuario } = await abrirMaterias()
     await usuario.click(screen.getByRole('button', { name: 'Registrar materia' }))

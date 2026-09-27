@@ -47,7 +47,6 @@ const PERMISOS_POR_ROL: Record<string, readonly Permiso[]> = {
     'Manage Subjects',
     'Manage Questions',
     'Manage Exams',
-    'Take Exams',
   ],
   'Comandante de Escuadrón': [
     'Read',

@@ -6,6 +6,7 @@ import {
   menuPara,
   migasPara,
   PANTALLAS,
+  pantallaVisible,
   veSoloLoPropio,
   type Pantalla,
   type Perfil,
@@ -242,5 +243,14 @@ describe('veSoloLoPropio', () => {
   it('CA-TUR-14 y CA-EVA-10 restringe al alumno a sus propios datos', () => {
     expect(veSoloLoPropio(perfilDe('Alumno'))).toBe(true)
     expect(veSoloLoPropio(perfilDe('Instructor'))).toBe(false)
+  })
+})
+
+describe('pantallaVisible', () => {
+  it('el permiso no alcanza: roles se exige por separado', () => {
+    const conElPermisoPeroOtroRol: Perfil = { permisos: permisosDeRol('Alumno'), rol: { nombre: 'Administrador Web' } }
+    expect(permisosDeRol('Alumno').has('Take Exams')).toBe(true)
+    expect(pantallaVisible(PANTALLAS.misExamenes, conElPermisoPeroOtroRol, false)).toBe(false)
+    expect(pantallaVisible(PANTALLAS.misExamenes, perfilDe('Alumno'), false)).toBe(true)
   })
 })
