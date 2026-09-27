@@ -114,6 +114,16 @@ export const handlersManiobras = [
       errores.push(...erroresDeDescripcion(estandar.descripcion, `estandares[${indice}].descripcion`))
     })
     if (errores.length > 0) return errorResponse(400, 'Error al validar el modelo', null, errores)
+    // El estándar que llega con un `id` que EXISTE pero es de otra maniobra se rechaza con 410, no se
+    // muda: apropiárselo dejaba a la maniobra de origen con CERO estándares. Un `id` que no existe se
+    // sigue creando.
+    for (const enviado of estandares) {
+      const id = Number(enviado.id)
+      const ajeno = id > 0 ? datos().estandares.find((candidato) => candidato.id === id) : undefined
+      if (ajeno && ajeno.idManiobra !== maniobra.id) {
+        return errorResponse(410, 'Acción expirada', `El estándar ${ajeno.nombre} es de otra maniobra y no se puede mover.`)
+      }
+    }
     for (const enviado of estandares) {
       const id = Number(enviado.id)
       const existente = id > 0 ? datos().estandares.find((candidato) => candidato.id === id) : undefined

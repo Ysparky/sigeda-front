@@ -290,6 +290,12 @@ export function crearDatos(hoy: string = hoyIso()): DatosMock {
       { id: 2, nombre: 'Operaciones HeliTransportadas', descripcion: 'Entrenamiento en operaciones con helicópteros' },
       { id: 3, nombre: 'Operaciones AeroTácticas', descripcion: 'Operaciones avanzadas y tácticas especiales' },
     ],
+    // LAS CINCO CUELGAN DE LA FASE 1 A PROPÓSITO, y no coincide con la semilla del servidor, donde
+    // «Campos Extraños» y «Formación» se movieron a las fases 2 y 3 (migración 014). Acá se dejan
+    // juntas porque las fases 2 y 3 vacías son el único dato que ejercita CA-FAS-05 —eliminar una fase
+    // SIN subfases— y CA-DEP-01. Alinear esta lista con la semilla rompe esas dos pruebas y no arregla
+    // nada: la divergencia que causa defectos es la de FORMA (claves, tipos, nulabilidad), no la de
+    // qué filas trae cada fixture.
     subfases: [
       { id: 1, nombre: 'Contacto', descripcion: 'Familiarización con controles y procedimientos básicos', idFase: 1 },
       { id: 2, nombre: 'Navegación', descripcion: 'Técnicas de navegación y orientación', idFase: 1 },

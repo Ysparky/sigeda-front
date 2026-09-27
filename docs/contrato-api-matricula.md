@@ -600,7 +600,16 @@ Request: igual que §4.3, pero cada subfase lleva `id`:
 }
 ```
 
-- `id > 0` actualiza esa subfase; si pertenecía a otra fase, la mueve a esta (sin cambios; el frontend nunca envía ids ajenos). Un `id > 0` que no existe **crea** una subfase nueva, igual que `id` `0` (`FaseService.java:64-66`, `SubfaseSave.java:21-22`).
+- `id > 0` actualiza esa subfase. **Un `id` que existe pero pertenece a OTRA fase se rechaza con 410** (corregido el 27 sep 2026; antes la movía a esta con 200). Un `id > 0` que no existe **crea** una subfase nueva, igual que `id` `0` (`FaseService.java`, `SubfaseSave.java`).
+
+  > **Por qué cambió.** Este contrato decía «la mueve a esta (sin cambios; el frontend nunca envía
+  > ids ajenos)», y lo segundo sigue siendo verdad — ninguna pantalla manda ids ajenos —, pero el
+  > daño estaba subestimado. Reproducido contra PostgreSQL real: la fase de origen **perdía la
+  > subfase en silencio**, la respuesta **devolvía el `idFase` viejo** aunque la base ya tenía el
+  > nuevo, y los turnos quedaban con su columna `fase` desnormalizada **desmintiendo** la fase real
+  > de su subfase. Que ningún cliente legítimo lo provoque no es una defensa: era una pérdida de
+  > datos a un `id` de distancia. Se distingue «no existe» (crear, como siempre) de «existe y es de
+  > otro padre» (rechazar).
 - Una subfase guardada que **no** viene en la lista **se elimina** (orphan removal), sin ninguna comprobación. `turnos`, `evaluaciones_practicas` y `maniobras_subfase` no tienen FK hacia `subfases`, así que esas filas quedan apuntando a una subfase inexistente.
 - **[Nuevo — dependencia 37]** Si una subfase omitida tiene maniobras, turnos o evaluaciones → 410 §B (`ActionExpiredException`, mismo código que las demás negativas de borrado del módulo, §5.6) con `"La subfase <nombre> no se puede quitar, tiene maniobras, turnos o evaluaciones."`, sin guardar nada. El frontend no permite quitar subfases guardadas (M2-6).
 - Una `descripcion` vacía conserva la anterior, en la fase y en cada subfase (sin cambios; dependencia 38).
@@ -743,7 +752,12 @@ Request — `ManiobraDetail`, con la lista completa de estándares:
 }
 ```
 
-- `id > 0` actualiza ese estándar; si pertenece a otra maniobra, lo mueve a esta (el frontend nunca envía ids ajenos). Un `id > 0` que no existe **crea** un estándar nuevo, igual que `id` `0` (`ManiobraService.java:86-88`, `EstandarSave.java:15-16`).
+- `id > 0` actualiza ese estándar. **Un `id` que existe pero pertenece a OTRA maniobra se rechaza con 410** (corregido el 27 sep 2026; antes lo movía a esta con 200, dejando a la maniobra de origen **con cero estándares**). Un `id > 0` que no existe **crea** un estándar nuevo, igual que `id` `0` (`ManiobraService.java`, `EstandarSave.java`).
+
+  > El 410 es el código que este backend ya usa para «no se puede en este estado»
+  > (`ActionExpiredException`), y el que §4.4 y §5.6 responden en estas mismas rutas; **no se
+  > introdujo ningún 409**, que sigue sin existir en el código (ver la dependencia 60). Esta ruta
+  > **no tenía ninguna prueba** en toda la suite del backend antes de esto.
 - Un estándar guardado que **no** viene en la lista **no se elimina ni se desvincula**: sigue apuntando a la maniobra y reaparece en §5.2 (`Maniobra.estandares` no tiene orphan removal). El frontend no ofrece quitar estándares guardados. **[Opcional — dependencia 36]** Activar orphan removal para que un omitido se elimine.
 - Validación → 400 §B: `'estandares'` con `"La asignación de estandares es requerida"` (sin punto ni tilde; al menos uno); `'estandares[i].nombre'` y `'estandares[i].descripcion'` como en §4.3.
 - 404 §B `"No existe información de maniobra."` (con punto). Éxito → **200** `{id, nombre, descripcion}`. Una `descripcion` vacía conserva la anterior.

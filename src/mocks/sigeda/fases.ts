@@ -62,6 +62,21 @@ function existenteDe(enviada: SubfaseDelCuerpo, conIds: boolean): SubfaseMock | 
   return id > 0 ? buscarSubfase(id) : undefined
 }
 
+/**
+ * La subfase que la lista manda con un `id` que EXISTE pero cuelga de otra fase. El servidor la
+ * rechaza con 410 en vez de mudarla: apropiarse de ella dejaba a la fase de origen sin la subfase
+ * en silencio, devolvía el `idFase` viejo en la respuesta y dejaba turnos cuya columna `fase`
+ * desmentía la fase real de su subfase. Un `id` que NO existe se sigue creando, que es lo que las
+ * pantallas usan.
+ */
+function subfaseAjena(fase: FaseMock, subfases: SubfaseDelCuerpo[]): SubfaseMock | null {
+  for (const enviada of subfases) {
+    const existente = existenteDe(enviada, true)
+    if (existente && existente.idFase !== fase.id) return existente
+  }
+  return null
+}
+
 function subfaseOmitidaEnUso(fase: FaseMock, subfases: SubfaseDelCuerpo[]): SubfaseMock | null {
   const conservados = new Set(
     subfases.map((enviada) => existenteDe(enviada, true)?.id).filter((id) => id !== undefined),
@@ -131,6 +146,10 @@ export const handlersFases = [
     const errores = erroresDeFase(cuerpo)
     if (errores.length > 0) return errorResponse(400, 'Error al validar el modelo', null, errores)
     const subfases = cuerpo.subfases ?? []
+    const ajena = subfaseAjena(fase, subfases)
+    if (ajena) {
+      return errorResponse(410, 'Acción expirada', `La subfase ${ajena.nombre} es de otra fase y no se puede mover.`)
+    }
     const enUso = subfaseOmitidaEnUso(fase, subfases)
     if (enUso) {
       return errorResponse(
