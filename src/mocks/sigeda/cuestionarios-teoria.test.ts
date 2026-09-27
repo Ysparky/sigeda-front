@@ -29,6 +29,47 @@ function idIncorrecta(idPregunta: number): string {
   return String(alternativasDePregunta(idPregunta).find((alternativa) => !alternativa.correcto)?.id)
 }
 
+describe('contrato §4.1 y §4.2: solo lo propio', () => {
+  // El contrato no listaba 403 D15 en estas dos rutas y el mock no lo comprobaba, así que un
+  // alumno podía ver los pendientes de otro y, peor, INICIARLE el examen. La tanda C4 lo cerró
+  // en el servidor; acá se cierra en el mock y se fija el contrato corregido.
+  it('un alumno no puede ver los pendientes de otro', async () => {
+    await iniciarComo('alumno.lopez')
+    await expect(listarExamenesPendientes('666666')).rejects.toThrow(ApiError)
+  })
+
+  it('un alumno no puede iniciarle el examen a otro', async () => {
+    await iniciarComo('alumno.lopez')
+    await expect(iniciarExamen(3, '666666')).rejects.toThrow(ApiError)
+  })
+})
+
+describe('contrato §4.4 califica por id, no por texto', () => {
+  // §2.3 permite dos alternativas que difieran solo en tildes: su regla de unicidad ignora
+  // mayúsculas y espacios extremos, no acentos. El mock comparaba texto normalizado para todos
+  // los tipos, así que marcaba correcta cualquiera de las dos. El contrato §4.4 punto 1 compara
+  // el id. Sin el arreglo esta prueba falla con correcto: true.
+  it('dos alternativas que solo difieren en la tilde no se confunden', async () => {
+    await iniciarComo('alumno.lopez')
+    const examen = await iniciarExamen(3, '111111')
+    const idPregunta = examen.preguntas[0].idPregunta
+    const alternativas = alternativasDePregunta(idPregunta)
+    const correcta = alternativas.find((alternativa) => alternativa.correcto)!
+    const gemela = alternativas.find((alternativa) => !alternativa.correcto)!
+    gemela.respuesta = correcta.respuesta.replace(/a/i, 'á')
+    expect(gemela.respuesta).not.toBe(correcta.respuesta)
+
+    // Se afirma sobre la nota y no sobre calificaciones[] porque §4.6 devuelve el arreglo vacío
+    // al propio alumno mientras su turno no está FINALIZADO, y el turno 3 es el abierto. Con solo
+    // esa pregunta respondida, la nota es 0 si el id no coincide y el puntaje de la pregunta si
+    // se la marcara correcta por texto.
+    await guardarRespuestas(examen.id, '111111', [{ idPregunta, respuesta: String(gemela.id) }])
+    const entregado = await entregarExamen(examen.id, '111111')
+    expect(entregado.nota).toBe(0)
+    expect(entregado.aprobado).toBe(false)
+  })
+})
+
 describe('contrato §4.1 exámenes pendientes', () => {
   it('CA-EXA-01 lista los turnos habilitados sin entregar, ordenados por fecha y hora', async () => {
     await iniciarComo('alumno.torres')

@@ -148,6 +148,7 @@ export const handlersCuestionariosTeoria = [
     if (permitido instanceof Response) return permitido
     const codAlumno = new URL(request.url).searchParams.get('codAlumno') ?? ''
     if (!buscarPersona(codAlumno)) return textoNoEncontrado(D27_PERSONA_NO_EXISTE)
+    if (permitido.codPersona !== codAlumno) return textoProhibido(D15_SOLO_LO_PROPIO)
     cerrarExamenesVencidos()
     const pendientes = pendientesDe(codAlumno)
     if (pendientes.length === 0) return textoNoEncontrado(D17_SIN_PENDIENTES)
@@ -162,6 +163,7 @@ export const handlersCuestionariosTeoria = [
     const codAlumno = texto(cuerpo.codAlumno)
     if (codAlumno === '') return erroresDeCampo(["'codAlumno': El código del alumno es obligatorio."])
     if (!buscarPersona(codAlumno)) return textoNoEncontrado(D27_PERSONA_NO_EXISTE)
+    if (permitido.codPersona !== codAlumno) return textoProhibido(D15_SOLO_LO_PROPIO)
     if (!alumnosHabilitados(turno).some((alumno) => alumno.codigo === codAlumno)) {
       return textoProhibido(D9_ALUMNO_NO_HABILITADO)
     }

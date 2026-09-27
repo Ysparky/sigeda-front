@@ -70,6 +70,19 @@ export function respuestaEsperada(idPregunta: number): string {
   return alternativasDePregunta(idPregunta).find((alternativa) => alternativa.correcto)?.respuesta ?? ''
 }
 
+// El contrato §4.4 punto 1 califica OPCION_MULTIPLE y VERDADERO_FALSO comparando el **id** de
+// la alternativa, no su texto. Comparar texto normalizado marcaba como correcta cualquiera de
+// dos alternativas que difirieran solo en tildes o mayúsculas — y §2.3 permite ese par, porque
+// su regla de unicidad ignora mayúsculas y espacios pero no tildes. COMPLETAR sí compara texto
+// normalizado, que es lo que §4.4 punto 2 pide.
+function esCorrecta(idPregunta: number, guardada: string): boolean {
+  if (guardada.trim() === '') return false
+  if (buscarPregunta(idPregunta)?.tipoPregunta === 'COMPLETAR')
+    return normalizarRespuesta(guardada) === normalizarRespuesta(respuestaEsperada(idPregunta))
+  const correcta = alternativasDePregunta(idPregunta).find((alternativa) => alternativa.correcto)
+  return correcta !== undefined && String(correcta.id) === guardada.trim()
+}
+
 function respuestaDada(idPregunta: number, guardada: string): string | null {
   if (guardada.trim() === '') return null
   const pregunta = buscarPregunta(idPregunta)
@@ -84,7 +97,7 @@ export function calificar(cuestionario: CuestionarioMock, fechaEntrega: string, 
   cuestionario.calificaciones = preguntasDelTurno(turno.id).map((fila) => {
     const esperada = respuestaEsperada(fila.idPregunta)
     const dada = respuestaDada(fila.idPregunta, cuestionario.respuestas[fila.idPregunta] ?? '')
-    const correcto = dada !== null && normalizarRespuesta(dada) === normalizarRespuesta(esperada)
+    const correcto = esCorrecta(fila.idPregunta, cuestionario.respuestas[fila.idPregunta] ?? '')
     return {
       idPregunta: fila.idPregunta,
       orden: fila.orden,

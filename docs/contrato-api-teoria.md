@@ -562,7 +562,13 @@ Los turnos en los que el alumno está habilitado (§3.2), en estado `PROGRAMADO`
 ]
 ```
 
-`idCuestionario` y `estadoRendicion` dicen si el alumno ya empezó: `null` y `"NO_RINDIO"` si no. Lista vacía → **404** D17.
+`idCuestionario` y `estadoRendicion` dicen si el alumno ya empezó: `null` y `"NO_RINDIO"` si no. Lista vacía → **404** D17. **403** D15 si el `codAlumno` no es el propio.
+
+> **Corrección, 27 sep 2026.** Esta sección y la §4.2 **no listaban el 403 D15** y el mock no lo
+> comprobaba en ninguna de las dos, aunque §4 lo enuncia en general («Un `codAlumno` distinto del
+> propio debe responder **403** D15»). Sin él un alumno podía ver los pendientes de otro y, peor,
+> **iniciarle el examen**. La tanda C4 lo cerró en el servidor en las seis rutas; el mock y estas
+> dos secciones quedan alineados, con prueba en `cuestionarios-teoria.test.ts`.
 
 ### 4.2 `POST /api/turnos-teoricos/{id}/iniciar`
 
@@ -623,6 +629,7 @@ En `COMPLETAR`, `alternativas` es `[]`. `respuestaAlumno` es `null` mientras no 
 Errores:
 
 - **404** D6 si el turno no existe; **404** D27 si `codAlumno` no existe.
+- **403** D15 si el `codAlumno` no es el propio — **se comprueba antes que D9**: «no es tuyo» precede a «no estás habilitado».
 - **403** D9 si el alumno no está habilitado para el turno (no pertenece al grupo, o el turno es una subsanación o un rezagado que no le corresponde).
 - **409** D8 si la ventana no comenzó o ya cerró.
 - **409** D10 si el alumno ya entregó.
@@ -668,7 +675,7 @@ Errores:
 
 Califica y cierra. **Calificación:**
 
-1. `OPCION_MULTIPLE` y `VERDADERO_FALSO`: correcta si `respuesta` es el id de la alternativa marcada `correcto`.
+1. `OPCION_MULTIPLE` y `VERDADERO_FALSO`: correcta si `respuesta` es el **id** de la alternativa marcada `correcto`. **No se compara el texto**: §2.3 permite dos alternativas que difieran solo en tildes —su regla de unicidad ignora mayúsculas y espacios extremos, no acentos—, y comparar texto normalizado marcaría cualquiera de las dos como correcta. El mock lo hacía así y se corrigió el 27 sep 2026, con una prueba que puntúa 0 donde antes daba el puntaje completo.
 2. `COMPLETAR`: correcta si coincide con la respuesta esperada **ignorando mayúsculas, tildes, espacios extremos y espacios internos repetidos**.
 3. `puntajeObtenido` = `puntajeMaximo` si es correcta, `0` si no. Sin puntajes parciales.
 4. `nota` = suma de `puntajeObtenido`, sobre 20, con 2 decimales. Como los puntajes suman 20 (§3.3), la nota nunca pasa de 20.
