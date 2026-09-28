@@ -343,7 +343,7 @@ DELETE /api/turnos-teoricos/{id}                                                
 |---|---|---|---|
 | `GET /api/grupos` (`GrupoController.java:56-57`) | `Manage Groups` | `Page<IndexGrupo>` = `{id, nombre, descripcion, programa}` | El Instructor no tiene `Manage Groups`, y no hay filtro por `programa` |
 | `GET /api/grupos/programa/{nombre}` (`:123-125`) | `View All Groups` | `Page<CatalogoByPrograma>` | El Instructor tampoco lo tiene, y la proyección (`projections/CatalogoByPrograma.java:5-14`) trae `idGrupo` y `estado` **por alumno**, sin `nombre` de grupo ni fila de grupo |
-| `GET /api/grupos/instructor/{cod}/programa/{nombre}` (`:154-156`) | `View My Group` | `Page<CatalogoByAlumnoTurno>` sobre filas de `alumnos_turno`, una por (alumno, turno) | Son alumnos con los que ya voló, no grupos; y la proyección declara `List<Alumno> getPersona()` contra un `Persona` único |
+| `GET /api/grupos/instructor/{cod}/programa/{nombre}` (`:154-156`) | `View My Group` | `Page<CatalogoByAlumnoTurno>` sobre filas de `alumnos_turno`, una por (alumno, turno) | Son alumnos con los que ya voló, no grupos. (La proyección declaraba `List<Alumno> getPersona()` contra un `Persona` único; la tanda G lo alineó y `persona` es un objeto.) |
 
 El catálogo de alumnos del frontend tampoco puede suplirlo: `listarAlumnos` (`src/features/catalogos/api.ts:86-118`) devuelve alumnos y `aOpcion` (`:73-75`) usa `idGrupo` para armar una etiqueta y lo descarta.
 

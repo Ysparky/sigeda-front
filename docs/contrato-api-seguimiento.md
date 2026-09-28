@@ -134,10 +134,10 @@ GET /api/grupos/instructor/{cod}/programa/{nombre}?page&size&direction&property 
 
 ### 1.2 `GET /api/grupos/instructor/{cod}/programa/{nombre}` — **sin cambios, con dos avisos**
 
-`Page<CatalogoByAlumnoTurno>` = `{"persona": [...]}` sobre la misma proyección de alumno (`:154-156`, `projections/CatalogoByAlumnoTurno.java:7-9`).
+`Page<CatalogoByAlumnoTurno>` = `{"persona": {...}}` sobre la misma proyección de alumno (`:154-156`, `projections/CatalogoByAlumnoTurno.java:7-9`).
 
 1. **Pagina sobre filas de `alumnos_turno`, no sobre alumnos** (`grupo/services/GrupoServiceImpl.java:78-79` → `turno/dao/IAlumno_TurnoDao.java:24-25`), así que un alumno aparece una vez por turno volado con ese instructor. El frontend deduplica por `codigo` y **recorre todas las páginas hasta `totalPages`** en lugar de pedir una sola de 100, porque un instructor con muchos turnos truncaría el conjunto de alumnos (spec M5-6). `Page_Sort` no tiene tope de tamaño, así que paginar es una elección, no una restricción.
-2. **La proyección declara `List<Alumno> getPersona()` contra un `@OneToOne Persona` único** (`turno/entities/Alumno_Turno.java:24-26`). El frontend acepta las dos formas (`catalogos/api.ts:113`). La corrección es la decisión M1-9 de `contrato-api-turnos.md` §4.6 y sigue pendiente.
+2. **`persona` es un objeto, no un arreglo de uno — corregido en la tanda G.** La proyección declaraba `List<Alumno> getPersona()` contra un `@OneToOne Persona` único (`turno/entities/Alumno_Turno.java:24-26`) y el frontend tenía que aceptar las dos formas. Se alineó el tipo con la relación y no al revés, porque la lista de uno era lo falso; `contrato-api-turnos.md` §4.6 lo cuenta entero.
 
 Página vacía → **404** D1, que el frontend muestra como S2 («no tiene alumnos asignados») y no como un error.
 

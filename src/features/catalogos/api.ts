@@ -105,15 +105,14 @@ export async function listarAlumnos(
     )
   }
   if (!codPersona) return []
-  const filas = await todasLasFilas<{ persona: AlumnoConGrupo[] | AlumnoConGrupo }>(
+  // `persona` es un objeto y no un arreglo de uno. La proyección declaraba `List<Alumno>` sobre un
+  // `@OneToOne` y el servidor publicaba el arreglo; la tanda G alineó el código con la relación, así
+  // que acá ya no hace falta aceptar las dos formas.
+  const filas = await todasLasFilas<{ persona: AlumnoConGrupo }>(
     `/api/grupos/instructor/${encodeURIComponent(codPersona)}/programa/${encodeURIComponent(programa)}`,
   )
   return sinRepetidos(
-    filas.flatMap((item) =>
-      (Array.isArray(item.persona) ? item.persona : [item.persona]).map((persona) =>
-        aOpcion(persona, persona.idGrupo === null ? null : `Grupo ${persona.idGrupo}`),
-      ),
-    ),
+    filas.map((item) => aOpcion(item.persona, item.persona.idGrupo === null ? null : `Grupo ${item.persona.idGrupo}`)),
   )
 }
 

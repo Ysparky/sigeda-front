@@ -100,7 +100,7 @@ export const handlersCatalogos = [
       .flatMap((turno) =>
         turno.alumnos.flatMap((fila) => {
           const persona = buscarPersona(fila.codAlumno)
-          return persona ? [{ id: turno.id, persona: [alumnoConEstado(persona)] }] : []
+          return persona ? [{ id: turno.id, persona: alumnoConEstado(persona) }] : []
         }),
       )
     return paginar(catalogo, new URL(request.url), {

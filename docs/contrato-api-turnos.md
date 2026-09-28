@@ -555,13 +555,13 @@ GET /api/grupos/programa/{nombre}?page&size&direction&property   View All Groups
 GET /api/grupos/instructor/{cod}/programa/{nombre}?page&size&direction&property   View My Group
 ```
 
-**Corrección**: `CatalogoByAlumnoTurno.getPersona()` está tipado como `List<Alumno>` pero la propiedad que respalda (`Alumno_Turno.persona`) es un único `@OneToOne Persona` — hoy funciona "por accidente" (`Hibernate.initialize` sobre un proxy único no falla), pero la forma declarada no coincide con el dato real. Corregir la proyección/consulta para que **`persona` devuelva efectivamente la lista completa de alumnos** del/los grupo(s) de ese instructor y programa (no un solo objeto disfrazado de lista de un elemento):
+**Corrección HECHA (tanda G, 27 sep 2026), y al revés de como se pedía acá.** `CatalogoByAlumnoTurno.getPersona()` estaba tipado como `List<Alumno>` mientras la propiedad que lo respalda (`Alumno_Turno.persona`) es un único `@OneToOne Persona`. Esta sección proponía alinear la consulta con el tipo declarado —que `persona` trajera de verdad la lista de alumnos—, y el servidor hizo lo contrario: **alineó el tipo con la relación**, porque la lista de uno era lo falso. `persona` es ahora **un objeto**:
 
 ```json
-{ "content": [ { "persona": [ { "codigo": "111111", "nombre": "Oscar", "aPaterno": "Lopez", "aMaterno": "Chaparro", "idGrupo": 1, "estado": "Apto" } ] } ], "totalElements": 1, "...": "..." }
+{ "content": [ { "persona": { "codigo": "111111", "nombre": "Oscar", "aPaterno": "Lopez", "aMaterno": "Chaparro", "idGrupo": 1, "estado": "Apto" } } ], "totalElements": 1, "...": "..." }
 ```
 
-Se mantiene el nombre de campo `persona` (singular, aunque el valor sea un arreglo) para no romper el resto de la proyección — es el nombre ya declarado en `CatalogoByAlumnoTurno`. Este es el selector de alumnos para el rol Instructor (M1-9); no tiene un número de dependencia en `m1-addendum.md` §13.4 (ver Dependencias).
+Una fila por (alumno, turno) sigue siendo la unidad de paginado, así que la lista de alumnos se sigue armando recorriendo las páginas y deduplicando por `codigo` — que es lo que el frontend ya hacía. Con esto **deja de tener que aceptar las dos formas a la vez** (`catalogos/api.ts`). Es el selector de alumnos para el rol Instructor (M1-9).
 
 ### 4.7 `GET /api/personas/{cod}/status` — **Sin cambios**
 

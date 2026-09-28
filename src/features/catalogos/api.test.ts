@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { sigeda } from '@/lib/api/sigeda'
 import { permisosDeRol } from '@/lib/auth/permisos'
 import { config } from '@/lib/config'
 import { server } from '@/mocks/server'
@@ -83,6 +84,19 @@ describe('M1-9 selector de alumnos por rol', () => {
     const alumnos = await listarAlumnos('instructor', 'PDI', '888888')
     expect(alumnos.map((alumno) => alumno.codigo)).toEqual(['777777', '999999'])
   })
+
+  it('el catálogo del instructor publica `persona` como objeto, no como arreglo de uno', async () => {
+    // La proyección declaraba `List<Alumno>` sobre un `@OneToOne` y el frontend tenía que aceptar las
+    // dos formas a la vez. La tanda G alineó el servidor con la relación; esto lo fija de este lado.
+    await iniciarComo('instructor.mendoza')
+    const pagina = await sigeda.pagina<{ persona: unknown }>('/api/grupos/instructor/888888/programa/PDI', {
+      page: 0,
+      size: 10,
+    })
+    const persona = pagina.items[0]?.persona as Record<string, unknown>
+    expect(Array.isArray(persona)).toBe(false)
+    expect(persona.codigo).toBe('777777')
+  })
 })
 
 describe('agruparPorGrupo', () => {
@@ -96,7 +110,7 @@ describe('agruparPorGrupo', () => {
         const codigo = page === '0' ? '111111' : '999999'
         return HttpResponse.json({
           content: [
-            { persona: [{ codigo, nombre: 'Uno', aPaterno: 'Dos', aMaterno: 'Tres', idGrupo: 1, estado: 'Apto' }] },
+            { persona: { codigo, nombre: 'Uno', aPaterno: 'Dos', aMaterno: 'Tres', idGrupo: 1, estado: 'Apto' } },
           ],
           totalElements: 2,
           totalPages: 2,
