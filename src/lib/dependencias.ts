@@ -20,8 +20,11 @@ export const DEPENDENCIAS = {
   // publicado. Lo que la 62 traba es la tabla de coeficientes de MISIÓN, que el PDI nunca publicó, y
   // sin ella el servidor devuelve `nfpi` y `nia` en `null` diciendo por qué. Tenerlas juntas tapaba
   // el NIT con un aviso que además afirmaba algo falso («el servidor todavía no calcula los
-  // índices»). El orden de mérito sí sigue pidiendo la 62, porque no se puede ordenar por un índice
-  // que no se puede calcular.
+  // índices»). El orden de mérito sí pide la 62, porque no se puede ordenar por un índice que no se
+  // puede calcular — y **desde el 28 sep 2026 la 62 está resuelta**: el servidor tiene el catálogo de
+  // misiones del PDI con sus coeficientes y devuelve el NFPI con un número (16.47 para 555555). La
+  // compuerta sigue declarada así porque la condición es real, no porque falte: si un día el servidor
+  // deja de calcular el NFPI, el orden de mérito tiene que volver a cerrarse solo.
   verIndices: [61],
   verAlertas: [66],
   verOrdenMerito: [6, 62, 63],
