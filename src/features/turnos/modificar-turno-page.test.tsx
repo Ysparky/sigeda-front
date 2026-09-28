@@ -38,6 +38,23 @@ describe('Modificar turno', () => {
     expect(screen.getByLabelText('Nota mínima 3')).toHaveValue('E')
   })
 
+  // Dependencia 62, y es una limitación del servidor, no una decisión de la pantalla:
+  // `GET /api/turnos/{id}` no publica `idMision` —comprobado con curl contra el 8080—, así que el
+  // formulario no tiene de dónde leer la misión que el turno ya tenía. El selector arranca vacío y lo
+  // DICE, porque el `PUT` escribe el campo tal cual llega y guardar así borra la asignación.
+  it('dependencia 62 el selector de misión arranca vacío al modificar y avisa que guardar así la borra', async () => {
+    await abrirEdicion()
+    const mision = await screen.findByLabelText('Misión del PDI')
+    expect(mision).toHaveValue('')
+    expect(mision).toBeEnabled()
+    expect(
+      screen.getByText(
+        'El servidor no informa la misión que el turno ya tenía: si la deja sin asignar, la asignación anterior se borra al guardar.',
+      ),
+    ).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('option', { name: 'N/I-7 · 1 h · coef. 0.1000' })).toBeInTheDocument())
+  })
+
   it('recupera la sub fase por su nombre si el detalle no trae el idSubfase', async () => {
     server.use(
       http.get(`${config.sigedaApiUrl}/api/turnos/8`, () =>

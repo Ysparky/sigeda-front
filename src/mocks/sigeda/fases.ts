@@ -1,6 +1,14 @@
 import { http, HttpResponse } from 'msw'
 import { API, autorizar, erroresDeDescripcion, erroresDeNombre, errorResponse, paginarConOrden, texto } from './comun'
-import { buscarSubfase, datos, maniobrasDeSubfase, siguienteId, type FaseMock, type SubfaseMock } from './datos'
+import {
+  buscarSubfase,
+  datos,
+  maniobrasDeSubfase,
+  misionesDeSubfase,
+  siguienteId,
+  type FaseMock,
+  type SubfaseMock,
+} from './datos'
 
 type SubfaseDelCuerpo = { id?: unknown; nombre?: unknown; descripcion?: unknown }
 
@@ -179,6 +187,25 @@ export const handlersFases = [
     datos().subfases = datos().subfases.filter((subfase) => !suyas.has(subfase.id))
     datos().fases = datos().fases.filter((candidata) => candidata.id !== fase.id)
     return new HttpResponse(null, { status: 204 })
+  }),
+  // El coeficiente se DERIVA de las horas, como en el servidor: `horas / Σ horas de la sub fase`,
+  // redondeado a 4 decimales sólo para mostrarlo. Una sub fase sin misiones da `200 []`; el 404 es
+  // sólo para la sub fase que no existe, porque «todavía no tiene misiones» no es «no existe».
+  http.get(`${API}/api/subfases/:id/misiones`, ({ request, params }) => {
+    const permitido = autorizar(request, 'Read')
+    if (permitido instanceof Response) return permitido
+    const subfase = buscarSubfase(Number(params.id))
+    if (!subfase) return errorResponse(404, 'Recurso no encontrado', 'No existe información de subfase.')
+    const misiones = misionesDeSubfase(subfase.id)
+    const horas = misiones.reduce((total, mision) => total + mision.horas, 0)
+    return HttpResponse.json(
+      misiones.map((mision) => ({
+        id: mision.id,
+        codigo: mision.codigo,
+        horas: mision.horas,
+        coeficiente: Number((mision.horas / horas).toFixed(4)),
+      })),
+    )
   }),
   http.get(`${API}/api/subfases/:id`, ({ request, params }) => {
     const permitido = autorizar(request, 'Read')

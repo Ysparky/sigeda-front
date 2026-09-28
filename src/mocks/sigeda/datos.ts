@@ -36,6 +36,14 @@ export type SubfaseMock = { id: number; nombre: string; descripcion: string | nu
 
 export type ManiobraMock = { id: number; nombre: string; descripcion: string | null }
 
+/**
+ * El catálogo de misiones del PDI. **El coeficiente NO se guarda**, igual que en el servidor: se
+ * derivan `horas / Σ horas de la sub fase` en la respuesta, para que las dos fuentes no se separen.
+ * `codigo` sólo es único DENTRO de la sub fase: el bloque `N/I` del PDI es una sub fase combinada que
+ * SIGEDA tiene partida en dos, y está completo en las dos, así que `N/I-3` existe dos veces.
+ */
+export type MisionMock = { id: number; codigo: string; horas: number; idSubfase: number }
+
 export type EnlaceManiobraSubfase = { idSubfase: number; idManiobra: number }
 
 export type EstandarMock = { id: number; nombre: string; descripcion: string | null; idManiobra: number }
@@ -60,6 +68,7 @@ export type TurnoMock = {
   fase: string
   codInstructor: string | null
   idAeronave: number | null
+  idMision: number | null
   alumnos: AlumnoTurnoMock[]
   maniobras: ManiobraTurnoMock[]
 }
@@ -120,6 +129,7 @@ export type DatosMock = {
   subfases: SubfaseMock[]
   maniobras: ManiobraMock[]
   maniobrasSubfase: EnlaceManiobraSubfase[]
+  misiones: MisionMock[]
   estandares: EstandarMock[]
   materias: MateriaMock[]
   aeronaves: AeronaveMock[]
@@ -230,6 +240,7 @@ function turnoSemilla(
   codInstructor: string,
   codAlumno: string,
   maniobras: number[],
+  idMision: number | null,
 ): TurnoMock {
   return {
     id,
@@ -241,9 +252,31 @@ function turnoSemilla(
     fase,
     codInstructor,
     idAeronave: 1,
+    idMision,
     alumnos: [{ codAlumno, horaInicio: '13:00', horaFin: '14:30' }],
     maniobras: maniobras.map((idManiobra) => ({ idManiobra, notaMin: 'B' })),
   }
+}
+
+// Las horas son las de la hoja `ESTRUCTURA (2024)` del libro que acompaña al PDI, y el reparto es el
+// de la migración 016 del servidor: las cinco sub fases de SIGEDA con los bloques `C`, `N/I` (entero
+// en Navegación y entero en Instrumentos), `CX` y `FT`. Los ids 1..34 son los mismos que la semilla.
+const MISIONES_SEMBRADAS: [idSubfase: number, prefijo: string, horas: number[]][] = [
+  [1, 'C', [1, 1, 1, 1, 1, 1, 1]],
+  [2, 'N/I', [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1]],
+  [3, 'N/I', [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1]],
+  [4, 'CX', [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5]],
+  [5, 'FT', [1, 1, 1, 1, 1]],
+]
+
+function crearMisiones(): MisionMock[] {
+  let id = 0
+  return MISIONES_SEMBRADAS.flatMap(([idSubfase, prefijo, horas]) =>
+    horas.map((hora, indice) => {
+      id += 1
+      return { id, codigo: `${prefijo}-${indice + 1}`, horas: hora, idSubfase }
+    }),
+  )
 }
 
 export function crearDatos(hoy: string = hoyIso()): DatosMock {
@@ -304,6 +337,7 @@ export function crearDatos(hoy: string = hoyIso()): DatosMock {
       { id: 5, nombre: 'Formación', descripcion: 'Vuelo en formación y coordinación', idFase: 1 },
     ],
     maniobras: MANIOBRAS.map((item) => ({ ...item })),
+    misiones: crearMisiones(),
     maniobrasSubfase: [
       ...[1, 2, 3, 4, 5, 6].map((idManiobra) => ({ idSubfase: 2, idManiobra })),
       ...[9, 10].map((idManiobra) => ({ idSubfase: 3, idManiobra })),
@@ -323,13 +357,14 @@ export function crearDatos(hoy: string = hoyIso()): DatosMock {
       { id: 3, nombre: 'Schweizer S-300C', descripcion: 'Helicóptero de instrucción avanzada', imagen: null, estado: 'No_Disponible' },
     ],
     turnos: [
-      turnoSemilla(1, '2024-03-01', 'Contacto Básico', 1, 'Adaptación', 'Contacto', '444444', '111111', [1, 2, 3, 4, 5, 6]),
-      turnoSemilla(2, '2024-03-08', 'Contacto Intermedio', 1, 'Adaptación', 'Contacto', '444444', '222222', [1, 2, 3, 4, 5, 6]),
-      turnoSemilla(3, '2024-03-15', 'Contacto Avanzado', 1, 'Adaptación', 'Contacto', '444444', '555555', [1, 2, 3, 4, 5, 6]),
-      turnoSemilla(4, '2024-03-22', 'Navegación Inicial', 2, 'Adaptación', 'Navegación', '444444', '666666', [1, 2, 3, 4, 5, 6]),
-      turnoSemilla(5, '2024-03-29', 'Instrumentos Avanzados', 3, 'Adaptación', 'Instrumentos', '888888', '777777', [9, 10]),
-      turnoSemilla(6, '2024-04-05', 'Campos Tácticos', 4, 'Operaciones HeliTransportadas', 'Campos Extraños', '888888', '999999', [7, 8]),
-      turnoSemilla(7, '2024-04-12', 'Navegación Avanzada', 5, 'Operaciones AeroTácticas', 'Formación', '888888', '999999', [1, 2, 3, 4, 5, 6]),
+      // El último argumento es la misión del PDI asignada al turno, como la dejó la migración 016.
+      turnoSemilla(1, '2024-03-01', 'Contacto Básico', 1, 'Adaptación', 'Contacto', '444444', '111111', [1, 2, 3, 4, 5, 6], 1),
+      turnoSemilla(2, '2024-03-08', 'Contacto Intermedio', 1, 'Adaptación', 'Contacto', '444444', '222222', [1, 2, 3, 4, 5, 6], 2),
+      turnoSemilla(3, '2024-03-15', 'Contacto Avanzado', 1, 'Adaptación', 'Contacto', '444444', '555555', [1, 2, 3, 4, 5, 6], 3),
+      turnoSemilla(4, '2024-03-22', 'Navegación Inicial', 2, 'Adaptación', 'Navegación', '444444', '666666', [1, 2, 3, 4, 5, 6], 8),
+      turnoSemilla(5, '2024-03-29', 'Instrumentos Avanzados', 3, 'Adaptación', 'Instrumentos', '888888', '777777', [9, 10], 15),
+      turnoSemilla(6, '2024-04-05', 'Campos Tácticos', 4, 'Operaciones HeliTransportadas', 'Campos Extraños', '888888', '999999', [7, 8], 22),
+      turnoSemilla(7, '2024-04-12', 'Navegación Avanzada', 5, 'Operaciones AeroTácticas', 'Formación', '888888', '999999', [1, 2, 3, 4, 5, 6], 30),
       {
         id: 8,
         nombre: 'Navegación Nocturna',
@@ -340,6 +375,7 @@ export function crearDatos(hoy: string = hoyIso()): DatosMock {
         fase: 'Adaptación',
         codInstructor: '444444',
         idAeronave: 1,
+        idMision: null,
         alumnos: [
           { codAlumno: '111111', horaInicio: '09:00', horaFin: '10:30' },
           { codAlumno: '666666', horaInicio: '11:00', horaFin: '12:30' },
@@ -361,6 +397,7 @@ export function crearDatos(hoy: string = hoyIso()): DatosMock {
         fase: 'Adaptación',
         codInstructor: '888888',
         idAeronave: 1,
+        idMision: null,
         alumnos: [{ codAlumno: '777777', horaInicio: '07:30', horaFin: '08:30' }],
         maniobras: [
           { idManiobra: 9, notaMin: 'B' },
@@ -761,6 +798,15 @@ export function maniobrasDeSubfase(idSubfase: number): ManiobraMock[] {
     .filter((enlace) => enlace.idSubfase === idSubfase)
     .map((enlace) => enlace.idManiobra)
   return datosActuales.maniobras.filter((maniobra) => ids.includes(maniobra.id))
+}
+
+/** Ordenadas por id, que es el orden que el servidor fija con un `order by` explícito. */
+export function misionesDeSubfase(idSubfase: number): MisionMock[] {
+  return datosActuales.misiones.filter((mision) => mision.idSubfase === idSubfase).sort((a, b) => a.id - b.id)
+}
+
+export function buscarMision(id: number): MisionMock | undefined {
+  return datosActuales.misiones.find((mision) => mision.id === id)
 }
 
 export function subfasesDeManiobra(idManiobra: number): SubfaseMock[] {

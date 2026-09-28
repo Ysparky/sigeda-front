@@ -44,6 +44,9 @@ export function crearEsquemaTurno(hoy: string, aeronavesDisponibles: ReadonlySet
         .refine((fecha) => fecha > hoy, 'La fecha del turno debe ser posterior a hoy.'),
       programa: z.string().refine((valor) => valor === 'PDI' || valor === 'PDE', 'Ingresar programa válido.'),
       idSubfase: z.string().min(1, 'La subfase es requerida.'),
+      // La misión del PDI es opcional en el servidor y acá también: un turno puede programarse sin
+      // ella, y entonces su nota de sub fase sale como promedio simple en vez de ponderada.
+      idMision: z.string(),
       codInstructor: z.string().min(1, 'Instructor debe ser asignado.'),
       idAeronave: z
         .string()
@@ -102,6 +105,7 @@ export function turnoVacio(programa: Programa = 'PDI'): ValoresTurno {
     fechaEval: '',
     programa,
     idSubfase: '',
+    idMision: '',
     codInstructor: '',
     idAeronave: '',
     alumnosTurno: [],
@@ -109,12 +113,20 @@ export function turnoVacio(programa: Programa = 'PDI'): ValoresTurno {
   }
 }
 
+/**
+ * `idMision` arranca VACÍO al modificar y no se puede hacer mejor: `GET /api/turnos/{id}` no publica
+ * la misión asignada (comprobado con curl: la respuesta del `PUT` la trae, el `GET` no), así que el
+ * formulario no tiene de dónde leerla. El campo se manda igual —`null` si queda vacío— porque el
+ * `PUT` reemplaza y omitirlo borraría la asignación sin decírselo a nadie; con el selector a la vista
+ * la pérdida se ve y se puede volver a elegir.
+ */
 export function valoresDesdeTurno(turno: TurnoDetalle, idSubfase: number | undefined): ValoresTurno {
   return {
     nombre: turno.nombre,
     fechaEval: turno.fechaEval,
     programa: turno.programa,
     idSubfase: idSubfase === undefined ? '' : String(idSubfase),
+    idMision: '',
     codInstructor: turno.codInstructor ?? '',
     idAeronave: turno.aeronave ? String(turno.aeronave.id) : '',
     alumnosTurno: turno.alumnos.map(({ codAlumno, horaInicio, horaFin }) => ({ codAlumno, horaInicio, horaFin })),
@@ -128,6 +140,7 @@ export function aCuerpoTurno(valores: ValoresTurno): CuerpoTurno {
     fechaEval: valores.fechaEval,
     programa: valores.programa === 'PDE' ? 'PDE' : 'PDI',
     idSubfase: Number(valores.idSubfase),
+    idMision: valores.idMision === '' ? null : Number(valores.idMision),
     codInstructor: valores.codInstructor,
     aeronave: { id: Number(valores.idAeronave) },
     alumnosTurno: valores.alumnosTurno.map(({ codAlumno, horaInicio, horaFin }) => ({ codAlumno, horaInicio, horaFin })),

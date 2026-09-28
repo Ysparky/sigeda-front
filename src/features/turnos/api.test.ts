@@ -164,6 +164,50 @@ describe('api de turnos', () => {
     expect(recibido).toMatchObject({ nombre: 'Navegación Diurna', aeronave: { id: 1 } })
   })
 
+  // El PUT escribe `idMision` tal cual llega (§1.6 reemplaza, no parchea), así que el campo tiene que
+  // viajar SIEMPRE: si el destructurado de `modificarTurno` se lo deja afuera, cada modificación borra
+  // la misión del turno en silencio y la nota de sub fase se cae a promedio simple.
+  it('dependencia 62 modificar envía idMision siempre, y explícitamente null cuando no hay ninguna', async () => {
+    const recibidos: Record<string, unknown>[] = []
+    server.use(
+      http.put(`${API}/api/turnos/:id`, async ({ request }) => {
+        recibidos.push((await request.json()) as Record<string, unknown>)
+        return HttpResponse.json({ mensaje: 'Turno guardado con éxito.', turno: { id: 8 } }, { status: 201 })
+      }),
+    )
+    await iniciarComo('jefe.operaciones')
+    await modificarTurno(8, cuerpoValido({ idMision: 8 }))
+    await modificarTurno(8, cuerpoValido())
+    expect(recibidos.map((cuerpo) => cuerpo.idMision)).toEqual([8, null])
+    expect(recibidos[1]).toHaveProperty('idMision')
+  })
+
+  it('dependencia 62 el servidor rechaza con 400 la misión que no es de la sub fase del turno', async () => {
+    await iniciarComo('jefe.operaciones')
+    // La sub fase 2 tiene las misiones 8 a 14; la 1 es `C-1`, de Contacto.
+    await expect(crearTurno(cuerpoValido({ idMision: 1 }))).rejects.toMatchObject({
+      status: 400,
+      message: 'La misión asignada no pertenece a la subfase del turno.',
+    })
+    // En el PUT la sub fase es la del turno guardado, no la del cuerpo: el turno 8 es de Navegación.
+    await expect(modificarTurno(8, cuerpoValido({ idMision: 1 }))).rejects.toMatchObject({
+      status: 400,
+      message: 'La misión asignada no pertenece a la subfase del turno.',
+    })
+  })
+
+  it('dependencia 62 la respuesta del guardado trae idMision, y el GET del detalle no', async () => {
+    await iniciarComo('jefe.operaciones')
+    const guardado = await sigeda.post<{ turno: Record<string, unknown> }>(
+      '/api/turnos',
+      cuerpoValido({ idMision: 9 }),
+    )
+    expect(guardado.turno.idMision).toBe(9)
+    // Y por eso el formulario no puede recuperarla al modificar: la proyección del detalle no la trae.
+    const detalle = await sigeda.get<Record<string, unknown>>(`/api/turnos/${guardado.turno.id}`)
+    expect(detalle).not.toHaveProperty('idMision')
+  })
+
   it('CA-TUR-11 el backend rechaza eliminar un turno cuya fecha pasó', async () => {
     await iniciarComo('jefe.operaciones')
     await expect(eliminarTurno(1)).rejects.toMatchObject({

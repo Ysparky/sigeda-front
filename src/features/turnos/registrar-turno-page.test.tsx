@@ -110,6 +110,56 @@ describe('Registrar turno', () => {
     expect(screen.queryByLabelText('Maniobra 1')).not.toBeInTheDocument()
   })
 
+  // Dependencia 62. Sin este selector el `idMision` del turno no se puede asignar desde ninguna
+  // pantalla, y sin misión asignada el servidor calcula la nota de sub fase como promedio simple.
+  it('dependencia 62 ofrece las misiones de la sub fase elegida, con su código, sus horas y su coeficiente', async () => {
+    const { usuario } = await abrirFormulario()
+    expect(screen.getByLabelText('Misión del PDI')).toBeDisabled()
+    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Navegación')
+    const selector = screen.getByLabelText('Misión del PDI')
+    await waitFor(() => expect(within(selector).getAllByRole('option')).toHaveLength(8))
+    expect(within(selector).getAllByRole('option').map((opcion) => opcion.textContent)).toEqual([
+      'Sin misión asignada',
+      'N/I-1 · 1.5 h · coef. 0.1500',
+      'N/I-2 · 1.5 h · coef. 0.1500',
+      'N/I-3 · 1.5 h · coef. 0.1500',
+      'N/I-4 · 1.5 h · coef. 0.1500',
+      'N/I-5 · 1.5 h · coef. 0.1500',
+      'N/I-6 · 1.5 h · coef. 0.1500',
+      'N/I-7 · 1 h · coef. 0.1000',
+    ])
+    expect(selector).toHaveValue('')
+  })
+
+  it('dependencia 62 cambiar la sub fase descarta la misión elegida, que era de la otra', async () => {
+    const { usuario } = await abrirFormulario()
+    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Navegación')
+    await waitFor(() => expect(within(screen.getByLabelText('Misión del PDI')).getAllByRole('option')).toHaveLength(8))
+    await usuario.selectOptions(screen.getByLabelText('Misión del PDI'), 'N/I-3 · 1.5 h · coef. 0.1500')
+    expect(screen.getByLabelText('Misión del PDI')).toHaveValue('10')
+    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Contacto')
+    await waitFor(() => expect(screen.getByLabelText('Misión del PDI')).toHaveValue(''))
+  })
+
+  it('dependencia 62 guarda la misión elegida en el cuerpo del turno', async () => {
+    let recibido: Record<string, unknown> | null = null
+    server.use(
+      http.post(`${config.sigedaApiUrl}/api/turnos`, async ({ request }) => {
+        recibido = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ mensaje: 'Turno guardado con éxito.', turno: { id: 10 } }, { status: 201 })
+      }),
+    )
+    const { usuario } = await abrirFormulario()
+    await llenarDatos(usuario)
+    await waitFor(() => expect(within(screen.getByLabelText('Misión del PDI')).getAllByRole('option')).toHaveLength(8))
+    await usuario.selectOptions(screen.getByLabelText('Misión del PDI'), 'N/I-7 · 1 h · coef. 0.1000')
+    await agregarAlumno(usuario, 1, 'Juan Falconi Fernandez', '08:00', '09:30')
+    await agregarManiobra(usuario, 1, 'Maniobra 1', 'B')
+    await guardar(usuario)
+    await waitFor(() => expect(recibido).not.toBeNull())
+    expect(recibido).toMatchObject({ idSubfase: 2, idMision: 14 })
+  })
+
   it('CA-TUR-06 la nota mínima solo ofrece D, I, R, B o E', async () => {
     const { usuario } = await abrirFormulario()
     await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Navegación')

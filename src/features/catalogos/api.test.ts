@@ -12,6 +12,7 @@ import {
   listarAlumnos,
   listarInstructores,
   listarManiobrasDeSubfase,
+  listarMisionesDeSubfase,
   listarSubfases,
 } from './api'
 
@@ -32,6 +33,42 @@ describe('catálogos para turnos y evaluaciones', () => {
     await iniciarComo('jefe.operaciones')
     expect((await listarManiobrasDeSubfase(4)).map((maniobra) => maniobra.nombre)).toEqual(['Maniobra 7', 'Maniobra 8'])
     await expect(listarManiobrasDeSubfase(1)).resolves.toEqual([])
+  })
+
+  // Los cuatro valores salen de la respuesta del servidor vivo, no del contrato:
+  // GET /api/subfases/1/misiones -> C-1..C-7, 1.0 h, coeficiente 0.1429 en las siete;
+  // GET /api/subfases/2/misiones -> N/I-1..N/I-6 a 0.15 y N/I-7 a 0.1 (1.0 h contra 1.5).
+  it('dependencia 62 lista el catálogo de misiones de la sub fase con su coeficiente derivado', async () => {
+    await iniciarComo('jefe.operaciones')
+    const contacto = await listarMisionesDeSubfase(1)
+    expect(contacto.map((mision) => mision.codigo)).toEqual(['C-1', 'C-2', 'C-3', 'C-4', 'C-5', 'C-6', 'C-7'])
+    expect(contacto[0]).toEqual({ id: 1, codigo: 'C-1', horas: 1, coeficiente: 0.1429 })
+    // La única misión del bloque N/I que no vale 1.5 h: si el coeficiente se hubiera guardado en vez
+    // de derivarse de las horas, esta es la fila donde se notaría.
+    const navegacion = await listarMisionesDeSubfase(2)
+    expect(navegacion.map((mision) => mision.coeficiente)).toEqual([0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0.1])
+    expect(navegacion.at(-1)).toEqual({ id: 14, codigo: 'N/I-7', horas: 1, coeficiente: 0.1 })
+  })
+
+  it('dependencia 62 la sub fase sin misiones da 200 con lista vacía, y la que no existe da 404', async () => {
+    await iniciarComo('admin.sistema')
+    // Una sub fase recién creada no tiene misiones: el servidor devuelve `200 []`, porque «todavía no
+    // tiene misiones» no es «no existe». El 404 queda sólo para la sub fase inexistente.
+    const fase = await sigeda.post<{ subfases: { id: number; nombre: string }[] }>('/api/fases', {
+      nombre: 'Fase de prueba',
+      descripcion: 'Creada para comprobar el catálogo vacío',
+      subfases: [{ nombre: 'Sub fase sin misiones', descripcion: 'Sin misiones sembradas' }],
+    })
+    const idNueva = fase.subfases[0]?.id ?? 0
+    expect(idNueva).toBeGreaterThan(5)
+    await expect(sigeda.get(`/api/subfases/${idNueva}/misiones`)).resolves.toEqual([])
+    await expect(sigeda.get('/api/subfases/999/misiones')).rejects.toMatchObject({
+      status: 404,
+      message: 'No existe información de subfase.',
+    })
+    // `sigeda.lista` degrada el 404 a lista vacía, que para un selector es lo correcto: no hay
+    // misiones que ofrecer. La distinción de estado sigue estando y se comprueba arriba.
+    await expect(listarMisionesDeSubfase(999)).resolves.toEqual([])
   })
 
   it('CA-TUR-08 trae el estado de cada aeronave', async () => {

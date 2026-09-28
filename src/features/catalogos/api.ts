@@ -14,6 +14,14 @@ export type Subfase = { id: number; nombre: string; descripcion: string }
 
 export type Maniobra = { id: number; nombre: string; descripcion: string }
 
+/**
+ * Una misión del catálogo del PDI. `coeficiente` viene ya derivado de las horas y redondeado a 4
+ * decimales por el servidor, que NO lo guarda: la fuente son las horas de la hoja `ESTRUCTURA (2024)`.
+ * `codigo` no es único entre sub fases —el bloque `N/I` está completo en Navegación y en Instrumentos—,
+ * así que la clave de una opción es el `id`.
+ */
+export type MisionDelPdi = { id: number; codigo: string; horas: number; coeficiente: number }
+
 export type Aeronave = { id: number; nombre: string; estado: string }
 
 export type PersonaResumida = { codigo: string; nombreCompleto: string }
@@ -36,6 +44,7 @@ export const clavesCatalogos = {
   todo: ['catalogos'] as const,
   subfases: () => [...clavesCatalogos.todo, 'subfases'] as const,
   maniobras: (idSubfase: number) => [...clavesCatalogos.todo, 'maniobras', idSubfase] as const,
+  misiones: (idSubfase: number) => [...clavesCatalogos.todo, 'misiones', idSubfase] as const,
   aeronaves: () => [...clavesCatalogos.todo, 'aeronaves'] as const,
   instructores: (programa: Programa) => [...clavesCatalogos.todo, 'instructores', programa] as const,
   alumnos: (fuente: FuenteAlumnos, programa: Programa, codPersona: string | null) =>
@@ -48,6 +57,10 @@ export function listarSubfases(): Promise<Subfase[]> {
 
 export function listarManiobrasDeSubfase(idSubfase: number): Promise<Maniobra[]> {
   return sigeda.lista<Maniobra>(`/api/maniobras/subfase/${encodeURIComponent(idSubfase)}`)
+}
+
+export function listarMisionesDeSubfase(idSubfase: number): Promise<MisionDelPdi[]> {
+  return sigeda.lista<MisionDelPdi>(`/api/subfases/${encodeURIComponent(idSubfase)}/misiones`)
 }
 
 export async function listarAeronaves(): Promise<Aeronave[]> {
@@ -131,6 +144,13 @@ export const consultasCatalogos = {
     queryOptions({
       queryKey: clavesCatalogos.maniobras(idSubfase),
       queryFn: () => listarManiobrasDeSubfase(idSubfase),
+      enabled: idSubfase > 0,
+      staleTime: 300_000,
+    }),
+  misiones: (idSubfase: number) =>
+    queryOptions({
+      queryKey: clavesCatalogos.misiones(idSubfase),
+      queryFn: () => listarMisionesDeSubfase(idSubfase),
       enabled: idSubfase > 0,
       staleTime: 300_000,
     }),

@@ -4,6 +4,7 @@ import { permiteCambios, seSuperponen } from '@/lib/dominio/turno'
 import { API, autorizar, errorResponse, paginar, texto, textoNoEncontrado } from './comun'
 import {
   bloqueadoPorSubsanacion,
+  buscarMision,
   buscarPersona,
   buscarSubfase,
   datos,
@@ -20,6 +21,7 @@ type CuerpoTurno = {
   fechaEval?: unknown
   programa?: unknown
   idSubfase?: unknown
+  idMision?: unknown
   codInstructor?: unknown
   aeronave?: { id?: unknown } | null
   alumnosTurno?: { codAlumno?: unknown; horaInicio?: unknown; horaFin?: unknown }[]
@@ -27,6 +29,7 @@ type CuerpoTurno = {
 }
 
 const MENSAJE_HORA = 'La hora debe estar en formato HH:mm (09:00, 14:00)'
+export const MENSAJE_MISION_AJENA = 'La misión asignada no pertenece a la subfase del turno.'
 
 function programaDeConsulta(valor: string | null): ProgramaMock {
   return (valor ?? 'pdi').toUpperCase() === 'PDE' ? 'PDE' : 'PDI'
@@ -164,11 +167,30 @@ function aAlumnos(cuerpo: CuerpoTurno): AlumnoTurnoMock[] {
   }))
 }
 
+// `idMision` va en la respuesta del guardado y NO en `detalleTurno`, que es lo que el servidor hace:
+// el `POST`/`PUT` serializa la entidad y la trae, `GET /api/turnos/{id}` usa una proyección que no la
+// tiene. Ponerla en las dos dejaría al mock publicando un campo que el servidor no publica.
 function guardado(turno: TurnoMock) {
-  return HttpResponse.json({ mensaje: 'Turno guardado con éxito.', turno: detalleTurno(turno) }, { status: 201 })
+  return HttpResponse.json(
+    { mensaje: 'Turno guardado con éxito.', turno: { ...detalleTurno(turno), idMision: turno.idMision } },
+    { status: 201 },
+  )
 }
 
-function validarGuardado(cuerpo: CuerpoTurno, idSubfase: number | null, idPropio: number | null): Response | null {
+// Ninguna restricción de la base puede exigir que la misión sea de la sub fase del turno —son dos
+// columnas de dos tablas—, así que el servidor lo comprueba al escribir y el cálculo del NSF la
+// descarta al leer. Un `idMision` ausente o nulo es válido: el turno queda sin misión.
+function misionAjena(idMision: unknown, idSubfase: number): boolean {
+  if (idMision === undefined || idMision === null || idMision === '') return false
+  return buscarMision(Number(idMision))?.idSubfase !== idSubfase
+}
+
+function validarGuardado(
+  cuerpo: CuerpoTurno,
+  idSubfase: number | null,
+  idPropio: number | null,
+  idSubfaseDelTurno: number,
+): Response | null {
   const errores = validarCampos(cuerpo, idPropio === null)
   if (idSubfase !== null && idSubfase > 0 && !datos().subfases.some((subfase) => subfase.id === idSubfase)) {
     return errorResponse(404, 'Recurso no encontrado', 'No existe información de subfase.')
@@ -177,6 +199,9 @@ function validarGuardado(cuerpo: CuerpoTurno, idSubfase: number | null, idPropio
     const aeronave = datos().aeronaves.find((candidata) => candidata.id === Number(cuerpo.aeronave?.id))
     if (!aeronave) return errorResponse(404, 'Recurso no encontrado', 'No existe información de aeronave.')
     if (aeronave.estado !== 'Disponible') return errorResponse(400, 'Error al validar el modelo', 'Asignar aeronave disponible.')
+    if (misionAjena(cuerpo.idMision, idSubfaseDelTurno)) {
+      return errorResponse(400, 'Error al validar el modelo', MENSAJE_MISION_AJENA)
+    }
     const solape = erroresDeSolape(aAlumnos(cuerpo), texto(cuerpo.fechaEval), idPropio)
     // El bloqueo se comprueba DESPUÉS del cruce y solo si el cruce pasó, como en el servidor: el
     // cruce ya exige que los alumnos existan, y un código inexistente tiene que salir por su 404.
@@ -190,6 +215,10 @@ function aplicar(turno: TurnoMock, cuerpo: CuerpoTurno) {
   turno.fechaEval = texto(cuerpo.fechaEval)
   turno.codInstructor = texto(cuerpo.codInstructor)
   turno.idAeronave = Number(cuerpo.aeronave?.id)
+  // Se escribe TAL CUAL LLEGA, también en el `PUT`: §1.6 reemplaza el turno y no lo parchea, así que
+  // omitir `idMision` borra la asignación. Conservar la anterior acá haría que el mock perdonara lo
+  // que el servidor no perdona.
+  turno.idMision = cuerpo.idMision === undefined || cuerpo.idMision === null ? null : Number(cuerpo.idMision)
   turno.alumnos = aAlumnos(cuerpo)
   turno.maniobras = (cuerpo.maniobrasTurno ?? []).map((maniobra) => ({
     idManiobra: Number(maniobra.idManiobra),
@@ -251,7 +280,7 @@ export const handlersTurnos = [
     if (permitido instanceof Response) return permitido
     const cuerpo = (await request.json()) as CuerpoTurno
     const idSubfase = Number(cuerpo.idSubfase)
-    const rechazo = validarGuardado(cuerpo, idSubfase, null)
+    const rechazo = validarGuardado(cuerpo, idSubfase, null, idSubfase)
     if (rechazo) return rechazo
     const subfase = buscarSubfase(idSubfase)
     const turno: TurnoMock = {
@@ -264,6 +293,7 @@ export const handlersTurnos = [
       fase: subfase ? nombreDeFase(subfase.idFase) : '',
       codInstructor: null,
       idAeronave: null,
+      idMision: null,
       alumnos: [],
       maniobras: [],
     }
@@ -278,7 +308,7 @@ export const handlersTurnos = [
     if (!turno) return errorResponse(404, 'Recurso no encontrado', 'No existe información de turno.')
     if (!permiteCambios(turno.fechaEval)) return turnoVencido()
     const cuerpo = (await request.json()) as CuerpoTurno
-    const rechazo = validarGuardado(cuerpo, null, turno.id)
+    const rechazo = validarGuardado(cuerpo, null, turno.id, turno.idSubfase)
     if (rechazo) return rechazo
     aplicar(turno, cuerpo)
     return guardado(turno)

@@ -87,10 +87,17 @@ describe('esquema del turno', () => {
       fechaEval: '2026-09-30',
       programa: 'PDI',
       idSubfase: 2,
+      idMision: null,
       codInstructor: '444444',
       aeronave: { id: 1 },
       alumnosTurno: [{ codAlumno: '222222', horaInicio: '08:00', horaFin: '09:30' }],
       maniobrasTurno: [{ idManiobra: 1, nota_min: 'B' }],
     })
+  })
+
+  it('dependencia 62 la misión es opcional y el selector vacío viaja como null, no como 0', () => {
+    expect(mensajes(valido({ idMision: '' }))).toEqual([])
+    expect(aCuerpoTurno(valido({ idMision: '' })).idMision).toBeNull()
+    expect(aCuerpoTurno(valido({ idMision: '9' })).idMision).toBe(9)
   })
 })

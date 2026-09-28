@@ -47,6 +47,10 @@ export type CuerpoTurno = {
   programa?: Programa
   idSubfase?: number
   codInstructor: string
+  // La misión del PDI del turno. Es opcional en el servidor y, en el `PUT`, **se escribe tal cual
+  // llega**: omitirla borra la asignación, porque §1.6 reemplaza el turno y no lo parchea. Por eso
+  // `modificarTurno` la manda siempre, aunque sea `null`.
+  idMision?: number | null
   aeronave: { id: number }
   alumnosTurno: { codAlumno: string; horaInicio: string; horaFin: string }[]
   maniobrasTurno: { idManiobra: number; nota_min: NotaDirbe }[]
@@ -204,12 +208,13 @@ export async function crearTurno(cuerpo: CuerpoTurno): Promise<TurnoGuardado> {
 }
 
 export async function modificarTurno(id: number, cuerpo: CuerpoTurno): Promise<TurnoGuardado> {
-  const { nombre, fechaEval, codInstructor, aeronave, alumnosTurno, maniobrasTurno } = cuerpo
+  const { nombre, fechaEval, codInstructor, idMision, aeronave, alumnosTurno, maniobrasTurno } = cuerpo
   return aTurnoGuardado(
     await sigeda.put<unknown>(`/api/turnos/${encodeURIComponent(id)}`, {
       nombre,
       fechaEval,
       codInstructor,
+      idMision: idMision ?? null,
       aeronave,
       alumnosTurno,
       maniobrasTurno,

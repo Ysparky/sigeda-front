@@ -25,7 +25,12 @@ import { agruparPorGrupo, consultasCatalogos, PROGRAMAS, type Programa } from '@
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { hoyIso } from '@/lib/dominio/calendario'
 import { NOTAS_DIRBE } from '@/lib/dominio/dirbe'
-import { conflictosDeAeronave } from '@/lib/dominio/turno'
+import {
+  conflictosDeAeronave,
+  TEXTO_MISION_AL_MODIFICAR,
+  TEXTO_MISION_PONDERA_LA_SUBFASE,
+  TEXTO_TURNO_SIN_MISION,
+} from '@/lib/dominio/turno'
 import { termino } from '@/lib/dominio/vocabulario'
 import { TEXTO_ESTADO_TEORICO_DESCONOCIDO, textoBloqueadoPorSubsanacion } from '@/lib/dominio/teoria'
 import { aplicarErroresDeCampo } from '@/lib/formularios'
@@ -66,6 +71,7 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
   const instructores = useQuery(consultasCatalogos.instructores(programaActual))
   const opcionesAlumnos = useQuery(consultasCatalogos.alumnos('programacion', programaActual, null))
   const opcionesManiobras = useQuery(consultasCatalogos.maniobras(Number(idSubfase) || 0))
+  const opcionesMisiones = useQuery(consultasCatalogos.misiones(Number(idSubfase) || 0))
   const ocupacion = useQuery(consultasTurnos.ocupacion(fechaEval, Number(idAeronave) || 0))
   const conflictos = conflictosDeAeronave(horarios, ocupacion.data ?? [], idTurno)
   const { estados: estadosTeoricos, comprobando } = useEstadoTeoricoDeAlumnos(horarios.map((alumno) => alumno.codAlumno))
@@ -99,6 +105,7 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
   function confirmarSubfase() {
     if (subfasePendiente === null) return
     formulario.setValue('idSubfase', subfasePendiente, { shouldValidate: true })
+    formulario.setValue('idMision', '')
     maniobras.replace([])
     setSubfasePendiente(null)
   }
@@ -183,7 +190,10 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
                     onBlur={field.onBlur}
                     onChange={(evento) => {
                       if (maniobras.fields.length > 0) setSubfasePendiente(evento.target.value)
-                      else field.onChange(evento.target.value)
+                      else {
+                        field.onChange(evento.target.value)
+                        formulario.setValue('idMision', '')
+                      }
                     }}
                   >
                     <NativeSelectOption value="">Elija una sub fase</NativeSelectOption>
@@ -197,6 +207,28 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
               />
               {errorDePrimeraCarga(subfases) !== null && <FieldError>No se pudieron cargar las sub fases.</FieldError>}
               <FieldError errors={[errors.idSubfase]} />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="turno-mision">Misión del PDI</FieldLabel>
+              <NativeSelect
+                id="turno-mision"
+                className="w-full"
+                disabled={idSubfase === ''}
+                {...formulario.register('idMision')}
+              >
+                <NativeSelectOption value="">{TEXTO_TURNO_SIN_MISION}</NativeSelectOption>
+                {(opcionesMisiones.data ?? []).map((mision) => (
+                  <NativeSelectOption key={mision.id} value={mision.id}>
+                    {`${mision.codigo} · ${mision.horas} h · coef. ${mision.coeficiente.toFixed(4)}`}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+              <FieldDescription>
+                {modificando ? TEXTO_MISION_AL_MODIFICAR : TEXTO_MISION_PONDERA_LA_SUBFASE}
+              </FieldDescription>
+              {errorDePrimeraCarga(opcionesMisiones) !== null && (
+                <FieldError>No se pudieron cargar las misiones de la sub fase.</FieldError>
+              )}
             </Field>
             <Field data-invalid={Boolean(errors.codInstructor)}>
               <FieldLabel htmlFor="turno-instructor">Instructor</FieldLabel>
