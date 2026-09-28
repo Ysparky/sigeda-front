@@ -103,7 +103,18 @@ export function GrillaCalificaciones({ control, register, errores }: Props) {
                         data-nota={nota}
                         disabled={!permitidas.includes(nota)}
                         aria-label={`${nota} (${CALIFICATIVOS[nota].descripcion})`}
-                        className="w-10"
+                        // LA NOTA ELEGIDA TIENE QUE VERSE ELEGIDA. El estado seleccionado del toggle es
+                        // `bg-muted`, que en el tema claro es L 0.955 contra un fondo L 0.985 —un 3 % de
+                        // diferencia— y **es el mismo color que `hover:bg-muted`**, así que una nota bajo
+                        // el puntero se ve idéntica a la elegida. Comprobado en una captura del control:
+                        // con B elegida y el puntero sobre R, las dos se veían iguales.
+                        //
+                        // Se usa `primary` porque es el vocabulario que fija §8 («Primary: aviation
+                        // navy»), no un color inventado acá, y contra `primary-foreground` el contraste
+                        // es holgado en los dos temas. Va en esta pantalla y no en
+                        // `components/ui/toggle.tsx`, que comparten controles donde el estado sutil es el
+                        // correcto.
+                        className="w-10 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary"
                       >
                         {nota}
                       </ToggleGroupItem>
