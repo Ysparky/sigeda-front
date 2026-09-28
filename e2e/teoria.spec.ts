@@ -27,6 +27,17 @@ test.describe('Módulo de teoría contra el backend real', () => {
     await expect(page.getByText('Semanal Adoctrinamiento de Vuelo').first()).toBeVisible({ timeout: 15_000 })
   })
 
+  // Dependencia 51: el catálogo de §3.0 ya no lleva `codInstructor`, así que los grupos que llegan
+  // son los que el servidor le reconoce al llamador por su token. Si las dos puntas se desalinean —el
+  // frontend mandando un parámetro que el servidor ignora, o al revés—, el selector de Grupo queda
+  // vacío sin ningún mensaje y no se puede registrar ningún turno. Acá se ve.
+  test('el formulario de turno teórico trae los grupos que el servidor le reconoce al instructor', async ({ page }) => {
+    await entrarComo(page, CUENTAS.instructor)
+    await page.goto('/teoria/turnos/nuevo')
+    await expect(page.getByRole('heading', { level: 1, name: 'Registrar turno teórico' })).toBeVisible()
+    await expect(page.getByLabel('Grupo').getByRole('option', { name: 'Grupo 3' })).toBeAttached({ timeout: 15_000 })
+  })
+
   test('un Alumno no alcanza el banco de preguntas', async ({ page }) => {
     await entrarComo(page, CUENTAS.alumno)
     await page.goto('/banco')
