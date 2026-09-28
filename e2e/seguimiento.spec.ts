@@ -13,16 +13,23 @@ test.describe('Seguimiento contra el backend real', () => {
     await expect(page.getByText('Promedio de asignatura bajo 13').first()).toBeVisible()
   })
 
-  // La mitad TEÓRICA sí la calcula el servidor, con los coeficientes reales de las materias. La
-  // práctica no, porque falta la tabla de coeficientes de misión del PDI, y la pantalla tiene que
-  // decir eso en vez de tapar las dos mitades o mostrar un cero.
-  test('el legajo muestra el NIT real y explica por qué falta el índice final', async ({ page }) => {
+  // El estado MIXTO que dejó la tanda H, y es el que la pantalla tiene que sostener: el NSF de
+  // Contacto es un número real —14.75, ponderado por el PDI sobre una sub fase a medio volar—,
+  // mientras el NIA sigue en null porque la base no tiene ninguna sub fase de NFOH ni de NFOA.
+  // Y la frase que culpaba a la tabla de coeficientes de misión ya no existe: la tabla está
+  // implementada, así que si volviera a aparecer estaría mintiendo.
+  test('el legajo muestra el NIT y el NSF reales y ya no culpa a los coeficientes de misión', async ({ page }) => {
     await entrarComo(page, CUENTAS.comandante)
     await page.goto('/seguimiento/555555')
     await expect(page.getByRole('heading', { level: 1, name: 'Legajo del alumno' })).toBeVisible()
     // 18.40 es el NIT que el servidor calcula para 555555 a partir de sus notas 20, 18 y 18.
     await expect(page.getByText('18.40').first()).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByText(/coeficientes de misión/).first()).toBeVisible()
+    // 14.75 = (14 + 15 + 15 + 15) / 4, renormalizado sobre las 4 de las 7 misiones de Contacto que
+    // tienen nota: el servidor manda cobertura 0.5714 y la pantalla la traduce a su porcentaje.
+    await expect(page.getByText('14.75').first()).toBeVisible()
+    await expect(page.getByText('Ponderada por el PDI').first()).toBeVisible()
+    await expect(page.getByText('Calculada sobre el 57 % de la sub fase, que está incompleta.')).toBeVisible()
+    await expect(page.getByText(/coeficientes de misión/)).toHaveCount(0)
   })
 
   // 555555 aprobó todo lo teórico (notas 20, 18 y 18 en la semilla), así que la mitad teórica no

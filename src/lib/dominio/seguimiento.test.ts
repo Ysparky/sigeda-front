@@ -14,7 +14,7 @@ import {
   TEXTO_EVALUADOR_SIN_CODIGO,
   TEXTO_HISTORIAL_TEORICO_SIN_SERVIDOR,
   TEXTO_INDICES_SIN_SERVIDOR,
-  TEXTO_ORDEN_MERITO_SIN_COEFICIENTES,
+  TEXTO_ORDEN_MERITO_SIN_NFPI,
   TEXTO_MEDIA_SIMPLE_SUBFASE,
   TEXTO_MITAD_PRACTICA,
   TEXTO_MITAD_TEORICA,
@@ -46,6 +46,7 @@ import {
   etiquetaDeCausal,
   etiquetaDeGrupo,
   etiquetaDeGrupoConNombre,
+  etiquetaDePonderacion,
   etiquetaDeSeveridad,
   etiquetaDeTipoAlerta,
   formulaDeIndice,
@@ -55,9 +56,26 @@ import {
   requiereAtencion,
   resumirEstados,
   textoCriterioCumplido,
+  textoDeCobertura,
   textoOrdenDeMeritoConsultado,
   textoSinNfpi,
 } from './seguimiento'
+
+describe('la ponderación y la cobertura del NSF', () => {
+  it('distingue el NSF del PDI del promedio simple, que es lo que no se puede confundir', () => {
+    expect(etiquetaDePonderacion('PDI')).toBe('Ponderada por el PDI')
+    expect(etiquetaDePonderacion('uniforme')).toBe('Promedio simple')
+    expect(etiquetaDePonderacion(null)).toBeNull()
+    expect(etiquetaDePonderacion('otra')).toBeNull()
+  })
+
+  it('la sub fase terminada no dice nada, la incompleta dice su porcentaje y la repetida se delata', () => {
+    expect(textoDeCobertura(1)).toBeNull()
+    expect(textoDeCobertura(null)).toBeNull()
+    expect(textoDeCobertura(0.5714)).toBe('Calculada sobre el 57 % de la sub fase, que está incompleta.')
+    expect(textoDeCobertura(1.1429)).toBe('Cobertura 1.1429: hay misiones calificadas más de una vez.')
+  })
+})
 
 describe('vocabulario de seguimiento', () => {
   it('M5-20 etiqueta los cinco tipos de alerta del contrato', () => {
@@ -161,12 +179,13 @@ describe('la única cifra derivada de M5', () => {
 
 describe('textos fijos de la spec §17.3', () => {
   it('M5-9 los textos sin parámetros son los de la spec, byte a byte', () => {
-    // CAMBIÓ RESPECTO DE LA SPEC §17.3, a propósito: el texto viejo decía que los índices del PDI
-    // «todavía no existen en el servidor», y es falso — el servidor calcula la mitad teórica (NIT) con
-    // los coeficientes reales de las materias. Lo que falta es la tabla de coeficientes de MISIÓN, que
-    // sólo traba el índice final y el orden de mérito, y ahora el aviso nombra exactamente eso.
-    expect(TEXTO_ORDEN_MERITO_SIN_COEFICIENTES).toBe(
-      'El orden de mérito necesita el índice final del PDI, y ése depende de la tabla de coeficientes de misión que el PDI no publica. Se muestra solo en modo mock.',
+    // CAMBIÓ RESPECTO DE LA SPEC §17.3 dos veces, y la segunda es de la tanda H: el aviso culpaba a
+    // la tabla de coeficientes de misión, que ya existe y el servidor ya usa (el NSF de Contacto de
+    // 555555 da 14.75 ponderado por el PDI). Lo que traba el orden de mérito es otra cosa: el NIA
+    // pondera tres fases y la base sólo tiene sub fases de Adaptación, así que no hay NFPI que
+    // ordenar. Nombrar la causa que ya se resolvió mandaba al Escuadrón a pedir un dato que tiene.
+    expect(TEXTO_ORDEN_MERITO_SIN_NFPI).toBe(
+      'El orden de mérito ordena por el índice final del PDI, y hoy ningún alumno lo tiene: el NIA pondera las tres fases y el sistema solo tiene sub fases de Adaptación. Se muestra solo en modo mock.',
     )
     expect(TEXTO_SIN_ALUMNOS_ASIGNADOS).toBe(
       'No tiene alumnos asignados en este programa: aparecen aquí cuando haya volado un turno con ellos.',

@@ -5,7 +5,7 @@ import { MENSAJE_SIN_PERMISO } from '@/lib/api/errors'
 import {
   TEXTO_ALERTAS_SIN_SERVIDOR,
   TEXTO_INDICES_SIN_SERVIDOR,
-  TEXTO_ORDEN_MERITO_SIN_COEFICIENTES,
+  TEXTO_ORDEN_MERITO_SIN_NFPI,
   TEXTO_ORDEN_MERITO_SIN_SERVIDOR,
 } from '@/lib/dominio/seguimiento'
 import { crearRouter } from '@/router'
@@ -95,7 +95,7 @@ describe('rutas de seguimiento', () => {
     await router.navigate({ to: '/reportes' })
     await screen.findByRole('heading', { level: 1, name: 'Reportes y orden de mérito' })
     expect(screen.queryByText(TEXTO_ORDEN_MERITO_SIN_SERVIDOR)).not.toBeInTheDocument()
-    expect(screen.queryByText(TEXTO_ORDEN_MERITO_SIN_COEFICIENTES)).not.toBeInTheDocument()
+    expect(screen.queryByText(TEXTO_ORDEN_MERITO_SIN_NFPI)).not.toBeInTheDocument()
   })
 
   it('M5-22 fuera del modo mock cada pantalla muestra el aviso de su dependencia', async () => {
@@ -106,7 +106,7 @@ describe('rutas de seguimiento', () => {
     expect(screen.getByText(TEXTO_ALERTAS_SIN_SERVIDOR)).toBeInTheDocument()
     await router.navigate({ to: '/reportes' })
     await screen.findByRole('heading', { level: 1, name: 'Reportes y orden de mérito' })
-    expect(screen.getByText(TEXTO_ORDEN_MERITO_SIN_COEFICIENTES)).toBeInTheDocument()
+    expect(screen.getByText(TEXTO_ORDEN_MERITO_SIN_NFPI)).toBeInTheDocument()
     expect(screen.getByText(TEXTO_ORDEN_MERITO_SIN_SERVIDOR)).toBeInTheDocument()
     await router.navigate({ to: '/seguimiento/$alumno', params: { alumno: '777777' } })
     await screen.findByRole('heading', { level: 1, name: /Legajo/ })

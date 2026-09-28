@@ -2,6 +2,7 @@ import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 import type { Programa } from '@/features/catalogos/api'
 import type { Pagina, ParametrosPagina } from '@/lib/api/pagina'
 import { sigeda } from '@/lib/api/sigeda'
+import type { Ponderacion } from '@/lib/dominio/seguimiento'
 
 export type AsignaturaDeIndices = {
   idMateria: number
@@ -20,6 +21,9 @@ export type SubfaseDeIndices = {
   peso: number
   nsf: number | null
   misiones: number
+  ponderacion: Ponderacion | null
+  cobertura: number | null
+  motivo: string | null
 }
 
 export type FaseDeIndices = {

@@ -1,16 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { consultasReportes } from '@/features/reportes/api'
+import { consultasReportes, type SubfaseDeIndices } from '@/features/reportes/api'
 import { accionDisponible } from '@/lib/dependencias'
 import {
   TEXTO_INDICES_SIN_SERVIDOR,
-  TEXTO_SIN_COEFICIENTES_DE_MISION,
   TEXTO_MITAD_PRACTICA,
   TEXTO_MITAD_TEORICA,
+  TEXTO_NFPI_SIN_NIA,
+  TEXTO_NIA_CON_SALVEDAD,
   TEXTO_SIN_COEFICIENTE_APLICADO,
   TEXTO_SIN_DATOS_SUFICIENTES,
+  etiquetaDePonderacion,
   formulaDeIndice,
+  textoDeCobertura,
 } from '@/lib/dominio/seguimiento'
 import { formatearNota } from '@/lib/formato'
 import { errorDePrimeraCarga } from '@/lib/query'
@@ -26,8 +29,36 @@ function Dato({ etiqueta, valor, ayuda }: { etiqueta: string; valor: number | nu
   )
 }
 
-function NotaDeSubfase({ valor }: { valor: number | null }): ReactNode {
-  return valor === null ? TEXTO_SIN_DATOS_SUFICIENTES : formatearNota(valor)
+/**
+ * El NSF nunca sale solo: desde la tanda H puede ser el promedio simple de las misiones —cuando los
+ * turnos no tienen misión asignada— y puede estar renormalizado sobre una sub fase a medio volar.
+ * Mostrar el número sin decir cuál de las dos cosas es lo presentaría como la ponderación del PDI.
+ */
+function NotaDeSubfase({ subfase }: { subfase: SubfaseDeIndices }): ReactNode {
+  if (subfase.nsf === null) return TEXTO_SIN_DATOS_SUFICIENTES
+  const ponderacion = etiquetaDePonderacion(subfase.ponderacion)
+  const cobertura = textoDeCobertura(subfase.cobertura)
+  return (
+    <div className="grid gap-1">
+      <span>{formatearNota(subfase.nsf)}</span>
+      {ponderacion && <span className="text-xs font-normal text-muted-foreground">{ponderacion}</span>}
+      {cobertura && <span className="text-xs font-normal text-muted-foreground">{cobertura}</span>}
+    </div>
+  )
+}
+
+function MotivosDeSubfase({ subfases }: { subfases: SubfaseDeIndices[] }) {
+  const conMotivo = subfases.filter((subfase) => subfase.motivo !== null)
+  if (conMotivo.length === 0) return null
+  return (
+    <ul className="grid gap-1 pl-5 text-xs text-muted-foreground list-disc">
+      {conMotivo.map((subfase) => (
+        <li key={subfase.idSubfase}>
+          {subfase.subfase}: {subfase.motivo}
+        </li>
+      ))}
+    </ul>
+  )
 }
 
 type Props = { codAlumno: string }
@@ -51,7 +82,7 @@ export function PanelDeIndices({ codAlumno }: Props) {
                 valor={indices.data.nfpi}
                 // Texto propio y NO el `nia.motivo`: ése ya se muestra en la mitad práctica, y
                 // repetirlo dejaba la misma frase dos veces en el panel. Cada índice explica lo suyo.
-                ayuda={indices.data.nfpi === null ? TEXTO_SIN_COEFICIENTES_DE_MISION : formulaDeIndice('NFPI')}
+                ayuda={indices.data.nfpi === null ? TEXTO_NFPI_SIN_NIA : formulaDeIndice('NFPI')}
               />
             </dl>
             <div className="grid gap-4 border-t pt-4">
@@ -103,7 +134,7 @@ export function PanelDeIndices({ codAlumno }: Props) {
                               <TableCell>{subfase.sigla}</TableCell>
                               <TableCell className="tabular-nums">{subfase.peso.toFixed(2)}</TableCell>
                               <TableCell className="tabular-nums">
-                                <NotaDeSubfase valor={subfase.nsf} />
+                                <NotaDeSubfase subfase={subfase} />
                               </TableCell>
                               <TableCell className="tabular-nums">{subfase.misiones}</TableCell>
                             </TableRow>
@@ -111,11 +142,19 @@ export function PanelDeIndices({ codAlumno }: Props) {
                         </TableBody>
                       </Table>
                     )}
+                    <MotivosDeSubfase subfases={fase.subfases} />
                   </div>
                 ))}
                 </div>
-              {indices.data.nia.valor === null && indices.data.nia.motivo && (
-                <p className="text-sm text-muted-foreground">{indices.data.nia.motivo}</p>
+              {/* El motivo ya no acompaña solo al hueco: cuando el NIA existe pero alguna sub fase se
+                  ponderó uniforme, es el aviso de que esa nota no es la ponderación de la norma.
+                  Mostrarlo solo con `valor === null` escondía justamente ese caso. */}
+              {indices.data.nia.motivo && (
+                <p className="text-sm text-muted-foreground">
+                  {indices.data.nia.valor === null
+                    ? indices.data.nia.motivo
+                    : `${TEXTO_NIA_CON_SALVEDAD} ${indices.data.nia.motivo}`}
+                </p>
               )}
             </div>
           </div>

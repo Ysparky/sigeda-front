@@ -1,7 +1,7 @@
 import { ESTADOS_ALUMNO, NOTAS_DEL_PROMEDIO } from './vocabulario'
 
-export const TEXTO_ORDEN_MERITO_SIN_COEFICIENTES =
-  'El orden de mérito necesita el índice final del PDI, y ése depende de la tabla de coeficientes de misión que el PDI no publica. Se muestra solo en modo mock.'
+export const TEXTO_ORDEN_MERITO_SIN_NFPI =
+  'El orden de mérito ordena por el índice final del PDI, y hoy ningún alumno lo tiene: el NIA pondera las tres fases y el sistema solo tiene sub fases de Adaptación. Se muestra solo en modo mock.'
 export const TEXTO_SIN_ALUMNOS_ASIGNADOS =
   'No tiene alumnos asignados en este programa: aparecen aquí cuando haya volado un turno con ellos.'
 export const TEXTO_SIN_GRUPO = 'Sin grupo'
@@ -21,9 +21,8 @@ export const TEXTO_ESTADO_YA_CAMBIO = 'El estado ya cambió: los contadores no s
 export const TEXTO_CHEQUEO_SIN_SERVIDOR = 'El historial de chequeos y los contadores todavía no existen en el servidor.'
 export const TEXTO_SIN_DATOS_SUFICIENTES = 'Sin datos suficientes'
 export const TEXTO_INDICES_SIN_SERVIDOR = 'El servidor todavía no calcula los índices del PDI.'
-/** El motivo lo manda el servidor en `nia.motivo`; esto es el respaldo si no lo mandara. */
-export const TEXTO_SIN_COEFICIENTES_DE_MISION =
-  'Falta la tabla de coeficientes de misión del PDI: sin ella no se puede calcular el índice final.'
+export const TEXTO_NFPI_SIN_NIA = 'El NFPI necesita el NIA: el motivo por el que falta está en la mitad práctica.'
+export const TEXTO_NIA_CON_SALVEDAD = 'El NIA está calculado, con una salvedad:'
 export const TEXTO_HISTORIAL_TEORICO_SIN_SERVIDOR =
   'El historial de exámenes teóricos todavía no existe en el servidor.'
 export const TEXTO_ESTADO_TEORICO_SIN_SERVIDOR = 'El estado teórico y sus causales todavía no existen en el servidor.'
@@ -50,6 +49,28 @@ export const TEXTO_SIN_SEGUNDA_NOTA = 'Sin segunda nota: la subsanación está p
 export const TEXTO_MITAD_TEORICA = 'Mitad teórica (NIT)'
 export const TEXTO_MITAD_PRACTICA = 'Mitad práctica (NIA)'
 export const TEXTO_SIN_COEFICIENTE_APLICADO = 'Sin coeficiente aplicado por falta de nota:'
+
+export const PONDERACIONES = {
+  PDI: 'Ponderada por el PDI',
+  uniforme: 'Promedio simple',
+} as const
+
+export type Ponderacion = keyof typeof PONDERACIONES
+
+export function etiquetaDePonderacion(ponderacion: string | null): string | null {
+  return ponderacion === 'PDI' || ponderacion === 'uniforme' ? PONDERACIONES[ponderacion] : null
+}
+
+/**
+ * La cobertura es la suma de los coeficientes que entraron en el NSF. `1` es la sub fase completa y
+ * no hace falta decir nada; por debajo el servidor renormalizó sobre lo volado y por encima hay
+ * misiones calificadas más de una vez, y las dos cosas cambian lo que la nota significa.
+ */
+export function textoDeCobertura(cobertura: number | null): string | null {
+  if (cobertura === null || cobertura === 1) return null
+  if (cobertura > 1) return `Cobertura ${cobertura.toFixed(4)}: hay misiones calificadas más de una vez.`
+  return `Calculada sobre el ${Math.round(cobertura * 100)} % de la sub fase, que está incompleta.`
+}
 
 export function etiquetaDeGrupo(idGrupo: number | null): string {
   return idGrupo === null ? TEXTO_SIN_GRUPO : `Grupo ${idGrupo}`

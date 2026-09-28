@@ -11,6 +11,14 @@ export const D18_GRUPO_NO_EXISTE = 'Grupo especificada no existe.'
 
 const MOTIVO_SIN_FASES = 'Sin nota en Operaciones HeliTransportadas ni en Operaciones AeroTácticas.'
 const MOTIVO_SIN_DATOS = 'No tiene evaluaciones registradas.'
+const MOTIVO_SIN_MISIONES = 'El alumno no tiene ninguna misión calificada en esta sub fase.'
+const MOTIVO_UNIFORME =
+  'Ninguna de las misiones calificadas tiene misión del PDI asignada en su turno, así que la nota de sub fase es el promedio simple de las notas.'
+// El servidor declara el aviso DOS veces —en la sub fase y en `nia.motivo`— porque quien mira la nota
+// de arriba no necesariamente abre el desglose, y por eso `nia.motivo` puede venir con un `nia.valor`
+// que no es null. El mock lo reproduce: sin esto la pantalla no tiene con qué ejercitar ese estado.
+const MOTIVO_NIA_UNIFORME =
+  'El NIA no está ponderado con los coeficientes de misión del PDI: hay sub fases calculadas como promedio simple.'
 
 const CATEGORIAS_PONDERADAS = new Set(['Ponderada', 'Chequeo Sub Fase'])
 
@@ -20,12 +28,16 @@ const FASES = [
   { fase: 'Operaciones AeroTácticas', sigla: 'NFOA', peso: 0.25 },
 ] as const
 
+// `cobertura` es la suma de los coeficientes que entraron en el NSF: 1 es la sub fase terminada y
+// menos significa que el servidor renormalizó sobre lo volado. `ponderacion: 'uniforme'` marca la
+// sub fase cuyos turnos no tienen misión asignada, donde el NSF es un promedio simple. El mock los
+// FIJA, como el resto de §9.5, pero cubre los tres estados que la pantalla tiene que distinguir.
 const SUBFASES_NFAD = [
-  { idSubfase: 1, sigla: 'C', peso: 0.25 },
-  { idSubfase: 2, sigla: 'N', peso: 0.25 },
-  { idSubfase: 3, sigla: 'I', peso: 0.2 },
-  { idSubfase: 5, sigla: 'F', peso: 0.15 },
-  { idSubfase: 4, sigla: 'CX', peso: 0.15 },
+  { idSubfase: 1, sigla: 'C', peso: 0.25, ponderacion: 'PDI', cobertura: 0.5714 },
+  { idSubfase: 2, sigla: 'N', peso: 0.25, ponderacion: 'uniforme', cobertura: null },
+  { idSubfase: 3, sigla: 'I', peso: 0.2, ponderacion: 'PDI', cobertura: 1 },
+  { idSubfase: 5, sigla: 'F', peso: 0.15, ponderacion: 'PDI', cobertura: 1 },
+  { idSubfase: 4, sigla: 'CX', peso: 0.15, ponderacion: 'PDI', cobertura: 1 },
 ] as const
 
 const ASIGNATURAS_CON_NOTA = [1, 2, 3]
@@ -94,6 +106,37 @@ function bloqueNit(fijacion: Fijacion) {
   }
 }
 
+function motivoDeSubfase(nsf: number | null, ponderacion: string, cobertura: number | null): string | null {
+  if (nsf === null) return MOTIVO_SIN_MISIONES
+  if (ponderacion === 'uniforme') return MOTIVO_UNIFORME
+  if (cobertura !== null && cobertura !== 1) {
+    return `La sub fase está incompleta: los coeficientes de las misiones calificadas suman ${cobertura.toFixed(4)} de 1.0000, así que la nota de sub fase se renormaliza sobre ese total.`
+  }
+  return null
+}
+
+function subfasesDelIndice(persona: PersonaMock, fijacion: Fijacion) {
+  return SUBFASES_NFAD.map((subfase) => {
+    const nsf = dosDecimales(fijacion.nfad)
+    return {
+      idSubfase: subfase.idSubfase,
+      subfase: datos().subfases.find((candidata) => candidata.id === subfase.idSubfase)?.nombre ?? '',
+      sigla: subfase.sigla,
+      peso: subfase.peso,
+      nsf,
+      misiones: misiones(persona.codigo, subfase.idSubfase),
+      ponderacion: nsf === null ? null : subfase.ponderacion,
+      cobertura: nsf === null || subfase.ponderacion !== 'PDI' ? null : subfase.cobertura,
+      motivo: motivoDeSubfase(nsf, subfase.ponderacion, subfase.cobertura),
+    }
+  })
+}
+
+function motivoDelNia(fijacion: Fijacion): string | null {
+  if (fijacion.nia === null) return fijacion.nfad === null ? MOTIVO_SIN_DATOS : MOTIVO_SIN_FASES
+  return fijacion.nfad === null ? null : MOTIVO_NIA_UNIFORME
+}
+
 function bloqueNia(persona: PersonaMock, fijacion: Fijacion) {
   const valores: Record<string, number | null> = { NFAD: fijacion.nfad, NFOH: fijacion.nfoh, NFOA: fijacion.nfoa }
   return {
@@ -103,19 +146,9 @@ function bloqueNia(persona: PersonaMock, fijacion: Fijacion) {
       sigla: fase.sigla,
       peso: fase.peso,
       valor: dosDecimales(valores[fase.sigla]),
-      subfases:
-        fase.sigla === 'NFAD'
-          ? SUBFASES_NFAD.map((subfase) => ({
-              idSubfase: subfase.idSubfase,
-              subfase: datos().subfases.find((candidata) => candidata.id === subfase.idSubfase)?.nombre ?? '',
-              sigla: subfase.sigla,
-              peso: subfase.peso,
-              nsf: dosDecimales(fijacion.nfad),
-              misiones: misiones(persona.codigo, subfase.idSubfase),
-            }))
-          : [],
+      subfases: fase.sigla === 'NFAD' ? subfasesDelIndice(persona, fijacion) : [],
     })),
-    motivo: fijacion.nia !== null ? null : fijacion.nfad === null ? MOTIVO_SIN_DATOS : MOTIVO_SIN_FASES,
+    motivo: motivoDelNia(fijacion),
   }
 }
 

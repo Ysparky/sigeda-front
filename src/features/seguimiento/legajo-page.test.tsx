@@ -319,6 +319,102 @@ describe('Legajo: índices del PDI', () => {
     expect(indices.queryByText('Sin coeficiente aplicado por falta de nota:')).not.toBeInTheDocument()
   })
 
+  // Tanda H: el NSF dejó de ser siempre null y puede ser un promedio simple. Estas pruebas fijan
+  // que la pantalla diga cuál de las dos cosas es cada número.
+  it('CA-LEG-13 el NSF ponderado por el PDI se etiqueta y dice su cobertura cuando la sub fase está a medias', async () => {
+    await abrirLegajo('555555')
+    const indices = panel('Índices del PDI')
+    const adaptacion = within(await indices.findByRole('table', { name: 'Sub fases de Adaptación' }))
+    const contacto = within(adaptacion.getByText('Contacto').closest('tr') as HTMLElement)
+    expect(contacto.getByText('Ponderada por el PDI')).toBeInTheDocument()
+    expect(contacto.getByText('Calculada sobre el 57 % de la sub fase, que está incompleta.')).toBeInTheDocument()
+  })
+
+  it('CA-LEG-13 un NSF sin ponderar se presenta como promedio simple y no como nota de sub fase del PDI', async () => {
+    await abrirLegajo('555555')
+    const indices = panel('Índices del PDI')
+    const adaptacion = within(await indices.findByRole('table', { name: 'Sub fases de Adaptación' }))
+    const navegacion = within(adaptacion.getByText('Navegación').closest('tr') as HTMLElement)
+    expect(navegacion.getByText('Promedio simple')).toBeInTheDocument()
+    expect(navegacion.queryByText('Ponderada por el PDI')).not.toBeInTheDocument()
+  })
+
+  it('CA-LEG-13 una cobertura mayor a 1 avisa que hay misiones calificadas dos veces', async () => {
+    server.use(
+      http.get(`${API}/api/personas/:cod/indices`, () =>
+        HttpResponse.json({
+          codigo: '555555',
+          alumno: 'Pedro Rodriguez Garcia',
+          programa: 'PDI',
+          nfpi: null,
+          nit: {
+            valor: null,
+            nct: null,
+            nei: null,
+            neiEvaluaciones: 0,
+            asignaturas: [],
+            asignaturasSinNota: [],
+            reduccionPorRezagadoAplicada: false,
+          },
+          nia: {
+            valor: null,
+            motivo: null,
+            fases: [
+              {
+                fase: 'Adaptación',
+                sigla: 'NFAD',
+                peso: 0.4,
+                valor: null,
+                subfases: [
+                  {
+                    idSubfase: 1,
+                    subfase: 'Contacto',
+                    sigla: 'C',
+                    peso: 0.25,
+                    nsf: 14.75,
+                    misiones: 9,
+                    ponderacion: 'PDI',
+                    cobertura: 1.1429,
+                    motivo: null,
+                  },
+                ],
+              },
+            ],
+          },
+        }),
+      ),
+    )
+    await abrirLegajo('555555')
+    const indices = panel('Índices del PDI')
+    expect(await indices.findByText('14.75')).toBeInTheDocument()
+    expect(indices.getByText('Cobertura 1.1429: hay misiones calificadas más de una vez.')).toBeInTheDocument()
+  })
+
+  // El defecto que esta prueba cierra: `nia.motivo` se mostraba sólo con `nia.valor === null`, y el
+  // servidor lo manda ahora junto a un valor para avisar que ese NIA no está ponderado con el PDI.
+  // La condición vieja escondía exactamente el aviso que no se debe esconder.
+  it('CA-LEG-13 el motivo del NIA se muestra también cuando el NIA tiene valor', async () => {
+    await abrirLegajo('555555')
+    const indices = panel('Índices del PDI')
+    expect(await indices.findByText('16.15')).toBeInTheDocument()
+    expect(
+      indices.getByText(
+        'El NIA está calculado, con una salvedad: El NIA no está ponderado con los coeficientes de misión del PDI: hay sub fases calculadas como promedio simple.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('CA-LEG-13 el motivo de cada sub fase que el servidor explica se muestra bajo su tabla', async () => {
+    await abrirLegajo('555555')
+    const indices = panel('Índices del PDI')
+    await indices.findByRole('table', { name: 'Sub fases de Adaptación' })
+    expect(
+      indices.getByText(
+        'Navegación: Ninguna de las misiones calificadas tiene misión del PDI asignada en su turno, así que la nota de sub fase es el promedio simple de las notas.',
+      ),
+    ).toBeInTheDocument()
+  })
+
   it('M5-22 con la dependencia de índices cerrada la pantalla no pide los índices', async () => {
     vi.stubEnv('VITE_MOCK_API', 'false')
     const pedidas: string[] = []

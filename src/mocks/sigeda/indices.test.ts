@@ -11,7 +11,20 @@ type Indices = {
   nia: {
     valor: number | null
     motivo: string | null
-    fases: { sigla: string; peso: number; valor: number | null; subfases: { idSubfase: number; peso: number; nsf: number | null; misiones: number }[] }[]
+    fases: {
+      sigla: string
+      peso: number
+      valor: number | null
+      subfases: {
+        idSubfase: number
+        peso: number
+        nsf: number | null
+        misiones: number
+        ponderacion: string | null
+        cobertura: number | null
+        motivo: string | null
+      }[]
+    }[]
   }
 }
 
@@ -67,6 +80,45 @@ describe('GET /api/personas/{cod}/indices', () => {
     expect(aerotacticas?.subfases).toEqual([])
     expect(adaptacion?.subfases.find((subfase) => subfase.idSubfase === 3)?.misiones).toBe(5)
     expect(adaptacion?.subfases.find((subfase) => subfase.idSubfase === 1)?.misiones).toBe(0)
+  })
+
+  // Tanda H. Las tres formas nuevas se comprobaron contra la respuesta del servidor vivo:
+  // GET /api/personas/555555/indices da Contacto con nsf 14.75, ponderacion "PDI", cobertura 0.5714
+  // y su motivo, y las cuatro sub fases sin misiones calificadas con los tres campos en null salvo
+  // el motivo. El mock reproduce ese estado mixto, que es el que la pantalla tiene que sostener.
+  it('contrato §3.1 cada sub fase declara su ponderación, su cobertura y su motivo', async () => {
+    await iniciarComo('instructor.perez')
+    const indices = await sigeda.get<Indices>('/api/personas/555555/indices')
+    const subfases = indices.nia.fases.find((fase) => fase.sigla === 'NFAD')?.subfases ?? []
+    const contacto = subfases.find((subfase) => subfase.idSubfase === 1)
+    const navegacion = subfases.find((subfase) => subfase.idSubfase === 2)
+    expect([contacto?.ponderacion, contacto?.cobertura]).toEqual(['PDI', 0.5714])
+    expect(contacto?.motivo).toContain('0.5714 de 1.0000')
+    // `cobertura` sólo tiene sentido con la ponderación del PDI: sin coeficientes no hay suma que
+    // cubrir, y el servidor la manda en null junto a `ponderacion: "uniforme"`.
+    expect([navegacion?.ponderacion, navegacion?.cobertura]).toEqual(['uniforme', null])
+    expect(subfases.every((subfase) => (subfase.nsf === null) === (subfase.ponderacion === null))).toBe(true)
+  })
+
+  it('contrato §3.1 el motivo del NIA puede venir con un NIA que NO es null', async () => {
+    await iniciarComo('instructor.perez')
+    const indices = await sigeda.get<Indices>('/api/personas/555555/indices')
+    expect(indices.nia.valor).toBe(16.15)
+    expect(indices.nia.motivo).toBe(
+      'El NIA no está ponderado con los coeficientes de misión del PDI: hay sub fases calculadas como promedio simple.',
+    )
+  })
+
+  it('contrato §3.1 la frase que culpaba a los coeficientes de misión ya no la manda nadie', async () => {
+    await iniciarComo('instructor.perez')
+    for (const codigo of ['222222', '555555', '666666', '654321']) {
+      const indices = await sigeda.get<Indices>(`/api/personas/${codigo}/indices`)
+      expect(indices.nia.motivo ?? '').not.toContain('Falta la tabla de coeficientes de misión')
+    }
+    const merito = await sigeda.get<Merito>('/api/reportes/orden-merito?programa=PDI&page=0&size=10')
+    for (const fila of merito.content) {
+      expect(fila.motivoSinNfpi ?? '').not.toContain('Falta la tabla de coeficientes de misión')
+    }
   })
 
   it('contrato §9.5 666666 tiene NIT sin NIA, y 654321 llega todo en null con 200', async () => {

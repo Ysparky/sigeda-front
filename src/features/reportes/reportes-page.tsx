@@ -11,7 +11,7 @@ import { hoyIso } from '@/lib/dominio/calendario'
 import { accionDisponible } from '@/lib/dependencias'
 import {
   TEXTO_DESEMPATE,
-  TEXTO_ORDEN_MERITO_SIN_COEFICIENTES,
+  TEXTO_ORDEN_MERITO_SIN_NFPI,
   TEXTO_ORDEN_MERITO_SIN_SERVIDOR,
   TEXTO_SIN_ALUMNOS_CON_INDICES,
   textoOrdenDeMeritoConsultado,
@@ -42,7 +42,7 @@ export function ReportesPage() {
   return (
     <div className="grid gap-4">
       <PageHeader titulo={PANTALLAS.reportes.titulo} descripcion={PANTALLAS.reportes.descripcion} />
-      <AvisoDeDependencia accion="verOrdenMerito" texto={TEXTO_ORDEN_MERITO_SIN_COEFICIENTES} />
+      <AvisoDeDependencia accion="verOrdenMerito" texto={TEXTO_ORDEN_MERITO_SIN_NFPI} />
       <AvisoDeDependencia accion="verOrdenMerito" texto={TEXTO_ORDEN_MERITO_SIN_SERVIDOR} />
       {disponible && error !== null && <AvisoDeError error={error} alReintentar={() => void merito.refetch()} />}
       {disponible && error === null && (
