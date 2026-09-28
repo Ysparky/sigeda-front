@@ -31,7 +31,6 @@ import {
   TEXTO_SIN_TURNOS_DEL_ALUMNO,
   TEXTO_TURNO_SIN_CANTIDAD,
   textoCriterioCumplido,
-  textoRegularAlternado,
 } from '@/lib/dominio/seguimiento'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
@@ -618,11 +617,14 @@ describe('Legajo: ciclo de chequeo', () => {
     expect(chequeo.getByText('6 Regulares alternados')).toBeInTheDocument()
   })
 
-  it('CA-LEG-09 muestra el historial de chequeos y la regla del Regular alternado', async () => {
+  it('CA-LEG-09 muestra el historial de chequeos', async () => {
     await abrirLegajo('999999', '?tab=practico')
     const chequeo = panel('Ciclo de chequeo')
-    expect(await chequeo.findByText(textoRegularAlternado(true))).toBeInTheDocument()
-    const historial = within(chequeo.getByRole('table', { name: 'Historial de chequeos' }))
+    // Acá se afirmaba además `textoRegularAlternado(true)`. El campo `regularAlternado` salió de la
+    // respuesta al resolver la dependencia 71: contestaba «¿contará el próximo Regular?» por paridad,
+    // y como todo Regular cuenta la respuesta era siempre sí. Un texto que explica un booleano
+    // constante sobra en la pantalla.
+    const historial = within(await chequeo.findByRole('table', { name: 'Historial de chequeos' }))
     expect(historial.getAllByRole('row').slice(1)).toHaveLength(1)
     const fila = within(historial.getAllByRole('row')[1]!)
     expect(fila.getByText('Aprobado')).toBeInTheDocument()

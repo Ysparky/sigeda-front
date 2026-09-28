@@ -31,10 +31,6 @@ export type ChequeoDerivado = {
 
 type EstadoReplay = { estado: string; chequeo: number; malos: number; regulares: number }
 
-export function esRegularAlternado(regulares: number): boolean {
-  return regulares === 0 || regulares % 2 === 0
-}
-
 export function criterioCumplido(criterio: 1 | 2, malos: number, regulares: number): boolean {
   if (criterio === 2) return malos === 2 || (malos === 1 && regulares === 2) || regulares === 4
   return malos === 3 || (malos === 2 && regulares === 2) || (malos === 1 && regulares === 4) || regulares === 6
@@ -82,7 +78,11 @@ export function replayDeResultados(): { desaprobados: DesaprobadoMock[]; chequeo
       if (evaluacion.clasificacion === 'Malo') {
         actual.malos += 1
         desaprobados.push(fila(evaluacion))
-      } else if (evaluacion.clasificacion === 'Regular' && esRegularAlternado(actual.regulares)) {
+      // TODO REGULAR CUENTA. Acá se replicaba el filtro de paridad del servidor
+      // (`regulares === 0 || regulares % 2 === 0`), que era una lectura equivocada del PDI: dejaba el
+      // contador clavado en 1 y volvía inalcanzables cinco de las siete ramas del criterio. El
+      // documento define «alternados» como «(en cualquier orden)», así que es un conteo.
+      } else if (evaluacion.clasificacion === 'Regular') {
         actual.regulares += 1
         desaprobados.push(fila(evaluacion))
       }

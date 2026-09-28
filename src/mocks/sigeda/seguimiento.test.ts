@@ -31,13 +31,15 @@ async function alertas(consulta = 'programa=PDI&page=0&size=20') {
 }
 
 describe('GET /api/seguimiento/alertas', () => {
-  it('contrato §9.7 deriva trece alertas con una ALTA, seis MEDIA y seis BAJA', async () => {
+  it('contrato §9.7 deriva catorce alertas con una ALTA, seis MEDIA y siete BAJA', async () => {
     await iniciarComo('comandante.aguirre')
     const pagina = await alertas()
-    expect(pagina.totalElements).toBe(13)
+    // UNA ALERTA MÁS DESDE LA DEPENDENCIA 71: el segundo Regular de 555555 abre su desaprobado,
+    // y cada vuelo desaprobado es una alerta de severidad BAJA.
+    expect(pagina.totalElements).toBe(14)
     const porSeveridad = (severidad: string) => pagina.content.filter((alerta) => alerta.severidad === severidad).length
-    expect([porSeveridad('ALTA'), porSeveridad('MEDIA'), porSeveridad('BAJA')]).toEqual([1, 6, 6])
-    expect(pagina.content.filter((alerta) => alerta.tipo === 'VUELO_DESAPROBADO')).toHaveLength(6)
+    expect([porSeveridad('ALTA'), porSeveridad('MEDIA'), porSeveridad('BAJA')]).toEqual([1, 6, 7])
+    expect(pagina.content.filter((alerta) => alerta.tipo === 'VUELO_DESAPROBADO')).toHaveLength(7)
     expect(pagina.content.filter((alerta) => alerta.tipo === 'CAUSAL_TEORICO')).toHaveLength(4)
   })
 
@@ -51,7 +53,7 @@ describe('GET /api/seguimiento/alertas', () => {
       'CAUSAL_TEORICO:111111:PROMEDIO_ASIGNATURA:3',
       'CAUSAL_TEORICO:111111:PROMEDIO_ASIGNATURA:2',
     ])
-    expect(new Set(pagina.content.map((alerta) => alerta.id)).size).toBe(13)
+    expect(new Set(pagina.content.map((alerta) => alerta.id)).size).toBe(14)
   })
 
   it('contrato §2.1 la severidad viaja como etiqueta del enum y el ordinal no se serializa', async () => {
@@ -90,7 +92,8 @@ describe('GET /api/seguimiento/alertas', () => {
   it('contrato §2.1 un instructor sin View All Groups solo ve los grupos con los que voló', async () => {
     await iniciarComo('instructor.perez')
     const pagina = await alertas()
-    expect(pagina.totalElements).toBe(7)
+    // 8 y no 7: 555555 está en un grupo que este instructor ve, así que su segunda alerta entra acá.
+    expect(pagina.totalElements).toBe(8)
     expect(new Set(pagina.content.map((alerta) => alerta.idGrupo))).toEqual(new Set([1, 3]))
     expect(pagina.content.map((alerta) => alerta.codAlumno)).not.toContain('777777')
   })
@@ -105,12 +108,13 @@ describe('GET /api/seguimiento/alertas', () => {
   it('contrato §2.1 filtra por grupo, por tipo y por rango de fechas', async () => {
     await iniciarComo('comandante.aguirre')
     expect((await alertas('programa=PDI&idGrupo=4&page=0&size=20')).totalElements).toBe(4)
-    expect((await alertas('programa=PDI&tipo=VUELO_DESAPROBADO&page=0&size=20')).totalElements).toBe(6)
+    expect((await alertas('programa=PDI&tipo=VUELO_DESAPROBADO&page=0&size=20')).totalElements).toBe(7)
     expect((await alertas(`programa=PDI&fechaPre=${sumarDias(hoyIso(), -15)}&page=0&size=20`)).totalElements).toBe(8)
     expect(
       (await alertas(`programa=PDI&fechaPost=${sumarDias(hoyIso(), -25)}&page=0&size=20`)).totalElements,
-    ).toBe(3)
-    expect((await alertas('programa=PDI&tipo=NO_EXISTE&page=0&size=20')).totalElements).toBe(13)
+    ).toBe(4)
+    // Un tipo inexistente no filtra nada, así que devuelve el total: 14 desde la dependencia 71.
+    expect((await alertas('programa=PDI&tipo=NO_EXISTE&page=0&size=20')).totalElements).toBe(14)
   })
 
   it('contrato §2.1 una alerta sin fecha queda al final de su banda de severidad', async () => {

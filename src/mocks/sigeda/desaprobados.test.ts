@@ -43,10 +43,14 @@ describe('contadores, grupos y evaluaciones de las fijaciones', () => {
 })
 
 describe('el replay de ResultadoController', () => {
-  it('contrato §9.3 deriva seis desaprobados en cuatro alumnos y tres grupos', () => {
+  it('contrato §9.3 deriva siete desaprobados en cuatro alumnos y tres grupos', () => {
     const { desaprobados } = replayDeResultados()
+    // SON SIETE Y NO SEIS desde que se resolvió la dependencia 71: `555555-3` es una segunda Ponderada
+    // Regular del mismo alumno, y el filtro de paridad que se quitó la descartaba por tener
+    // `contRegular` impar. Ahora todo Regular cuenta, así que abre su fila como la primera.
     expect(desaprobados.map((fila) => fila.codigo)).toEqual([
       '555555-1',
+      '555555-3',
       '666666-1',
       '777777-1',
       '777777-2',
@@ -65,10 +69,18 @@ describe('el replay de ResultadoController', () => {
     expect(desaprobados.filter((fila) => fila.codPersona === '777777')).toHaveLength(3)
   })
 
-  it('contrato §9.3 un Regular con contRegular impar no abre desaprobado', () => {
+  /**
+   * ESTA PRUEBA AFIRMABA LO CONTRARIO y se dio vuelta a propósito: decía que un Regular con
+   * `contRegular` impar **no** abría desaprobado, que era el filtro de paridad del servidor replicado
+   * acá. El PDI define «alternados» como «(en cualquier orden)», así que es un conteo y los dos
+   * Regulares de 555555 cuentan. Con el filtro puesto, el contador quedaba clavado en 1 y eran
+   * inalcanzables cinco de las siete ramas del criterio de chequeo.
+   */
+  it('contrato §9.3 los dos Regulares del mismo alumno abren su desaprobado', () => {
     const { desaprobados } = replayDeResultados()
-    expect(desaprobados.map((fila) => fila.codigo)).toContain('555555-1')
-    expect(desaprobados.map((fila) => fila.codigo)).not.toContain('555555-3')
+    const codigos = desaprobados.map((fila) => fila.codigo)
+    expect(codigos).toContain('555555-1')
+    expect(codigos).toContain('555555-3')
   })
 
   it('contrato §9.4 el Chequeo Sub Fase de 999999 deriva una sola fila de chequeo aprobado', () => {

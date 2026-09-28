@@ -100,11 +100,11 @@ describe('Alertas', () => {
 
   it('CA-ALE-01 pagina de 10 en 10 con las páginas del servidor', async () => {
     const { usuario, router } = await abrirAlertas('/seguimiento/alertas')
-    expect(screen.getByText('Página 1 de 2 · 13 registros')).toBeInTheDocument()
+    expect(screen.getByText('Página 1 de 2 · 14 registros')).toBeInTheDocument()
     expect(filas()).toHaveLength(10)
     await usuario.click(screen.getByRole('button', { name: 'Siguiente' }))
     await waitFor(() => expect(router.state.location.search).toMatchObject({ page: 1 }))
-    await waitFor(() => expect(filas()).toHaveLength(3))
+    await waitFor(() => expect(filas()).toHaveLength(4))
   })
 
   it('CA-ALE-02 filtra por programa, grupo y tipo y todo viaja en la URL', async () => {
@@ -113,7 +113,7 @@ describe('Alertas', () => {
     await waitFor(() => expect(router.state.location.search).toMatchObject({ programa: 'PDE' }))
     expect(await screen.findByText(TEXTO_SIN_ALERTAS)).toBeInTheDocument()
     await usuario.selectOptions(screen.getByLabelText('Programa'), 'PDI')
-    await waitFor(() => expect(filas()).toHaveLength(13))
+    await waitFor(() => expect(filas()).toHaveLength(14))
     await usuario.selectOptions(screen.getByLabelText('Grupo'), '4')
     await waitFor(() => expect(router.state.location.search).toMatchObject({ idGrupo: 4 }))
     await waitFor(() => expect(filas()).toHaveLength(4))
@@ -127,13 +127,13 @@ describe('Alertas', () => {
     const { usuario } = await abrirAlertas(`/seguimiento/alertas?size=20&fechaPre=${desde}`)
     expect(screen.getByLabelText('Desde')).toHaveValue(desde)
     const conFiltro = filas().length
-    expect(conFiltro).toBeLessThan(13)
+    expect(conFiltro).toBeLessThan(14)
     await usuario.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
-    await waitFor(() => expect(filas()).toHaveLength(13))
+    await waitFor(() => expect(filas()).toHaveLength(14))
     expect(screen.getByLabelText('Desde')).toHaveValue('')
     const hasta = sumarDias(hoyIso(), -25)
     await usuario.type(screen.getByLabelText('Hasta'), hasta)
-    await waitFor(() => expect(filas()).toHaveLength(3))
+    await waitFor(() => expect(filas()).toHaveLength(4))
   })
 
   it('CA-ALE-08 si el catálogo de grupos falla lo avisa bajo su propio selector y la tabla sigue', async () => {
@@ -142,7 +142,7 @@ describe('Alertas', () => {
     renderApp('/seguimiento/alertas?size=20')
     await screen.findByRole('table', { name: 'Alertas del escuadrón' })
     expect(await screen.findByText('No se pudieron cargar los grupos.')).toBeInTheDocument()
-    await waitFor(() => expect(filas()).toHaveLength(13))
+    await waitFor(() => expect(filas()).toHaveLength(14))
   })
 
   it('CA-ALE-02 una URL mal escrita vuelve a los valores por defecto', async () => {
@@ -211,6 +211,7 @@ describe('Alertas: tipos y destinos', () => {
       'Baja',
       'Baja',
       'Baja',
+      'Baja',
     ])
     const fechas = celdas('Fecha').map(ordenable)
     for (const banda of ['Alta', 'Media', 'Baja']) {
@@ -255,10 +256,14 @@ describe('Alertas: tipos y destinos', () => {
 
   it('CA-ALE-04 una alerta de vuelo desaprobado abre su evaluación', async () => {
     await abrirAlertas()
-    expect(screen.getByRole('link', { name: 'Abrir Vuelo desaprobado de Pedro Rodriguez Garcia' })).toHaveAttribute(
-      'href',
+    // SON DOS DESDE LA DEPENDENCIA 71: 555555 tiene dos Ponderadas Regulares y el filtro de paridad
+    // que se quitó descartaba la segunda, así que este nombre accesible ya no es único. Se afirman las
+    // dos, que además fija que cada alerta enlaza a SU evaluación y no las dos a la misma.
+    const enlaces = screen.getAllByRole('link', { name: 'Abrir Vuelo desaprobado de Pedro Rodriguez Garcia' })
+    expect(enlaces.map((enlace) => enlace.getAttribute('href'))).toEqual([
+      '/evaluaciones/555555-3',
       '/evaluaciones/555555-1',
-    )
+    ])
   })
 
   it('CA-ALE-04 un vuelo desaprobado sin código de evaluación abre el legajo en vez de una URL rota', async () => {

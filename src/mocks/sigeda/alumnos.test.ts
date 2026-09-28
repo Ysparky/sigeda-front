@@ -62,7 +62,6 @@ describe('GET /api/personas/{cod}/legajo', () => {
       criterio: 1,
       criterioCumplido: true,
       detalle: '3 vuelos Malos',
-      regularAlternado: true,
       cuentaConEsteEstado: false,
     })
     const cumplidoYApto = await sigeda.get<{ chequeo: Record<string, unknown> }>('/api/personas/999999/legajo')
@@ -75,7 +74,6 @@ describe('GET /api/personas/{cod}/legajo', () => {
     expect(sinCumplir.chequeo).toMatchObject({
       criterioCumplido: false,
       detalle: 'Lleva 1 Malo y 2 Regulares',
-      regularAlternado: true,
       cuentaConEsteEstado: true,
     })
   })

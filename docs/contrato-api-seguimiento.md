@@ -623,7 +623,15 @@ GET /api/personas/{cod}/legajo     Read   [NUEVO, dep. 64]
 GET /api/personas/{cod}/chequeos   Read   [NUEVO, dep. 65 — y es cambio de esquema antes que ruta]
 ```
 
-### 6.1 `GET /api/personas/{cod}/legajo` — **nuevo**
+### 6.1 `GET /api/personas/{cod}/legajo`
+
+> **`regularAlternado` YA NO ESTÁ EN LA RESPUESTA (28 sep 2026).** Contestaba «¿contará el próximo
+> calificativo Regular?» a partir de la paridad de `contRegular`, que era una lectura equivocada del
+> PDI —el documento define «alternados» como «(en cualquier orden)»—, y con la dependencia 71 resuelta
+> **todo Regular cuenta**, así que la respuesta pasó a ser invariablemente sí. Un booleano constante no
+> informa nada, y la pantalla le dedicaba una línea de texto explicándolo; salió de las dos puntas en
+> un solo movimiento. El efecto colateral visible: el mock deriva **una alerta más** (14, no 13),
+> porque el segundo Regular de un alumno ahora sí abre su desaprobado. — **nuevo**
 
 **Por qué no sirve lo que hay.** `GET /api/personas/{cod}/alumno` devuelve `DetallePersona` (`grupo/projections/DetallePersona.java:5-20`), que **no trae `codigo`, ni `tipo`, ni `idGrupo`, ni el nombre del grupo, ni los contadores**, (nombraba además sus apellidos distinto del resto; eso ya se corrigió, ver §9.9). Los cuatro contadores del ciclo de chequeo (`grupo/entities/Persona.java:41-44`, `schema_prod.sql:220-223`) están hoy solo en dos sitios: `GET /api/grupos/{id}` (`Manage Groups`, `GrupoController.java:87-89`) y el cuerpo 201 de una escritura de persona (`Manage Users`).
 
@@ -651,7 +659,6 @@ El nombre del grupo, además, solo existe en `GET /api/grupos` (`Manage Groups`,
     "criterio": 1,
     "criterioCumplido": true,
     "detalle": "3 vuelos Malos",
-    "regularAlternado": true,
     "cuentaConEsteEstado": false
   },
   "ultimaEvaluacion": { "codigo": "777777-1", "fecha": "2026-09-15", "clasificacion": "Malo", "estadoAlumno": "En Chequeo" }
@@ -668,7 +675,6 @@ El nombre del grupo, además, solo existe en `GET /api/grupos` (`Manage Groups`,
 | `criterio` | `1` para `Adaptación` y `Operaciones HeliTransportadas`, `2` para `Operaciones AeroTácticas` (`EvaluacionPractica.java:239-246`) |
 | `criterioCumplido` | `comprobarCriterio1(contMalo, contRegular)` = `3M · 2M+2R · 1M+4R · 6R` (`TurnoDesaprobado.java:16-21`), o `comprobarCriterio2` = `2M · 1M+2R · 4R` (`:24-28`) |
 | `detalle` | qué rama del criterio se cumplió, o qué falta para cumplirlo. **Sin punto final** (corregido el 27 sep 2026: el ejemplo de arriba lo traía): el punto lo pone S12 en el frontend, que compara la cadena exacta, y el mock ya lo emite sin punto |
-| `regularAlternado` | `esRegularAlternado` = `contRegular == 0 || contRegular % 2 == 0` (`:8-13`): si el próximo `Regular` contará |
 | `cuentaConEsteEstado` | **si el estado actual del alumno permite que los contadores se muevan**: `true` solo cuando `estado == "Apto"` |
 
 Las dos reglas del criterio coinciden con `pdi:748-752` (Adaptación y Helitransportadas) y `pdi:780-783` (Aerotácticas) palabra por palabra. **El frontend las muestra y no las recalcula**: el cambio de estado lo decide `ResultadoController` al registrar la próxima evaluación, y la pantalla lo dice en S12.

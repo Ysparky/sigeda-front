@@ -283,11 +283,13 @@ describe('capa de API de alertas', () => {
   it('contrato §2.1 pagina las alertas y conserva sus punteros', async () => {
     await iniciarComo('comandante.aguirre')
     const pagina = await listarAlertas({ programa: 'PDI', page: 0, size: 10, direction: 'ASC' })
-    expect(pagina.total).toBe(13)
+    // 14 y no 13 desde la dependencia 71: el segundo Regular de 555555 abre su desaprobado, y cada
+    // desaprobado es una alerta.
+    expect(pagina.total).toBe(14)
     expect(pagina.totalPages).toBe(2)
     expect(pagina.items[0]).toMatchObject({ tipo: 'SUBSANACION_PENDIENTE', severidad: 'ALTA' })
     const segunda = await listarAlertas({ programa: 'PDI', page: 1, size: 10, direction: 'ASC' })
-    expect(segunda.items).toHaveLength(3)
+    expect(segunda.items).toHaveLength(4)
   })
 
   it('contrato §2.1 una lista vacía llega como página vacía, no como error', async () => {

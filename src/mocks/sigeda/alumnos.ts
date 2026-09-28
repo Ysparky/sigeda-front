@@ -3,7 +3,7 @@ import { criterioDeFase } from '@/lib/dominio/seguimiento'
 import { API, autorizar, pideLoDeOtro, textoNoEncontrado, textoProhibido } from './comun'
 import { D15_SOLO_LO_PROPIO } from './cuestionarios-teoria'
 import { buscarPersona, datos, usuarioDePersona, type PersonaMock } from './datos'
-import { criterioCumplido, esRegularAlternado, ramaCumplida } from './desaprobados'
+import { criterioCumplido, ramaCumplida } from './desaprobados'
 
 export const D2_PERSONA_NO_EXISTE = 'Persona especificada no existe.'
 
@@ -42,7 +42,6 @@ function bloqueDeChequeo(persona: PersonaMock) {
     detalle:
       ramaCumplida(criterio, persona.contMalo, persona.contRegular) ??
       `Lleva ${plural(persona.contMalo, 'Malo', 'Malos')} y ${plural(persona.contRegular, 'Regular', 'Regulares')}`,
-    regularAlternado: esRegularAlternado(persona.contRegular),
     cuentaConEsteEstado: persona.estado === 'Apto',
   }
 }

@@ -56,7 +56,6 @@ import {
   resumirEstados,
   textoCriterioCumplido,
   textoOrdenDeMeritoConsultado,
-  textoRegularAlternado,
   textoSinNfpi,
 } from './seguimiento'
 
@@ -116,12 +115,6 @@ describe('ciclo de chequeo', () => {
     expect(ramasDeCriterio(2)).toEqual(['2 vuelos Malos', '1 Malo y 2 Regulares alternados', '4 Regulares alternados'])
   })
 
-  it('M5-20 la regla del Regular alternado se dice en los dos sentidos', () => {
-    expect(textoRegularAlternado(true)).toBe('El próximo calificativo Regular contará para el criterio.')
-    expect(textoRegularAlternado(false)).toBe(
-      'El próximo calificativo Regular no contará: solo cuentan los Regulares alternados.',
-    )
-  })
 })
 
 describe('estados del escuadrón', () => {

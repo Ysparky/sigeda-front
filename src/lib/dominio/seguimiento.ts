@@ -77,11 +77,6 @@ export function textoSinNfpi(detalle: string): string {
   return limpio === '' ? 'Sin NFPI.' : `Sin NFPI: ${limpio}.`
 }
 
-export function textoRegularAlternado(alternado: boolean): string {
-  return alternado
-    ? 'El próximo calificativo Regular contará para el criterio.'
-    : 'El próximo calificativo Regular no contará: solo cuentan los Regulares alternados.'
-}
 
 export const TIPOS_ALERTA = [
   { valor: 'VUELO_DESAPROBADO', etiqueta: 'Vuelo desaprobado' },

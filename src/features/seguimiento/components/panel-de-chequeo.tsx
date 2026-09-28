@@ -10,7 +10,6 @@ import {
   TEXTO_SIN_CHEQUEOS,
   ramasDeCriterio,
   textoCriterioCumplido,
-  textoRegularAlternado,
 } from '@/lib/dominio/seguimiento'
 import { formatearFecha } from '@/lib/formato'
 import { errorDePrimeraCarga } from '@/lib/query'
@@ -70,7 +69,6 @@ export function PanelDeChequeo({ codAlumno }: Props) {
                 </p>
               </div>
             )}
-            <p className="text-sm text-muted-foreground">{textoRegularAlternado(legajo.data.chequeo.regularAlternado)}</p>
             {detalle.data && (
               <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
                 <div className="flex items-center gap-2">

@@ -249,7 +249,6 @@ export type BloqueDeChequeo = {
   criterio: number
   criterioCumplido: boolean
   detalle: string
-  regularAlternado: boolean
   cuentaConEsteEstado: boolean
 }
 
