@@ -589,7 +589,9 @@ Filtros: `codAlumno` (obligatorio mientras la 51 no exista), `idMateria` (int), 
 
 Página vacía → **404** D14, que el frontend muestra como panel vacío.
 
-### 5.3 `GET /api/estado-teorico?codAlumnos=` — **nuevo, la dependencia 56**
+### 5.3 `GET /api/estado-teorico?codAlumnos=` — **la dependencia 56, HECHA (tanda G, 27 sep 2026)**
+
+El servidor la implementó **campo por campo igual que el mock**: arreglo desnudo sin envoltura ni paginado, `pendientes` como objetos, sin la clave `causales` (ausente, no vacía), un código inexistente omitido y `200 []` para la lista vacía. Hasta esta tanda era **la única plantilla de ruta del frontend sin servidor detrás**, con el mock implementándola y la suite ejercitándola contra una ruta inexistente.
 
 `Read`. `codAlumnos` es una lista separada por comas, de **1 a 100** códigos. Devuelve un objeto por alumno, con la misma forma de §5.1 pero **sin `causales[]`** — la pantalla que lo consume es una lista y solo necesita el bloqueo:
 
@@ -597,7 +599,9 @@ Página vacía → **404** D14, que el frontend muestra como panel vacío.
 [ { "codAlumno": "666666", "alumno": "Ana Torres Martinez", "bloqueadoPorSubsanacion": true, "motivo": "…", "desaprobados": [ … ], "pendientes": [ 5 ] } ]
 ```
 
-Un código que no existe **se omite del arreglo**, no rompe la respuesta: el llamador es una lista de alumnos que puede haber cambiado entre dos peticiones. Lista vacía de resultados → `200 []`, no 404, porque la pregunta tenía respuesta.
+Un código que no existe **se omite del arreglo**, no rompe la respuesta: el llamador es una lista de alumnos que puede haber cambiado entre dos peticiones. Lista vacía de resultados → `200 []`, no 404, porque la pregunta tenía respuesta. El orden de salida es **el de los códigos pedidos**, no el físico; los repetidos no se quitan; el tope de 100 es inclusive; y el cierre diferido de teoría §4.7 se aplica alumno por alumno **antes** de decidir el bloqueo, porque si no, un examen `EN_CURSO` vencido tiene `aprobado` en `null` y esta ruta —que es la que decide si el alumno puede programarse— diría que puede volar.
+
+**403** D11 si un **alumno** pide cualquier código que no sea el suyo, y se comprueba antes de tocar los datos. Es la única diferencia que el servidor tuvo con el mock al implementarla, y no es una forma sino un rechazo: sin él un alumno leería el bloqueo de todo su grupo pidiendo cien códigos de una vez, que es más de lo que §5.1 le deja pedir de a uno.
 
 Validación → **400** arreglo:
 

@@ -130,6 +130,13 @@ export const handlersEstadoTeorico = [
       .filter((valor) => valor !== '')
     if (codigos.length === 0) return erroresDeCampo([`'codAlumnos': ${D15_AL_MENOS_UN_CODIGO}`])
     if (codigos.length > 100) return erroresDeCampo([`'codAlumnos': ${D16_MAXIMO_CIEN}`])
+    // Mismo check que la ruta por persona de abajo, y acá importa más: sin él un alumno leería el
+    // bloqueo de todo su grupo pidiendo cien códigos de una vez, que es más de lo que §5.1 le deja
+    // pedir de a uno. Se comprueba antes de tocar los datos.
+    const esAlumno = rolPorId(usuarioDePersona(permitido.codPersona)?.idRol ?? null)?.nombre === 'Alumno'
+    if (esAlumno && codigos.some((cod) => cod !== permitido.codPersona)) {
+      return textoProhibido(D15_SOLO_LO_PROPIO)
+    }
     return HttpResponse.json(
       codigos.flatMap((cod) => {
         const persona = buscarPersona(cod)

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { sigeda } from '@/lib/api/sigeda'
 import { iniciarComo } from '@/test/render'
+import { D15_SOLO_LO_PROPIO } from './cuestionarios-teoria'
 
 type Causal = { codigo: string; idMateria: number | null; materia: string | null; grupo: string[] | null; detalle: string; fecha: string }
 
@@ -42,5 +43,15 @@ describe('causales[] del estado teórico', () => {
     expect(lote).toHaveLength(2)
     expect(lote[0]).not.toHaveProperty('causales')
     expect(lote[0]).toHaveProperty('bloqueadoPorSubsanacion')
+  })
+
+  it('contrato §5.3 un alumno solo puede pedirse a sí mismo en el lote (dependencia 56)', async () => {
+    // Sin esto un alumno leería el bloqueo de todo su grupo en un solo pedido, que es más de lo que
+    // la ruta por persona le deja pedir de a uno. Un código ajeno entre los propios también rechaza.
+    await iniciarComo('alumno.lopez')
+    const propio = await sigeda.get<Record<string, unknown>[]>('/api/estado-teorico?codAlumnos=111111')
+    expect(propio.map((fila) => fila.codAlumno)).toEqual(['111111'])
+    await expect(sigeda.get('/api/estado-teorico?codAlumnos=666666')).rejects.toThrow(D15_SOLO_LO_PROPIO)
+    await expect(sigeda.get('/api/estado-teorico?codAlumnos=111111,666666')).rejects.toThrow(D15_SOLO_LO_PROPIO)
   })
 })
