@@ -8,10 +8,10 @@ import { CUENTAS, entrarComo } from './ayudantes'
  * de verdad: el catálogo de misiones del PDI con sus coeficientes (tanda H) y las diez sub fases que
  * el NIA pondera (tanda I).
  *
- * NO SE AFIRMA EL VALOR DEL NFPI a propósito, aunque se conozca (16.47 al escribir esto). Dos
- * evaluaciones de la semilla tienen un `promedio` que `CalculoNota` no produce, y corregirlas mueve la
- * cadena entera; fijar la cifra acá haría fallar esta prueba por un arreglo correcto del backend. Lo
- * que se fija es lo que no debe cambiar: que el alumno con los diez NSF esté rankeado, que los demás
+ * NO SE AFIRMA EL VALOR DEL NFPI a propósito, y la decisión ya se pagó sola: se escribió cuando valía
+ * **16.47** y horas después valía **16.46**, porque se corrigieron dos evaluaciones de la semilla cuyo
+ * `promedio` `CalculoNota` no producía. Una aserción sobre la cifra habría fallado por un arreglo
+ * correcto del backend. Lo que se fija es lo que no debe cambiar: que el alumno con los diez NSF esté rankeado, que los demás
  * queden «Sin puesto» con su motivo, y que el desempate sea el de §4.1.
  */
 test.describe('Orden de mérito contra el backend real', () => {

@@ -193,7 +193,7 @@ Los dos alumnos del grupo 3 son la historia, y son opuestos a propósito:
 | Código de persona inexistente | 404 | `Persona especificada no existe.` |
 | Persona que **no es alumno** | **200** | con el bloqueo en `false` y los arreglos vacíos: «no calculable» y «no encontrado» son cosas distintas |
 | `NIA` y `NFPI` | 200 | `null`, con `nia.motivo` **variable** nombrando lo que falta: con la semilla, que `NFOH` y `NFOA` no tienen ninguna sub fase en el sistema. **La frase se muestra, no se compara** (tanda H, 28 sep 2026: la vieja culpaba a la tabla de coeficientes de misión, que ya está implementada) |
-| `nsf` de Contacto de `555555` | 200 | **`14.75`**, `ponderacion: "PDI"`, `cobertura: 0.5714` — la nota de sub fase **sí** se calcula, renormalizada sobre las 4 de las 7 misiones que tienen nota, y la pantalla dice sobre qué porcentaje |
+| `nsf` de Contacto de `555555` | 200 | **`14.63`**, `ponderacion: "PDI"`, `cobertura: 0.5714` — la nota de sub fase **sí** se calcula, renormalizada sobre las 4 de las 7 misiones que tienen nota, y la pantalla dice sobre qué porcentaje |
 
 **Un índice ausente nunca vale 0.** Cero es una nota posible, y confundir las dos cosas es
 exactamente cómo se publica un orden de mérito falso. Por eso `null` se propaga hacia arriba:

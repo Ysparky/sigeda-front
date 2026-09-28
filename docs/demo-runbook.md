@@ -132,7 +132,7 @@ Recorrido sugerido:
    **La razón cambió el 28 sep 2026, y conviene no contar la vieja en la demo:** ya **no** falta la
    tabla de coeficientes de misión. Esa tabla estaba en el libro de trabajo del PDI como horas por
    misión (`docs/coeficientes-de-mision-pdi.md`), el servidor la implementó en la tanda H y **la nota
-   de sub fase se calcula de verdad** — el legajo de `555555` muestra `14.75` en Contacto, ponderado
+   de sub fase se calcula de verdad** — el legajo de `555555` muestra `14.63` en Contacto, ponderado
    por el PDI sobre el 57 % de la sub fase, y lo dice. Lo que deja el `NIA` en `null` es que
    **`NFOH` y `NFOA` no tienen ninguna sub fase en el sistema**: el NIA pondera las tres fases y solo
    existen las de Adaptación. Eso es una decisión de alcance del proyecto, no un dato que falte en la
@@ -143,7 +143,7 @@ Recorrido sugerido:
 
    **⚠ Y unas horas después esto ya estaba a medio vencer: la semilla creció.** Comprobado con `curl`
    el 28 sep 2026: la base pasó a tener **las 10 sub fases del PDI** y **68 misiones**, y con eso
-   `555555` da **`nfpi` 16.47, `nia` 15.99** y **puesto 1** en el orden de mérito. Los otros seis
+   `555555` da **`nfpi` 16.46, `nia` 15.97** y **puesto 1** en el orden de mérito. Los otros seis
    alumnos siguen sin puesto, porque sus evaluaciones no cubren las diez sub fases. Antes de la demo,
    **volver a pedir `/api/personas/555555/indices` y contar lo que devuelva ese día**: el legajo se ve
    bien en los dos estados, pero la explicación de por qué el orden de mérito no se presenta depende

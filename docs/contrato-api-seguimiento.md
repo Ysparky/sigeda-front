@@ -329,7 +329,7 @@ GET /api/personas/{cod}/indices   Read   [NUEVO, deps. 61 y 62; su mitad teóric
     "valor": null,
     "fases": [
       { "fase": "Adaptación",                    "sigla": "NFAD", "peso": 0.40, "valor": null, "subfases": [
-        { "idSubfase": 1, "subfase": "Contacto",        "sigla": "C",  "peso": 0.25, "nsf": 14.75, "misiones": 4, "ponderacion": "PDI",  "cobertura": 0.5714, "motivo": "La sub fase está incompleta: los coeficientes de las misiones calificadas suman 0.5714 de 1.0000, así que la nota de sub fase se renormaliza sobre ese total." },
+        { "idSubfase": 1, "subfase": "Contacto",        "sigla": "C",  "peso": 0.25, "nsf": 14.63, "misiones": 4, "ponderacion": "PDI",  "cobertura": 0.5714, "motivo": "La sub fase está incompleta: los coeficientes de las misiones calificadas suman 0.5714 de 1.0000, así que la nota de sub fase se renormaliza sobre ese total." },
         { "idSubfase": 2, "subfase": "Navegación",      "sigla": "N",  "peso": 0.25, "nsf": null,  "misiones": 0, "ponderacion": null,   "cobertura": null,   "motivo": "El alumno no tiene ninguna misión calificada en esta sub fase." },
         { "idSubfase": 3, "subfase": "Instrumentos",    "sigla": "I",  "peso": 0.20, "nsf": null,  "misiones": 0, "ponderacion": null,   "cobertura": null,   "motivo": "El alumno no tiene ninguna misión calificada en esta sub fase." },
         { "idSubfase": 5, "subfase": "Formación",       "sigla": "F",  "peso": 0.15, "nsf": null,  "misiones": 0, "ponderacion": null,   "cobertura": null,   "motivo": "El alumno no tiene ninguna misión calificada en esta sub fase." },
@@ -343,7 +343,7 @@ GET /api/personas/{cod}/indices   Read   [NUEVO, deps. 61 y 62; su mitad teóric
 }
 ```
 
-**Este bloque es la respuesta real del servidor para `555555`, pegada de `curl` el 28 sep 2026**, no un ejemplo escrito a mano: el `nsf` de Contacto da **14.75** y el `nia.valor` está en `null`. Los dos hechos conviven y la pantalla tiene que sostener ese estado mixto.
+**Este bloque es la respuesta real del servidor para `555555`, pegada de `curl` el 28 sep 2026**, no un ejemplo escrito a mano: el `nsf` de Contacto da **14.63**. Cuando se pegó, el `nia.valor` estaba en `null` y la pantalla tenía que sostener ese estado mixto; **ya no**, porque la semilla se completó con las diez sub fases que el NIA pondera. La pantalla igual tiene que seguir sosteniéndolo: un alumno que todavía no voló las tres fases lo vuelve a producir.
 
 > ### ⚠ Y unas horas después, la misma consulta daba otra cosa: la semilla del servidor creció
 >
@@ -355,13 +355,13 @@ GET /api/personas/{cod}/indices   Read   [NUEVO, deps. 61 y 62; su mitad teóric
 >
 > ```
 > $ curl .../api/personas/555555/indices
-> nfpi 16.47 | nia 15.99 | nit 18.4 | nia.motivo: null
->   NFAD 15.94  Contacto 14.75 PDI 0.5714 · Navegación 17.0 PDI 0.15 · Instrumentos 16.0 PDI 0.15
+> nfpi 16.46 | nia 15.97 | nit 18.4 | nia.motivo: null
+>   NFAD 15.91  Contacto 14.63 PDI 0.5714 · Navegación 17.0 PDI 0.15 · Instrumentos 16.0 PDI 0.15
 >               Formación 20.0 PDI 0.2 · Campos Extraños 12.0 PDI 0.125
 >   NFOH 15.60  Carga Externa 13.0 · Búsqueda y Rescate 17.0 · Operaciones Especiales 16.5 (PDI 0.1667)
 >   NFOA 16.60  Nav Táctica Diurna 16.0 PDI 0.1333 · Visores Nocturnos 17.2 PDI 0.275
 > $ curl .../api/reportes/orden-merito?programa=PDI
-> puesto 1 · 555555 · nfpi 16.47 · nia 15.99      (los otros seis siguen sin puesto)
+> puesto 1 · 555555 · nfpi 16.46 · nia 15.97      (los otros seis siguen sin puesto)
 > ```
 >
 > **`NIA` y `NFPI` ya no son `null` para todo el mundo, y el orden de mérito tiene un puesto.** Es la
