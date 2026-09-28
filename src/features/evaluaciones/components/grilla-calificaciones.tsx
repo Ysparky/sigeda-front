@@ -20,6 +20,27 @@ type Props = {
   errores: FieldErrors<ValoresEvaluacion>['calificaciones']
 }
 
+/**
+ * LAS FLECHAS TIENEN QUE SELECCIONAR, NO SÓLO MOVER EL FOCO. `ToggleGroup` con `type="single"` se
+ * anuncia como `role="radiogroup"` con items `role="radio"`, y el patrón WAI-ARIA de radiogroup exige
+ * que la flecha CAMBIE la selección. Radix sólo mueve el foco: medido en un banco aparte, tras
+ * `Tab` + `ArrowRight` el foco pasaba de `D` a `I` y quedaban **cero** items con `aria-checked="true"`.
+ * En la pantalla que registra las notas de un alumno, eso es recorrer la escala con el teclado
+ * creyendo elegir y no elegir nada.
+ *
+ * No se llama `preventDefault`: Radix mueve el foco al siguiente item HABILITADO, y acá se elige de la
+ * misma lista y en el mismo orden, así que foco y selección terminan en el mismo sitio. `permitidas`
+ * ya excluye las notas que el estándar no admite —son las que van `disabled` y las que Radix saltea—,
+ * y el módulo queda igual: no se tocó `components/ui/toggle-group.tsx`, que lo comparten pantallas
+ * donde la semántica de *toggle* sí es la correcta.
+ */
+const PASO_POR_TECLA: Record<string, number | undefined> = {
+  ArrowRight: 1,
+  ArrowDown: 1,
+  ArrowLeft: -1,
+  ArrowUp: -1,
+}
+
 export function GrillaCalificaciones({ control, register, errores }: Props) {
   const calificaciones = useWatch({ control, name: 'calificaciones' })
   const conteo = contarRespectoAlEstandar(calificaciones)
@@ -59,12 +80,27 @@ export function GrillaCalificaciones({ control, register, errores }: Props) {
                     onValueChange={(valor) => {
                       if (valor) field.onChange(valor)
                     }}
+                    onKeyDown={(evento) => {
+                      const paso = PASO_POR_TECLA[evento.key]
+                      if (paso === undefined) return
+                      const orden = NOTAS_DIRBE.filter((nota) => permitidas.includes(nota))
+                      // SE PARTE DEL ITEM ENFOCADO, NO DE `field.value`, y la diferencia importa: con
+                      // nada seleccionado, Radix mueve el foco de la primera a la segunda nota mientras
+                      // `field.value` sigue vacío. Partir del valor elegiría la PRIMERA y dejaría el foco
+                      // en la segunda — foco y selección separados, que es peor que el defecto original.
+                      const enfocada = (evento.target as HTMLElement).dataset.nota
+                      const actual = enfocada === undefined ? -1 : orden.indexOf(enfocada as (typeof orden)[number])
+                      if (actual === -1) return
+                      const proxima = orden[(actual + paso + orden.length) % orden.length]
+                      if (proxima !== undefined) field.onChange(proxima)
+                    }}
                   >
                     {NOTAS_DIRBE.map((nota) => (
                       <ToggleGroupItem
                         key={nota}
                         ref={nota === permitidas[0] ? field.ref : undefined}
                         value={nota}
+                        data-nota={nota}
                         disabled={!permitidas.includes(nota)}
                         aria-label={`${nota} (${CALIFICATIVOS[nota].descripcion})`}
                         className="w-10"

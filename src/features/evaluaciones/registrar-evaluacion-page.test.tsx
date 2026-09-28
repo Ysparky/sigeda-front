@@ -135,6 +135,37 @@ describe('Registrar evaluación', () => {
     expect(screen.getByRole('radiogroup', { name: 'Calificación de Maniobra 1' })).toHaveAttribute('aria-invalid', 'false')
   })
 
+  /**
+   * §8 pide «navegación por teclado de Radix» y el control se anuncia como `role="radiogroup"` con
+   * items `role="radio"`, así que el patrón WAI-ARIA exige que la FLECHA CAMBIE LA SELECCIÓN. Radix
+   * sólo movía el foco: medido, tras enfocar la primera nota y pulsar `ArrowRight` el foco avanzaba y
+   * quedaban **cero** items con `aria-checked="true"`. En la pantalla que registra las notas de un
+   * alumno, eso es recorrer la escala creyendo elegir y no elegir nada.
+   *
+   * Se afirman LAS DOS COSAS —que el foco avanzó y que ese mismo item quedó marcado— porque el error
+   * fácil al arreglarlo es separarlos: partiendo de `field.value` en vez del item enfocado, con nada
+   * seleccionado se elegía la PRIMERA nota mientras el foco ya estaba en la segunda.
+   */
+  it('CA-EVA-05 las flechas cambian la calificación y no sólo el foco', async () => {
+    const { usuario } = await abrirFormulario()
+    const grupo = screen.getByRole('radiogroup', { name: 'Calificación de Maniobra 1' })
+    const habilitadas = within(grupo)
+      .getAllByRole('radio')
+      .filter((opcion) => !opcion.hasAttribute('disabled'))
+    expect(habilitadas.length).toBeGreaterThan(1)
+
+    habilitadas[0]!.focus()
+    await usuario.keyboard('{ArrowRight}')
+    expect(document.activeElement).toBe(habilitadas[1])
+    expect(habilitadas[1]).toHaveAttribute('aria-checked', 'true')
+
+    // Y hacia atrás, que es la mitad que prueba que el paso no está cableado en una sola dirección.
+    await usuario.keyboard('{ArrowLeft}')
+    expect(document.activeElement).toBe(habilitadas[0])
+    expect(habilitadas[0]).toHaveAttribute('aria-checked', 'true')
+    expect(habilitadas[1]).toHaveAttribute('aria-checked', 'false')
+  })
+
   it('CA-EVA-05 una calificación bajo el estándar exige observación, causa y recomendación', async () => {
     const { usuario } = await abrirFormulario()
     await calificar(usuario, 'Maniobra 1', 'R')
