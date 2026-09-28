@@ -70,7 +70,7 @@ Todas con contraseña **`123`**.
 |---|---|---|
 | `admin.sistema` | Administrador Web | todo |
 | `comandante.aguirre` | Comandante de Escuadrón | materias, seguimiento, legajo |
-| `jefe.operaciones` | Jefe de Operaciones | turnos, grupos, estándares |
+| `jefe.operaciones` | Jefe de Operaciones | turnos, estándares (**grupos ya no**: la dependencia 4 dejó `Manage Groups` solo en el Administrador Web) |
 | `instructor.perez` | Instructor | banco de preguntas, turnos teóricos, evaluar |
 | `alumno.lopez` | Alumno | sus turnos, sus exámenes, su legajo |
 

@@ -280,8 +280,9 @@ POST /api/turnos   Manage Shifts
 4. **[Nuevo — dependencia 15, corregido el 27 sep 2026]** Para cada alumno de `alumnosTurno`: comprobar que su `horaInicio`/`horaFin` no se solape (i) con otro turno ya guardado de **ese mismo alumno** en la **misma fecha**, **sea cual sea la aeronave** (usando `turno/utils/HorasInicioFin.java`), ni (ii) con otra entrada de `alumnosTurno` del mismo request para el mismo alumno. Cada conflicto agrega al arreglo 400 el elemento `"'alumnosTurno[i].codAlumno': El alumno <cod> tiene un horario que se cruza con otro turno del mismo día."` (uno por alumno en conflicto).
 
    > **Por qué cambió.** La versión anterior filtraba por **misma aeronave y fecha**, y con ese filtro **el caso que justifica la regla se escapa**: el mismo alumno en **dos aeronaves distintas** a la misma hora pasaba sin que nadie lo notara. La regla es del **alumno** —no puede estar en dos turnos a la vez—, así que no se filtra por aeronave. El solape de **aeronave** es otra cosa: sigue siendo un **aviso del frontend que deja guardar** (decisión M1-10), y el servidor **no** lo rechaza. El texto del mensaje también cambió, porque el anterior nombraba a la aeronave como la razón de un rechazo que es del alumno.
-5. Si el `bindingResult` (validaciones de campo + el error de solape del paso 4) tiene errores → 400 `Response.setErrorsFrom` (arreglo crudo de strings).
-6. Éxito → **201**:
+5. **[Nuevo — dependencia 57, hecha el 27 sep 2026]** Para cada alumno, comprobar que no esté bloqueado por una subsanación teórica pendiente (`contrato-api-teoria.md` §5.1). Cada bloqueado agrega al arreglo 400 el elemento `"'alumnosTurno[i].codAlumno': El alumno <cod> tiene una subsanación pendiente y no puede programarse en un turno práctico."` **Se comprueba después del paso 4**, porque el cruce ya exige que los alumnos existan y un código inexistente tiene que salir por su 404 y no por acá. La regla no se reimplementa: se le pregunta a la misma que calcula `bloqueadoPorSubsanacion`, con el cierre diferido aplicado antes.
+6. Si el `bindingResult` (validaciones de campo + el error de solape del paso 4 + el del paso 5) tiene errores → 400 `Response.setErrorsFrom` (arreglo crudo de strings).
+7. Éxito → **201**:
 ```json
 { "mensaje": "Turno guardado con éxito.", "turno": { /* DetalleTurno, ver §1.4 */ } }
 ```
@@ -290,13 +291,22 @@ POST /api/turnos   Manage Shifts
 
 El cuerpo `turno` es el `DetalleTurno` completo (§1.4), no la entidad `Turno` cruda — así el frontend puede confirmar de una vez qué alumnos/maniobras quedaron guardados (hoy `alumnosTurno`/`maniobrasTurno` son `@JsonIgnore` en `Turno` y esto era imposible de verificar).
 
+> **`idSubfase`, no `idSubFase`, y en la respuesta (tanda G, 27 sep 2026).** Mientras el servidor
+> devolvió la entidad `Turno` cruda acá y en el `PUT`, publicaba el campo como **`idSubFase`**,
+> mientras `GET /api/turnos/{id}` ya devolvía `idSubfase` por la proyección. Los **requests** siempre
+> fueron `idSubfase` en las dos puntas, así que no había nada roto ahí: lo que estaba partido era la
+> respuesta. Se unificó en `idSubfase`, la grafía que el cliente **envía**, que el `GET` devuelve y
+> que este contrato documenta. No rompió al frontend —de estas dos respuestas solo lee `mensaje` e
+> `id`— y **`EvaluacionPractica.idSubFase` NO cambió**: sale con F mayúscula por
+> `GET /api/evaluaciones/{cod}` (§3.3), así lo documenta este contrato y el frontend no lo lee.
+
 ### 1.6 `PUT /api/turnos/{id}` — **Corrección**
 
 ```
 PUT /api/turnos/{id}   Manage Shifts
 ```
 
-**`TurnoUpdate`**: mismos campos/mensajes que `TurnoCreate` para `nombre`, `fechaEval`, `codInstructor`, `aeronave`, `alumnosTurno`, `maniobrasTurno` — **sin** `programa` ni `idSubfase` (no se pueden cambiar en un update). Mismas correcciones de `Alumno_TurnoSave` que §1.5.
+**`TurnoUpdate`**: mismos campos/mensajes que `TurnoCreate` para `nombre`, `fechaEval`, `codInstructor`, `aeronave`, `alumnosTurno`, `maniobrasTurno` — **sin** `programa` ni `idSubfase` (no se pueden cambiar en un update). Mismas correcciones de `Alumno_TurnoSave` que §1.5. También aplica el rechazo por subsanación pendiente del paso 5 de §1.5, y también publica `idSubfase` con f minúscula.
 
 **Reglas de negocio, en orden** (igual que create, con dos diferencias):
 

@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
 import { config } from '@/lib/config'
+import { sigeda } from '@/lib/api/sigeda'
 import { server } from '@/mocks/server'
 import { iniciarComo } from '@/test/render'
 import {
@@ -122,6 +123,24 @@ describe('api de turnos', () => {
     await iniciarComo('jefe.operaciones')
     await expect(crearTurno(cuerpoValido())).resolves.toEqual({ mensaje: 'Turno guardado con éxito.', id: 10 })
     await expect(obtenerTurno(10)).resolves.toMatchObject({ nombre: 'Navegación Diurna', subfase: 'Navegación' })
+  })
+
+  it('el POST y el PUT devuelven idSubfase, con f minúscula como el GET y como el request', async () => {
+    // El servidor publicaba `idSubFase` en estas dos respuestas y `idSubfase` en el GET; la tanda G
+    // unificó en la grafía que el cliente ENVÍA. No rompía al frontend —de estas dos solo lee
+    // `mensaje` e `id`— pero un mock que se quedara con la vieja volvería a documentar algo falso.
+    await iniciarComo('jefe.operaciones')
+    // Horarios distintos en cada una: el segundo pedido cruzaría con el alumno del primero.
+    for (const respuesta of [
+      await sigeda.put<{ turno: Record<string, unknown> }>('/api/turnos/8', cuerpoValido()),
+      await sigeda.post<{ turno: Record<string, unknown> }>(
+        '/api/turnos',
+        cuerpoValido({ alumnosTurno: [{ codAlumno: '222222', horaInicio: '14:00', horaFin: '15:00' }] }),
+      ),
+    ]) {
+      expect(respuesta.turno.idSubfase).toBeTypeOf('number')
+      expect(respuesta.turno).not.toHaveProperty('idSubFase')
+    }
   })
 
   it('M1-1 tolera la respuesta 200 con la entidad cruda del backend actual', async () => {
