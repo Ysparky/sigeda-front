@@ -42,7 +42,7 @@ Lo que **no** está en este contrato y M5 hereda está en spec §16.6: el histor
 | **`notaMinimaAplicada`** en §3.2, §4.1, §4.2 y §4.6, con la regla de Pre-Solo | Sin ella un Pre-Solo en una materia de mínimo 16 aprobaría con 16, contra el PDI (spec §3.4), y la interfaz mostraría el umbral equivocado |
 | `calificaciones_teoricas` gana `enunciado` y `respuesta_correcta` (§8); §2.4 explica qué se conserva y qué se lee en vivo | §2.4 prometía un historial que el esquema no podía guardar, y a la vez permitía editar una pregunta en uso |
 | Ventana mínima de **10 minutos** (§3.3) y una regla única de fecha futura para registrar y modificar | El aviso de los 5 minutos necesitaba una ventana que lo contenga; §3.3 y §3.4 pedían cosas distintas |
-| `codInstructor`: **400** si falta o está mal formado, **404** D27 si no existe | Eran un solo mensaje para dos causas distintas |
+| `codInstructor`: **400** si falta o está mal formado, **404** D27 si no existe | Eran un solo mensaje para dos causas distintas. **Los dos se retiraron en la tanda G**: con la dependencia 51 el código no viaja, así que no puede faltar ni no existir |
 | D26–D28 para tres textos que se afirmaban sin id; D12 y D15 dicen "examen", no "cuestionario" | El frontend solo muestra literalmente los mensajes con id, y la copia de M4 no debe mezclar el examen calificado con el cuestionario de práctica de M3 |
 | §3.6 (inasistencias), `GET /api/cuestionarios` (historial), `causales[]`, §5.2 (lote) y la reducción del 50 % **salen del contrato** | Recortes de alcance 1–4; su único consumidor es M5 (spec §16.6). Con ellos se va el error de guardar `NO_RINDIO` en una columna cuyo enum no lo tiene |
 | §9.2 ya no deriva el horario del reloj; lo abre un ayudante de pruebas | `reiniciarDatosMock()` corre en `afterEach` con temporizadores reales, antes de que exista el reloj falso |
@@ -231,7 +231,6 @@ Lista vacía → **404** D1.
 
 ```json
 {
-  "codInstructor": "444444",
   "idMateria": 3,
   "enunciado": "¿Qué documento fija la conducta del alumno piloto durante la instrucción?",
   "tipoPregunta": "OPCION_MULTIPLE",
@@ -246,17 +245,16 @@ Lista vacía → **404** D1.
 }
 ```
 
-`origen` **no se acepta en el cuerpo**: lo fija el servidor en `MANUAL` aquí y en `IA` en §2.6. Un `id` en el cuerpo se ignora. `codInstructor` desaparece con la dependencia 51.
+`origen` **no se acepta en el cuerpo**: lo fija el servidor en `MANUAL` aquí y en `IA` en §2.6. Un `id` en el cuerpo se ignora. **`codInstructor` tampoco se acepta: el autor es el llamador** (dependencia 51, hecha). Uno que llegue se ignora, así que ya no hay 400 de campo ni 404 D27 por ese código.
 
 **201** `{"mensaje":"Pregunta guardada con éxito.","pregunta":{…forma de §2.2…}}` (D20).
 
-**404** D4 si `idMateria` no existe; **404** D27 si `codInstructor` no corresponde a ninguna persona. No son errores de campo: el patrón de la casa para un id anidado inexistente es 404, como pide la dependencia 34.
+**404** D4 si `idMateria` no existe. No es un error de campo: el patrón de la casa para un id anidado inexistente es 404, como pide la dependencia 34.
 
 Validación → **400** arreglo:
 
 | Campo | Regla | Mensaje exacto |
 |---|---|---|
-| `codInstructor` | obligatorio y de 6 dígitos (que exista es el 404 D27) | `El código del instructor es obligatorio.` |
 | `idMateria` | obligatorio y positivo | `La materia es obligatoria.` |
 | `enunciado` | obligatorio (`null`, `""` o solo espacios) | `El enunciado es obligatorio.` |
 | | 10 a 500 caracteres | `El enunciado debe tener entre 10 y 500 caracteres.` |
@@ -276,7 +274,7 @@ Los errores de una alternativa llevan el índice en el nombre del campo: `"'alte
 
 ### 2.4 `PUT /api/preguntas/{id}`
 
-Mismo cuerpo, mismas reglas y mismo `201` que §2.3. `origen` **no cambia nunca**: una pregunta importada desde IA que se corrige a mano sigue siendo `IA`. `404` D2 si la pregunta no existe, `404` D4 si la nueva `idMateria` no existe, `404` D27 si el `codInstructor` no existe.
+Mismo cuerpo, mismas reglas y mismo `201` que §2.3. `origen` **no cambia nunca**: una pregunta importada desde IA que se corrige a mano sigue siendo `IA`. **`codInstructor` tampoco: el autor sigue siendo quien la escribió**, aunque la corrija otro instructor. Es la asimetría deliberada con §3.4, donde el instructor del turno **sí** pasa a ser quien modifica: acá la regla «el autor no cambia» ya estaba escrita, allá la contraria. `404` D2 si la pregunta no existe, `404` D4 si la nueva `idMateria` no existe.
 
 **Las alternativas se actualizan en su lugar, no se borran y se reinsertan.** El arreglo `alternativas` del cuerpo no lleva ids, así que se empareja por posición con las alternativas que la pregunta ya tiene, ordenadas por `id`: la alternativa de la posición *i* conserva su `id` y solo cambia su `respuesta` y su `correcto`, una alternativa que el cuerpo ya no trae se borra y una posición nueva recibe un `id` nuevo. **No es un detalle interno:** §4.3 guarda la respuesta del alumno como el `id` de la alternativa en texto y §4.4 califica comparando contra ese `id`, de modo que renumerar las alternativas de una pregunta que está en un examen `EN_CURSO` le borraría la respuesta al alumno sin que nada lo avise.
 
@@ -302,14 +300,13 @@ Lo usa **solo** Importar desde IA (§6).
 
 ```json
 {
-  "codInstructor": "444444",
   "preguntas": [ { "idMateria": 3, "enunciado": "…", "tipoPregunta": "VERDADERO_FALSO", "dificultad": "BAJA", "explicacion": "…", "alternativas": [ { "respuesta": "Verdadero", "correcto": true }, { "respuesta": "Falso", "correcto": false } ] } ]
 }
 ```
 
 - `preguntas` tiene de 1 a 20 elementos; cada uno se valida con las reglas de §2.3.
 - **Todo o nada**, en una transacción: si una falla, ninguna se guarda.
-- `origen` se fija en `IA` para todas.
+- `origen` se fija en `IA` para todas, y el autor de todas es el llamador (dependencia 51).
 
 **201** `{"mensaje":"Preguntas guardadas con éxito.","preguntas":[ …forma de §2.2, en el orden recibido… ]}` (D21).
 
@@ -323,7 +320,7 @@ Validación → **400** arreglo, con el índice de la pregunta en el nombre del 
 
 El duplicado se rechaza solo dentro del lote, no contra el banco: un modelo que genera dos veces la misma pregunta es un defecto de esa generación, mientras que una pregunta que ya existe en el banco puede ser una variante deliberada.
 
-**404** D4 si alguna `idMateria` no existe; **404** D27 si `codInstructor` no existe.
+**404** D4 si alguna `idMateria` no existe.
 
 ---
 

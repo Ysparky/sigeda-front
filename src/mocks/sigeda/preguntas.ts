@@ -4,7 +4,6 @@ import { API, autorizar, erroresDeCampo, paginar, texto, textoEliminado, textoNo
 import {
   alternativasDePregunta,
   buscarMateria,
-  buscarPersona,
   buscarPregunta,
   datos,
   preguntaEnUso,
@@ -28,7 +27,6 @@ const ORIGENES: OrigenMock[] = ['MANUAL', 'IA']
 type AlternativaEnviada = { respuesta?: unknown; correcto?: unknown }
 
 type CuerpoPregunta = {
-  codInstructor?: unknown
   idMateria?: unknown
   enunciado?: unknown
   tipoPregunta?: unknown
@@ -37,7 +35,7 @@ type CuerpoPregunta = {
   alternativas?: unknown
 }
 
-type CuerpoLote = { codInstructor?: unknown; preguntas?: unknown }
+type CuerpoLote = { preguntas?: unknown }
 
 function normalizarParaBusqueda(valor: string): string {
   return valor
@@ -138,11 +136,8 @@ function erroresDeAlternativas(cuerpo: CuerpoPregunta, prefijo: string): string[
   return errores
 }
 
-export function erroresDePregunta(cuerpo: CuerpoPregunta, prefijo = '', conInstructor = true): string[] {
+export function erroresDePregunta(cuerpo: CuerpoPregunta, prefijo = ''): string[] {
   const errores: string[] = []
-  if (conInstructor && !/^\d{6}$/.test(texto(cuerpo.codInstructor))) {
-    errores.push("'codInstructor': El código del instructor es obligatorio.")
-  }
   if (typeof cuerpo.idMateria !== 'number' || !Number.isInteger(cuerpo.idMateria) || cuerpo.idMateria <= 0) {
     errores.push(`'${prefijo}idMateria': La materia es obligatoria.`)
   }
@@ -229,14 +224,11 @@ export const handlersPreguntas = [
     const cuerpo = (await request.json()) as CuerpoLote
     const lista = Array.isArray(cuerpo.preguntas) ? (cuerpo.preguntas as CuerpoPregunta[]) : []
     const errores: string[] = []
-    if (!/^\d{6}$/.test(texto(cuerpo.codInstructor))) {
-      errores.push("'codInstructor': El código del instructor es obligatorio.")
-    }
     if (lista.length === 0) errores.push("'preguntas': Debe enviar al menos una pregunta.")
     else if (lista.length > 20) errores.push("'preguntas': No se pueden importar más de 20 preguntas a la vez.")
     const vistas = new Set<string>()
     lista.forEach((pregunta, indice) => {
-      errores.push(...erroresDePregunta(pregunta, `preguntas[${indice}].`, false))
+      errores.push(...erroresDePregunta(pregunta, `preguntas[${indice}].`))
       const clave = claveDuplicadoDeLote(pregunta)
       if (vistas.has(clave)) {
         errores.push(`'preguntas[${indice}].enunciado': La pregunta está repetida en este lote.`)
@@ -244,11 +236,10 @@ export const handlersPreguntas = [
       vistas.add(clave)
     })
     if (errores.length > 0) return erroresDeCampo(errores)
-    if (!buscarPersona(texto(cuerpo.codInstructor))) return textoNoEncontrado(D27_PERSONA_NO_EXISTE)
     if (lista.some((pregunta) => !buscarMateria(Number(pregunta.idMateria)))) {
       return textoNoEncontrado(D4_MATERIA_NO_EXISTE)
     }
-    const creadas = lista.map((pregunta) => insertar(pregunta, 'IA', texto(cuerpo.codInstructor)))
+    const creadas = lista.map((pregunta) => insertar(pregunta, 'IA', permitido.codPersona))
     return HttpResponse.json(
       { mensaje: D21_PREGUNTAS_GUARDADAS, preguntas: creadas.map(detallePublico) },
       { status: 201 },
@@ -260,9 +251,8 @@ export const handlersPreguntas = [
     const cuerpo = (await request.json()) as CuerpoPregunta
     const errores = erroresDePregunta(cuerpo)
     if (errores.length > 0) return erroresDeCampo(errores)
-    if (!buscarPersona(texto(cuerpo.codInstructor))) return textoNoEncontrado(D27_PERSONA_NO_EXISTE)
     if (!buscarMateria(Number(cuerpo.idMateria))) return textoNoEncontrado(D4_MATERIA_NO_EXISTE)
-    const pregunta = insertar(cuerpo, 'MANUAL', texto(cuerpo.codInstructor))
+    const pregunta = insertar(cuerpo, 'MANUAL', permitido.codPersona)
     return HttpResponse.json({ mensaje: D20_PREGUNTA_GUARDADA, pregunta: detallePublico(pregunta) }, { status: 201 })
   }),
   http.get(`${API}/api/preguntas/:id`, ({ request, params }) => {
@@ -280,8 +270,8 @@ export const handlersPreguntas = [
     const cuerpo = (await request.json()) as CuerpoPregunta
     const errores = erroresDePregunta(cuerpo)
     if (errores.length > 0) return erroresDeCampo(errores)
-    if (!buscarPersona(texto(cuerpo.codInstructor))) return textoNoEncontrado(D27_PERSONA_NO_EXISTE)
     if (!buscarMateria(Number(cuerpo.idMateria))) return textoNoEncontrado(D4_MATERIA_NO_EXISTE)
+    // `codInstructor` no se toca: modificar una pregunta no le cambia el autor (contrato §2.4).
     pregunta.idMateria = Number(cuerpo.idMateria)
     pregunta.enunciado = texto(cuerpo.enunciado).trim()
     if (esTipo(cuerpo.tipoPregunta)) pregunta.tipoPregunta = cuerpo.tipoPregunta

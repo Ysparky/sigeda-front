@@ -14,7 +14,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { consultasMaterias } from '@/features/materias/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
-import { useSesion } from '@/lib/auth/use-sesion'
 import { accionDisponible } from '@/lib/dependencias'
 import {
   DIFICULTADES,
@@ -40,13 +39,12 @@ export function TablaDeImportacion({ filas: iniciales }: Props) {
   const materias = useQuery(consultasMaterias.lista())
   const queryClient = useQueryClient()
   const navegar = useNavigate()
-  const sesion = useSesion()
   const elegidas = filas.filter((fila) => fila.incluida)
   const importables = elegidas.every((fila) => filaImportable(fila, elegidas))
 
   const importar = useMutation({
     mutationFn: (filasEnviadas: FilaImportacion[]) =>
-      importarPreguntas({ codInstructor: sesion?.codPersona ?? '', preguntas: aCuerpoDeLote(filasEnviadas) }),
+      importarPreguntas({ preguntas: aCuerpoDeLote(filasEnviadas) }),
     onSuccess: async (mensaje) => {
       toast.success(mensaje)
       await queryClient.invalidateQueries({ queryKey: clavesPreguntas.todo })

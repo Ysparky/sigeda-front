@@ -108,9 +108,8 @@ export function valoresDesdePregunta(pregunta: PreguntaDetalle): ValoresPregunta
   }
 }
 
-export function aCuerpoPregunta(valores: ValoresPregunta, codInstructor: string): CuerpoPregunta {
+export function aCuerpoPregunta(valores: ValoresPregunta): CuerpoPregunta {
   return {
-    codInstructor,
     idMateria: Number(valores.idMateria),
     enunciado: valores.enunciado.trim(),
     tipoPregunta: valores.tipoPregunta,

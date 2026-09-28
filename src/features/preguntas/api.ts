@@ -41,7 +41,6 @@ export type PreguntaDetalle = {
 export type AlternativaEnviada = { respuesta: string; correcto: boolean }
 
 export type CuerpoPregunta = {
-  codInstructor: string
   idMateria: number
   enunciado: string
   tipoPregunta: TipoPregunta
@@ -50,7 +49,9 @@ export type CuerpoPregunta = {
   alternativas: AlternativaEnviada[]
 }
 
-export type CuerpoLote = { codInstructor: string; preguntas: Omit<CuerpoPregunta, 'codInstructor'>[] }
+// El autor no viaja: el servidor lo resuelve del token (dependencia 51). En el `PUT` tampoco, y
+// ahí es una regla y no una omisión: modificar una pregunta NO le cambia el autor.
+export type CuerpoLote = { preguntas: CuerpoPregunta[] }
 
 export type FiltrosPreguntas = ParametrosPagina & {
   idMateria?: number

@@ -33,7 +33,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { consultasMaterias } from '@/features/materias/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
-import { useSesion } from '@/lib/auth/use-sesion'
 import { DIFICULTADES, MARCADOR_COMPLETAR, TIPOS_PREGUNTA, type TipoPregunta } from '@/lib/dominio/teoria'
 import { aplicarErroresDeCampo } from '@/lib/formularios'
 import { errorDePrimeraCarga } from '@/lib/query'
@@ -51,7 +50,6 @@ type PropsFormulario = { pregunta?: PreguntaDetalle; alGuardar: () => void }
 
 function FormularioPregunta({ pregunta, alGuardar }: PropsFormulario) {
   const queryClient = useQueryClient()
-  const sesion = useSesion()
   const materias = useQuery(consultasMaterias.lista())
   const [tipoPendiente, setTipoPendiente] = useState<TipoPregunta | null>(null)
   const [huerfanos, setHuerfanos] = useState<string[]>([])
@@ -64,7 +62,7 @@ function FormularioPregunta({ pregunta, alGuardar }: PropsFormulario) {
 
   const guardar = useMutation({
     mutationFn: (valores: ValoresPregunta) => {
-      const cuerpo = aCuerpoPregunta(valores, sesion?.codPersona ?? '')
+      const cuerpo = aCuerpoPregunta(valores)
       return pregunta ? modificarPregunta(pregunta.id, cuerpo) : crearPregunta(cuerpo)
     },
     onSuccess: async (mensaje) => {

@@ -111,7 +111,7 @@ export function filaImportable(fila: FilaImportacion, todas: readonly FilaImport
   return avisosDeFila(fila, todas).length === 0
 }
 
-export function aCuerpoDeLote(filas: readonly FilaImportacion[]): Omit<CuerpoPregunta, 'codInstructor'>[] {
+export function aCuerpoDeLote(filas: readonly FilaImportacion[]): CuerpoPregunta[] {
   return filas.map((fila) => ({
     idMateria: Number(fila.idMateria),
     enunciado: fila.enunciado.trim(),

@@ -18,13 +18,11 @@ import {
   D2_PREGUNTA_NO_EXISTE,
   D3_PREGUNTA_EN_USO,
   D4_MATERIA_NO_EXISTE,
-  D27_PERSONA_NO_EXISTE,
 } from './preguntas'
 
 const PARAMETROS = { page: 0, size: 10, direction: 'ASC' } as const
 
 const NUEVA: CuerpoPregunta = {
-  codInstructor: '444444',
   idMateria: 5,
   enunciado: '¿Cuál es el procedimiento normal de encendido del motor?',
   tipoPregunta: 'OPCION_MULTIPLE',
@@ -192,10 +190,35 @@ describe('contrato §2.2 y §2.3 detalle y creación', () => {
     ).toBe('Pregunta guardada con éxito.')
   })
 
-  it('contrato §2.3 responde 404 D4 y D27 para la materia y el instructor inexistentes', async () => {
+  it('contrato §2.3 responde 404 D4 para la materia inexistente', async () => {
     await comoInstructor()
     await expect(crearPregunta({ ...NUEVA, idMateria: 99 })).rejects.toThrow(D4_MATERIA_NO_EXISTE)
-    await expect(crearPregunta({ ...NUEVA, codInstructor: '000999' })).rejects.toThrow(D27_PERSONA_NO_EXISTE)
+  })
+
+  it('el autor de la pregunta es el llamador, no un codInstructor del cuerpo (dependencia 51)', async () => {
+    // Hacen falta DOS llamadores: con uno solo, «el autor es el llamador» no se distingue de
+    // «el autor es 444444». Un codInstructor ajeno en el cuerpo tiene que ignorarse, no crear
+    // una pregunta de otro instructor ni dar 404.
+    await comoInstructor()
+    await crearPregunta({ ...NUEVA, codInstructor: '000999' } as never)
+    expect(datos().preguntas.at(-1)?.codInstructor).toBe('444444')
+    await iniciarComo('admin.sistema')
+    await crearPregunta({ ...NUEVA, enunciado: 'Otra pregunta escrita por el administrador web.' })
+    expect(datos().preguntas.at(-1)?.codInstructor).toBe('000001')
+  })
+
+  it('modificar no le cambia el autor a la pregunta (contrato §2.4)', async () => {
+    await iniciarComo('admin.sistema')
+    const antes = await obtenerPregunta(1)
+    await modificarPregunta(1, {
+      idMateria: antes.materia.id,
+      enunciado: 'Enunciado corregido por alguien que no es su autor original.',
+      tipoPregunta: antes.tipoPregunta,
+      dificultad: antes.dificultad,
+      explicacion: antes.explicacion,
+      alternativas: antes.alternativas.map(({ respuesta, correcto }) => ({ respuesta, correcto })),
+    })
+    expect(datos().preguntas.find((pregunta) => pregunta.id === 1)?.codInstructor).toBe('444444')
   })
 })
 
@@ -213,7 +236,6 @@ describe('contrato §2.4 y §2.5 modificar y eliminar', () => {
     const antes = await obtenerPregunta(9)
     expect(antes.origen).toBe('IA')
     await modificarPregunta(9, {
-      codInstructor: '444444',
       idMateria: antes.materia.id,
       enunciado: 'Enunciado corregido a mano después de importarlo desde la IA.',
       tipoPregunta: antes.tipoPregunta,
@@ -234,7 +256,6 @@ describe('contrato §2.4 y §2.5 modificar y eliminar', () => {
     expect(idsAntes.map(String)).toContain(guardada)
     const antes = await obtenerPregunta(1)
     await modificarPregunta(1, {
-      codInstructor: '444444',
       idMateria: antes.materia.id,
       enunciado: 'Enunciado corregido mientras un alumno tiene el examen en curso.',
       tipoPregunta: antes.tipoPregunta,
@@ -255,7 +276,7 @@ describe('contrato §2.4 y §2.5 modificar y eliminar', () => {
     const idsAntes = alternativasDePregunta(17).map((alternativa) => alternativa.id)
     expect(idsAntes).toHaveLength(4)
     const siguiente = datos().secuencias.alternativa
-    const base = { codInstructor: '444444', idMateria: 4, dificultad: 'BAJA' } as const
+    const base = { idMateria: 4, dificultad: 'BAJA' } as const
     await modificarPregunta(17, {
       ...base,
       enunciado: 'Los límites de operación se encuentran en el manual de _____.',
@@ -299,11 +320,7 @@ describe('contrato §2.6 lote', () => {
   it('CA-IMP-10 guarda todas con origen IA y en el orden recibido', async () => {
     await comoInstructor()
     const mensaje = await importarPreguntas({
-      codInstructor: '444444',
-      preguntas: [
-        { ...NUEVA, codInstructor: undefined } as never,
-        { ...NUEVA, enunciado: 'Otro enunciado generado por la IA para el banco.' } as never,
-      ],
+      preguntas: [NUEVA, { ...NUEVA, enunciado: 'Otro enunciado generado por la IA para el banco.' }],
     })
     expect(mensaje).toBe('Preguntas guardadas con éxito.')
     expect((await obtenerPregunta(25)).origen).toBe('IA')
@@ -313,7 +330,6 @@ describe('contrato §2.6 lote', () => {
   it('contrato §2.6 el lote responde con la forma de detalle de §2.2, no la fila plana de §2.1', async () => {
     await comoInstructor()
     const respuesta = await sigeda.post<{ mensaje: string; preguntas: unknown[] }>('/api/preguntas/lote', {
-      codInstructor: '444444',
       preguntas: [NUEVA],
     })
     const primera = respuesta.preguntas[0] as Record<string, unknown>
@@ -326,7 +342,6 @@ describe('contrato §2.6 lote', () => {
   it('CA-IMP-09 rechaza el lote completo señalando la fila', async () => {
     await comoInstructor()
     const error = await importarPreguntas({
-      codInstructor: '444444',
       preguntas: [NUEVA, { ...NUEVA, enunciado: 'corto' }],
     }).catch((problema: unknown) => problema)
     expect((error as ApiError).erroresDeCampo['preguntas[1].enunciado']).toBe(
@@ -337,14 +352,13 @@ describe('contrato §2.6 lote', () => {
 
   it('contrato §2.6 rechaza un lote vacío, uno de más de 20 y los enunciados repetidos dentro del lote', async () => {
     await comoInstructor()
-    const vacio = await importarPreguntas({ codInstructor: '444444', preguntas: [] }).catch((p: unknown) => p)
+    const vacio = await importarPreguntas({ preguntas: [] }).catch((p: unknown) => p)
     expect((vacio as ApiError).erroresDeCampo.preguntas).toBe('Debe enviar al menos una pregunta.')
     const muchas = await importarPreguntas({
-      codInstructor: '444444',
       preguntas: Array.from({ length: 21 }, (_, indice) => ({ ...NUEVA, enunciado: `Enunciado generado numero ${indice}.` })),
     }).catch((p: unknown) => p)
     expect((muchas as ApiError).erroresDeCampo.preguntas).toBe('No se pueden importar más de 20 preguntas a la vez.')
-    const repetida = await importarPreguntas({ codInstructor: '444444', preguntas: [NUEVA, { ...NUEVA }] }).catch(
+    const repetida = await importarPreguntas({ preguntas: [NUEVA, { ...NUEVA }] }).catch(
       (p: unknown) => p,
     )
     expect((repetida as ApiError).erroresDeCampo['preguntas[1].enunciado']).toBe('La pregunta está repetida en este lote.')
