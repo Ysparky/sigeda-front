@@ -341,7 +341,7 @@ DELETE /api/turnos-teoricos/{id}                                                
 
 | Ruta existente | Permiso | Qué devuelve | Por qué no sirve |
 |---|---|---|---|
-| `GET /api/grupos` (`GrupoController.java:56-57`) | `Manage Groups` | `Page<IndexGrupo>` = `{id, nombre, descripcion, programa}` | El Instructor no tiene `Manage Groups`, y no hay filtro por `programa` |
+| `GET /api/grupos` (`GrupoController.java:56-57`) | `Manage Groups` | `Page<IndexGrupo>` = `{id, nombre, descripcion, programa}` | El Instructor no tiene `Manage Groups` — desde la dependencia 4, tampoco el Jefe de Operaciones: solo el Administrador Web —, y no hay filtro por `programa` |
 | `GET /api/grupos/programa/{nombre}` (`:123-125`) | `View All Groups` | `Page<CatalogoByPrograma>` | El Instructor tampoco lo tiene, y la proyección (`projections/CatalogoByPrograma.java:5-14`) trae `idGrupo` y `estado` **por alumno**, sin `nombre` de grupo ni fila de grupo |
 | `GET /api/grupos/instructor/{cod}/programa/{nombre}` (`:154-156`) | `View My Group` | `Page<CatalogoByAlumnoTurno>` sobre filas de `alumnos_turno`, una por (alumno, turno) | Son alumnos con los que ya voló, no grupos. (La proyección declaraba `List<Alumno> getPersona()` contra un `Persona` único; la tanda G lo alineó y `persona` es un objeto.) |
 
@@ -815,7 +815,7 @@ La única integración real de M4. `POST /quizzes/generate` en `sigeda_chat_stat
 
 Dos preguntas generadas idénticas se rechazan en el `lote` (§2.6), así que la pantalla las señala antes de enviar.
 
-Notas heredadas de M3 que valen aquí: la generación es **síncrona** con hasta tres intentos del modelo, así que el frontend corta a los 120 s (M3-4); su 400 puede traer texto crudo de Zod, así que solo se muestran los mensajes de la lista cerrada de M3-5 y cualquier otro se reemplaza por E8 (dependencia 50); el servidor de IA **no autentica** (dependencia 39), pero Importar **no** está bloqueada por eso, porque la pregunta se escribe en `sigeda-back` con el `codInstructor` que envía el frontend y no se agrega nada a ninguna lista compartida del lado de la IA (spec M4-5).
+Notas heredadas de M3 que valen aquí: la generación es **síncrona** con hasta tres intentos del modelo, así que el frontend corta a los 120 s (M3-4); su 400 puede traer texto crudo de Zod, así que solo se muestran los mensajes de la lista cerrada de M3-5 y cualquier otro se reemplaza por E8 (dependencia 50); el servidor de IA **no autentica** (dependencia 39), pero Importar **no** está bloqueada por eso, porque la pregunta se escribe en `sigeda-back` —con el autor que el servidor resuelve del token, desde la dependencia 51— y no se agrega nada a ninguna lista compartida del lado de la IA (spec M4-5).
 
 **[Dependencia 59, opcional]** Si `POST /quizzes/generate` aceptara `maxPromptChars` (≤ 500) y una pista de dificultad, casi toda la edición manual desaparecería.
 
@@ -974,7 +974,7 @@ Consecuencias buscadas:
 
 Todas con `codInstructor: "444444"` y `programa: "PDI"`. Por el camino `turnos.cod_instructor` → `alumnos_turno` → `personas.id_grupo`, **444444 alcanza los grupos 1, 2 y 3**, y 888888 alcanza el 4 y el 6. Las fechas son relativas a `hoy`, el argumento de `crearDatos(hoy)`.
 
-> **Aviso, 27 sep 2026 — la semilla contiene un par que su propio `POST` rechazaría.** Los turnos **6 y 7 son del grupo 6 con `codInstructor: "444444"`**, y 444444 no alcanza el grupo 6: un `POST` de §3.3 con ese par recibe `'codInstructor': El grupo no corresponde al instructor.`, salvo que el llamador tenga `Manage Groups`. La semilla se dejó así **a propósito**, para que el mock y el backend coincidan mientras se decide de qué lado se arregla: cambiar esos dos turnos a `888888`, o darle el grupo 6 a 444444. Es una línea en cualquiera de los dos lados.
+> **Aviso, 27 sep 2026 — la semilla contiene un par que su propio `POST` rechazaría.** Los turnos **6 y 7 son del grupo 6 con `codInstructor: "444444"`**, y 444444 no alcanza el grupo 6: un `POST` de §3.3 hecho por 444444 con el grupo 6 recibe `'idGrupo': El grupo no corresponde al instructor.`, salvo que el llamador tenga `Manage Groups`. La semilla se dejó así **a propósito**, para que el mock y el backend coincidan mientras se decide de qué lado se arregla: cambiar esos dos turnos a `888888`, o darle el grupo 6 a 444444. Es una línea en cualquiera de los dos lados.
 
 | Id | Estado | Materia | Grupo | Tipo | Fecha | Horario | Preguntas | Para |
 |---|---|---|---|---|---|---|---|---|
@@ -999,7 +999,7 @@ Lo demás de la §9.2:
 - `resultados` del turno 5 contiene **solo a `666666`**, porque es el único que desaprobó el turno 1. Es lo que prueba la regla de habilitados de §3.2.
 - Ningún turno incluye a `654321` (sin grupo) ni al grupo 5 (sin alumnos): §3.0 no lo ofrece, y un cuerpo que lo envíe recibe `El grupo no tiene alumnos.`
 - El grupo 3 es el único con dos alumnos, así que es el único que puede mostrar resultados mixtos.
-- **Catálogo de grupos (§3.0):** `codInstructor=444444&programa=PDI` → grupos 1 (1 alumno), 2 (1) y 3 (2); `codInstructor=888888&programa=PDI` → grupos 4 (1) y 6 (1); sin `codInstructor` y con `Manage Groups` → 1, 2, 3, 4 y 6. `programa=PDE` → **404** D28, porque todos los grupos sembrados son PDI.
+- **Catálogo de grupos (§3.0):** `programa=PDI` como `instructor.perez` (444444) → grupos 1 (1 alumno), 2 (1) y 3 (2); el **mismo pedido** como `instructor.mendoza` (888888) → grupos 4 (1) y 6 (1); como `admin.sistema`, que tiene `Manage Groups` → 1, 2, 3, 4 y 6. `programa=PDE` → **404** D28, porque todos los grupos sembrados son PDI.
 
 ### 9.3 Exámenes y estado teórico
 
@@ -1069,8 +1069,8 @@ Numeración de la spec (§10, §13.4, §14.5, §15.5 y §16.5). Todas son de `si
 | 39 (M3) | El servidor de IA no autentica. **No bloquea** Importar desde IA | §6 |
 | 48 (M3) | `sourceDocumentId` por pregunta | §6 |
 | 50 (M3) | Mensajes de error del servidor de IA sin texto de librerías | §6 |
-| 51 | **Seguridad:** resolver quién llama (`sub` → `Usuario` → `Persona.codigo`), quitar `codInstructor` y `codAlumno` de la firma y aplicar la propiedad en el servidor (D15) | Convenciones, §2, §3, §4, §5 |
-| 52 | `GET /api/turnos-teoricos/grupos?codInstructor=&programa=`: los grupos para los que un instructor puede programar, derivados de `turnos.cod_instructor` → `alumnos_turno` → `personas.id_grupo`. Endpoint **nuevo**, no una ampliación: ninguna de las tres rutas de `GrupoController` sirve (permiso, forma o falta de identidad de grupo) | §3.0 |
+| 51 | **Seguridad:** resolver quién llama (`sub` → `Usuario` → `Persona.codigo`), quitar `codInstructor` y `codAlumno` de la firma y aplicar la propiedad en el servidor (D15). **HECHA en la tanda G** (27 sep 2026) | Convenciones, §2, §3, §4, §5 |
+| 52 | `GET /api/turnos-teoricos/grupos?programa=`: los grupos para los que un instructor puede programar, derivados de `turnos.cod_instructor` → `alumnos_turno` → `personas.id_grupo`. Endpoint **nuevo**, no una ampliación: ninguna de las tres rutas de `GrupoController` sirve (permiso, forma o falta de identidad de grupo) | §3.0 |
 | 53 | Esquema y semilla de teoría: 7 tablas, sus secuencias, sus FK y un camino de migración a producción | §8 |
 | 54 | Los cuatro permisos como código en `Permiso.java`, `Permission.java` y `Role.java`. Hasta entonces **cualquier usuario autenticado alcanza todo lo de aquí** | Permisos |
 | 55 | Cierre de la ventana del examen: perezoso en cada lectura (obligatorio) y, mejor, un trabajo programado. Hoy no hay ningún `@Scheduled` en el proyecto | §4.7 |
