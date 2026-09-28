@@ -124,13 +124,22 @@ Recorrido sugerido:
    frontend muestra como panel vacío, porque **la semilla no tiene ninguna fila en
    `chequeos_finales`**.
 3. **El orden de mérito está FUERA DE ALCANCE por ahora, y no se demuestra.** El endpoint está
-   implementado y probado, pero falta la tabla de coeficientes de misión del PDI (dependencia 62),
-   que **no está en el documento ni en su libro de trabajo**, así que ningún alumno tiene `NFPI`
-   calculable y el reporte devolvería todas las filas sin puesto. **Un orden de mérito sin puestos
-   no es un orden de mérito**, así que no se presenta como funcionalidad terminada. La pantalla
-   queda deshabilitada sola (la acción exige la 62) y explica cuál es el dato que falta. El
-   `NFPI` del legajo dice lo mismo. **No es una carencia del software**: el día que llegue la tabla,
-   vuelve al alcance sin código nuevo.
+   implementado y probado, pero ningún alumno tiene `NFPI` calculable, así que el reporte devolvería
+   todas las filas sin puesto. **Un orden de mérito sin puestos no es un orden de mérito**, así que
+   no se presenta como funcionalidad terminada. La pantalla queda deshabilitada sola (la acción
+   exige la 62) y explica por qué.
+
+   **La razón cambió el 28 sep 2026, y conviene no contar la vieja en la demo:** ya **no** falta la
+   tabla de coeficientes de misión. Esa tabla estaba en el libro de trabajo del PDI como horas por
+   misión (`docs/coeficientes-de-mision-pdi.md`), el servidor la implementó en la tanda H y **la nota
+   de sub fase se calcula de verdad** — el legajo de `555555` muestra `14.75` en Contacto, ponderado
+   por el PDI sobre el 57 % de la sub fase, y lo dice. Lo que deja el `NIA` en `null` es que
+   **`NFOH` y `NFOA` no tienen ninguna sub fase en el sistema**: el NIA pondera las tres fases y solo
+   existen las de Adaptación. Eso es una decisión de alcance del proyecto, no un dato que falte en la
+   norma.
+
+   **Lo que sí se puede demostrar** es el legajo en ese estado mixto: un NSF real con su ponderación
+   declarada, un NIA en `null` y un motivo que nombra exactamente qué falta.
 4. **~~`NCT` y las causales salen vacíos.~~ ARREGLADO el 27 sep 2026.** Faltaba que la semilla
    tuviera un turno de tipo **`EXAMEN`** — `PE` solo se alimenta de ese tipo, así que ningún `NA`
    era calculable. Se sembraron un `TEST` y un `EXAMEN` de la materia 3 para el grupo 3

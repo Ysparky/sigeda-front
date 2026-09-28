@@ -78,7 +78,7 @@ Defaults `page=0`, `size=6`, `direction=ASC`. Errores de paginado (índice negat
 
 | Permiso | Rol(es) confirmados | Uso en este contrato |
 |---|---|---|
-| `Read` | uso general de consulta (múltiples roles) | listas y detalles de turnos, evaluaciones, subfases/maniobras/fases/estandares, `GET /api/aeronaves` |
+| `Read` | uso general de consulta (múltiples roles) | listas y detalles de turnos, evaluaciones, subfases/maniobras/fases/estandares, `GET /api/subfases/{id}/misiones`, `GET /api/aeronaves` |
 | `Write` | Instructor (entre otros) | crear evaluaciones, `GET /api/personas/{cod}/status` |
 | `Modify Evaluations` | Administrador Web, Comandante de Escuadrón (**no** Instructor) | editar/eliminar evaluaciones |
 | `Manage Shifts` | Jefe de Operaciones | CRUD de turnos, `GET /turnos/{fecha}/aeronave/{id}`, `GET /maniobras/subfase/{id}`, `GET /personas/instructor/{tipo}`, `GET /alumnos/programa/{nombre}` |
@@ -233,6 +233,7 @@ GET /api/turnos/{id}   Read
 - `aeronave` reutiliza el mismo objeto ya usado en la respuesta de create/update (§1.5), pero agregando `estado` (no solo `id`/`nombre`).
 - `maniobrasTurno` y `fase` ya son correctos hoy (propiedades reales de `Turno`); no cambian.
 - `idSubfase` es **nuevo** (dependencia 21): el id de la sub fase del turno, junto a su nombre `subfase`. Hoy el detalle solo trae el nombre y Modificar turno recupera el id buscándolo por nombre en `GET /api/subfases`; con este campo deja de depender de que los nombres de sub fase sean únicos.
+- **`idMision` NO está acá, y tiene consecuencia** (tanda H, 28 sep 2026). El turno lleva una misión del PDI opcional (§1.5), la respuesta del `POST`/`PUT` la devuelve y **esta proyección no** — comprobado con `curl` contra el 8080: `GET /api/turnos/8` no trae la clave. Como el `PUT` **escribe `idMision` tal cual llega** (§1.6), el formulario de Modificar turno **no puede recuperar la misión que el turno ya tenía** y su selector arranca vacío, de modo que guardar sin volver a elegirla **borra la asignación**. La pantalla lo dice en el campo en vez de callarlo. Lo que lo cierra de verdad es publicar `idMision` acá, y es trabajo del servidor.
 
 ⚠ Dato de seed: los 7 turnos sembrados tienen `cod_instructor` **NULL** (columna omitida en el INSERT) y tampoco tienen aeronave asignada — ambos solo se completan al hacer `POST`/`PUT /api/turnos`. El ejemplo de arriba asume que a este turno ya se le asignó el instructor `444444` (Juan Torres Perez) y la aeronave `1` (Robinson R22).
 
@@ -252,6 +253,7 @@ POST /api/turnos   Manage Shifts
 | `fechaEval` | `LocalDate` (`uuuu-MM-dd`) | `@NotNull`; `@Future` | `"Ingresar fecha válida."` / `"La fecha del turno debe ser posterior a hoy."` |
 | `programa` | Programa | `@NotNull` | `"Ingresar programa válido."` |
 | `idSubfase` | int | `@Positive` | `"La subfase es requerida."` |
+| `idMision` | `Integer` **opcional** | — (nullable; el guardia es de negocio, no de campo) | — |
 | `codInstructor` | String | `@NotBlank` | `"Instructor debe ser asignado."` |
 | `aeronave` | objeto `{id}` | `@NotNull` | `"La asignación de aeronave es requerida."` |
 | `alumnosTurno` | `List<Alumno_TurnoSave>` | `@NotEmpty` | `"La asignación de alumnos es requerida"` |
@@ -277,6 +279,12 @@ POST /api/turnos   Manage Shifts
 1. `subfaseService.findById(idSubfase)` — no existe → 404 `ErrorResponse` "No existe información de subfase." (sin cambios).
 2. `aeronaveDao.findById(aeronave.id)` — no existe → 404 `ErrorResponse` "No existe información de aeronave." (sin cambios).
 3. `aeronave.estado != Disponible` → 400 `ErrorResponse` (`ValidationException`) "Asignar aeronave disponible." (sin cambios).
+3bis. **[Nuevo — dependencia 62, tanda H, 28 sep 2026]** Si el request trae `idMision` y esa misión **no pertenece a la sub fase del turno** → 400 `ErrorResponse` (`ValidationException`) con `$.message` exacto **`"La misión asignada no pertenece a la subfase del turno."`**. Tres cosas comprobadas con `curl` contra el 8080, no deducidas del código:
+   - Un **`idMision` que no existe** da el **mismo** mensaje, no un 404: el guardia pregunta «¿existe una misión con este id **en esta sub fase**?», y la respuesta es no en los dos casos.
+   - `idMision: null` y `idMision` **ausente** son válidos: el turno queda sin misión, y entonces su nota de sub fase sale como **promedio simple** (`contrato-api-seguimiento.md` §3.1, `ponderacion: "uniforme"`).
+   - **El orden importa y es éste:** con una aeronave no disponible *y* una misión ajena, el servidor responde `"Asignar aeronave disponible."`. O sea que este guardia va **después** del paso 3 y **antes** del cruce de horarios del paso 4.
+
+   Ninguna restricción de la base puede exigirlo —son dos columnas de dos tablas—, así que el servidor lo rechaza al escribir y el cálculo del NSF lo descarta al leer.
 4. **[Nuevo — dependencia 15, corregido el 27 sep 2026]** Para cada alumno de `alumnosTurno`: comprobar que su `horaInicio`/`horaFin` no se solape (i) con otro turno ya guardado de **ese mismo alumno** en la **misma fecha**, **sea cual sea la aeronave** (usando `turno/utils/HorasInicioFin.java`), ni (ii) con otra entrada de `alumnosTurno` del mismo request para el mismo alumno. Cada conflicto agrega al arreglo 400 el elemento `"'alumnosTurno[i].codAlumno': El alumno <cod> tiene un horario que se cruza con otro turno del mismo día."` (uno por alumno en conflicto).
 
    > **Por qué cambió.** La versión anterior filtraba por **misma aeronave y fecha**, y con ese filtro **el caso que justifica la regla se escapa**: el mismo alumno en **dos aeronaves distintas** a la misma hora pasaba sin que nadie lo notara. La regla es del **alumno** —no puede estar en dos turnos a la vez—, así que no se filtra por aeronave. El solape de **aeronave** es otra cosa: sigue siendo un **aviso del frontend que deja guardar** (decisión M1-10), y el servidor **no** lo rechaza. El texto del mensaje también cambió, porque el anterior nombraba a la aeronave como la razón de un rechazo que es del alumno.
@@ -288,6 +296,8 @@ POST /api/turnos   Manage Shifts
 ```
 
 ⚠ **Nota para Victor**: `Response.wasSaved(nombreEntidad, entidad)` concatena siempre `"<nombreEntidad> guardada con éxito."` (concordancia femenina, correcta para "Evaluación" pero incorrecta para "Turno", masculino). Para producir exactamente `"Turno guardado con éxito."` sin romper el uso ya existente en Evaluación/Persona/Grupo, sobrecargar el helper (p. ej. un parámetro de género) o construir el mapa de respuesta manualmente en este endpoint — no reusar `wasSaved("Turno", ...)` tal cual.
+
+**La respuesta trae `idMision`** (tanda H): el servidor serializa la entidad `Turno`, así que la clave viaja con el valor que quedó guardado. `GET /api/turnos/{id}` **no** la trae (§1.4), y ésa es la asimetría de la que sale la advertencia del formulario.
 
 El cuerpo `turno` es el `DetalleTurno` completo (§1.4), no la entidad `Turno` cruda — así el frontend puede confirmar de una vez qué alumnos/maniobras quedaron guardados (hoy `alumnosTurno`/`maniobrasTurno` son `@JsonIgnore` en `Turno` y esto era imposible de verificar).
 
@@ -306,7 +316,20 @@ El cuerpo `turno` es el `DetalleTurno` completo (§1.4), no la entidad `Turno` c
 PUT /api/turnos/{id}   Manage Shifts
 ```
 
-**`TurnoUpdate`**: mismos campos/mensajes que `TurnoCreate` para `nombre`, `fechaEval`, `codInstructor`, `aeronave`, `alumnosTurno`, `maniobrasTurno` — **sin** `programa` ni `idSubfase` (no se pueden cambiar en un update). Mismas correcciones de `Alumno_TurnoSave` que §1.5. También aplica el rechazo por subsanación pendiente del paso 5 de §1.5, y también publica `idSubfase` con f minúscula.
+**`TurnoUpdate`**: mismos campos/mensajes que `TurnoCreate` para `nombre`, `fechaEval`, `codInstructor`, `idMision`, `aeronave`, `alumnosTurno`, `maniobrasTurno` — **sin** `programa` ni `idSubfase` (no se pueden cambiar en un update). Mismas correcciones de `Alumno_TurnoSave` que §1.5. También aplica el rechazo por subsanación pendiente del paso 5 de §1.5, y también publica `idSubfase` con f minúscula.
+
+> ## ⚠ `idMision` se ESCRIBE TAL CUAL LLEGA: omitirlo BORRA la asignación
+>
+> Este DTO **reemplaza el turno, no lo parchea**, y `idMision` no es la excepción: comprobado con
+> `curl` contra el 8080, un `PUT` sin la clave deja el campo en `null`. El guardia de sub fase del
+> paso 3bis de §1.5 también se aplica acá, y compara contra la **sub fase del turno guardado**, no
+> contra una del cuerpo, porque el cuerpo no la trae.
+>
+> Del lado del cliente eso obliga a que **`modificarTurno` mande `idMision` siempre**, con `null`
+> explícito cuando no hay ninguna, y no a que lo omita: omitirlo hace exactamente lo mismo que
+> mandar `null`, pero por accidente y sin que nadie lo haya decidido. Y como `GET /api/turnos/{id}`
+> no publica la misión (§1.4), el formulario **no puede conservar la que había**: arranca vacío y lo
+> advierte en el campo.
 
 **Reglas de negocio, en orden** (igual que create, con dos diferencias):
 
@@ -548,6 +571,30 @@ GET /api/subfases?page&size&direction&properties   Read
 GET /api/maniobras/subfase/{id}   Manage Shifts
 ```
 `List<IndexGeneral>`; 404 `ErrorResponse` "No existen maniobras disponibles." si vacío. Ejemplo `id=2` (Navegación) → maniobras 1–6 (`"Maniobra 1"`…`"Maniobra 6"`).
+
+### 4.2bis `GET /api/subfases/{id}/misiones` — **Nuevo (dependencia 62, tanda H, 28 sep 2026)**
+
+```
+GET /api/subfases/{id}/misiones   Read
+```
+
+El catálogo de misiones del PDI de una sub fase, **ordenado**, y el insumo del selector de misión del formulario de turno (§1.5).
+
+**200** — lista plana, `[]` incluida:
+
+```json
+[
+  { "id": 1, "codigo": "C-1", "horas": 1.0, "coeficiente": 0.1429 },
+  { "id": 2, "codigo": "C-2", "horas": 1.0, "coeficiente": 0.1429 }
+]
+```
+
+- **`200 []` si la sub fase no tiene misiones. El 404 es SOLO para la sub fase que no existe**, con `ErrorResponse` `"No existe información de subfase."` — «todavía no tiene misiones» no es «no existe». (Del lado del cliente, `sigeda.lista` degrada el 404 a lista vacía, que para un selector es la degradación correcta: no hay misiones que ofrecer. La distinción de estado sigue estando y el mock la reproduce.)
+- **`coeficiente` viene DERIVADO, no guardado:** es `horas / Σ horas de la sub fase`, redondeado a **4 decimales solo para mostrarlo**. El NSF no se calcula sobre estos valores redondeados sino sobre la división exacta (`contrato-api-seguimiento.md` §3.4). Y es `number`, así que **JSON le come los ceros finales**: el `0.1500` de la tabla publicada llega como `0.15` y el `0.1000` como `0.1` — si la pantalla quiere cuatro decimales, los formatea ella.
+- **`codigo` no es único entre sub fases.** El bloque `N/I` del PDI es una sub fase combinada que SIGEDA tiene partida en dos, y está **completo en las dos** (`contrato-api-seguimiento.md` §3.3 ítem 1), así que `N/I-3` existe en Navegación y en Instrumentos con ids distintos. La clave de una opción es el `id`.
+- **El orden lo fija el servidor** con un `order by` explícito, y no es adorno: es una lista numerada que el usuario lee. Sin él, una actualización ordinaria en PostgreSQL mueve la fila al final del heap y el catálogo saldría `C-3 … C-7, C-1, C-2`.
+
+Ejemplos comprobados con `curl` contra el 8080 el 28 sep 2026: `id=1` → `C-1`…`C-7`, 1.0 h y `0.1429` las siete; `id=2` e `id=3` → `N/I-1`…`N/I-6` a 1.5 h y `0.15`, más `N/I-7` a 1.0 h y `0.1`; `id=4` → `CX-1`…`CX-8` a 1.5 h y `0.125`; `id=5` → `FT-1`…`FT-5` a 1.0 h y `0.2`. `id=99` → 404.
 
 ### 4.3 `GET /api/personas/instructor/{tipo}` — **Sin cambios**
 

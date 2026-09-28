@@ -329,21 +329,39 @@ GET /api/personas/{cod}/indices   Read   [NUEVO, deps. 61 y 62; su mitad teóric
     "valor": null,
     "fases": [
       { "fase": "Adaptación",                    "sigla": "NFAD", "peso": 0.40, "valor": null, "subfases": [
-        { "idSubfase": 1, "subfase": "Contacto",        "sigla": "C",  "peso": 0.25, "nsf": null, "misiones": 3 },
-        { "idSubfase": 2, "subfase": "Navegación",      "sigla": "N",  "peso": 0.25, "nsf": null, "misiones": 0 },
-        { "idSubfase": 3, "subfase": "Instrumentos",    "sigla": "I",  "peso": 0.20, "nsf": null, "misiones": 0 },
-        { "idSubfase": 5, "subfase": "Formación",       "sigla": "F",  "peso": 0.15, "nsf": null, "misiones": 0 },
-        { "idSubfase": 4, "subfase": "Campos Extraños", "sigla": "CX", "peso": 0.15, "nsf": null, "misiones": 0 }
+        { "idSubfase": 1, "subfase": "Contacto",        "sigla": "C",  "peso": 0.25, "nsf": 14.75, "misiones": 4, "ponderacion": "PDI",  "cobertura": 0.5714, "motivo": "La sub fase está incompleta: los coeficientes de las misiones calificadas suman 0.5714 de 1.0000, así que la nota de sub fase se renormaliza sobre ese total." },
+        { "idSubfase": 2, "subfase": "Navegación",      "sigla": "N",  "peso": 0.25, "nsf": null,  "misiones": 0, "ponderacion": null,   "cobertura": null,   "motivo": "El alumno no tiene ninguna misión calificada en esta sub fase." },
+        { "idSubfase": 3, "subfase": "Instrumentos",    "sigla": "I",  "peso": 0.20, "nsf": null,  "misiones": 0, "ponderacion": null,   "cobertura": null,   "motivo": "El alumno no tiene ninguna misión calificada en esta sub fase." },
+        { "idSubfase": 5, "subfase": "Formación",       "sigla": "F",  "peso": 0.15, "nsf": null,  "misiones": 0, "ponderacion": null,   "cobertura": null,   "motivo": "El alumno no tiene ninguna misión calificada en esta sub fase." },
+        { "idSubfase": 4, "subfase": "Campos Extraños", "sigla": "CX", "peso": 0.15, "nsf": null,  "misiones": 0, "ponderacion": null,   "cobertura": null,   "motivo": "El alumno no tiene ninguna misión calificada en esta sub fase." }
       ] },
       { "fase": "Operaciones HeliTransportadas", "sigla": "NFOH", "peso": 0.35, "valor": null, "subfases": [] },
       { "fase": "Operaciones AeroTácticas",      "sigla": "NFOA", "peso": 0.25, "valor": null, "subfases": [] }
     ],
-    "motivo": "Falta la tabla de coeficientes de misión del PDI: sin ella no se puede calcular ninguna nota de sub fase."
+    "motivo": "No se puede calcular el NIA: NFAD no tiene nota de sub fase en Navegación, Instrumentos, Formación, Campos Extraños; NFOH no tiene ninguna de sus sub fases en el sistema; NFOA no tiene ninguna de sus sub fases en el sistema."
   }
 }
 ```
 
-`nfpi`, `nit.valor`, `nia.valor`, cada `fases[].valor` y cada `subfases[].nsf` son `number` con 2 decimales **o `null`**. `nit` y `nia` nunca son `null` como objeto: si su `valor` no se puede calcular, el objeto viene con `valor: null` y su desglose con lo que sí hay, para que la pantalla explique qué falta. `nia.motivo` es una frase corta que el frontend muestra literalmente cuando `nia.valor` es `null`.
+**Este bloque es la respuesta real del servidor para `555555`, pegada de `curl` el 28 sep 2026**, no un ejemplo escrito a mano: con la semilla del Escuadrón el `nsf` de Contacto da **14.75** y el `nia.valor` sigue en `null`. Los dos hechos conviven y la pantalla tiene que sostener ese estado mixto.
+
+`nfpi`, `nit.valor`, `nia.valor`, cada `fases[].valor` y cada `subfases[].nsf` son `number` con 2 decimales **o `null`**. `nit` y `nia` nunca son `null` como objeto: si su `valor` no se puede calcular, el objeto viene con `valor: null` y su desglose con lo que sí hay, para que la pantalla explique qué falta.
+
+**`nia.motivo` se MUESTRA, no se compara, y puede venir con un `nia.valor` que NO es `null`** (tanda H, 28 sep 2026). Las dos cosas cambiaron a la vez:
+
+- **El texto es variable.** Se arma con las fases y las sub fases que falten, así que ninguna constante, ningún `if (motivo === …)` y ningún snapshot lo puede fijar. La frase vieja —«Falta la tabla de coeficientes de misión del PDI…»— **ya no la devuelve el servidor en ningún caso**, ni acá ni en el `motivoSinNfpi` de §4.1, porque esa tabla existe y ya está implementada (§3.3 ítem 1).
+- **Ya no acompaña solo al hueco.** Si alguna sub fase se ponderó como promedio simple, el NIA es un número y el `motivo` es el aviso de que **esa nota no es la ponderación de la norma**. Mostrarlo solo cuando `valor === null` esconde exactamente el aviso que no se debe esconder. Regla de pantalla: `valor === null` → el hueco con el motivo; `valor !== null && motivo !== null` → la nota **con** el aviso.
+
+**Cada sub fase declara cómo se calculó su `nsf`**, y los tres campos son de la tanda H:
+
+| Campo | Tipo | Qué dice |
+|---|---|---|
+| `nsf` | `number \| null` | La nota de sub fase. **Ya no es siempre `null`**: era el supuesto del panel hasta la tanda H. |
+| `ponderacion` | `"PDI" \| "uniforme" \| null` | `"PDI"` = `Σ(nota×coef)/Σcoef` con los coeficientes de misión. `"uniforme"` = **promedio simple**, porque alguna misión calificada no resuelve a una misión con coeficiente (su turno no tiene `idMision`, o el que tiene es de otra sub fase). `null` solo cuando `nsf` es `null`. **La pantalla tiene que etiquetar el caso `"uniforme"` como promedio simple:** presentarlo como si fuera el NSF ponderado del PDI sería mentir. |
+| `cobertura` | `number \| null` | Σ de los coeficientes que entraron, **4 decimales**. Solo viaja con `"PDI"`. `1.0000` es la sub fase terminada; **menos** significa que la nota se renormalizó sobre lo volado —y la pantalla lo dice—; **más de `1.0000` significa misiones calificadas más de una vez** (no se deduplica: el PDI no da regla de prevalencia para la instrucción aérea, y descartar notas en silencio es peor que mostrar la cobertura). |
+| `motivo` | `string \| null` | La explicación de esa sub fase, por si la pantalla la quiere mostrar. Variable, como el de `nia`. |
+
+`misiones` **no cambió de significado**: sigue contando las evaluaciones `Ponderada` y `Chequeo Sub Fase` de la sub fase, con o sin nota, así que puede ser **mayor** que la cantidad de notas que entraron en el `nsf`.
 
 **El desglose baja hasta la sub fase**, porque es el nivel en el que el PDI pondera y es el único nivel en el que un instructor puede leer «dónde está flojo». Las siglas `C`, `N`, `I`, `F`, `CX`, `CE`, `SAR`, `OEH`, `NTD`, `NVG` son las del PDI y viajan para que la pantalla pueda mostrar la fórmula tal como está publicada.
 
@@ -409,7 +427,15 @@ Las tres sumas de pesos de fase cierran en 1.00, y las tres de sub fase también
 
 Son cinco, todas de datos o de mapeo. Ninguna es una fórmula: las diez fórmulas están publicadas.
 
-**1. La tabla de coeficientes de misión, sin la cual `NIA` no la puede calcular nadie.** `pdi:732` dice «Cada misión tendrá un coeficiente independiente, el cual se detalla a continuación» y la línea siguiente es «Reconocimientos:» — **la tabla prometida no está en el documento**. Y no está en el libro de trabajo que lo acompaña: `PCPH 2024xlsx.xlsx` tiene 316 cadenas compartidas y **ninguna contiene «coef»**, ni `NSF`, `NMI`, `NFAD`, `NFOH` ni `NFOA`; sus dieciséis hojas son `ESTRUCTURA (2024)`, `PRESOLO`, `CONTACTO`, `NAV-INS`, `FORMACIÓN`, `NOCTURNO`, `EMERGENCIAS`, `CAMPEX`, `CARGEX`, `SAR`, `NVG`, `FORTAC`, `NTD`, `OEH`, `OO` y `Hoja1`, que son las hojas de calificativos por sub fase. Conclusión, y es la más fuerte de este contrato: **`NSF` no es computable como está publicado, por nadie** — ni por este sistema ni por el Escuadrón con lápiz — hasta que la institución entregue esa tabla. No es una carencia del backend: es un dato que falta en la norma. Mientras falte, `nsf`, `NFAD`, `NFOH`, `NFOA`, `NIA` y `NFPI` son `null`, y `nia.motivo` lo dice. **La dependencia 62 pide esa tabla como dato institucional.**
+**1. ~~La tabla de coeficientes de misión, sin la cual `NIA` no la puede calcular nadie.~~ RESUELTO — tanda H, 28 sep 2026.** Lo que este contrato daba por perdido era medio cierto: `pdi:732` promete «Cada misión tendrá un coeficiente independiente, el cual se detalla a continuación» y la línea siguiente es «Reconocimientos:», así que **la tabla no está en el documento**. Pero **sí está en el libro de trabajo**: `PCPH 2024xlsx.xlsx`, hoja `ESTRUCTURA (2024)`, expresada como **horas por misión** — que es por lo que el grep de «coef» no la encontró. El coeficiente es `horas de la misión ÷ horas de la sub fase`, y la verificación de que la extracción es dato y no interpretación es que la suma de las horas por misión da exactamente el total que la propia hoja declara, en las 16 sub fases. La tabla completa está en `docs/coeficientes-de-mision-pdi.md`.
+
+**Qué implementó el servidor con ella**, y son tres decisiones que el frontend refleja y no vuelve a decidir:
+
+- **El coeficiente no se guarda: se derivan de las horas.** La tabla `misiones` guarda `codigo`, `horas` e `id_subfase`, y el coeficiente sale en la respuesta. Guardar el cociente además de las horas obligaría a reescribir la columna entera cada vez que una sub fase gana o pierde una misión.
+- **El bloque `N/I` está en las DOS sub fases, no repartido entre ellas.** El PDI tiene **una** sub fase combinada «Navegación e Instrumentos» con 7 misiones y 10 h; SIGEDA la tiene **partida en dos**, y **cada mitad lleva el bloque completo** y normaliza sobre sus propias 10 h. Repartir las 7 misiones exigiría decidir cuáles son de navegación y cuáles de instrumentos, y **el documento no lo dice**: cualquier corte sería un dato inventado con apariencia de dato del PDI. Con el bloque completo en las dos, los coeficientes que salen son **exactamente los publicados** —`0.1500` seis veces y `0.1000` una— y se pueden verificar contra la tabla línea por línea; un corte 4/3 habría dado cifras que no aparecen en ninguna página del PDI. **Costo asumido y dicho:** sumadas, las dos mitades dan **20 h donde el PDI da 10**, así que esta tabla no sirve para un informe de horas de vuelo totales. Y `N/I-3` existe dos veces, una por sub fase, por lo que la clave única es `(id_subfase, codigo)` y no `codigo`.
+- **El NSF se renormaliza dentro de la sub fase:** `NSF = Σ(NMI × COEF) / Σ COEF`. El PDI enuncia `Σ(NMI × COEF)` para una sub fase **terminada**, donde los coeficientes suman `1.0000` y dividir no cambia nada, así que esto coincide con la norma en el dominio de la norma y solo la extiende fuera de él. Sin renormalizar, un alumno con 4 de las 7 misiones de Contacto tendría un NSF de **8.43 sobre 20** por no haber terminado, y ese número entraría en la nota de fase, en el NIA y en el orden de mérito: no es «un poco bajo», es sistemáticamente difamatorio. La renormalización no es invisible: viaja en `cobertura` (§3.1).
+
+**Lo que la 62 todavía pide** no es la tabla: es el paso de `evaluaciones_practicas.promedio` a columna numérica (hoy `varchar(255)`) y la FK de `fase`. Y **`NIA` y `NFPI` siguen en `null` con la semilla del Escuadrón**, por una razón que nunca fueron los coeficientes: el NIA pondera las tres fases y la base **no tiene ninguna sub fase de `NFOH` ni de `NFOA`** (§3.3 ítem 2b), así que dos notas de fase son `null` y `null` propaga (§3.4). Eso se cierra sembrando esas cinco sub fases o aceptando que el NFPI no existe hasta que un alumno llegue a las tres fases; **ninguna de las dos es un problema de software**.
 
 **2. El mapeo de sub fases, que no cuadra en ninguno de los tres lados.** El PDI pondera **diez** símbolos de sub fase. El libro de trabajo nombra **catorce** hojas de vuelo. `ec2b0dd` siembra **cinco** sub fases (`data_prod.sql:6-11`), todas con `id_fase = 1`:
 
@@ -437,7 +463,7 @@ Lo que hay que decidir: (a) las cinco sub fases sembradas son **exactamente** la
   **Lo que sigue optimista** es el `NIT` del alumno que faltó y a quien **nadie marcó la falta**. Eso ya no es una carencia del backend: es un dato que alguien tiene que tomar.
 - **`null` propaga, y no se rellena con 0.** Si una `NSF` es `null`, su fase es `null`; si una fase es `null`, `NIA` es `null`; si `NIA` es `null`, `NFPI` es `null` aunque `NIT` exista. Un índice ausente **nunca** se devuelve como `0`: 0 es una nota posible y confundir las dos cosas es la manera de publicar un orden de mérito falso.
 - **Redondeo.** Dos decimales, aproximando al centésimo inmediato superior cuando el milésimo sea 5 o mayor (`pdi:588`), **una sola vez al final**; los operandos intermedios no se redondean. Las fijaciones de la §9 están elegidas para que las cifras sean exactas con o sin esa regla.
-- **~~La mitad teórica está bloqueada por la 6.~~ YA NO — corregido el 27 sep 2026.** `NCT`, `NEI` y `NA` se calculan sobre `cuestionarios`, `calificaciones_teoricas` y `materias`, que **ya existen**: las tandas C2 a C5 construyeron las siete tablas de teoría (dependencia 53) y la 6 completa. **`nit.valor` se calcula de verdad** desde la tanda D1, y §9.5 se reprodujo sobre datos en vez de fijarse: `555555` da `nct` 18.00, `nei` 16.00 y `nit` 17.60. Quien implemente §4.1 **no debe suponer que el `NIT` sigue en `null`**. **Y la mitad práctica está bloqueada por un dato de la norma**, no por el backend: sin la tabla de coeficientes de misión, `NIA` es `null` desde el primer día. Es decir: **`NFPI` no es calculable hoy por dos razones independientes**, y solo una de ellas es software.
+- **~~La mitad teórica está bloqueada por la 6.~~ YA NO — corregido el 27 sep 2026.** `NCT`, `NEI` y `NA` se calculan sobre `cuestionarios`, `calificaciones_teoricas` y `materias`, que **ya existen**: las tandas C2 a C5 construyeron las siete tablas de teoría (dependencia 53) y la 6 completa. **`nit.valor` se calcula de verdad** desde la tanda D1, y §9.5 se reprodujo sobre datos en vez de fijarse: `555555` da `nct` 18.00, `nei` 16.00 y `nit` 17.60. Quien implemente §4.1 **no debe suponer que el `NIT` sigue en `null`**. **~~Y la mitad práctica está bloqueada por un dato de la norma~~ — corregido el 28 sep 2026.** La tabla de coeficientes de misión existe y el servidor la usa: el `NSF` **se calcula** (§3.1). Lo que deja el `NIA` en `null` con la semilla del Escuadrón es que **`NFOH` y `NFOA` no tienen ninguna sub fase en el sistema**, y eso es una decisión de alcance de este proyecto, no un dato que falte en la norma.
 
 ## 4. Orden de mérito — la otra mitad de la dependencia 8
 
@@ -445,19 +471,21 @@ Lo que hay que decidir: (a) las cinco sub fases sembradas son **exactamente** la
 >
 > **El endpoint está implementado y probado** (dependencia 63, tanda D2: el orden, el desempate
 > determinista, el alcance por grupo y el paginado). **Lo que queda fuera de alcance es el
-> entregable**: mientras falte la **dependencia 62** —la tabla de coeficientes de misión del PDI,
-> que **no está en el documento ni en su libro de trabajo**— ningún alumno tiene un `NFPI`
-> calculable, así que el reporte devuelve **todas las filas con `puesto: null`** y su
-> `motivoSinNfpi`. Un orden de mérito sin puestos no es un orden de mérito.
+> entregable**: ningún alumno tiene un `NFPI` calculable, así que el reporte devuelve **todas las
+> filas con `puesto: null`** y su `motivoSinNfpi`. Un orden de mérito sin puestos no es un orden de
+> mérito.
+>
+> **Y la razón cambió con la tanda H (28 sep 2026): ya no es la tabla de coeficientes de misión.**
+> Esa tabla existe, está en `docs/coeficientes-de-mision-pdi.md`, el servidor la implementó y el
+> `NSF` se calcula (§3.3 ítem 1). Lo que falta es que **`NFOH` y `NFOA` no tienen ninguna sub fase
+> en el sistema**, así que dos de las tres notas de fase del NIA son `null` y `null` propaga (§3.4).
+> Eso se cierra sembrando esas cinco sub fases o aceptando que el NFPI no existe hasta que un
+> alumno llegue a las tres fases, y es una decisión de alcance, no software.
 >
 > Por eso **no se demuestra ni se presenta como funcionalidad terminada**, y su dependencia no
 > entra en `VITE_DEPENDENCIAS_RESUELTAS` (la acción `verOrdenMerito` exige la 62 además de la 63,
-> así que la pantalla ya queda deshabilitada sola y explica por qué).
->
-> **No es una carencia del software.** El día que la institución entregue esa tabla, esto vuelve al
-> alcance sin escribir código nuevo: lo único que falta es el dato. Lo que sí queda pendiente del
-> lado del software cuando eso pase es el paso de `evaluaciones_practicas.promedio` a numérico, que
-> la propia 62 pide.
+> así que la pantalla ya queda deshabilitada sola y explica por qué). Lo que la 62 todavía pide del
+> lado del software es el paso de `evaluaciones_practicas.promedio` a numérico.
 
 
 ```
@@ -491,7 +519,9 @@ Es un `Page` de Spring sin envoltura ni campos añadidos, igual que todos los de
 
 **Orden y desempate, fijados:** `nfpi` **descendente**, y ante empate `nia` descendente, y si también empata `codigo` **ascendente**. El PDI no define el desempate — habla de «sumatoria ponderada» y de reconocimientos al primer puesto (`pdi:608,734-735`) sin decir qué hacer con dos notas iguales —, así que la regla es de este contrato y tiene que ser **determinista** para que dos lecturas no devuelvan dos órdenes. El `puesto` es el que calcula el servidor con esa regla y **el frontend no lo recalcula nunca**, ni siquiera cuando el usuario reordena la tabla por otra columna: reordenar cambia las filas de sitio, no su puesto. El frontend muestra la regla en S23.
 
-**Alumnos sin NFPI completo:** `puesto: null`, al final de la última página, con `motivoSinNfpi` como frase corta que el frontend muestra literalmente en S24. **No se les asigna puesto** y no desplazan a nadie: los puestos van 1..n sobre los alumnos rankeables. Mientras falte la tabla de coeficientes de misión (§3.3), **eso es todo el mundo**, y la pantalla dirá exactamente eso en lugar de una tabla vacía.
+**Alumnos sin NFPI completo:** `puesto: null`, al final de la última página, con `motivoSinNfpi` como frase que el frontend **muestra, no compara** (S24). **No se les asigna puesto** y no desplazan a nadie: los puestos van 1..n sobre los alumnos rankeables. Con la semilla del Escuadrón **eso es todo el mundo** (§3.3 ítem 1), y la pantalla dirá exactamente eso en lugar de una tabla vacía.
+
+**`motivoSinNfpi` reenvía el `nia.motivo` de §3.1 literalmente, así que le valen sus dos reglas nuevas** (tanda H): es **variable** —se arma con las fases y sub fases que falten— y la frase vieja «Falta la tabla de coeficientes de misión del PDI…» **ya no la devuelve el servidor**. Cualquier constante o aserción que la fijara está comparando contra un texto que no existe.
 
 **Un alumno sin grupo no aparece** (la alumna `654321` de las fijaciones): el reporte es por programa y grupo, y un alumno sin grupo no pertenece a ninguno de los dos alcances. Consultar su legajo sigue siendo posible por §3.1.
 
@@ -928,7 +958,7 @@ Es la única fila que el backend real escribiría: `:83-89` solo pide que la eva
 
 ### 9.5 Índices — **fijados, no derivados**, y el contrato dice por qué
 
-El mock **no calcula** los índices: los devuelve fijados. Dos motivos, y uno de ellos no es del software. **Primero**, la mitad práctica no es calculable por nadie mientras falte la tabla de coeficientes de misión del PDI (§3.3 ítem 1), y además las subfases de `NFOH` y `NFOA` no existen en la semilla. **Segundo**, la mitad teórica necesita las siete tablas de la dependencia 6 más una tabla `materias` que `sigeda-back` no tiene.
+El mock **no calcula** los índices: los devuelve fijados, porque la mitad práctica no cierra con la semilla —las sub fases de `NFOH` y `NFOA` no existen (§3.3 ítem 2b)— y porque las cifras de abajo son el fixture de los desempates de §4.1. **Lo que ya no es un motivo** es la tabla de coeficientes de misión: existe y el servidor la usa (§3.3 ítem 1).
 
 **Dos formas, las dos en el contrato.** Los mocks devuelven la forma **calculada** que se fija abajo, porque este contrato especifica el endpoint tal como debe quedar una vez implementado; una implementación viva hoy devolvería la forma **`null`** del ejemplo de §3.1, con `nia.motivo` explicando por qué. Las dos son correctas en su momento y las dos están fijadas.
 
@@ -952,6 +982,8 @@ Consecuencias buscadas:
 - **`666666` tiene NIT pero no NIA ni NFPI**: prueba que `null` propaga hacia arriba sin borrar la mitad que sí existe (CA-LEG-14) y que la fila aparece sin puesto en el reporte (CA-REP-05).
 - **`654321` viene todo en `null`** con **200**, no 404: prueba que «no calculable» y «no encontrado» son cosas distintas.
 - El desglose de cada alumno lleva sus **cinco sub fases de `NFAD`** con los pesos del PDI (0.25 · 0.25 · 0.20 · 0.15 · 0.15) y sus `nsf`, y `NFOH`/`NFOA` con `subfases: []`, porque esas sub fases no existen en la semilla. Un desglose cuyos pesos no sumen 1.00 está mal armado.
+- **Las tres formas de la tanda H se fijan cubriendo los tres estados que la pantalla distingue**, y no una sola: Contacto va con `ponderacion: "PDI"` y `cobertura: 0.5714` —la sub fase a medio volar, con su `motivo` de renormalización—, **Navegación va con `ponderacion: "uniforme"` y `cobertura: null`** —el promedio simple, que la pantalla no puede presentar como nota del PDI—, y las tres restantes con `"PDI"` y cobertura `1`. Una sub fase sin `nsf` lleva los tres campos en `null` salvo el `motivo`. Es la misma combinación que el servidor vivo devuelve para `555555`.
+- **Y por eso el mock manda `nia.motivo` junto a un `nia.valor` que no es `null`** para los seis alumnos con NIA: es el aviso de que ese NIA no está ponderado con el PDI. Sin esa fijación la pantalla no tiene con qué ejercitar el caso, que es justo el que se escondía.
 - `reduccionPorRezagadoAplicada` es **`false` en todos**, no porque la dependencia 70 falte —ya está hecha— sino porque **la semilla no marca ninguna inasistencia**. La tabla `inasistencias_teoricas` vacía significa «nadie tiene falta clasificada», que es el estado real: sembrar una le bajaría la nota a `999999`, que tiene un REZAGADO, y estas fijaciones dejarían de coincidir.
 - Ningún alumno tiene los once `NA`, así que `asignaturasSinNota[]` **nunca está vacío** y la renormalización de §3.3 ítem 5 se ejerce siempre.
 
@@ -1103,7 +1135,7 @@ Se prueba con `server.use(...)` por prueba, porque las fijaciones por defecto ti
 - un `GET /api/turnos/alumno` que responde con `cantGrupo` en lugar de `cantAlumno` (S11);
 - un `GET /api/personas/{cod}/indices` en la forma **`null`** de §3.1, para probar S14 y `nia.motivo` sobre un alumno que en las fijaciones sí tiene cifras.
 
-**Y una limitación declarada, no un hueco:** el historial práctico de un alumno y sus índices de §9.5 **no son aritméticamente consistentes**. Coinciden en orden — quien tiene desaprobados está abajo, quien no los tiene está arriba — y nada más. La razón está en §9.5: la mitad práctica no es computable por nadie sin la tabla de coeficientes de misión, así que no hay ninguna aritmética que reproducir.
+**Y una limitación declarada, no un hueco:** el historial práctico de un alumno y sus índices de §9.5 **no son aritméticamente consistentes**. Coinciden en orden — quien tiene desaprobados está abajo, quien no los tiene está arriba — y nada más. La razón está en §9.5: los índices del mock son **fijaciones**, elegidas para que los desempates de §4.1 tengan fixture, no el resultado de recorrer las evaluaciones sembradas. El servidor sí las recorre.
 
 ## 10. Dependencias
 
@@ -1111,7 +1143,7 @@ Numeración de la spec (§10, §13.4, §14.5, §15.5, §16.5 y §17.5). Todas so
 
 **Qué funciona hoy y qué no.** La pantalla de Escuadrón y **cuatro paneles del legajo** — historial práctico, reporte de subfase, promedios de subfase y vuelos desaprobados — funcionan contra `ec2b0dd` sin ninguna dependencia nueva. Dos de esos endpoints **nunca los ha llamado ninguna pantalla** y **no tenían ni handler de mock**: `contrato-api-turnos.md` §2.1 y §2.2 los documentaron en M1 y quedaron sin consumidor (§9.9). Todo lo demás es contrato. El frontend lo dice en pantalla (S1, S8, S13, S15, S16, S26) y deshabilita cada panel mientras su número no figure en `VITE_DEPENDENCIAS_RESUELTAS`: `verIndices` espera 61 y 62, `verOrdenMerito` espera **6**, 62 y 63, `verAlertas` 66, `verCicloChequeo` 64 y 65, `verHistorialTeorico` 6 y 67, `verCausalesTeoricos` 7 y 68, `verBloqueoTeoricoLote` 7 y 56. Al desplegar una de estas correcciones, avisar para agregar su número.
 
-**Y una que no es de software.** `NIA` no la puede calcular nadie sin la **tabla de coeficientes de misión** del PDI, que el documento promete y no incluye y que no está en el libro de trabajo que lo acompaña (§3.3 ítem 1). Es un dato que la institución tiene que entregar, y va dentro de la dependencia 62 porque sin él la 61 no tiene con qué trabajar.
+**~~Y una que no es de software.~~ RESUELTA — tanda H, 28 sep 2026.** La **tabla de coeficientes de misión** no hacía falta pedírsela a la institución: estaba en el libro de trabajo del PDI como horas por misión (§3.3 ítem 1, y la tabla completa en `docs/coeficientes-de-mision-pdi.md`). El servidor la implementó y el `NSF` se calcula. Lo que queda de la 62 es software —`promedio` a numérico y la FK de `fase`— y una **decisión de alcance**: `NFOH` y `NFOA` no tienen sub fases en el sistema, así que el `NIA` y el `NFPI` siguen en `null` con la semilla del Escuadrón.
 
 | # | Cambio | Sección |
 |---|---|---|
@@ -1127,7 +1159,7 @@ Numeración de la spec (§10, §13.4, §14.5, §15.5, §16.5 y §17.5). Todas so
 | 56 (M4) | `GET /api/estado-teorico?codAlumnos=` en lote. **Se consume aquí por primera vez**. **HECHA en la tanda G**, idéntica al mock campo por campo más un 403 de propiedad | §5.3 |
 | 58 (M4) | **Bug:** `GET /api/personas/{cod}/status` devuelve 404 para todo alumno cuyo estado no sea `Apto` **ni `En Observación`** — `puedeSerEvaluado()` es `esApto() || estaEnObservacion()` (`grupo/entities/Estado.java:50-52`), así que falla para cinco de los siete estados, no para los seis no-`Apto`. **M5 no lo llama** y por eso no lo pide: usarlo empeoraría el legajo justo para los alumnos que lo necesitan | — (spec §17.6) |
 | **61** | `GET /api/personas/{cod}/indices`: NFPI, NIT, NIA, NA, con el desglose que baja hasta la sub fase, cada valor nullable. **Las diez fórmulas y sus operandos están en el PDI, Título V caps. I–III** (§3.2); lo que falta son los cinco datos de §3.3. Los once coeficientes de asignatura son los del PDI (`pdi:633-669`) y **`sigeda-back` no los guarda: no hay tabla `materias` ni columna `coeficiente` en `src/main`** — llegan con la 6 y la 53. El núcleo de la 8 | §3 |
-| **62** | **Esquema y datos, y es prerrequisito de 61 y 63.** (a) `evaluaciones_practicas.promedio` a columna **numérica** (hoy `varchar(255)`), porque ordenar y promediar texto es lexicográfico. (b) `fase` con FK a `fases` (hoy un string denormalizado con sus tres valores escritos a mano en la entidad), porque un renombre rompe en silencio todo agregado por fase. (c) **Los pesos de sub fase del PDI como dato**: 0.25 · 0.25 · 0.20 · 0.15 · 0.15 en Adaptación, 0.30 · 0.30 · 0.40 en Helitransportadas, 0.50 · 0.50 en Aerotácticas (`pdi:698-723`), y qué sub fase corresponde a cada símbolo — el leyendario del PDI está cruzado y la semilla solo tiene cinco sub fases (§3.3 ítem 2). (d) **La tabla de coeficientes de misión**, que el PDI promete y no entrega (§3.3 ítem 1): **sin ella `NSF` no es computable por nadie**, ni por este sistema ni con lápiz | §3.1, §3.2, §4.1 |
+| **62** | **Esquema y datos, y es prerrequisito de 61 y 63.** (a) `evaluaciones_practicas.promedio` a columna **numérica** (hoy `varchar(255)`), porque ordenar y promediar texto es lexicográfico. (b) `fase` con FK a `fases` (hoy un string denormalizado con sus tres valores escritos a mano en la entidad), porque un renombre rompe en silencio todo agregado por fase. (c) **Los pesos de sub fase del PDI como dato**: 0.25 · 0.25 · 0.20 · 0.15 · 0.15 en Adaptación, 0.30 · 0.30 · 0.40 en Helitransportadas, 0.50 · 0.50 en Aerotácticas (`pdi:698-723`), y qué sub fase corresponde a cada símbolo — el leyendario del PDI está cruzado y la semilla solo tiene cinco sub fases (§3.3 ítem 2). (d) ~~**La tabla de coeficientes de misión**, que el PDI promete y no entrega~~ — **HECHA en la tanda H** (28 sep 2026): la tabla `misiones`, la columna `turnos.id_mision`, el `NSF` ponderado y renormalizado, `GET /api/subfases/{id}/misiones` y el `idMision` opcional del turno. **(c) también está hecha.** Quedan abiertas (a) y (b) | §3.1, §3.2, §4.1 |
 | **63** | `GET /api/reportes/orden-merito` con el desempate NFPI ↓ / NIA ↓ / código ↑ — que es de este contrato, porque el PDI no lo define — y los no rankeables al final sin puesto. Se calcula en cada lectura: no devuelve sello de tiempo porque no hay ningún trabajo programado del que colgarlo. **El primer endpoint que `Create Reports` protegería de verdad** | §4.1 |
 | **64** | `GET /api/personas/{cod}/legajo`: `codigo`, `tipo`, `idGrupo`, nombre y programa del grupo, los cuatro contadores y el bloque `chequeo` derivado de `TurnoDesaprobado`, incluido `cuentaConEsteEstado`. **Motivo, corregido el 27 sep 2026:** esta celda apoyaba el caso en que el Jefe de Operaciones *sí* tenía `Manage Groups` y por eso ya podía leer los contadores; la **dependencia 4** se lo quitó, así que **ningún rol de Seguimiento** alcanza `GET /api/grupos/{id}` — ni él, ni el Instructor, ni el Comandante (`Role.java:25-29`, `:18-23`), que son la audiencia del panel. Las otras dos razones siguen en pie: esa ruta devuelve la entidad `Grupo` completa con todas sus personas, no una cabecera de legajo, y responde 200 con cuerpo vacío para un id inexistente (dependencia 18) | §6.1 |
 | **65** | `GET /api/personas/{cod}/chequeos`, **y antes las columnas y las filas que le faltan a `chequeos_finales`**: `fecha`, `tipo` (OPERACIONES · COMANDO · SUBFASE) y `resultado`, **y escribir también los chequeos desaprobados**. Hoy la tabla guarda un código y cuatro contadores, no tiene ninguna ruta porque su único escritor es un `@Component` sin `@RequestMapping`, y sus dos escrituras ocurren **solo al aprobar** y van seguidas de `reiniciarCont()` — así que una fila significa «chequeo aprobado» y los chequeos que llevaron al alumno al Chequeo de Comando no dejan rastro (§6.2). **Peligro que traen las filas nuevas:** `Persona.recuperarCont` (`grupo/entities/Persona.java:238-245`), que `ResultadoController` llama en `:166`, `:176`, `:230` y `:240`, **restaura** los contadores desde una fila; en cuanto existan filas de chequeos desaprobados, `resultado` tiene que formar parte de esa consulta o un chequeo malo devolverá contadores que el alumno ya había limpiado | §6.2 |
@@ -1139,4 +1171,4 @@ Numeración de la spec (§10, §13.4, §14.5, §15.5, §16.5 y §17.5). Todas so
 
 **Ids retirados:** la **69** se pedía para el servicio de predicción (aceptar un `Persona.codigo` y recalibrar los umbrales) y **se retira con la §8**, sin reutilizar el número. La advertencia de por qué no debe concederse sin la 49 está en §8.
 
-**Lo primero que hay que decidir, antes de escribir una línea de la §3:** los cinco puntos `[CONFIRMAR]` de §3.3. Ninguno es una fórmula — las diez están publicadas — y el primero no lo puede resolver ningún programador: es una tabla que falta en la norma, y sin ella `NIA` y `NFPI` son `null` por mucho que la 61 esté implementada.
+**Lo primero que hay que decidir, antes de escribir una línea de la §3:** los cinco puntos `[CONFIRMAR]` de §3.3. Ninguno es una fórmula — las diez están publicadas — y el **primero ya está resuelto**: la tabla no faltaba en la norma, faltaba encontrarla. Lo que ahora bloquea `NIA` y `NFPI` es el **punto 2b**: `NFOH` y `NFOA` no tienen ninguna sub fase en el sistema, y eso lo decide el proyecto, no un programador.
