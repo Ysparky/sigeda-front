@@ -28,8 +28,7 @@ export function useAutoguardado(examen: ExamenEnCurso, restante: number) {
   }, [restante])
 
   const guardar = useMutation({
-    mutationFn: (valores: Respuestas) =>
-      guardarRespuestas(examen.id, examen.codAlumno, aRespuestasEnviadas(valores)),
+    mutationFn: (valores: Respuestas) => guardarRespuestas(examen.id, aRespuestasEnviadas(valores)),
   })
   const enviar = guardar.mutateAsync
 

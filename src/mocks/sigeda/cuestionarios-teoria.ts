@@ -28,9 +28,7 @@ export const D23_EXAMEN_ENTREGADO_CON_EXITO = 'Examen entregado con éxito.'
 export const D25_RESPUESTAS_GUARDADAS = 'Respuestas guardadas.'
 export const D27_PERSONA_NO_EXISTE = 'Persona especificada no existe.'
 
-type CuerpoAlumno = { codAlumno?: unknown }
-
-type CuerpoRespuestas = CuerpoAlumno & { respuestas?: unknown }
+type CuerpoRespuestas = { respuestas?: unknown }
 
 type RespuestaEnviada = { idPregunta?: unknown; respuesta?: unknown }
 
@@ -146,24 +144,18 @@ export const handlersCuestionariosTeoria = [
   http.get(`${API}/api/examenes/pendientes`, ({ request }) => {
     const permitido = autorizar(request, 'Take Exams')
     if (permitido instanceof Response) return permitido
-    const codAlumno = new URL(request.url).searchParams.get('codAlumno') ?? ''
-    if (!buscarPersona(codAlumno)) return textoNoEncontrado(D27_PERSONA_NO_EXISTE)
-    if (permitido.codPersona !== codAlumno) return textoProhibido(D15_SOLO_LO_PROPIO)
+    const codAlumno = permitido.codPersona
     cerrarExamenesVencidos()
     const pendientes = pendientesDe(codAlumno)
     if (pendientes.length === 0) return textoNoEncontrado(D17_SIN_PENDIENTES)
     return HttpResponse.json(pendientes)
   }),
-  http.post(`${API}/api/turnos-teoricos/:id/iniciar`, async ({ request, params }) => {
+  http.post(`${API}/api/turnos-teoricos/:id/iniciar`, ({ request, params }) => {
     const permitido = autorizar(request, 'Take Exams')
     if (permitido instanceof Response) return permitido
     const turno = buscarTurnoTeorico(Number(params.id))
     if (!turno) return textoNoEncontrado(D6_TURNO_NO_EXISTE)
-    const cuerpo = (await request.json()) as CuerpoAlumno
-    const codAlumno = texto(cuerpo.codAlumno)
-    if (codAlumno === '') return erroresDeCampo(["'codAlumno': El código del alumno es obligatorio."])
-    if (!buscarPersona(codAlumno)) return textoNoEncontrado(D27_PERSONA_NO_EXISTE)
-    if (permitido.codPersona !== codAlumno) return textoProhibido(D15_SOLO_LO_PROPIO)
+    const codAlumno = permitido.codPersona
     if (!alumnosHabilitados(turno).some((alumno) => alumno.codigo === codAlumno)) {
       return textoProhibido(D9_ALUMNO_NO_HABILITADO)
     }
@@ -194,8 +186,7 @@ export const handlersCuestionariosTeoria = [
     if (permitido instanceof Response) return permitido
     const turno = buscarTurnoTeorico(Number(params.id))
     if (!turno) return textoNoEncontrado(D6_TURNO_NO_EXISTE)
-    const codAlumno = new URL(request.url).searchParams.get('codAlumno') ?? ''
-    if (permitido.codPersona !== codAlumno) return textoProhibido(D15_SOLO_LO_PROPIO)
+    const codAlumno = permitido.codPersona
     cerrarExamenesVencidos(turno.id)
     const cuestionario = cuestionarioDe(turno.id, codAlumno)
     if (!cuestionario) return textoNoEncontrado(D12_EXAMEN_NO_EXISTE)
@@ -207,12 +198,12 @@ export const handlersCuestionariosTeoria = [
     const cuestionario = datos().cuestionarios.find((candidato) => candidato.id === Number(params.id))
     if (!cuestionario) return textoNoEncontrado(D12_EXAMEN_NO_EXISTE)
     const cuerpo = (await request.json()) as CuerpoRespuestas
-    const codAlumno = texto(cuerpo.codAlumno)
-    const errores: string[] = []
-    if (codAlumno === '') errores.push("'codAlumno': El código del alumno es obligatorio.")
-    if (!Array.isArray(cuerpo.respuestas)) errores.push("'respuestas': Las respuestas son obligatorias.")
-    if (errores.length > 0) return erroresDeCampo(errores)
-    if (cuestionario.codAlumno !== codAlumno) return textoProhibido(D15_SOLO_LO_PROPIO)
+    if (!Array.isArray(cuerpo.respuestas)) {
+      return erroresDeCampo(["'respuestas': Las respuestas son obligatorias."])
+    }
+    // El 403 sobrevive a la dependencia 51 en esta ruta y en la de entregar, y sólo en estas dos:
+    // el id del EXAMEN viaja en la URL, así que pedir el de otro sigue siendo expresable.
+    if (cuestionario.codAlumno !== permitido.codPersona) return textoProhibido(D15_SOLO_LO_PROPIO)
     const turno = buscarTurnoTeorico(cuestionario.idTurnoTeorico)
     if (turno && estadoDelTurno(turno) === 'FINALIZADO') {
       cerrarExamenesVencidos(turno.id)
@@ -250,15 +241,12 @@ export const handlersCuestionariosTeoria = [
     }
     return HttpResponse.json({ mensaje: D25_RESPUESTAS_GUARDADAS, respuestasGuardadas: vistas.size })
   }),
-  http.post(`${API}/api/cuestionarios/:id/entregar`, async ({ request, params }) => {
+  http.post(`${API}/api/cuestionarios/:id/entregar`, ({ request, params }) => {
     const permitido = autorizar(request, 'Take Exams')
     if (permitido instanceof Response) return permitido
     const cuestionario = datos().cuestionarios.find((candidato) => candidato.id === Number(params.id))
     if (!cuestionario) return textoNoEncontrado(D12_EXAMEN_NO_EXISTE)
-    const cuerpo = (await request.json()) as CuerpoAlumno
-    const codAlumno = texto(cuerpo.codAlumno)
-    if (codAlumno === '') return erroresDeCampo(["'codAlumno': El código del alumno es obligatorio."])
-    if (cuestionario.codAlumno !== codAlumno) return textoProhibido(D15_SOLO_LO_PROPIO)
+    if (cuestionario.codAlumno !== permitido.codPersona) return textoProhibido(D15_SOLO_LO_PROPIO)
     const turno = buscarTurnoTeorico(cuestionario.idTurnoTeorico)
     if (turno && estadoDelTurno(turno) === 'FINALIZADO') {
       cerrarExamenesVencidos(turno.id)

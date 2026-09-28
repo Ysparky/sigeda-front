@@ -244,7 +244,7 @@ describe('contrato §2.4 y §2.5 modificar y eliminar', () => {
     })
     expect(alternativasDePregunta(1).map((alternativa) => alternativa.id)).toEqual(idsAntes)
     await iniciarComo('alumno.lopez')
-    await entregarExamen(3, '111111')
+    await entregarExamen(3)
     const primera = cuestionarioDe(3, '111111')?.calificaciones.find((fila) => fila.idPregunta === 1)
     expect(primera?.respuestaAlumno).not.toBeNull()
     expect(primera?.correcto).toBe(true)

@@ -55,10 +55,9 @@ Lo que **no** está en este contrato y M5 hereda está en spec §16.6: el histor
 
 - **Base y autenticación.** Prefijo `/api` sobre `http://localhost:8080`; `Authorization: Bearer <jwt>` en todo (`security/config/SecurityConfig.java:50-53`); CORS solo para `http://localhost:5173` (`:77-80`). Sin token válido → `401`.
 - **Autorización.** `@PreAuthorize("hasRole('<Permiso>')")` por método; la autoridad es `"ROLE_" + permiso.nombre`. Los cuatro permisos de este contrato **no existen todavía** (dependencia 54): hasta que existan, cualquier usuario autenticado alcanza cualquier endpoint de aquí.
-- **Quién llama.** Ningún controlador lo sabe. Mientras la dependencia 51 no exista:
-  - las escrituras de §2 y §3 llevan `codInstructor` en el cuerpo, como ya lo hace `POST /api/turnos` en `ec2b0dd`;
-  - los endpoints del alumno (§4) llevan `codAlumno` en el cuerpo o en la query.
-  El frontend lo toma del `codPersona` de la sesión — **nunca de un parámetro de la URL** — y comprueba la propiedad en sus cargadores de ruta; **es una comprobación de interfaz, no de servidor** (la misma situación que la dependencia 20 para turnos y evaluaciones). Cuando la 51 llegue, los dos campos desaparecen de la firma y el servidor resuelve `sub` → `Usuario` → `Persona.codigo`.
+- **Quién llama. La dependencia 51 está hecha** (tanda G, 27 sep 2026): el servidor resuelve `sub` → `Usuario` → `Persona.codigo` y **ni `codInstructor` ni `codAlumno` viajan** en las escrituras de §2 y §3 ni en las rutas del alumno de §4. Mandarlos **no da error**: el servidor los ignora, así que el orden de despliegue de los dos repos no importa. Lo que sí cambió es que ya no sirven para apuntar a otra persona, y con eso se fueron los **400** de «código obligatorio» y los **404** D27 de esos códigos en §2.3, §2.4, §2.6, §3.0, §3.3, §3.4, §4.1 y §4.2.
+  Dos parámetros con el mismo nombre **no** son identidad y por lo tanto **se conservan**: `codInstructor` en el filtro de §3.1 y `codAlumno` en el historial de `GET /api/cuestionarios` (contrato de seguimiento §5.2), que ahí pasó de obligatorio a opcional porque es cómo el personal lee el historial de cualquier alumno.
+  La comprobación de propiedad del frontend en sus cargadores de ruta **sigue siendo útil pero ya no es la única**: el servidor la hace y responde `403` con `Solo puede consultar su propia información.`
 - **Envoltura de error.** Se usa la convención **§A** de `contrato-api-turnos.md` (`utils/Response.java`), igual que Turno, Evaluación, Persona, Grupo y Materia:
 
   | Caso | HTTP | Cuerpo |
@@ -526,15 +525,17 @@ Mismo cuerpo, **exactamente** las mismas reglas y mismo `201` que §3.3 — incl
 ## 4. Rendición del examen (alumno)
 
 ```
-GET  /api/examenes/pendientes?codAlumno=                        Take Exams
+GET  /api/examenes/pendientes                                   Take Exams
 POST /api/turnos-teoricos/{id}/iniciar                          Take Exams
 PUT  /api/cuestionarios/{id}/respuestas                         Take Exams
 POST /api/cuestionarios/{id}/entregar                           Take Exams
-GET  /api/turnos-teoricos/{id}/mi-cuestionario?codAlumno=       Take Exams
+GET  /api/turnos-teoricos/{id}/mi-cuestionario                   Take Exams
 GET  /api/cuestionarios/{id}                                    Take Exams (propio) · Manage Exams
 ```
 
-`codAlumno` es obligatorio en las rutas que lo declaran y el frontend lo toma de la sesión, **nunca de la URL**; con la dependencia 51 desaparece y el servidor lo resuelve. Un `codAlumno` distinto del propio debe responder **403** D15 en cuanto la 51 exista; hoy no hay manera de comprobarlo y el frontend es el único guardián.
+**`codAlumno` ya no viaja en ninguna de las cinco rutas: la dependencia 51 está hecha (tanda G, 27 sep 2026)** y el servidor resuelve al alumno desde el token. Mandarlo igual **no es un error**: el servidor lo ignora, así que un cliente viejo sigue funcionando y el orden de despliegue no importa.
+
+Lo que la 51 se llevó por delante, y conviene leerlo entero porque es el tipo de error que un contrato desactualizado produce: los **400** de «código obligatorio» y los **404** D27 de `codAlumno` inexistente **ya no son alcanzables** en §4.1–§4.4, y el **403 D15 por código ajeno no se relajó: se volvió inexpresable**. El 403 D15 que **sí** sobrevive es otro y vive sólo en §4.3, §4.4 y §4.6, porque ahí el **id del examen** viaja en la URL y sigue pudiendo ser el de otra persona.
 
 El historial del alumno (`GET /api/cuestionarios` con filtros) **no está en M4**: es de M5, con el legajo (spec §16.6). Lo único que el alumno consulta después de entregar es su propio examen, por §4.5.
 
@@ -562,19 +563,17 @@ Los turnos en los que el alumno está habilitado (§3.2), en estado `PROGRAMADO`
 ]
 ```
 
-`idCuestionario` y `estadoRendicion` dicen si el alumno ya empezó: `null` y `"NO_RINDIO"` si no. Lista vacía → **404** D17. **403** D15 si el `codAlumno` no es el propio.
+`idCuestionario` y `estadoRendicion` dicen si el alumno ya empezó: `null` y `"NO_RINDIO"` si no. Lista vacía → **404** D17. **Sin errores de identidad**: la lista es siempre la del llamador.
 
-> **Corrección, 27 sep 2026.** Esta sección y la §4.2 **no listaban el 403 D15** y el mock no lo
-> comprobaba en ninguna de las dos, aunque §4 lo enuncia en general («Un `codAlumno` distinto del
-> propio debe responder **403** D15»). Sin él un alumno podía ver los pendientes de otro y, peor,
-> **iniciarle el examen**. La tanda C4 lo cerró en el servidor en las seis rutas; el mock y estas
-> dos secciones quedan alineados, con prueba en `cuestionarios-teoria.test.ts`.
+> **Historia de esta línea, porque enseña algo.** La sección no listaba el 403 D15 y el mock no lo
+> comprobaba, así que un alumno podía ver los pendientes de otro y, peor, **iniciarle el examen**.
+> La tanda C4 lo cerró con un 403 sobre el `codAlumno` de la query; la tanda G lo cerró mejor,
+> quitando el campo: sin código de cliente no hay código ajeno que rechazar. La prueba de
+> `cuestionarios-teoria.test.ts` pasó de «rechaza al ajeno» a «lo ignora y trae lo propio».
 
 ### 4.2 `POST /api/turnos-teoricos/{id}/iniciar`
 
-```json
-{ "codAlumno": "111111" }
-```
+**Sin cuerpo.** La ruta no lee ninguno (dependencia 51); uno que llegue se ignora.
 
 - **Idempotente**: si el alumno ya tiene un examen `EN_CURSO` de este turno, lo devuelve con las respuestas guardadas en lugar de crear otro. Recargar la página retoma el examen.
 - El **orden de las preguntas** es el `orden` del turno (§3.3) y se guarda en el examen al crearlo, así que nunca cambia entre recargas ni entre alumnos.
@@ -628,12 +627,11 @@ En `COMPLETAR`, `alternativas` es `[]`. `respuestaAlumno` es `null` mientras no 
 
 Errores:
 
-- **404** D6 si el turno no existe; **404** D27 si `codAlumno` no existe.
-- **403** D15 si el `codAlumno` no es el propio — **se comprueba antes que D9**: «no es tuyo» precede a «no estás habilitado».
+- **404** D6 si el turno no existe.
 - **403** D9 si el alumno no está habilitado para el turno (no pertenece al grupo, o el turno es una subsanación o un rezagado que no le corresponde).
 - **409** D8 si la ventana no comenzó o ya cerró.
 - **409** D10 si el alumno ya entregó.
-- Validación → **400** arreglo: `codAlumno` obligatorio → `El código del alumno es obligatorio.`
+- **Sin 400 de campo y sin 404 D27**: no hay cuerpo que validar ni código que buscar.
 
 ### 4.3 `PUT /api/cuestionarios/{id}/respuestas`
 
@@ -641,7 +639,6 @@ Autoguardado. **Reemplaza el conjunto completo**: lo que no venga queda sin resp
 
 ```json
 {
-  "codAlumno": "111111",
   "respuestas": [
     { "idPregunta": 1, "respuesta": "1" },
     { "idPregunta": 4, "respuesta": "rotor de cola" }
@@ -655,13 +652,12 @@ Autoguardado. **Reemplaza el conjunto completo**: lo que no venga queda sin resp
 
 Errores:
 
-- **404** D12 si el examen no existe. **403** D15 si es de otro alumno (dependencia 51).
+- **404** D12 si el examen no existe. **403** D15 si el examen es de otro alumno: acá el id viaja en la URL, así que este 403 **sobrevive a la 51** y es el único de §4 que se puede provocar.
 - **409** D10 si ya fue entregado. **409** D11 si la ventana cerró — el servidor cierra y califica el examen antes de responder (§4.7).
 - Validación → **400** arreglo:
 
 | Campo | Regla | Mensaje exacto |
 |---|---|---|
-| `codAlumno` | obligatorio | `El código del alumno es obligatorio.` |
 | `respuestas` | presente (puede venir vacío) | `Las respuestas son obligatorias.` |
 | `respuestas[i].idPregunta` | debe ser una pregunta del examen, sin repetir | `La pregunta no pertenece a este examen.` |
 | `respuestas[i].respuesta` | en `OPCION_MULTIPLE` y `VERDADERO_FALSO`, id de una alternativa de esa pregunta | `La alternativa no pertenece a esta pregunta.` |
@@ -669,9 +665,7 @@ Errores:
 
 ### 4.4 `POST /api/cuestionarios/{id}/entregar`
 
-```json
-{ "codAlumno": "111111" }
-```
+**Sin cuerpo** (dependencia 51).
 
 Califica y cierra. **Calificación:**
 
@@ -687,13 +681,13 @@ Califica y cierra. **Calificación:**
 
 **200** `{"mensaje":"Examen entregado con éxito.","cuestionario":{…forma de §4.6…}}` (D23). Devolver el detalle completo evita una segunda petición: el frontend ya tiene el resultado que va a mostrar.
 
-Errores: **404** D12 · **403** D15 · **409** D10 si ya fue entregado · **409** D11 si la ventana cerró (en ese caso el examen **ya quedó entregado y calificado** por §4.7, así que el frontend muestra el resultado) · **400** arreglo con `El código del alumno es obligatorio.`
+Errores: **404** D12 · **403** D15 por el id del examen ajeno, como en §4.3 · **409** D10 si ya fue entregado · **409** D11 si la ventana cerró (en ese caso el examen **ya quedó entregado y calificado** por §4.7, así que el frontend muestra el resultado).
 
 ### 4.5 `GET /api/turnos-teoricos/{id}/mi-cuestionario`
 
 El examen del alumno para ese turno, cualquiera sea su estado. Existe para que el alumno navegue siempre por id de turno, y es lo único que M4 necesita para volver a ver un resultado.
 
-**200** — forma de §4.6. **404** D12 si el alumno no tiene examen en ese turno; **404** D6 si el turno no existe; **403** D15 para otro alumno (dependencia 51). Antes de responder se aplica §4.7.
+**200** — forma de §4.6. **404** D12 si el alumno no tiene examen en ese turno; **404** D6 si el turno no existe. **Sin 403**: con la 51 el turno es el único dato del cliente y el examen es siempre el propio, así que pedir el de otro da el D12 de «no tenés examen acá».
 
 ### 4.6 `GET /api/cuestionarios/{id}`
 

@@ -43,7 +43,7 @@ function Examen({ examen, idTurno }: { examen: ExamenEnCurso; idTurno: number })
   }, [restante])
 
   const entregar = useMutation({
-    mutationFn: (_variables: VariablesEntrega) => entregarExamen(examen.id, examen.codAlumno),
+    mutationFn: (_variables: VariablesEntrega) => entregarExamen(examen.id),
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: clavesExamenes.todo })
     },

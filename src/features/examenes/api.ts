@@ -275,44 +275,34 @@ export const clavesExamenes = {
   estadoTeorico: (codAlumno: string) => [...clavesExamenes.todo, 'estado-teorico', codAlumno] as const,
 }
 
-export async function listarExamenesPendientes(codAlumno: string): Promise<ExamenPendiente[]> {
-  const pendientes = await sigeda.lista<unknown>('/api/examenes/pendientes', { codAlumno })
+// El `codAlumno` ya no viaja en ninguna de estas cinco rutas: el servidor resuelve al alumno desde
+// el token (dependencia 51). Las `consultasExamenes` de abajo SÍ lo conservan, porque ahí no es un
+// dato de la petición sino la clave de caché y la condición que espera a que la sesión exista.
+export async function listarExamenesPendientes(): Promise<ExamenPendiente[]> {
+  const pendientes = await sigeda.lista<unknown>('/api/examenes/pendientes')
   return pendientes.map((pendiente) => {
     const leido = esquemaPendiente.parse(pendiente)
     return { ...leido, idCuestionario: leido.idCuestionario ?? null }
   })
 }
 
-export async function iniciarExamen(idTurnoTeorico: number, codAlumno: string): Promise<ExamenEnCurso> {
-  return aEnCurso(
-    await sigeda.post<unknown>(`/api/turnos-teoricos/${encodeURIComponent(idTurnoTeorico)}/iniciar`, { codAlumno }),
-  )
+export async function iniciarExamen(idTurnoTeorico: number): Promise<ExamenEnCurso> {
+  return aEnCurso(await sigeda.post<unknown>(`/api/turnos-teoricos/${encodeURIComponent(idTurnoTeorico)}/iniciar`))
 }
 
-export async function guardarRespuestas(
-  idCuestionario: number,
-  codAlumno: string,
-  respuestas: RespuestaDeExamen[],
-): Promise<void> {
-  await sigeda.put<unknown>(`/api/cuestionarios/${encodeURIComponent(idCuestionario)}/respuestas`, {
-    codAlumno,
-    respuestas,
-  })
+export async function guardarRespuestas(idCuestionario: number, respuestas: RespuestaDeExamen[]): Promise<void> {
+  await sigeda.put<unknown>(`/api/cuestionarios/${encodeURIComponent(idCuestionario)}/respuestas`, { respuestas })
 }
 
-export async function entregarExamen(idCuestionario: number, codAlumno: string): Promise<ExamenResuelto> {
-  const respuesta = await sigeda.post<unknown>(`/api/cuestionarios/${encodeURIComponent(idCuestionario)}/entregar`, {
-    codAlumno,
-  })
+export async function entregarExamen(idCuestionario: number): Promise<ExamenResuelto> {
+  const respuesta = await sigeda.post<unknown>(`/api/cuestionarios/${encodeURIComponent(idCuestionario)}/entregar`)
   const cuerpo = respuesta as { cuestionario?: unknown }
   return aResuelto(cuerpo.cuestionario ?? respuesta)
 }
 
-export async function obtenerMiExamen(idTurnoTeorico: number, codAlumno: string): Promise<ExamenResuelto> {
+export async function obtenerMiExamen(idTurnoTeorico: number): Promise<ExamenResuelto> {
   return aResuelto(
-    await sigeda.get<unknown>(`/api/turnos-teoricos/${encodeURIComponent(idTurnoTeorico)}/mi-cuestionario`, {
-      codAlumno,
-    }),
+    await sigeda.get<unknown>(`/api/turnos-teoricos/${encodeURIComponent(idTurnoTeorico)}/mi-cuestionario`),
   )
 }
 
@@ -328,20 +318,20 @@ export const consultasExamenes = {
   pendientes: (codAlumno: string) =>
     queryOptions({
       queryKey: clavesExamenes.pendientes(codAlumno),
-      queryFn: () => listarExamenesPendientes(codAlumno),
+      queryFn: () => listarExamenesPendientes(),
       enabled: codAlumno !== '',
     }),
   miExamen: (idTurnoTeorico: number, codAlumno: string) =>
     queryOptions({
       queryKey: clavesExamenes.examen(idTurnoTeorico, codAlumno),
-      queryFn: () => obtenerMiExamen(idTurnoTeorico, codAlumno),
+      queryFn: () => obtenerMiExamen(idTurnoTeorico),
       enabled: codAlumno !== '',
       retry: false,
     }),
   enCurso: (idTurnoTeorico: number, codAlumno: string) =>
     queryOptions({
       queryKey: clavesExamenes.enCurso(idTurnoTeorico, codAlumno),
-      queryFn: () => iniciarExamen(idTurnoTeorico, codAlumno),
+      queryFn: () => iniciarExamen(idTurnoTeorico),
       enabled: codAlumno !== '',
       retry: false,
       staleTime: Number.POSITIVE_INFINITY,
