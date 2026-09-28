@@ -25,6 +25,20 @@ export function autorizar(request: Request, permiso: Permiso): UsuarioMock | Res
   return usuario
 }
 
+/**
+ * Si un Alumno está pidiendo datos de OTRA persona. El servidor real responde 403 en las rutas de
+ * seguimiento por persona, y el mock no lo hacía en dos de ellas: devolvía 200 donde el servidor
+ * niega, con las dos suites en verde. Es la misma divergencia que dejó la cabecera del legajo
+ * mostrando «Pedro undefined undefined» —el mock implementando algo que el servidor no hace—, sólo
+ * que al revés: acá el mock era MÁS permisivo, que es la dirección peligrosa.
+ *
+ * Se comprueba por rol y no por permiso porque `Read` lo tiene todo el mundo: lo que distingue a un
+ * Alumno es que sólo puede verse a sí mismo.
+ */
+export function pideLoDeOtro(usuario: UsuarioMock, cod: string): boolean {
+  return rolPorId(usuario.idRol)?.nombre === 'Alumno' && cod !== usuario.codPersona
+}
+
 export function textoNoEncontrado(mensaje: string) {
   return HttpResponse.text(mensaje, { status: 404 })
 }

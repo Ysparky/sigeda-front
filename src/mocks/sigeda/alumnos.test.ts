@@ -93,7 +93,14 @@ describe('GET /api/personas/{cod}/legajo', () => {
     await expect(sigeda.get('/api/personas/777777/legajo')).resolves.toBeTruthy()
     await expect(sigeda.get('/api/personas/777777/alumno')).resolves.toBeTruthy()
     await expect(sigeda.get('/api/personas/000000/legajo')).rejects.toMatchObject({ status: 404 })
+    // OJO CON `/alumno`: para un Alumno, un código inexistente da **403**, no 404, porque ahí la
+    // propiedad se comprueba antes que la existencia (dependencia 25) — al revés que en `/legajo`, y
+    // las dos cosas son deliberadas en el servidor. Así que el 404 de esta ruta se comprueba con una
+    // cuenta del personal, que no tiene restricción de propiedad.
+    await expect(sigeda.get('/api/personas/000000/alumno')).rejects.toMatchObject({ status: 403 })
+    await iniciarComo('comandante.aguirre')
     await expect(sigeda.get('/api/personas/000000/alumno')).rejects.toMatchObject({ status: 404 })
+    await iniciarComo('alumno.ramirez')
     tokens.guardar(jwtDePrueba('raul.paredes'), '')
     await expect(sigeda.get('/api/personas/777777/legajo')).rejects.toMatchObject({
       status: 403,
@@ -103,5 +110,29 @@ describe('GET /api/personas/{cod}/legajo', () => {
       status: 403,
       message: MENSAJE_SIN_PERMISO,
     })
+  })
+
+  /**
+   * EL MOCK ERA MÁS PERMISIVO QUE EL SERVIDOR, que es la dirección peligrosa de la divergencia.
+   * Comprobado con curl contra el servidor real: `alumno.lopez` (persona 111111) pidiendo lo de 666666
+   * recibe **403** en las dos rutas, y 200 en las suyas. El mock devolvía 200 en los cuatro casos, así
+   * que la suite entera podía estar verde mientras la interfaz confiaba en un permiso que el servidor
+   * niega. El contrato §6.1 ya documentaba ese 403; el mock simplemente no lo implementaba.
+   */
+  it('§6.1 un Alumno no alcanza el legajo ni el detalle de otra persona', async () => {
+    await iniciarComo('alumno.lopez')
+
+    await expect(sigeda.get('/api/personas/666666/legajo')).rejects.toMatchObject({ status: 403 })
+    await expect(sigeda.get('/api/personas/666666/alumno')).rejects.toMatchObject({ status: 403 })
+
+    // Y lo propio sí, que es la mitad que vuelve útil a la aserción de arriba.
+    await expect(sigeda.get('/api/personas/111111/legajo')).resolves.toBeTruthy()
+    await expect(sigeda.get('/api/personas/111111/alumno')).resolves.toBeTruthy()
+  })
+
+  it('el personal sí ve el de cualquiera: la restricción es del rol Alumno, no de la ruta', async () => {
+    await iniciarComo('comandante.aguirre')
+    await expect(sigeda.get('/api/personas/666666/legajo')).resolves.toBeTruthy()
+    await expect(sigeda.get('/api/personas/666666/alumno')).resolves.toBeTruthy()
   })
 })

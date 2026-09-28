@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { criterioDeFase } from '@/lib/dominio/seguimiento'
-import { API, autorizar, textoNoEncontrado } from './comun'
+import { API, autorizar, pideLoDeOtro, textoNoEncontrado, textoProhibido } from './comun'
+import { D15_SOLO_LO_PROPIO } from './cuestionarios-teoria'
 import { buscarPersona, datos, usuarioDePersona, type PersonaMock } from './datos'
 import { criterioCumplido, esRegularAlternado, ramaCumplida } from './desaprobados'
 
@@ -57,6 +58,7 @@ export const handlersAlumnos = [
   http.get(`${API}/api/personas/:cod/alumno`, ({ request, params }) => {
     const permitido = autorizar(request, 'Read')
     if (permitido instanceof Response) return permitido
+    if (pideLoDeOtro(permitido, String(params.cod))) return textoProhibido(D15_SOLO_LO_PROPIO)
     const persona = buscarPersona(String(params.cod))
     if (!persona) return textoNoEncontrado(D2_PERSONA_NO_EXISTE)
     return HttpResponse.json({
@@ -72,8 +74,14 @@ export const handlersAlumnos = [
   http.get(`${API}/api/personas/:cod/legajo`, ({ request, params }) => {
     const permitido = autorizar(request, 'Read')
     if (permitido instanceof Response) return permitido
+    // EL ORDEN ES AL REVÉS QUE EN `/alumno`, Y LAS DOS COSAS SON DELIBERADAS EN EL SERVIDOR: acá la
+    // existencia va primero porque, si no, un código que no es de NADIE recibiría un 403 diciéndole al
+    // alumno que el dato es de otra persona, y el mensaje mentiría. En `/alumno` manda la propiedad
+    // primero (dependencia 25), para no filtrar qué códigos existen. Comprobado contra el servidor:
+    // `alumno.lopez` pidiendo `000000` recibe 404 en `/legajo` y 403 en `/alumno`.
     const persona = buscarPersona(String(params.cod))
     if (!persona) return textoNoEncontrado(D2_PERSONA_NO_EXISTE)
+    if (pideLoDeOtro(permitido, String(params.cod))) return textoProhibido(D15_SOLO_LO_PROPIO)
     const grupo = datos().grupos.find((candidato) => candidato.id === persona.idGrupo)
     return HttpResponse.json({
       codigo: persona.codigo,
