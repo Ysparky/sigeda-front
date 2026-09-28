@@ -165,6 +165,28 @@ describe('api de turnos', () => {
     })
   })
 
+  it('M5-23 rechaza al alumno con una subsanación pendiente, en el POST y en el PUT', async () => {
+    // Dependencia 57: la interfaz ya avisaba (M4-12) y ahora el servidor rechaza. El error lleva el
+    // índice de la fila, como el de cruce de horarios, para que caiga en el selector de esa fila.
+    await iniciarComo('jefe.operaciones')
+    const bloqueado = {
+      erroresDeCampo: {
+        'alumnosTurno[1].codAlumno':
+          'El alumno 666666 tiene una subsanación pendiente y no puede programarse en un turno práctico.',
+      },
+      status: 400,
+    }
+    const cuerpo = cuerpoValido({
+      alumnosTurno: [
+        { codAlumno: '222222', horaInicio: '08:00', horaFin: '09:30' },
+        { codAlumno: '666666', horaInicio: '10:00', horaFin: '11:00' },
+      ],
+    })
+    await expect(crearTurno(cuerpo)).rejects.toMatchObject(bloqueado)
+    await expect(modificarTurno(8, cuerpo)).rejects.toMatchObject(bloqueado)
+    await expect(crearTurno(cuerpoValido())).resolves.toMatchObject({ mensaje: 'Turno guardado con éxito.' })
+  })
+
   it('devuelve el error de nombre y el de solape de horario en el mismo 400', async () => {
     await iniciarComo('jefe.operaciones')
     const cuerpo = cuerpoValido({

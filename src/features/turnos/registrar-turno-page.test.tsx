@@ -201,6 +201,31 @@ describe('Registrar turno', () => {
     expect(screen.getByLabelText('Nombre')).toBeInTheDocument()
   })
 
+  it('M5-23 el rechazo del servidor por subsanación se pinta en el selector de esa fila', async () => {
+    // Con la dependencia 7 resuelta la interfaz ya deshabilita Guardar (lo fija
+    // `subsanacion-turno.test.tsx`), así que el 400 de la dependencia 57 solo se alcanza cuando el
+    // frontend NO sabe del bloqueo: dependencia 7 pendiente, o el bloqueo aparece entre la carga y
+    // el guardado. Se simula ese desconocimiento con el estado teórico en falso; el 400 es el real
+    // del mock. Lo que se fija es que el mensaje CAIGA en el campo de la fila: un error de campo sin
+    // campo es un 400 en blanco.
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/personas/666666/estado-teorico`, () =>
+        HttpResponse.json({ bloqueadoPorSubsanacion: false, motivo: null, desaprobados: [], pendientes: [] }),
+      ),
+    )
+    const { usuario } = await abrirFormulario()
+    await llenarDatos(usuario)
+    await agregarAlumno(usuario, 1, 'Ana Torres Martinez', '08:00', '09:30')
+    await agregarManiobra(usuario, 1, 'Maniobra 1', 'B')
+    await guardar(usuario)
+    const fila = (await screen.findByLabelText('Alumno 1')).closest('[data-slot="field"]') as HTMLElement
+    expect(
+      await within(fila).findByText(
+        'El alumno 666666 tiene una subsanación pendiente y no puede programarse en un turno práctico.',
+      ),
+    ).toBeInTheDocument()
+  })
+
   it('CA-TUR-13 muestra bajo cada campo los errores de validación del backend', async () => {
     server.use(
       http.post(`${config.sigedaApiUrl}/api/turnos`, () =>

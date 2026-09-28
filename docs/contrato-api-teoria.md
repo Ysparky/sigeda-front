@@ -773,7 +773,14 @@ GET /api/personas/{cod}/estado-teorico      Read (alumno: solo el propio, depend
 }
 ```
 
-- `bloqueadoPorSubsanacion` es verdadero mientras exista un examen desaprobado **sin una subsanación aprobada posterior** de la misma materia. Mientras lo sea, el alumno **no debe programarse en turnos prácticos** (PDI, spec §3.4): el frontend lo marca en la fila del alumno con su motivo e impide guardar, y `POST`/`PUT /api/turnos` debe rechazarlo (dependencia 57).
+- `bloqueadoPorSubsanacion` es verdadero mientras exista un examen desaprobado **sin una subsanación aprobada posterior** de la misma materia. Mientras lo sea, el alumno **no puede programarse en turnos prácticos** (PDI, spec §3.4). Lo comprueban las dos puntas: el frontend lo marca en la fila del alumno con su motivo y deshabilita Guardar, y **`POST`/`PUT /api/turnos` lo rechazan desde la tanda G** (dependencia 57, hecha) con un error de campo por fila:
+
+  ```
+  'alumnosTurno[0].codAlumno': El alumno 666666 tiene una subsanación pendiente y no puede programarse en un turno práctico.
+  ```
+
+  Va en el mismo arreglo 400 del turno práctico y **se comprueba después del cruce de horarios**: el cruce ya exige que los alumnos existan, así que un código inexistente tiene que salir por su 404 y no por acá. La regla no se reimplementa en el módulo de turnos: se le pregunta a la misma que calcula este campo, **con el cierre diferido de §4.7 aplicado antes**, porque un examen `EN_CURSO` vencido tiene `aprobado` en `null` y sin cerrarlo la regla diría que el alumno puede volar.
+  **El rechazo del servidor es una red, no el camino normal**: con la dependencia 7 resuelta la interfaz ni deja intentarlo. Se alcanza cuando el frontend no sabe del bloqueo —dependencia 7 pendiente— o cuando el bloqueo aparece entre la carga del formulario y el guardado.
 - Aprobar la subsanación **levanta el bloqueo y no borra la nota desaprobada**, que sigue en su propio examen (§4.6) y en el legajo de M5 (§4.4, «prevalece la primera nota»). **Corrección, 27 sep 2026:** antes esta línea decía que la nota seguía en `desaprobados`, lo que contradecía la regla de más abajo («`desaprobados` son los exámenes desaprobados **sin subsanar**»). Manda el mock, que es el spec ejecutable: usa `desaprobadosSinSubsanar(cod)` y calcula `bloqueadoPorSubsanacion` como `desaprobados.length > 0`, o sea que **las dos cosas son la misma lista** y un examen ya subsanado sale de ella. La nota desaprobada se sigue viendo en su examen, no acá.
 - `motivo` es `null` cuando no está bloqueado; es el texto que la interfaz muestra y por eso lo arma el servidor, con el nombre del turno, la nota con 2 decimales y el mínimo aplicado.
 - `desaprobados` son los exámenes desaprobados sin subsanar; `pendientes` son los turnos `PROGRAMADO` o `EN_CURSO` de tipo `SUBSANACION` o `REZAGADO` en los que está habilitado.
@@ -1068,7 +1075,7 @@ Numeración de la spec (§10, §13.4, §14.5, §15.5 y §16.5). Todas son de `si
 | 54 | Los cuatro permisos como código en `Permiso.java`, `Permission.java` y `Role.java`. Hasta entonces **cualquier usuario autenticado alcanza todo lo de aquí** | Permisos |
 | 55 | Cierre de la ventana del examen: perezoso en cada lectura (obligatorio) y, mejor, un trabajo programado. Hoy no hay ningún `@Scheduled` en el proyecto | §4.7 |
 | 56 | `GET /api/estado-teorico?codAlumnos=` en lote; amplía la 7. **Fuera de M4** (spec §16.6): la consume M5 | §5.1 (nota) |
-| 57 | `POST` y `PUT /api/turnos` rechazan a un alumno bloqueado por subsanación | §5.1 |
+| 57 | `POST` y `PUT /api/turnos` rechazan a un alumno bloqueado por subsanación. **HECHA en la tanda G** (27 sep 2026), con el error de campo de §5.1 | §5.1 |
 | 58 | **Bug:** `GET /api/personas/{cod}/status` devuelve 404 para todo alumno que no esté `Apto`, descartando las categorías que ya había agregado, y está protegido con `Write` en lugar de `Read` | — (encontrado al dimensionar M4) |
 | 59 | Opcional, en `sigeda_chat_status`: `maxPromptChars` y pista de dificultad en `POST /quizzes/generate` | §6 |
 | 60 | Convenciones del módulo: **409** con texto plano para las reglas de estado (hoy `CONFLICT` no existe y `ActionExpiredException` devuelve 410 en tres lugares, uno con el texto exacto de D3). Para la validación, preferir el **arreglo** de `'campo': mensaje` (`Response.setErrorsFrom` con `BindingResult` en la firma) — preferencia de consistencia, no requisito del cliente, porque `errors.ts:101` ya lee `ErrorResponse.messages[]` igual. El defecto real es que `ConstraintErrors.formatErrors` nunca ordena | Convenciones |

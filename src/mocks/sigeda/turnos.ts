@@ -3,6 +3,7 @@ import { esFechaIso, esHora, esPosteriorAHoy } from '@/lib/dominio/calendario'
 import { permiteCambios, seSuperponen } from '@/lib/dominio/turno'
 import { API, autorizar, errorResponse, paginar, texto, textoNoEncontrado } from './comun'
 import {
+  bloqueadoPorSubsanacion,
   buscarPersona,
   buscarSubfase,
   datos,
@@ -142,6 +143,19 @@ function erroresDeSolape(alumnos: AlumnoTurnoMock[], fechaEval: string, idPropio
     .filter((mensaje): mensaje is string => mensaje !== null)
 }
 
+// La regla no se reimplementa acá: se pregunta al mismo `bloqueadoPorSubsanacion` que usan el
+// estado teórico y el detalle del turno teórico. El módulo de turnos prácticos no sabe nada de
+// cuestionarios: pasa códigos y recibe un sí o un no.
+function erroresDeBloqueo(alumnos: AlumnoTurnoMock[]): string[] {
+  return alumnos.flatMap((alumno, indice) =>
+    bloqueadoPorSubsanacion(alumno.codAlumno)
+      ? [
+          `'alumnosTurno[${indice}].codAlumno': El alumno ${alumno.codAlumno} tiene una subsanación pendiente y no puede programarse en un turno práctico.`,
+        ]
+      : [],
+  )
+}
+
 function aAlumnos(cuerpo: CuerpoTurno): AlumnoTurnoMock[] {
   return (cuerpo.alumnosTurno ?? []).map((alumno) => ({
     codAlumno: texto(alumno.codAlumno),
@@ -163,7 +177,10 @@ function validarGuardado(cuerpo: CuerpoTurno, idSubfase: number | null, idPropio
     const aeronave = datos().aeronaves.find((candidata) => candidata.id === Number(cuerpo.aeronave?.id))
     if (!aeronave) return errorResponse(404, 'Recurso no encontrado', 'No existe información de aeronave.')
     if (aeronave.estado !== 'Disponible') return errorResponse(400, 'Error al validar el modelo', 'Asignar aeronave disponible.')
-    errores.push(...erroresDeSolape(aAlumnos(cuerpo), texto(cuerpo.fechaEval), idPropio))
+    const solape = erroresDeSolape(aAlumnos(cuerpo), texto(cuerpo.fechaEval), idPropio)
+    // El bloqueo se comprueba DESPUÉS del cruce y solo si el cruce pasó, como en el servidor: el
+    // cruce ya exige que los alumnos existan, y un código inexistente tiene que salir por su 404.
+    errores.push(...(solape.length > 0 ? solape : erroresDeBloqueo(aAlumnos(cuerpo))))
   }
   return errores.length > 0 ? HttpResponse.json(errores, { status: 400 }) : null
 }
