@@ -36,9 +36,12 @@ describe('Grupos', () => {
     await waitFor(() => expect(filas()[0]?.[0]).toBe('Promoción 2026-A'))
   })
 
-  it('CA-GRU-01 también la ve el jefe de operaciones', async () => {
-    await abrirGrupos('jefe.operaciones')
-    expect(await screen.findByRole('table', { name: 'Grupos registrados' })).toBeInTheDocument()
+  it('CA-GRU-01 el jefe de operaciones ya NO la alcanza (dependencia 4)', async () => {
+    // Gestionar grupos es matrícula, no operaciones de vuelo. Mientras tuvo el permiso veía la
+    // pantalla en el menú y el servidor le contestaba 403 al entrar.
+    await iniciarComo('jefe.operaciones')
+    renderApp('/grupos')
+    expect(await screen.findByText('No tiene permisos para esta acción.')).toBeInTheDocument()
   })
 
   it('muestra el aviso de error si la lista no carga', async () => {

@@ -103,7 +103,9 @@ describe('menuPara', () => {
   it('CA-PER-11 y CA-GRU-01 Matrícula se reparte entre el administrador y el jefe de operaciones', () => {
     expect(titulosDelMenu('Administrador Web')).toContain('Personas')
     expect(titulosDelMenu('Administrador Web')).toContain('Grupos')
-    expect(titulosDelMenu('Jefe de Operaciones')).toContain('Grupos')
+    // La dependencia 4 le quitó `Manage Groups` al Jefe de Operaciones: Matrícula entera es del
+    // Administrador Web. Antes veía Grupos en el menú y el servidor le respondía 403 al entrar.
+    expect(titulosDelMenu('Jefe de Operaciones')).not.toContain('Grupos')
     expect(titulosDelMenu('Jefe de Operaciones')).not.toContain('Personas')
     expect(titulosDelMenu('Comandante de Escuadrón')).not.toContain('Grupos')
     expect(titulosDelMenu('Alumno')).not.toContain('Fases y subfases')

@@ -82,12 +82,23 @@ Defaults `page=0`, `size=6`, `direction=ASC`. Errores de paginado (índice negat
 | `Write` | Instructor (entre otros) | crear evaluaciones, `GET /api/personas/{cod}/status` |
 | `Modify Evaluations` | Administrador Web, Comandante de Escuadrón (**no** Instructor) | editar/eliminar evaluaciones |
 | `Manage Shifts` | Jefe de Operaciones | CRUD de turnos, `GET /turnos/{fecha}/aeronave/{id}`, `GET /maniobras/subfase/{id}`, `GET /personas/instructor/{tipo}`, `GET /alumnos/programa/{nombre}` |
-| `Manage Groups` | Jefe de Operaciones | `GET /personas/alumno/{tipo}`, `GET /grupos` |
+| `Manage Groups` | **Administrador Web** (ya **no** el Jefe de Operaciones: dependencia 4) | `GET /personas/alumno/{tipo}`, `GET /grupos` — ninguna de las dos la usa este contrato |
 | `View All Groups` | rol con acceso a todos los grupos | `GET /grupos/programa/{nombre}` |
 | `View My Group` | Instructor | `GET /grupos/instructor/{cod}/programa/{nombre}` |
 | `Manage Subphases` | Comandante de Escuadrón | fuera de alcance directo (creación de subfases) |
 
-El mapeo completo rol↔permiso vive en `Role.java` (hardcodeado); es el desvío deliberado documentado: **Comandante** crea maniobras/fases/subfases, **Jefe de Operaciones** asigna estándares y gestiona turnos/grupos.
+El mapeo completo rol↔permiso vive en `Role.java` (hardcodeado); es el desvío deliberado documentado: **Comandante** crea maniobras/fases/subfases, **Jefe de Operaciones** asigna estándares y **gestiona turnos**.
+
+> **Corrección, 27 sep 2026 — esta línea decía «gestiona turnos/grupos», y es la que cedió.** La
+> dependencia 4 (`contrato-api-matricula.md:841`) pedía exactamente lo contrario de lo que esta frase
+> documentaba como decisión deliberada, y se resolvió a favor de la 4: **gestionar grupos es
+> matrícula, trabajo administrativo, no operaciones de vuelo**, así que `Manage Groups` queda solo en
+> el Administrador Web. El Jefe de Operaciones pierde las cinco rutas de `/api/grupos` y
+> `GET /api/personas/alumno/{tipo}`, y conserva `Manage Shifts` intacto. **No rompe nada de este
+> contrato**: el selector de alumnos del formulario de turno práctico lo resuelve `fuenteDeAlumnos`
+> por `Manage Shifts` → `GET /api/alumnos/programa/{nombre}`, no por `Manage Groups`; la única ruta de
+> `Manage Groups` que el frontend llama es `GET /api/personas/alumno/Alumno`, y es el selector *de la
+> pantalla de Grupos*, que es precisamente lo que la 4 le quita.
 
 ⚠ Nota de datos: los `roles.nombre`/`descripcion` del rol id 5 ("Comandante de Escuadrón") tienen mojibake en el seed (`data_prod.sql`) y no hay ningún usuario sembrado con ese rol — ver Dependencias, ítem 19.
 

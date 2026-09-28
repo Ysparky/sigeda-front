@@ -72,7 +72,11 @@ const PERMISOS_POR_ROL: Record<string, readonly Permiso[]> = {
     'Manage Questions',
     'Manage Exams',
   ],
-  'Jefe de Operaciones': ['Read', 'Write', 'Update', 'View My Group', 'Manage Shifts', 'Manage Groups', 'Manage Standards'],
+  // Sin `Manage Groups`: la dependencia 4 lo dejó solo en el Administrador Web, porque gestionar
+  // grupos es matrícula y no operaciones de vuelo. `contrato-api-turnos.md` lo documentaba al revés
+  // como desvío deliberado; la 4 lo revirtió y esa línea es la que cedió. No rompe el formulario de
+  // turno práctico: `fuenteDeAlumnos` manda al Jefe de Operaciones por `Manage Shifts`.
+  'Jefe de Operaciones': ['Read', 'Write', 'Update', 'View My Group', 'Manage Shifts', 'Manage Standards'],
   Alumno: ['Read', 'Update', 'Take Exams'],
 }
 

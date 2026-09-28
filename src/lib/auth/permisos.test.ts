@@ -13,6 +13,22 @@ describe('permisosDeRol replica Role.java', () => {
     expect(permisos.has('Manage Maneuvers')).toBe(false)
   })
 
+  it('M5-24 Manage Groups lo tiene exactamente el Administrador Web (dependencia 4)', () => {
+    // Dos aserciones y no una: el error natural al editar una lista de siete permisos es llevarse un
+    // vecino, y ningún otro caso de la suite mira los otros seis del Jefe de Operaciones.
+    const conElPermiso = ['Administrador Web', 'Comandante de Escuadrón', 'Jefe de Operaciones', 'Instructor', 'Alumno']
+      .filter((rol) => permisosDeRol(rol).has('Manage Groups'))
+    expect(conElPermiso).toEqual(['Administrador Web'])
+    expect([...permisosDeRol('Jefe de Operaciones')]).toEqual([
+      'Read',
+      'Write',
+      'Update',
+      'View My Group',
+      'Manage Shifts',
+      'Manage Standards',
+    ])
+  })
+
   it('Comandante crea maniobras y modifica evaluaciones, pero no programa turnos', () => {
     const permisos = permisosDeRol('Comandante de Escuadrón')
     expect(permisos.has('Manage Maneuvers')).toBe(true)

@@ -53,7 +53,7 @@ Mapeo rol→permiso de `security/entities/Role.java:8-37` (el frontend lo replic
 | `Manage Users` | Administrador Web | `GET/POST /api/personas`, `GET /api/personas/{cod}/usuario`, `PUT/DELETE /api/personas/{cod}` |
 | `Manage Roles` | Administrador Web | `GET /api/roles`, `PUT /api/usuarios/{id}/rol` |
 | `Update` | todos | `PUT /api/usuarios/{id}` (la dependencia 3 lo restringe) |
-| `Manage Groups` | Administrador Web, Jefe de Operaciones | CRUD `/api/grupos`, `GET /api/personas/alumno/{tipo}` |
+| `Manage Groups` | **Administrador Web** (la dependencia 4 se lo quitó al Jefe de Operaciones) | CRUD `/api/grupos`, `GET /api/personas/alumno/{tipo}` |
 | `Read` | todos | GET de fases, subfases, maniobras y materias |
 | `Manage Phases` | Administrador Web, Comandante de Escuadrón | `POST/PUT/DELETE /api/fases` |
 | `Manage Subphases` | Administrador Web, Comandante de Escuadrón | `GET /api/subfases/assign` (no usado en M2) |
@@ -838,7 +838,7 @@ El frontend habilita cuatro acciones solo cuando su dependencia figura en la var
 |---|---|---|
 | 2 (M0) | Dejar de serializar el hash en `/api/usuarios/nombre/{nombre}`; la amplía la 24 | §2.4 |
 | 3 (M0, enmendada en M2) | `PUT /api/usuarios/{id}` solo para la propia cuenta o `Manage Users`; sobre la propia cuenta, `passwordActual` obligatoria; `Manage Users` restablece otra cuenta sin ella | §2.3 |
-| 4 | `Manage Groups` solo para Administrador Web: sigue abierta, pero no bloquea M2 (el frontend replica el backend) | Permisos |
+| 4 | `Manage Groups` solo para Administrador Web. **HECHA en la tanda G** (27 sep 2026): el Jefe de Operaciones pierde las cinco rutas de `/api/grupos` y `GET /api/personas/alumno/{tipo}`, y `contrato-api-turnos.md` dejó de documentar lo contrario | Permisos |
 | 5 | Catálogo de materias, CRUD y `Manage Subjects` | §6 |
 | 18 | `GrupoController.detail` sin `return` (200 con `null`) | §3.2 |
 | 19 | Mojibake en `roles` del seed | §2.1, Valores |
