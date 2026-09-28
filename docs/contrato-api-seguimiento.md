@@ -343,7 +343,36 @@ GET /api/personas/{cod}/indices   Read   [NUEVO, deps. 61 y 62; su mitad teóric
 }
 ```
 
-**Este bloque es la respuesta real del servidor para `555555`, pegada de `curl` el 28 sep 2026**, no un ejemplo escrito a mano: con la semilla del Escuadrón el `nsf` de Contacto da **14.75** y el `nia.valor` sigue en `null`. Los dos hechos conviven y la pantalla tiene que sostener ese estado mixto.
+**Este bloque es la respuesta real del servidor para `555555`, pegada de `curl` el 28 sep 2026**, no un ejemplo escrito a mano: el `nsf` de Contacto da **14.75** y el `nia.valor` está en `null`. Los dos hechos conviven y la pantalla tiene que sostener ese estado mixto.
+
+> ### ⚠ Y unas horas después, la misma consulta daba otra cosa: la semilla del servidor creció
+>
+> **Observado con `curl` el 28 sep 2026, sin informe del backend que lo acompañe**, así que queda
+> anotado como hecho comprobado y no como contrato. La base pasó de **5 sub fases a las 10 que el PDI
+> pondera** —se sembraron Carga Externa, Búsqueda y Rescate, Operaciones Especiales, Navegación
+> Táctica Diurna y Visores Nocturnos—, de **34 a 68 misiones** (los bloques `CE`, `SAR`, `OEH`, `NTD`
+> y `NVG`, con los ids 35 a 68) y de 7 a 17 turnos. Con eso:
+>
+> ```
+> $ curl .../api/personas/555555/indices
+> nfpi 16.47 | nia 15.99 | nit 18.4 | nia.motivo: null
+>   NFAD 15.94  Contacto 14.75 PDI 0.5714 · Navegación 17.0 PDI 0.15 · Instrumentos 16.0 PDI 0.15
+>               Formación 20.0 PDI 0.2 · Campos Extraños 12.0 PDI 0.125
+>   NFOH 15.60  Carga Externa 13.0 · Búsqueda y Rescate 17.0 · Operaciones Especiales 16.5 (PDI 0.1667)
+>   NFOA 16.60  Nav Táctica Diurna 16.0 PDI 0.1333 · Visores Nocturnos 17.2 PDI 0.275
+> $ curl .../api/reportes/orden-merito?programa=PDI
+> puesto 1 · 555555 · nfpi 16.47 · nia 15.99      (los otros seis siguen sin puesto)
+> ```
+>
+> **`NIA` y `NFPI` ya no son `null` para todo el mundo, y el orden de mérito tiene un puesto.** Es la
+> primera de las dos salidas que este contrato planteaba —sembrar las cinco sub fases que faltaban— y
+> deja obsoleto, para `555555`, todo párrafo que diga que la mitad práctica no cierra.
+>
+> **Lo que NO cambió es la forma**, que es lo que este contrato fija: los tres campos de la tanda H
+> siguen ahí con los mismos tipos y las mismas invariantes, y las coberturas nuevas (`0.15`, `0.125`,
+> `0.1333`, `0.275`) son el caso de sub fase a medio volar llevado al extremo — una nota renormalizada
+> sobre el **13 %** de su sub fase. La pantalla lo dice, que es exactamente para lo que existe
+> `cobertura`.
 
 `nfpi`, `nit.valor`, `nia.valor`, cada `fases[].valor` y cada `subfases[].nsf` son `number` con 2 decimales **o `null`**. `nit` y `nia` nunca son `null` como objeto: si su `valor` no se puede calcular, el objeto viene con `valor: null` y su desglose con lo que sí hay, para que la pantalla explique qué falta.
 

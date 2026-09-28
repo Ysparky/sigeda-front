@@ -1,7 +1,11 @@
 import { ESTADOS_ALUMNO, NOTAS_DEL_PROMEDIO } from './vocabulario'
 
+// Este aviso nombra lo que falta del lado del SOFTWARE a propósito, y no el estado de los datos: la
+// semilla del servidor cambió dos veces en un día —el 28 sep 2026 pasó de cinco sub fases a las diez
+// que el PDI pondera, y con eso 555555 empezó a tener NFPI— y un texto que cuente cuántos alumnos son
+// rankeables hoy envejece con la próxima migración. Lo que no envejece es la dependencia 62.
 export const TEXTO_ORDEN_MERITO_SIN_NFPI =
-  'El orden de mérito ordena por el índice final del PDI, y hoy ningún alumno lo tiene: el NIA pondera las tres fases y el sistema solo tiene sub fases de Adaptación. Se muestra solo en modo mock.'
+  'El orden de mérito ordena por el índice final del PDI, y el servidor todavía lo calcula sobre notas de vuelo guardadas como texto (dependencia 62): ordenar y promediar texto es lexicográfico. Se muestra solo en modo mock.'
 export const TEXTO_SIN_ALUMNOS_ASIGNADOS =
   'No tiene alumnos asignados en este programa: aparecen aquí cuando haya volado un turno con ellos.'
 export const TEXTO_SIN_GRUPO = 'Sin grupo'

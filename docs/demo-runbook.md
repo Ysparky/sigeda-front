@@ -140,6 +140,14 @@ Recorrido sugerido:
 
    **Lo que sí se puede demostrar** es el legajo en ese estado mixto: un NSF real con su ponderación
    declarada, un NIA en `null` y un motivo que nombra exactamente qué falta.
+
+   **⚠ Y unas horas después esto ya estaba a medio vencer: la semilla creció.** Comprobado con `curl`
+   el 28 sep 2026: la base pasó a tener **las 10 sub fases del PDI** y **68 misiones**, y con eso
+   `555555` da **`nfpi` 16.47, `nia` 15.99** y **puesto 1** en el orden de mérito. Los otros seis
+   alumnos siguen sin puesto, porque sus evaluaciones no cubren las diez sub fases. Antes de la demo,
+   **volver a pedir `/api/personas/555555/indices` y contar lo que devuelva ese día**: el legajo se ve
+   bien en los dos estados, pero la explicación de por qué el orden de mérito no se presenta depende
+   de cuál sea.
 4. **~~`NCT` y las causales salen vacíos.~~ ARREGLADO el 27 sep 2026.** Faltaba que la semilla
    tuviera un turno de tipo **`EXAMEN`** — `PE` solo se alimenta de ese tipo, así que ningún `NA`
    era calculable. Se sembraron un `TEST` y un `EXAMEN` de la materia 3 para el grupo 3

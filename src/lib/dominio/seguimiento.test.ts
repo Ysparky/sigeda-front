@@ -179,13 +179,15 @@ describe('la única cifra derivada de M5', () => {
 
 describe('textos fijos de la spec §17.3', () => {
   it('M5-9 los textos sin parámetros son los de la spec, byte a byte', () => {
-    // CAMBIÓ RESPECTO DE LA SPEC §17.3 dos veces, y la segunda es de la tanda H: el aviso culpaba a
-    // la tabla de coeficientes de misión, que ya existe y el servidor ya usa (el NSF de Contacto de
-    // 555555 da 14.75 ponderado por el PDI). Lo que traba el orden de mérito es otra cosa: el NIA
-    // pondera tres fases y la base sólo tiene sub fases de Adaptación, así que no hay NFPI que
-    // ordenar. Nombrar la causa que ya se resolvió mandaba al Escuadrón a pedir un dato que tiene.
+    // CAMBIÓ RESPECTO DE LA SPEC §17.3 dos veces el 28 sep 2026, y la segunda vez enseña algo. El
+    // texto original culpaba a la tabla de coeficientes de misión, que ya existe y el servidor usa
+    // (el NSF de Contacto de 555555 da 14.75 ponderado por el PDI). Se reemplazó por «ningún alumno
+    // tiene NFPI porque solo hay sub fases de Adaptación», y **ese texto duró unas horas**: la
+    // semilla del servidor pasó a tener las diez sub fases del PDI y 555555 apareció con NFPI 16.47 y
+    // puesto 1. Moraleja, y es por lo que el texto de ahora habla de la dependencia y no de los
+    // datos: un aviso que cuenta el estado de la base envejece con la próxima migración.
     expect(TEXTO_ORDEN_MERITO_SIN_NFPI).toBe(
-      'El orden de mérito ordena por el índice final del PDI, y hoy ningún alumno lo tiene: el NIA pondera las tres fases y el sistema solo tiene sub fases de Adaptación. Se muestra solo en modo mock.',
+      'El orden de mérito ordena por el índice final del PDI, y el servidor todavía lo calcula sobre notas de vuelo guardadas como texto (dependencia 62): ordenar y promediar texto es lexicográfico. Se muestra solo en modo mock.',
     )
     expect(TEXTO_SIN_ALUMNOS_ASIGNADOS).toBe(
       'No tiene alumnos asignados en este programa: aparecen aquí cuando haya volado un turno con ellos.',
