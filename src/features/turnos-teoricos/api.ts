@@ -75,7 +75,6 @@ export type TurnoTeoricoDetalle = {
 }
 
 export type CuerpoTurnoTeorico = {
-  codInstructor: string
   nombre: string
   programa: Programa
   idMateria: number
@@ -191,19 +190,17 @@ function aDetalle(crudo: unknown): TurnoTeoricoDetalle {
 
 export const clavesTurnosTeoricos = {
   todo: ['turnos-teoricos'] as const,
-  grupos: (codInstructor: string | null, programa: Programa) =>
-    [...clavesTurnosTeoricos.todo, 'grupos', codInstructor, programa] as const,
+  grupos: (programa: Programa) => [...clavesTurnosTeoricos.todo, 'grupos', programa] as const,
   lista: (filtros: FiltrosTurnosTeoricos) => [...clavesTurnosTeoricos.todo, 'lista', filtros] as const,
   detalle: (id: number) => [...clavesTurnosTeoricos.todo, 'detalle', id] as const,
   finalizados: (idMateria: number, idGrupo: number) =>
     [...clavesTurnosTeoricos.todo, 'finalizados', idMateria, idGrupo] as const,
 }
 
-export async function listarGruposDeExamen(codInstructor: string | null, programa: Programa): Promise<GrupoDeExamen[]> {
-  const grupos = await sigeda.lista<unknown>('/api/turnos-teoricos/grupos', {
-    codInstructor: codInstructor ?? undefined,
-    programa,
-  })
+// Sin `codInstructor`: el servidor devuelve los grupos que alcanza el llamador (dependencia 51), y
+// con `Manage Groups` todos los del programa. El frontend no elige entre las dos cosas: el token sí.
+export async function listarGruposDeExamen(programa: Programa): Promise<GrupoDeExamen[]> {
+  const grupos = await sigeda.lista<unknown>('/api/turnos-teoricos/grupos', { programa })
   return grupos.map((grupo) => esquemaGrupo.parse(grupo))
 }
 
@@ -261,10 +258,10 @@ export async function eliminarTurnoTeorico(id: number): Promise<string> {
 }
 
 export const consultasTurnosTeoricos = {
-  grupos: (codInstructor: string | null, programa: Programa) =>
+  grupos: (programa: Programa) =>
     queryOptions({
-      queryKey: clavesTurnosTeoricos.grupos(codInstructor, programa),
-      queryFn: () => listarGruposDeExamen(codInstructor, programa),
+      queryKey: clavesTurnosTeoricos.grupos(programa),
+      queryFn: () => listarGruposDeExamen(programa),
       staleTime: 300_000,
     }),
   lista: (filtros: FiltrosTurnosTeoricos) =>

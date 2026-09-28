@@ -128,9 +128,8 @@ export function valoresDesdeTurnoTeorico(turno: TurnoTeoricoDetalle): ValoresTur
   }
 }
 
-export function aCuerpoTurnoTeorico(valores: ValoresTurnoTeorico, codInstructor: string): CuerpoTurnoTeorico {
+export function aCuerpoTurnoTeorico(valores: ValoresTurnoTeorico): CuerpoTurnoTeorico {
   return {
-    codInstructor,
     nombre: valores.nombre.trim(),
     programa: valores.programa,
     idMateria: Number(valores.idMateria),

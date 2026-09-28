@@ -26,7 +26,6 @@ const PARAMETROS = { page: 0, size: 10, direction: 'ASC' } as const
 
 function nuevoTurno(): CuerpoTurnoTeorico {
   return {
-    codInstructor: '444444',
     nombre: 'Quincenal Procedimientos Normales',
     programa: 'PDI',
     idMateria: 4,
@@ -49,32 +48,36 @@ async function errorDe(promesa: Promise<unknown>): Promise<ApiError> {
 }
 
 describe('contrato §3.0 catálogo de grupos', () => {
-  it('CA-TUT-04 devuelve los grupos del instructor con su cantidad de alumnos', async () => {
+  it('CA-TUT-04 devuelve los grupos del llamador con su cantidad de alumnos', async () => {
     await comoInstructor()
-    expect(await listarGruposDeExamen('444444', 'PDI')).toEqual([
+    expect(await listarGruposDeExamen('PDI')).toEqual([
       { id: 1, nombre: 'Grupo 1', programa: 'PDI', cantAlumnos: 1 },
       { id: 2, nombre: 'Grupo 2', programa: 'PDI', cantAlumnos: 1 },
       { id: 3, nombre: 'Grupo 3', programa: 'PDI', cantAlumnos: 2 },
     ])
-    expect((await listarGruposDeExamen('888888', 'PDI')).map((grupo) => grupo.id)).toEqual([4, 6])
+    await iniciarComo('instructor.mendoza')
+    expect((await listarGruposDeExamen('PDI')).map((grupo) => grupo.id)).toEqual([4, 6])
   })
 
-  it('M4-6 con Manage Groups y sin instructor devuelve todos los grupos del programa con alumnos', async () => {
-    await iniciarComo('admin.sistema')
-    expect((await listarGruposDeExamen(null, 'PDI')).map((grupo) => grupo.id)).toEqual([1, 2, 3, 4, 6])
-  })
-
-  it('M4-6 sin Manage Groups exige el código del instructor', async () => {
+  it('M4-6 un codInstructor ajeno en la query se ignora (dependencia 51)', async () => {
     await comoInstructor()
-    const error = await errorDe(listarGruposDeExamen(null, 'PDI'))
-    expect(error.erroresDeCampo.codInstructor).toBe('El código del instructor es obligatorio.')
+    const grupos = await sigeda.lista<{ id: number }>('/api/turnos-teoricos/grupos', {
+      programa: 'PDI',
+      codInstructor: '888888',
+    })
+    expect(grupos.map((grupo) => grupo.id)).toEqual([1, 2, 3])
+  })
+
+  it('M4-6 con Manage Groups la escotilla decide sola: todos los grupos del programa con alumnos', async () => {
+    await iniciarComo('admin.sistema')
+    expect((await listarGruposDeExamen('PDI')).map((grupo) => grupo.id)).toEqual([1, 2, 3, 4, 6])
   })
 
   it('M4-6 el programa es obligatorio y un programa sin grupos responde 404 D28', async () => {
     await iniciarComo('admin.sistema')
-    const error = await errorDe(listarGruposDeExamen(null, 'XX' as never))
+    const error = await errorDe(listarGruposDeExamen('XX' as never))
     expect(error.erroresDeCampo.programa).toBe('Ingresar programa válido.')
-    expect(await listarGruposDeExamen(null, 'PDE')).toEqual([])
+    expect(await listarGruposDeExamen('PDE')).toEqual([])
     expect(D28_SIN_GRUPOS).toBe('No existen grupos disponibles.')
   })
 })
@@ -112,6 +115,24 @@ describe('contrato §3.1 lista de turnos teóricos', () => {
     expect((await listarTurnosTeoricos({ ...PARAMETROS, fechaPre: hoyIso() })).total).toBe(3)
     expect((await listarTurnosTeoricos({ ...PARAMETROS, fechaPost: sumarDias(hoyIso(), -6) })).total).toBe(3)
     expect((await listarTurnosTeoricos({ ...PARAMETROS, idGrupo: 5 })).items).toEqual([])
+  })
+
+  it('CA-TUT-02 el codInstructor de esta ruta es un filtro y NO identidad (dependencia 51)', async () => {
+    // Confundir este parámetro con el que la 51 quitó es el error fácil: acá filtra por
+    // `turnos_teoricos.cod_instructor` y nada dice que un instructor solo vea sus propios turnos.
+    await comoInstructor()
+    // Se golpea la ruta directo porque `listarTurnosTeoricos` no manda el filtro: la pantalla no lo
+    // ofrece. El parámetro sigue en el contrato y el mock tiene que seguir respetándolo.
+    const propios = await sigeda.pagina<{ id: number }>('/api/turnos-teoricos', {
+      ...PARAMETROS,
+      codInstructor: '444444',
+    })
+    const ajenos = await sigeda.pagina<{ id: number }>('/api/turnos-teoricos', {
+      ...PARAMETROS,
+      codInstructor: '888888',
+    })
+    expect(propios.total).toBe(7)
+    expect(ajenos.items).toEqual([])
   })
 
   it('CA-TUT-02 una lista vacía responde 404 con el texto D5 que genera el handler', async () => {
@@ -253,8 +274,10 @@ describe('contrato §3.3 registrar turno teórico', () => {
     expect(programa.erroresDeCampo.programa).toBe('El programa no corresponde al grupo.')
     const sinAlumnos = await errorDe(crearTurnoTeorico({ ...nuevoTurno(), idGrupo: 5 }))
     expect(sinAlumnos.erroresDeCampo.idGrupo).toBe('El grupo no tiene alumnos.')
+    // El campo es `idGrupo` y no `codInstructor`: el formulario no tiene campo de instructor, así
+    // que con el nombre viejo el error no tenía dónde pintarse y el usuario veía un 400 sin mensaje.
     const ajeno = await errorDe(crearTurnoTeorico({ ...nuevoTurno(), idGrupo: 4 }))
-    expect(ajeno.erroresDeCampo.codInstructor).toBe('El grupo no corresponde al instructor.')
+    expect(ajeno.erroresDeCampo.idGrupo).toBe('El grupo no corresponde al instructor.')
     expect(await errorDe(crearTurnoTeorico({ ...nuevoTurno(), idGrupo: 99 })).then((e) => e.message)).toBe(
       D26_GRUPO_NO_EXISTE,
     )
@@ -262,11 +285,23 @@ describe('contrato §3.3 registrar turno teórico', () => {
 
   it('CA-TUT-04 con Manage Groups basta que el grupo pertenezca al programa', async () => {
     await iniciarComo('admin.sistema')
-    const cuerpo = { ...nuevoTurno(), codInstructor: '000001', idGrupo: 4 }
+    const cuerpo = { ...nuevoTurno(), idGrupo: 4 }
     expect(await crearTurnoTeorico(cuerpo)).toEqual({ mensaje: 'Turno teórico guardado con éxito.', id: 8 })
     expect((await obtenerTurnoTeorico(8)).grupo).toEqual({ id: 4, nombre: 'Grupo 4', programa: 'PDI' })
     const sinAlumnos = await errorDe(crearTurnoTeorico({ ...cuerpo, idGrupo: 5 }))
     expect(sinAlumnos.erroresDeCampo.idGrupo).toBe('El grupo no tiene alumnos.')
+  })
+
+  it('CA-TUT-06 el instructor del turno es el llamador y no un campo del cuerpo (dependencia 51)', async () => {
+    // Hacen falta dos llamadores, como en preguntas: con uno solo «el instructor es el llamador» no
+    // se distingue de «el instructor es 444444».
+    await comoInstructor()
+    const creado = await crearTurnoTeorico({ ...nuevoTurno(), codInstructor: '000999' } as never)
+    expect((await obtenerTurnoTeorico(creado.id)).instructor.codigo).toBe('444444')
+    // Y a diferencia de una pregunta, el PUT SÍ le cambia el instructor: lo pasa a quien modifica.
+    await iniciarComo('admin.sistema')
+    await modificarTurnoTeorico(creado.id, nuevoTurno())
+    expect((await obtenerTurnoTeorico(creado.id)).instructor.codigo).toBe('000001')
   })
 
   it('CA-TUT-08 exige el turno de origen solo en subsanación o rezagado', async () => {

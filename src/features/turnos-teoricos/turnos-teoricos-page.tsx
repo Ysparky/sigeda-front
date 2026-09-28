@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { consultasMaterias } from '@/features/materias/api'
 import { PANTALLAS } from '@/lib/auth/pantallas'
-import { usePuede, useSesion } from '@/lib/auth/use-sesion'
 import { accionDisponible, MENSAJE_DEPENDENCIA_PENDIENTE } from '@/lib/dependencias'
 import { ESTADOS_TURNO, TEXTO_SIN_TURNOS_TEORICOS, TEXTO_TEORIA_SOLO_MOCK, TIPOS_EXAMEN } from '@/lib/dominio/teoria'
 import { termino } from '@/lib/dominio/vocabulario'
@@ -48,12 +47,8 @@ function AccionRegistrar() {
 export function TurnosTeoricosPage() {
   const busqueda = ruta.useSearch()
   const navegar = ruta.useNavigate()
-  const sesion = useSesion()
-  const todosLosGrupos = usePuede('Manage Groups')
   const materias = useQuery(consultasMaterias.lista())
-  const grupos = useQuery(
-    consultasTurnosTeoricos.grupos(todosLosGrupos ? null : (sesion?.codPersona ?? null), 'PDI'),
-  )
+  const grupos = useQuery(consultasTurnosTeoricos.grupos('PDI'))
   const turnos = useQuery(consultasTurnosTeoricos.lista(busqueda))
   const error = errorDePrimeraCarga(turnos)
 

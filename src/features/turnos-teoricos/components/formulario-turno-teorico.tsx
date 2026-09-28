@@ -25,7 +25,6 @@ import { PROGRAMAS } from '@/features/catalogos/api'
 import { consultasMaterias } from '@/features/materias/api'
 import { consultasPreguntas } from '@/features/preguntas/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
-import { usePuede, useSesion } from '@/lib/auth/use-sesion'
 import { accionDisponible } from '@/lib/dependencias'
 import { sumarDias } from '@/lib/dominio/calendario'
 import {
@@ -47,8 +46,6 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
   const modificando = idTurno !== undefined
   const navegar = useNavigate()
   const queryClient = useQueryClient()
-  const sesion = useSesion()
-  const todosLosGrupos = usePuede('Manage Groups')
   const [erroresGenerales, setErroresGenerales] = useState<string[]>([])
   const [materiaPendiente, setMateriaPendiente] = useState<string | null>(null)
   const esquema = useMemo(() => crearEsquemaTurnoTeorico(new Date()), [])
@@ -58,9 +55,7 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
   const valores = useWatch({ control: formulario.control }) as ValoresTurnoTeorico
 
   const materias = useQuery(consultasMaterias.lista())
-  const grupos = useQuery(
-    consultasTurnosTeoricos.grupos(todosLosGrupos ? null : (sesion?.codPersona ?? null), valores.programa),
-  )
+  const grupos = useQuery(consultasTurnosTeoricos.grupos(valores.programa))
   const banco = useQuery(consultasPreguntas.porMateria(Number(valores.idMateria) || 0))
   const origenes = useQuery(
     consultasTurnosTeoricos.finalizados(Number(valores.idMateria) || 0, Number(valores.idGrupo) || 0),
@@ -68,7 +63,7 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
 
   const guardar = useMutation({
     mutationFn: (siguientes: ValoresTurnoTeorico) => {
-      const cuerpo = aCuerpoTurnoTeorico(siguientes, sesion?.codPersona ?? '')
+      const cuerpo = aCuerpoTurnoTeorico(siguientes)
       return modificando ? modificarTurnoTeorico(idTurno, cuerpo) : crearTurnoTeorico(cuerpo)
     },
     onSuccess: async (resultado) => {

@@ -18,7 +18,6 @@ export const D4_MATERIA_NO_EXISTE = 'Materia especificada no existe.'
 export const D18_PREGUNTA_ELIMINADA = 'Pregunta eliminado con éxito.'
 export const D20_PREGUNTA_GUARDADA = 'Pregunta guardada con éxito.'
 export const D21_PREGUNTAS_GUARDADAS = 'Preguntas guardadas con éxito.'
-export const D27_PERSONA_NO_EXISTE = 'Persona especificada no existe.'
 
 const TIPOS: TipoPreguntaMock[] = ['OPCION_MULTIPLE', 'VERDADERO_FALSO', 'COMPLETAR']
 const DIFICULTADES: DificultadMock[] = ['BAJA', 'MEDIA', 'ALTA']

@@ -327,7 +327,7 @@ El duplicado se rechaza solo dentro del lote, no contra el banco: un modelo que 
 ## 3. Turnos teóricos
 
 ```
-GET    /api/turnos-teoricos/grupos?codInstructor=&programa=                             Manage Exams
+GET    /api/turnos-teoricos/grupos?programa=                                            Manage Exams
 GET    /api/turnos-teoricos?idGrupo=&idMateria=&estado=&tipoExamen=&codInstructor=&fechaPre=&fechaPost=&page=&size=&direction=&property=   Manage Exams
 GET    /api/turnos-teoricos/{id}                                                        Manage Exams
 POST   /api/turnos-teoricos                                                             Manage Exams
@@ -347,7 +347,7 @@ DELETE /api/turnos-teoricos/{id}                                                
 
 El catálogo de alumnos del frontend tampoco puede suplirlo: `listarAlumnos` (`src/features/catalogos/api.ts:86-118`) devuelve alumnos y `aOpcion` (`:73-75`) usa `idGrupo` para armar una etiqueta y lo descarta.
 
-Parámetros: `programa` (obligatorio, `PDI` o `PDE`) y `codInstructor` (obligatorio mientras no exista la dependencia 51; omitirlo solo se permite al llamador que además tiene `Manage Groups`, y entonces devuelve todos los grupos del programa).
+Parámetro único: `programa` (obligatorio, `PDI` o `PDE`). **`codInstructor` ya no existe** (dependencia 51, hecha): los grupos son los que alcanza el llamador, y **la escotilla de `Manage Groups` decide sola** — quien lo tiene recibe todos los grupos del programa. Antes hacía falta *además* omitir el parámetro; ahora no hay parámetro que omitir, y es lo que mantiene la ruta usable para el Administrador Web, cuya persona no programa turnos y por tanto no alcanza ningún grupo.
 
 **200** — arreglo **no paginado**, ordenado por `nombre`. Solo grupos **con al menos un alumno**, para que el selector no pueda ofrecer un grupo que la validación de §3.3 va a rechazar:
 
@@ -359,13 +359,13 @@ Parámetros: `programa` (obligatorio, `PDI` o `PDE`) y `codInstructor` (obligato
 ]
 ```
 
-Lista vacía → **404** D28. **404** D27 si `codInstructor` no existe. **400** arreglo si falta `programa` → `Ingresar programa válido.`, o si falta `codInstructor` sin tener `Manage Groups` → `El código del instructor es obligatorio.`
+Lista vacía → **404** D28. **400** arreglo si falta `programa` → `Ingresar programa válido.` Sin 404 D27 y sin el 400 de `codInstructor`: el código ya no viaja.
 
 **De dónde salen los grupos de un instructor.** No hay relación instructor↔grupo en el esquema (`grupos` no tiene columna de instructor; el único enlace es `turnos.cod_instructor` → `alumnos_turno` → `personas.id_grupo`). El servidor debe derivarlos por ese camino: los grupos de los alumnos que voló. **[Dependencia 52]** Si en el futuro `grupos` gana un instructor asignado, este endpoint no cambia de forma.
 
 ### 3.1 `GET /api/turnos-teoricos`
 
-Filtros opcionales combinables con AND: `idGrupo`, `idMateria`, `estado` (`EstadoTurnoTeorico`; al ser derivado se traduce a una comparación de `fechaExamen`+horas contra el reloj del servidor), `tipoExamen`, `codInstructor`, `fechaPre`/`fechaPost` (rango cerrado sobre `fechaExamen`, `yyyy-MM-dd`; los mismos nombres que `GET /api/turnos`). Paginado `Page_Sort`, `property` por defecto `"fechaExamen"`; propiedades ordenables: `id`, `nombre`, `fechaExamen`, `materia`, `grupo`.
+Filtros opcionales combinables con AND: `idGrupo`, `idMateria`, `estado` (`EstadoTurnoTeorico`; al ser derivado se traduce a una comparación de `fechaExamen`+horas contra el reloj del servidor), `tipoExamen`, **`codInstructor` — que la dependencia 51 CONSERVA, porque acá es un filtro sobre `turnos_teoricos.cod_instructor` y no la identidad del llamador; nada dice que un Instructor solo vea sus propios turnos, así que quitarlo sería perder función sin ganar seguridad** —, `fechaPre`/`fechaPost` (rango cerrado sobre `fechaExamen`, `yyyy-MM-dd`; los mismos nombres que `GET /api/turnos`). Paginado `Page_Sort`, `property` por defecto `"fechaExamen"`; propiedades ordenables: `id`, `nombre`, `fechaExamen`, `materia`, `grupo`.
 
 **200** — `Page` de filas planas:
 
@@ -445,7 +445,6 @@ Lista vacía → **404** D5.
 
 ```json
 {
-  "codInstructor": "444444",
   "nombre": "Quincenal Límites de Operación",
   "programa": "PDI",
   "idMateria": 4,
@@ -471,14 +470,14 @@ Lista vacía → **404** D5.
 
 **201** `{"mensaje":"Turno teórico guardado con éxito.","turnoTeorico":{…forma de §3.2…}}` (D22).
 
-**404** D4 si `idMateria` no existe; **404** D26 si `idGrupo` no existe; **404** D27 si `codInstructor` no existe; **404** D6 si `idTurnoOrigen` no existe; **404** D2 si alguna `idPregunta` no existe.
+**`codInstructor` no viaja** (dependencia 51, hecha): el instructor del turno es el llamador y se guarda como tal. Uno que llegue en el cuerpo se ignora, así que se fueron su 400 de obligatorio y su 404 D27. De los **cinco** 404 de id anidado quedan **cuatro**.
+
+**404** D4 si `idMateria` no existe; **404** D26 si `idGrupo` no existe; **404** D6 si `idTurnoOrigen` no existe; **404** D2 si alguna `idPregunta` no existe.
 
 Validación → **400** arreglo:
 
 | Campo | Regla | Mensaje exacto |
 |---|---|---|
-| `codInstructor` | obligatorio y de 6 dígitos (que exista es el 404 D27) | `El código del instructor es obligatorio.` |
-| | el grupo debe ser uno de los que devuelve §3.0 para ese instructor, **salvo que el llamador tenga además `Manage Groups`**: a ese le basta que el grupo pertenezca al `programa` enviado, igual que §3.0 le devuelve todos los grupos del programa. `codInstructor` sigue siendo el de quien programa el turno y se guarda como tal | `El grupo no corresponde al instructor.` |
 | `nombre` | obligatorio | `El nombre es obligatorio` |
 | | 10 a 60 caracteres, no solo espacios | `El nombre debe tener entre 10 y 60 caracteres.` |
 | `programa` | obligatorio y `PDI` o `PDE` | `Ingresar programa válido.` |
@@ -491,6 +490,7 @@ Validación → **400** arreglo:
 | | `horaFin` al menos **10 minutos** después de `horaInicio` | `La ventana del examen debe durar al menos 10 minutos.` |
 | `idGrupo` | obligatorio | `El grupo es obligatorio.` |
 | | el grupo debe tener al menos un alumno | `El grupo no tiene alumnos.` |
+| | el grupo debe ser uno de los que devuelve §3.0 para el llamador, **salvo que además tenga `Manage Groups`**: a ese le basta que el grupo pertenezca al `programa` enviado. **El error es de `idGrupo` y no de `codInstructor`, y eso arregla un defecto de interfaz**: el formulario no tiene campo de instructor, así que con el nombre viejo el mensaje no tenía dónde pintarse y el usuario veía un 400 en blanco | `El grupo no corresponde al instructor.` |
 | `idTurnoOrigen` | obligatorio si `tipoExamen` es `SUBSANACION` o `REZAGADO` | `El turno de origen es obligatorio para una subsanación o un rezagado.` |
 | | prohibido en cualquier otro tipo | `El turno de origen solo se indica en una subsanación o un rezagado.` |
 | | debe ser un turno `FINALIZADO` de la misma materia y el mismo grupo | `El turno de origen debe ser un turno finalizado de la misma materia y grupo.` |
@@ -508,6 +508,8 @@ La regla de las 24 horas del PDI (una subsanación se rinde dentro de las 24 h d
 ### 3.4 `PUT /api/turnos-teoricos/{id}`
 
 Mismo cuerpo, **exactamente** las mismas reglas y mismo `201` que §3.3 — incluida la de que `fechaExamen` con `horaInicio` quede en el futuro, que por eso se enuncia una sola vez.
+
+**El instructor del turno pasa a ser quien modifica**, al revés que en §2.4, donde una pregunta no cambia de autor. La asimetría es deliberada: cada lado traduce fielmente la regla que su código ya tenía escrita antes de la 51.
 
 **404** D6. **409** D7 si el turno no está `PROGRAMADO` (su ventana ya comenzó o terminó).
 

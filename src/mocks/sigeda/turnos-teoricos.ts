@@ -33,7 +33,7 @@ import {
   preguntasDelTurno,
   siguienteId,
 } from './datos'
-import { D2_PREGUNTA_NO_EXISTE, D4_MATERIA_NO_EXISTE, D27_PERSONA_NO_EXISTE } from './preguntas'
+import { D2_PREGUNTA_NO_EXISTE, D4_MATERIA_NO_EXISTE } from './preguntas'
 import { minimoAplicado, type CuestionarioMock, type TipoExamenMock, type TurnoTeoricoMock } from './semilla-teoria'
 
 export const D5_SIN_TURNOS = 'No existen turnos teóricos disponibles.'
@@ -49,7 +49,6 @@ const TIPOS: readonly TipoExamenMock[] = TIPOS_EXAMEN.map((tipo) => tipo.valor)
 type PreguntaEnviada = { idPregunta?: unknown; puntajeMaximo?: unknown }
 
 type CuerpoTurno = {
-  codInstructor?: unknown
   nombre?: unknown
   programa?: unknown
   idMateria?: unknown
@@ -218,9 +217,6 @@ function preguntasDelCuerpo(valor: unknown): PreguntaEnviada[] {
 
 function erroresDeForma(cuerpo: CuerpoTurno): string[] {
   const errores: string[] = []
-  if (!/^\d{6}$/.test(texto(cuerpo.codInstructor))) {
-    errores.push("'codInstructor': El código del instructor es obligatorio.")
-  }
   const nombre = texto(cuerpo.nombre).trim()
   if (nombre === '') errores.push("'nombre': El nombre es obligatorio")
   else if (nombre.length < 10 || nombre.length > 60) {
@@ -284,14 +280,17 @@ function gruposDelInstructor(codInstructor: string): number[] {
   return [...new Set(ids)]
 }
 
-function erroresDeCruce(cuerpo: CuerpoTurno, todosLosGrupos: boolean): string[] {
+function erroresDeCruce(cuerpo: CuerpoTurno, codInstructor: string, todosLosGrupos: boolean): string[] {
   const errores: string[] = []
   const grupo = datos().grupos.find((candidato) => candidato.id === Number(cuerpo.idGrupo))
   if (!grupo) return errores
   if (alumnosDeGrupo(grupo.id).length === 0) errores.push("'idGrupo': El grupo no tiene alumnos.")
   if (grupo.programa !== cuerpo.programa) errores.push("'programa': El programa no corresponde al grupo.")
-  if (!todosLosGrupos && !gruposDelInstructor(texto(cuerpo.codInstructor)).includes(grupo.id)) {
-    errores.push("'codInstructor': El grupo no corresponde al instructor.")
+  // El campo es `idGrupo` y no `codInstructor`, y no es cosmético: el formulario no tiene un campo
+  // de instructor —lo resuelve el servidor—, así que el error no tenía dónde pintarse y el usuario
+  // veía un 400 sin mensaje. `idGrupo` es el selector que sí puede corregir.
+  if (!todosLosGrupos && !gruposDelInstructor(codInstructor).includes(grupo.id)) {
+    errores.push("'idGrupo': El grupo no corresponde al instructor.")
   }
   const origen = typeof cuerpo.idTurnoOrigen === 'number' ? buscarTurnoTeorico(cuerpo.idTurnoOrigen) : undefined
   if (origen) {
@@ -315,7 +314,6 @@ function erroresDeCruce(cuerpo: CuerpoTurno, todosLosGrupos: boolean): string[] 
 }
 
 function noEncontrados(cuerpo: CuerpoTurno): Response | null {
-  if (!buscarPersona(texto(cuerpo.codInstructor))) return textoNoEncontrado(D27_PERSONA_NO_EXISTE)
   if (!buscarMateria(Number(cuerpo.idMateria))) return textoNoEncontrado(D4_MATERIA_NO_EXISTE)
   if (!datos().grupos.some((grupo) => grupo.id === Number(cuerpo.idGrupo))) return textoNoEncontrado(D26_GRUPO_NO_EXISTE)
   if (typeof cuerpo.idTurnoOrigen === 'number' && !buscarTurnoTeorico(cuerpo.idTurnoOrigen)) {
@@ -339,7 +337,7 @@ function guardarPreguntas(idTurnoTeorico: number, cuerpo: CuerpoTurno) {
   })
 }
 
-function aplicar(turno: TurnoTeoricoMock, cuerpo: CuerpoTurno) {
+function aplicar(turno: TurnoTeoricoMock, cuerpo: CuerpoTurno, codInstructor: string) {
   turno.nombre = texto(cuerpo.nombre).trim()
   turno.idMateria = Number(cuerpo.idMateria)
   turno.tipoExamen = TIPOS.find((tipo) => tipo === cuerpo.tipoExamen) ?? turno.tipoExamen
@@ -347,7 +345,9 @@ function aplicar(turno: TurnoTeoricoMock, cuerpo: CuerpoTurno) {
   turno.horaInicio = texto(cuerpo.horaInicio)
   turno.horaFin = texto(cuerpo.horaFin)
   turno.idGrupo = Number(cuerpo.idGrupo)
-  turno.codInstructor = texto(cuerpo.codInstructor)
+  // Al revés que en preguntas, y a propósito: acá el instructor del turno pasa a ser quien lo
+  // modifica, porque es la regla que el servidor tenía escrita antes de la 51 y se tradujo fiel.
+  turno.codInstructor = codInstructor
   turno.idTurnoOrigen = typeof cuerpo.idTurnoOrigen === 'number' ? cuerpo.idTurnoOrigen : null
   guardarPreguntas(turno.id, cuerpo)
 }
@@ -377,16 +377,14 @@ export const handlersTurnosTeoricos = [
     if (permitido instanceof Response) return permitido
     const url = new URL(request.url)
     const programa = url.searchParams.get('programa')
-    const codInstructor = url.searchParams.get('codInstructor')
-    const errores: string[] = []
-    if (programa !== 'PDI' && programa !== 'PDE') errores.push("'programa': Ingresar programa válido.")
-    const permisos = autorizar(request, 'Manage Groups')
-    if (codInstructor === null && permisos instanceof Response) {
-      errores.push("'codInstructor': El código del instructor es obligatorio.")
+    if (programa !== 'PDI' && programa !== 'PDE') {
+      return erroresDeCampo(["'programa': Ingresar programa válido."])
     }
-    if (errores.length > 0) return erroresDeCampo(errores)
-    if (codInstructor !== null && !buscarPersona(codInstructor)) return textoNoEncontrado(D27_PERSONA_NO_EXISTE)
-    const alcanzables = codInstructor === null ? null : gruposDelInstructor(codInstructor)
+    // La escotilla de `Manage Groups` decide sola: antes hacía falta ADEMÁS omitir el parámetro, y
+    // ahora no hay parámetro que omitir. Es lo que mantiene la ruta usable para el Administrador
+    // Web, cuya persona no programa turnos y por tanto no alcanza ningún grupo.
+    const todosLosGrupos = !(autorizar(request, 'Manage Groups') instanceof Response)
+    const alcanzables = todosLosGrupos ? null : gruposDelInstructor(permitido.codPersona)
     const grupos = datos()
       .grupos.filter((grupo) => grupo.programa === programa)
       .filter((grupo) => alumnosDeGrupo(grupo.id).length > 0)
@@ -415,7 +413,7 @@ export const handlersTurnosTeoricos = [
     if (forma.length > 0) return erroresDeCampo(forma)
     const faltante = noEncontrados(cuerpo)
     if (faltante) return faltante
-    const cruce = erroresDeCruce(cuerpo, !(autorizar(request, 'Manage Groups') instanceof Response))
+    const cruce = erroresDeCruce(cuerpo, permitido.codPersona, !(autorizar(request, 'Manage Groups') instanceof Response))
     if (cruce.length > 0) return erroresDeCampo(cruce)
     const turno: TurnoTeoricoMock = {
       id: siguienteId('turnoTeorico'),
@@ -430,7 +428,7 @@ export const handlersTurnosTeoricos = [
       idTurnoOrigen: null,
     }
     datos().turnosTeoricos.push(turno)
-    aplicar(turno, cuerpo)
+    aplicar(turno, cuerpo, permitido.codPersona)
     return HttpResponse.json({ mensaje: D22_TURNO_GUARDADO, turnoTeorico: detallePublico(turno) }, { status: 201 })
   }),
   http.get(`${API}/api/turnos-teoricos/:id`, ({ request, params }) => {
@@ -452,9 +450,9 @@ export const handlersTurnosTeoricos = [
     if (forma.length > 0) return erroresDeCampo(forma)
     const faltante = noEncontrados(cuerpo)
     if (faltante) return faltante
-    const cruce = erroresDeCruce(cuerpo, !(autorizar(request, 'Manage Groups') instanceof Response))
+    const cruce = erroresDeCruce(cuerpo, permitido.codPersona, !(autorizar(request, 'Manage Groups') instanceof Response))
     if (cruce.length > 0) return erroresDeCampo(cruce)
-    aplicar(turno, cuerpo)
+    aplicar(turno, cuerpo, permitido.codPersona)
     return HttpResponse.json({ mensaje: D22_TURNO_GUARDADO, turnoTeorico: detallePublico(turno) }, { status: 201 })
   }),
   http.delete(`${API}/api/turnos-teoricos/:id`, ({ request, params }) => {
