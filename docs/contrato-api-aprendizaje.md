@@ -41,7 +41,24 @@ La §6 resume dónde el backend de hoy difiere de este contrato y qué hace el f
 
 ---
 
-## 0. Autenticación — **Corrección** (dependencia 39)
+## 0. Autenticación — **HECHA** (dependencia 39, 27 sep 2026)
+
+> **Implementada.** `DevAuthMiddleware` se borró y un guard global verifica el JWT de `sigeda-back`
+> con la clave **base64-decodificada** (`Buffer.from(secreto,'base64')`, que es lo que hace
+> `Keys.hmacShaKeyFor(Decoders.BASE64.decode(...))` del otro lado; con la cadena cruda **toda** firma
+> falla). `sub → User.id` contra un `username String @unique` nuevo, y un `sub` sin fila da **401**, no
+> 404. Los once usuarios de `sigeda-back` se siembran (`pnpm seed:usuarios`); si no se corre, **todos**
+> los tokens dan 401. Hace falta `SIGEDA_JWT_SECRET` o el servicio no arranca, a propósito.
+> Demostrado: con el token de `admin.sistema` la lista trae sus documentos, y con el de `alumno.lopez`
+> trae `[]` — el agujero de datos, cerrado.
+>
+> **Dos cosas que el análisis previo daba por ciertas y no lo eran:** no existía ninguna fila con el
+> UUID del usuario de desarrollo (0 documentos, 0 quizzes, 0 sesiones), así que no hubo migración de
+> datos que hacer; y la base **no estaba gobernada por Prisma Migrate** (venía de `db push`), así que
+> hubo que hacer el baseline antes de poder migrar.
+
+Lo que sigue describe el estado ANTERIOR, y se conserva porque explica por qué la corrección era
+necesaria.
 
 **Hoy.** `DevAuthMiddleware` se aplica a todas las rutas (`src/app.module.ts:23-25`) y fija `req.user = { id: '564984ee-448a-424f-b689-57a03b3ea108' }` ignorando el encabezado `Authorization` (`src/common/dev-auth.middleware.ts:5-8`). No hay ninguna librería de JWT en `package.json`, ni guard, ni columna `username` en `User` (`prisma/schema.prisma:56-74`). **Todas las peticiones son el mismo usuario**, así que los documentos de una persona aparecen en la lista de todas.
 
@@ -138,7 +155,16 @@ GET /documents/{id}
 
 **200** `DocumentResponseDto`. **404** `"Documento no encontrado."` (`documents.service.ts:69`). Un `{id}` que no es un UUID devuelve hoy **500** (`documents.controller.ts:52`, sin `ParseUUIDPipe`); con la dependencia 47 debe ser 400.
 
-**[Corrección — dependencia 47]** Hoy es `findUnique({ where: { id } })` sin filtrar por `ownerId` (`documents.service.ts:68`): cualquiera puede leer cualquier documento por su UUID. Agregar el filtro por dueño y responder el mismo **404** (no 403) cuando el documento es de otra persona, para no revelar su existencia.
+**[HECHA — dependencia 47, 27 sep 2026]** Era `findUnique({ where: { id } })` sin filtrar por
+`ownerId`: cualquiera leía cualquier documento por su UUID, y el `DELETE` lo **borraba**. Ahora el
+dueño va **dentro del `where`** —no en un `if` posterior, para que la fila ajena no llegue ni a
+memoria— y el documento de otra persona responde **404**, no 403. Lo mismo en
+`GET /quiz/{id}`, que tenía el mismo hueco. Y `ParseUUIDPipe` en los cuatro parámetros de ruta: un id
+mal formado daba **500** desde Prisma y ahora da 400.
+
+> **Por qué esto se volvió urgente al cerrar la 39, y no antes:** mientras todas las peticiones eran
+> el mismo usuario de desarrollo, un `findUnique` por id suelto daba igual. Con identidades reales
+> pasó a ser una fuga entre personas. Cerrar una dependencia puede volver peligrosa a otra.
 
 ### 1.4 `DELETE /documents/{id}` — **Corrección** (dependencia 47)
 
