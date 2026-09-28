@@ -151,12 +151,12 @@ página retoma el mismo examen con las respuestas guardadas, con **200** en vez 
 
 | Alternativa | HTTP | Mensaje literal |
 |---|---|---|
-| Pedir los pendientes de otro alumno | **403** | `Solo puede consultar sus propios exámenes.` |
-| Iniciarle el examen a otro alumno | **403** | igual — **se comprueba antes** de si está habilitado |
+| Pedir los pendientes de otro alumno | **200** | ya no es expresable: con la dependencia 51 el código no viaja y la lista es siempre la propia |
+| Iniciarle el examen a otro alumno | **201/200** | tampoco: la ruta no lee cuerpo y el examen es el del llamador |
 | Iniciar un turno de un grupo que no es el suyo | 403 | `El alumno no está habilitado para este examen.` |
 | Iniciar cuando la ventana no abrió o ya cerró | 409 | `La ventana del examen cerró.` |
 | Entregar dos veces | 409 | `El examen ya fue entregado.` |
-| Ver el examen de otro alumno | **403** | `Solo puede consultar sus propios exámenes.` |
+| Ver el examen de otro alumno | **403** | `Solo puede consultar su propia información.` — el id del examen sí viaja en la URL |
 | **El Instructor** ve el examen de cualquiera | **200** | misma ruta, permiso `Manage Exams`: el cuerpo llega **completo** |
 
 **La misma ruta devuelve dos cuerpos distintos según quién pregunta.** Mientras el turno no esté
@@ -187,7 +187,7 @@ Los dos alumnos del grupo 3 son la historia, y son opuestos a propósito:
 
 | Alternativa | HTTP | Qué pasa |
 |---|---|---|
-| Un alumno pide el legajo de otro | **403** | `Solo puede consultar su propio legajo.` |
+| Un alumno pide el legajo de otro | **403** | `Solo puede consultar su propia información.` — un único texto para los ocho controladores que emiten este 403 |
 | Un alumno pide **el suyo** | 200 | legajo completo |
 | Un alumno sin ningún chequeo | **404** | `No existen chequeos disponibles.` → la interfaz muestra el panel vacío |
 | Código de persona inexistente | 404 | `Persona especificada no existe.` |

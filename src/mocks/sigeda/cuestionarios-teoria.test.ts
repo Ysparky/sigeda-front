@@ -30,6 +30,28 @@ function idIncorrecta(idPregunta: number): string {
   return String(alternativasDePregunta(idPregunta).find((alternativa) => !alternativa.correcto)?.id)
 }
 
+describe('un único 403 de propiedad', () => {
+  it('el texto no nombra ningún recurso, porque sirve a ocho controladores', () => {
+    // Eran tres redacciones para el mismo rechazo, y cada una nombraba un recurso: «exámenes» era
+    // falso en el legajo y «legajo» era falso en los turnos. Esta prueba fija el texto Y la razón:
+    // si vuelve a nombrar un recurso, vuelve a haber tres.
+    expect(D15_SOLO_LO_PROPIO).toBe('Solo puede consultar su propia información.')
+    for (const recurso of ['examen', 'legajo', 'turno', 'grupo', 'alumno', 'evaluación']) {
+      expect(D15_SOLO_LO_PROPIO.toLowerCase()).not.toContain(recurso)
+    }
+  })
+
+  it('las rutas por persona que un alumno recorre seguidas dicen todas lo mismo', async () => {
+    await iniciarComo('alumno.lopez')
+    for (const ruta of ['estado-teorico', 'indices']) {
+      await expect(sigeda.get(`/api/personas/666666/${ruta}`)).rejects.toThrow(D15_SOLO_LO_PROPIO)
+    }
+    await expect(sigeda.pagina('/api/cuestionarios', { codAlumno: '666666', page: 0, size: 6 })).rejects.toThrow(
+      D15_SOLO_LO_PROPIO,
+    )
+  })
+})
+
 describe('contrato §4.1 y §4.2: el servidor resuelve al alumno (dependencia 51)', () => {
   // Antes el alumno viajaba en la query o en el cuerpo y el mock tenía que comprobar que fuera el
   // propio (403 D15). Con la 51 el servidor lo deduce del token, así que el 403 no se relajó: se

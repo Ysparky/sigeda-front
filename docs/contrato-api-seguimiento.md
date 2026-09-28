@@ -739,7 +739,7 @@ Cualquier otro texto del servidor se reemplaza por el genérico y solo va a la c
 | D8 | 404 | Evaluación especificada no existe. | §6.3, detalle de evaluación |
 | D9 | 404 | No existen turnos disponibles. | §6.3, turnos del alumno con página vacía |
 | D10 | 404 | No existen alertas disponibles. | §2.1 (lista vacía; el frontend muestra S7) |
-| D11 | 403 | Solo puede consultar su propio legajo. | §3.1, §5.1, §5.2, §6.1, §6.2, con la dependencia 51 |
+| D11 | 403 | Solo puede consultar su propia información. | §3.1, §5.1, §5.2, §5.3, §6.1, §6.2. **Mismo texto que D15 de teoría**: la dependencia 51 unificó las tres redacciones de este 403 en una, porque cada una nombraba un recurso y «legajo» era falso en los turnos igual que «exámenes» era falso en el legajo. Los ids siguen siendo distintos por sección porque son ids del caso, no del texto |
 | D12 | 404 | No existen alumnos con índices disponibles. | §4.1 (lista vacía; el frontend muestra S25) |
 | D13 | 404 | No existen chequeos disponibles. | §6.2 (lista vacía) |
 | D14 | 404 | No existen exámenes disponibles. | §5.2 (lista vacía). **Reutiliza el id que `contrato-api-teoria.md:848` retiró** al recortar el historial |

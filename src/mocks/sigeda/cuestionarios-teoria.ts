@@ -22,7 +22,11 @@ export const D9_ALUMNO_NO_HABILITADO = 'El alumno no está habilitado para este 
 export const D10_EXAMEN_ENTREGADO = 'El examen ya fue entregado.'
 export const D11_VENTANA_CERRADA = 'La ventana del examen cerró.'
 export const D12_EXAMEN_NO_EXISTE = 'Examen especificada no existe.'
-export const D15_SOLO_LO_PROPIO = 'Solo puede consultar sus propios exámenes.'
+// Un único 403 de propiedad para los ocho controladores que lo emiten. Antes eran tres
+// redacciones, cada una nombrando un recurso, y nombrar el recurso es lo que las produjo: «exámenes»
+// era falso en el legajo y «legajo» era falso en los turnos. Sin el sustantivo, una constante cubre
+// las ocho y el texto se muestra en la pantalla del recurso, donde el usuario ya sabe qué pidió.
+export const D15_SOLO_LO_PROPIO = 'Solo puede consultar su propia información.'
 export const D17_SIN_PENDIENTES = 'No existen exámenes pendientes.'
 export const D23_EXAMEN_ENTREGADO_CON_EXITO = 'Examen entregado con éxito.'
 export const D25_RESPUESTAS_GUARDADAS = 'Respuestas guardadas.'
