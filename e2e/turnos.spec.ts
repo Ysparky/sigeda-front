@@ -37,4 +37,22 @@ test.describe('Turnos prácticos contra el backend real', () => {
     await page.getByRole('button', { name: 'Agregar alumno' }).click()
     await expect(page.getByLabel('Alumno 1').getByRole('option', { name: /Lopez/ })).toBeAttached({ timeout: 15_000 })
   })
+
+  // Dependencia 62, y contra el servidor porque es donde vale: el catálogo lo sirve
+  // `GET /api/subfases/2/misiones`, y `N/I-7` es la única misión del bloque que vale 1 h contra 1.5.
+  // Si el coeficiente se guardara en vez de derivarse de las horas, o si la respuesta llegara con otra
+  // forma, es la opción que no aparecería. El servidor manda el número como `0.1`: los cuatro
+  // decimales los pone la pantalla, así que esto también fija que no se muestre el crudo.
+  test('el selector de misión trae el catálogo del PDI que sirve el servidor', async ({ page }) => {
+    await entrarComo(page, CUENTAS.operaciones)
+    await page.goto('/turnos/nuevo')
+    await expect(page.getByRole('heading', { level: 1, name: 'Registrar turno' })).toBeVisible()
+    await expect(page.getByLabel('Misión del PDI')).toBeDisabled()
+    await page.getByLabel('Sub fase').selectOption({ label: 'Navegación' })
+    const mision = page.getByLabel('Misión del PDI')
+    await expect(mision.getByRole('option', { name: 'N/I-7 · 1 h · coef. 0.1000' })).toBeAttached({ timeout: 15_000 })
+    await expect(mision.getByRole('option', { name: 'N/I-1 · 1.5 h · coef. 0.1500' })).toBeAttached()
+    await expect(mision.getByRole('option', { name: 'Sin misión asignada' })).toBeAttached()
+    await expect(mision).toHaveValue('')
+  })
 })
