@@ -26,14 +26,25 @@ function ratio(a: number[], b: number[]) {
   return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)
 }
 
+/**
+ * EL TEMA SE FIJA CON `colorScheme`, NO TOCANDO LA CLASE DEL `<html>`. `next-themes` corre con
+ * `attribute="class"` + `enableSystem`, así que es ÉL quien pone y quita esa clase sincronizándola con
+ * `prefers-color-scheme`: un `classList.add('dark')` a mano sobrevive unos cientos de milisegundos y
+ * después lo pisa. Medido: con 800 ms de espera la clase seguía puesta y con 3500 ms ya no, o sea que
+ * la versión anterior de esta prueba medía el tema oscuro **por casualidad de tiempos**.
+ */
 for (const tema of ['claro', 'oscuro'] as const) {
-  test(`contraste del DIRBE elegido · tema ${tema}`, async ({ page }) => {
+  test.describe(`tema ${tema}`, () => {
+    test.use({ colorScheme: tema === 'oscuro' ? 'dark' : 'light' })
+    test(`contraste del DIRBE elegido · tema ${tema}`, async ({ page }) => {
     await entrarComo(page, CUENTAS.instructor)
     await page.goto('/turnos/2/evaluar/222222')
     const grupo = page.getByRole('radiogroup').first()
     await grupo.waitFor({ timeout: 15_000 })
     if (tema === 'oscuro') {
-      await page.evaluate(() => document.documentElement.classList.add('dark'))
+      // Con `colorScheme` puesto, next-themes ya debería haber puesto la clase. Si no está, el tema
+      // no se aplicó y medir sería mentir, así que se falla acá en vez de reportar números del claro.
+      await expect(page.locator('html')).toHaveClass(/dark/)
     }
     const elegida = grupo.getByRole('radio', { name: /^B \(/ })
     await elegida.click()
@@ -67,7 +78,8 @@ for (const tema of ['claro', 'oscuro'] as const) {
     const r = ratio(rgbFondo as number[], rgbTexto as number[])
     console.log(`[${tema}] elegida fondo=${JSON.stringify(rgbFondo)} texto=${JSON.stringify(rgbTexto)} ratio=${r.toFixed(2)}`)
     console.log(`[${tema}] hover fondo=${JSON.stringify(rgbHover)} distinguible=${JSON.stringify(rgbHover) !== JSON.stringify(rgbFondo)}`)
-    expect(r).toBeGreaterThanOrEqual(4.5)
-    expect(JSON.stringify(rgbHover)).not.toBe(JSON.stringify(rgbFondo))
+      expect(r).toBeGreaterThanOrEqual(4.5)
+      expect(JSON.stringify(rgbHover)).not.toBe(JSON.stringify(rgbFondo))
+    })
   })
 }
