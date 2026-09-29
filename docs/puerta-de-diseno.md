@@ -1,4 +1,19 @@
-# La puerta de diseño (§8) — qué se arregló, qué no era un defecto, qué queda para vos
+# La puerta de diseño (§8) — **CERRADA el 29 sep 2026**
+
+> **Aprobada por el usuario** sobre el shell y una pantalla de referencia, que es exactamente lo que
+> §8 pedía: «M0 ends with a design review: shell plus one reference screen, run in the browser,
+> approved before M1 starts». Se revisó en el navegador, contra el servidor real: el shell con el
+> legajo de `555555` en **tema claro y oscuro**, el registro de evaluación con el control DIRBE en
+> contexto, y la vista de alumno a 390 px.
+>
+> **Segunda decisión tomada en la misma revisión:** las tablas de las pantallas de alumno a 390 px
+> **se quedan como están**, desplazándose en horizontal. Funciona, todo se alcanza, el desplazamiento
+> está contenido en la tabla y la página nunca desborda; apilarlas en tarjetas es diseño nuevo, no un
+> arreglo. Queda anotado como mejora posible, no como deuda.
+>
+> Lo que sigue es el registro de cómo se llegó acá.
+
+## Qué se arregló, qué no era un defecto, qué queda para vos
 
 El spec pedía una revisión de diseño al final de M0: **«shell plus one reference screen, run in the
 browser, approved before M1 starts»**. Nunca ocurrió, y M1 a M5 se construyeron y fusionaron sin
@@ -69,8 +84,12 @@ calidad**. Lo digo porque la diferencia cambia qué es obligatorio y qué es opi
    qué nota cuenta. Es tensión entre dos señales, y cuál debe ganar es criterio de dominio.
 4. **`next-themes` registra un aviso de script bajo React 19** en consola. No afecta a la pantalla.
 
-## Cómo te sugiero cerrarla
+## Cómo se cerró
 
-Hacé lo que el spec pedía en origen: **el shell y una pantalla de referencia**, aprobás o corregís
-eso, y yo propago las decisiones al resto. Revisar las 90 capturas milestone por milestone es cómo
-esto se convierte en un segundo proyecto.
+Se hizo lo que el spec pedía en origen —**el shell y una pantalla de referencia**, en el navegador,
+contra el servidor real— en vez de revisar las 90 capturas milestone por milestone, que es cómo esto
+se convertía en un segundo proyecto.
+
+De los cuatro puntos de arriba, el usuario resolvió el **1** (las tablas se quedan) y dejó los otros
+tres anotados como mejoras posibles. **Ninguno bloquea nada**: los dos que incumplían §8 ya estaban
+arreglados y medidos antes de la revisión.
