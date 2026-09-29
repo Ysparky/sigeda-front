@@ -71,7 +71,7 @@ describe('Detalle de evaluación', () => {
 
   it('CA-EVA-10 el alumno abre sus propias evaluaciones', async () => {
     await abrirEvaluacion('alumno.lopez', '111111-1')
-    expect(screen.getByRole('heading', { level: 1, name: 'Ponderada Contacto Básico' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Ponderada Control Básico 1' })).toBeInTheDocument()
   })
 
   it('una evaluación inexistente muestra la página no encontrada', async () => {

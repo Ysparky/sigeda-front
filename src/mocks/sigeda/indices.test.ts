@@ -55,7 +55,7 @@ describe('contrato §3.1: el legajo ajeno', () => {
   it('un alumno sí puede pedir los propios', async () => {
     await iniciarComo('alumno.lopez')
     const propios = await sigeda.get<Indices>('/api/personas/111111/indices')
-    expect(propios.nia.fases).toHaveLength(3)
+    expect(propios.nia.fases).toHaveLength(5)
   })
 })
 
@@ -68,35 +68,38 @@ describe('GET /api/personas/{cod}/indices', () => {
     }
   })
 
-  it('contrato §9.5 el desglose baja a las cinco subfases de NFAD y sus pesos suman 1.00', async () => {
+  // Los pesos NO se suman acá y es deliberado: son las horas de la Tabla 4 sobre el total que ponderan,
+  // a cuatro decimales, y los tres de Adaptación dan 1.0001. El servidor pondera por HORAS con una sola
+  // división al final, así que el peso es la cifra que se muestra y no el operando; que las horas
+  // cierren se comprueba en el backend (unit_test.CalculoDeIndicesTest).
+  it('contrato §9.5 el desglose trae las cinco fases y baja a las tres subfases de NFAD', async () => {
     await iniciarComo('instructor.perez')
     const indices = await sigeda.get<Indices>('/api/personas/777777/indices')
-    const [adaptacion, helitransportadas, aerotacticas] = indices.nia.fases
-    expect(indices.nia.fases.map((fase) => fase.sigla)).toEqual(['NFAD', 'NFOH', 'NFOA'])
-    expect(indices.nia.fases.reduce((suma, fase) => suma + fase.peso, 0)).toBeCloseTo(1, 10)
-    expect(adaptacion?.subfases.map((subfase) => subfase.idSubfase)).toEqual([1, 2, 3, 5, 4])
-    expect(adaptacion?.subfases.reduce((suma, subfase) => suma + subfase.peso, 0)).toBeCloseTo(1, 10)
-    expect(helitransportadas?.subfases).toEqual([])
-    expect(aerotacticas?.subfases).toEqual([])
+    const [adaptacion, navegacionVisual] = indices.nia.fases
+    expect(indices.nia.fases.map((fase) => fase.sigla)).toEqual(['NFAD', 'NFNV', 'NFEM', 'NFVN', 'NFVI'])
+    expect(indices.nia.fases.map((fase) => fase.peso)).toEqual([0.2766, 0.234, 0.1596, 0.1596, 0.1702])
+    expect(adaptacion?.subfases.map((subfase) => subfase.idSubfase)).toEqual([1, 2, 3])
+    expect(adaptacion?.subfases.map((subfase) => subfase.peso)).toEqual([0.4231, 0.3462, 0.2308])
+    expect(navegacionVisual?.subfases).toEqual([])
     expect(adaptacion?.subfases.find((subfase) => subfase.idSubfase === 3)?.misiones).toBe(5)
     expect(adaptacion?.subfases.find((subfase) => subfase.idSubfase === 1)?.misiones).toBe(0)
   })
 
-  // Tanda H. Las tres formas nuevas se comprobaron contra la respuesta del servidor vivo:
-  // GET /api/personas/555555/indices da Contacto con nsf 14.75, ponderacion "PDI", cobertura 0.5714
-  // y su motivo, y las cuatro sub fases sin misiones calificadas con los tres campos en null salvo
-  // el motivo. El mock reproduce ese estado mixto, que es el que la pantalla tiene que sostener.
+  // Las tres formas se comprobaron contra la respuesta del servidor vivo: GET
+  // /api/personas/555555/indices da la primera sub fase con nsf, ponderacion "PDI", su cobertura y su
+  // motivo, y las que no tienen misiones calificadas con los tres campos en null salvo el motivo. El
+  // mock reproduce ese estado mixto, que es el que la pantalla tiene que sostener.
   it('contrato §3.1 cada sub fase declara su ponderación, su cobertura y su motivo', async () => {
     await iniciarComo('instructor.perez')
     const indices = await sigeda.get<Indices>('/api/personas/555555/indices')
     const subfases = indices.nia.fases.find((fase) => fase.sigla === 'NFAD')?.subfases ?? []
-    const contacto = subfases.find((subfase) => subfase.idSubfase === 1)
-    const navegacion = subfases.find((subfase) => subfase.idSubfase === 2)
-    expect([contacto?.ponderacion, contacto?.cobertura]).toEqual(['PDI', 0.5714])
-    expect(contacto?.motivo).toContain('0.5714 de 1.0000')
+    const controlBasico = subfases.find((subfase) => subfase.idSubfase === 1)
+    const circuitos = subfases.find((subfase) => subfase.idSubfase === 2)
+    expect([controlBasico?.ponderacion, controlBasico?.cobertura]).toEqual(['PDI', 0.4423])
+    expect(controlBasico?.motivo).toContain('0.4423 de 1.0000')
     // `cobertura` sólo tiene sentido con la ponderación del PDI: sin coeficientes no hay suma que
     // cubrir, y el servidor la manda en null junto a `ponderacion: "uniforme"`.
-    expect([navegacion?.ponderacion, navegacion?.cobertura]).toEqual(['uniforme', null])
+    expect([circuitos?.ponderacion, circuitos?.cobertura]).toEqual(['uniforme', null])
     expect(subfases.every((subfase) => (subfase.nsf === null) === (subfase.ponderacion === null))).toBe(true)
   })
 
@@ -126,7 +129,9 @@ describe('GET /api/personas/{cod}/indices', () => {
     const incompleto = await sigeda.get<Indices>('/api/personas/666666/indices')
     expect(incompleto.nit.valor).toBe(12.8)
     expect(incompleto.nia.valor).toBeNull()
-    expect(incompleto.nia.motivo).toBe('Sin nota en Operaciones HeliTransportadas ni en Operaciones AeroTácticas.')
+    expect(incompleto.nia.motivo).toBe(
+      'Sin nota en Navegación Visual, Emergencias y Maniobras Avanzadas, Vuelo Nocturno ni en Vuelo por Instrumentos.',
+    )
     expect(incompleto.nia.fases.find((fase) => fase.sigla === 'NFAD')?.valor).toBe(14)
     const sinDatos = await sigeda.get<Indices>('/api/personas/654321/indices')
     expect([sinDatos.nfpi, sinDatos.nit.valor, sinDatos.nia.valor]).toEqual([null, null, null])
@@ -171,7 +176,7 @@ describe('GET /api/reportes/orden-merito', () => {
     expect(pagina.totalElements).toBe(6)
     expect(pagina.content.map((fila) => fila.codigo)).not.toContain('654321')
     expect(pagina.content.at(-1)?.motivoSinNfpi).toBe(
-      'Sin nota en Operaciones HeliTransportadas ni en Operaciones AeroTácticas.',
+      'Sin nota en Navegación Visual, Emergencias y Maniobras Avanzadas, Vuelo Nocturno ni en Vuelo por Instrumentos.',
     )
     expect(pagina.content.find((fila) => fila.codigo === '999999')?.grupo).toBe('Promoción 2026-A')
   })

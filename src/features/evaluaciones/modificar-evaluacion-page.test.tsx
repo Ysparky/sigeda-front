@@ -19,7 +19,7 @@ function maniobra(nombre: string) {
 describe('Modificar evaluación', () => {
   it('CA-EVA-12 carga la última evaluación con sus calificaciones', async () => {
     await abrir('555555-3')
-    expect(await screen.findByLabelText('Nombre')).toHaveValue('Ponderada Contacto Avanzado')
+    expect(await screen.findByLabelText('Nombre')).toHaveValue('Ponderada Control Básico 3')
     expect(screen.getByLabelText('Categoría')).toBeDisabled()
     expect(screen.getByLabelText('Categoría')).toHaveValue('Ponderada')
     expect(maniobra('Maniobra 1').getByRole('radio', { name: 'R (Regular)' })).toHaveAttribute('aria-checked', 'true')

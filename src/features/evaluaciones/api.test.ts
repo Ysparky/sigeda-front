@@ -22,7 +22,7 @@ const PAGINA = { page: 0, size: 10, direction: 'ASC' as const }
 
 function cuerpoPonderada(cambios: Partial<CuerpoEvaluacion> = {}): CuerpoEvaluacion {
   return {
-    nombre: 'Ponderada Contacto Medio',
+    nombre: 'Ponderada Control Básico Medio',
     categoria: 'Ponderada',
     recomendacion: 'Seguir practicando',
     url: null,
@@ -45,7 +45,7 @@ describe('api de evaluaciones', () => {
     expect(todas.items.map((evaluacion) => evaluacion.codigo)).toEqual(['555555-1', '555555-2', '555555-3'])
     expect(todas.items[0]).toEqual({
       codigo: '555555-1',
-      nombre: 'Ponderada Contacto Básico',
+      nombre: 'Ponderada Control Básico 1',
       fase: 'Adaptación',
       evaluador: 'Juan Torres',
       fecha: '2024-03-01',

@@ -22,7 +22,7 @@ describe('GET /api/personas/{cod}/chequeos', () => {
       tipo: 'SUBFASE',
       resultado: 'Aprobado',
       contadores: { chequeo: 0, evaluaciones: 7, malos: 0, regulares: 1 },
-      subfase: 'Contacto',
+      subfase: 'Control Básico',
       idSubfase: 1,
     })
   })

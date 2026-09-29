@@ -24,9 +24,11 @@ describe('Fases y subfases', () => {
     await abrirFases()
     expect(await screen.findByRole('table', { name: 'Fases del programa' })).toBeInTheDocument()
     expect(filas()).toEqual([
-      ['Adaptación', 'Fase inicial de familiarización con procedimientos básicos'],
-      ['Operaciones HeliTransportadas', 'Entrenamiento en operaciones con helicópteros'],
-      ['Operaciones AeroTácticas', 'Operaciones avanzadas y tácticas especiales'],
+      ['Adaptación', 'Control básico del helicóptero, circuitos y precisión'],
+      ['Navegación Visual', 'Navegación local, en ruta y compleja con referencias visuales'],
+      ['Emergencias y Maniobras Avanzadas', 'Autorrotación y fallas de sistemas'],
+      ['Vuelo Nocturno', 'Adaptación, navegación y emergencias de noche'],
+      ['Vuelo por Instrumentos', 'Procedimientos, aproximación y emergencias IFR'],
     ])
     expect(screen.getByRole('link', { name: 'Registrar fase' })).toHaveAttribute('href', '/programa/fases/nueva')
   })
@@ -43,7 +45,7 @@ describe('Fases y subfases', () => {
     expect(router.state.location.search).toMatchObject({ property: 'nombre', direction: 'ASC' })
     await waitFor(() => expect(filas()[0]?.[0]).toBe('Adaptación'))
     await usuario.click(screen.getByRole('button', { name: /Nombre/ }))
-    await waitFor(() => expect(filas()[0]?.[0]).toBe('Operaciones HeliTransportadas'))
+    await waitFor(() => expect(filas()[0]?.[0]).toBe('Vuelo por Instrumentos'))
   })
 
   it('muestra el aviso de error si la lista no carga', async () => {

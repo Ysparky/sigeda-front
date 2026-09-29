@@ -12,10 +12,10 @@ describe('api de fases', () => {
         nombre: 'Adaptación Renombrada',
         descripcion: 'Descripción de fase modificada',
         subfases: [
-          { id: 1, nombre: 'Contacto', descripcion: 'Descripción de Contacto modificada' },
-          { id: 2, nombre: 'Navegación', descripcion: 'Técnicas de navegación y orientación' },
-          { id: 4, nombre: 'Campos Extraños', descripcion: 'Operaciones en terrenos no preparados' },
-          { id: 5, nombre: 'Formación', descripcion: 'Vuelo en formación y coordinación' },
+          { id: 1, nombre: 'Control Básico', descripcion: 'Descripción de Control Básico modificada' },
+          { id: 2, nombre: 'Circuitos y Maniobras', descripcion: 'Circuito de tránsito y maniobras normales' },
+          { id: 4, nombre: 'Navegación Local', descripcion: 'Navegación en las cercanías de la base' },
+          { id: 5, nombre: 'Navegación en Ruta', descripcion: 'Navegación entre puntos con plan de vuelo' },
         ],
       }),
     ).rejects.toBeInstanceOf(ApiError)

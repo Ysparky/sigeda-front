@@ -157,7 +157,7 @@ Ramas de filtro (sin cambios): sin `idSubfase` y sin fechas → por programa; co
 ```json
 {
   "content": [
-    { "id": 1, "subfase": "Contacto", "nombre": "Contacto Básico", "fechaEval": "2024-03-01", "programa": "PDI", "cantAlumno": 1, "cantManiobra": 6 }
+    { "id": 1, "subfase": "Control Básico", "nombre": "Control Básico Inicial", "fechaEval": "2024-03-01", "programa": "PDI", "cantAlumno": 1, "cantManiobra": 6 }
   ],
   "totalElements": 7, "totalPages": 2, "size": 6, "number": 0, "first": true, "last": false, "numberOfElements": 6, "empty": false
 }
@@ -192,7 +192,7 @@ Path vars: `fecha` (`yyyy-MM-dd`), `id` (int, id de aeronave).
 200 — `List<TurnoByAeronave>`, sin cambios en la forma:
 ```json
 [
-  { "id": 1, "nombre": "Contacto Básico", "fechaEval": "2024-03-01", "horaInicio": "13:00", "horaFin": "14:30", "aeronave": { "id": 1, "nombre": "Robinson R22" } }
+  { "id": 1, "nombre": "Control Básico Inicial", "fechaEval": "2024-03-01", "horaInicio": "13:00", "horaFin": "14:30", "aeronave": { "id": 1, "nombre": "Robinson R22" } }
 ]
 ```
 
@@ -211,9 +211,9 @@ GET /api/turnos/{id}   Read
 ```json
 {
   "id": 1,
-  "nombre": "Contacto Básico",
+  "nombre": "Control Básico Inicial",
   "idSubfase": 1,
-  "subfase": "Contacto",
+  "subfase": "Control Básico",
   "fechaEval": "2024-03-01",
   "programa": "PDI",
   "fase": "Adaptación",
@@ -416,7 +416,7 @@ GET /api/evaluaciones/filter/persona/{cod}?idSubfase=&nombre=&clasificacion=&pag
 
 `idSubfase` (int, def. `0`), `nombre` (Programa, def. `"pdi"`), `clasificacion` (String, def. `""`; parseo case-sensitive con `Clasificacion.valueOf` — cualquier valor no exacto se ignora silenciosamente, sin 400), paginado con `property` def. `"codigo"`. `Page<EvalByAlumno>`:
 ```json
-{ "codigo": "555555-1", "nombre": "Contacto Básico", "fase": "Adaptación", "evaluador": "Juan Torres", "fecha": "2024-03-01", "alumno": "Pedro Rodriguez", "promedio": "14.0", "clasificacion": "Regular" }
+{ "codigo": "555555-1", "nombre": "Control Básico Inicial", "fase": "Adaptación", "evaluador": "Juan Torres", "fecha": "2024-03-01", "alumno": "Pedro Rodriguez", "promedio": "14.0", "clasificacion": "Regular" }
 ```
 404 (`isEmpty`, §A) si la página está vacía.
 

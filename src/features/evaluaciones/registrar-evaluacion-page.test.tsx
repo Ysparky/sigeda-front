@@ -91,7 +91,7 @@ describe('Registrar evaluación', () => {
 
   it('conserva el formulario si falla una recarga en segundo plano', async () => {
     const { usuario, queryClient } = await abrirFormulario()
-    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Contacto Medio')
+    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Control Básico Medio')
     server.use(
       http.get(`${config.sigedaApiUrl}/api/evaluaciones/persona/:cod`, () =>
         HttpResponse.text('No se pudo recargar la evaluación.', { status: 400 }),
@@ -99,7 +99,7 @@ describe('Registrar evaluación', () => {
     )
     await queryClient.invalidateQueries()
     await waitFor(() => expect(queryClient.isFetching()).toBe(0))
-    expect(screen.getByLabelText('Nombre')).toHaveValue('Ponderada Contacto Medio')
+    expect(screen.getByLabelText('Nombre')).toHaveValue('Ponderada Control Básico Medio')
     expect(screen.queryByText('No se pudieron cargar los datos de la evaluación')).not.toBeInTheDocument()
   })
 
@@ -124,7 +124,7 @@ describe('Registrar evaluación', () => {
 
   it('CA-EVA-06 al guardar enfoca la primera maniobra sin calificar y la marca como inválida', async () => {
     const { usuario } = await abrirFormulario()
-    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Contacto Medio')
+    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Control Básico Medio')
     await usuario.selectOptions(screen.getByLabelText('Categoría'), 'Ponderada')
     await calificar(usuario, 'Maniobra 1', 'B')
     await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
@@ -190,7 +190,7 @@ describe('Registrar evaluación', () => {
 
   it('CA-EVA-07 al guardar muestra el promedio y la clasificación del backend', async () => {
     const { usuario, router } = await abrirFormulario()
-    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Contacto Medio')
+    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Control Básico Medio')
     await usuario.selectOptions(screen.getByLabelText('Categoría'), 'Ponderada')
     await calificarTodasConB(usuario)
     await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
@@ -209,7 +209,7 @@ describe('Registrar evaluación', () => {
       ),
     )
     const { usuario } = await abrirFormulario()
-    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Contacto Medio')
+    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Control Básico Medio')
     await usuario.selectOptions(screen.getByLabelText('Categoría'), 'Ponderada')
     await calificarTodasConB(usuario)
     await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
@@ -223,7 +223,7 @@ describe('Registrar evaluación', () => {
       ),
     )
     const { usuario } = await abrirFormulario()
-    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Contacto Medio')
+    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Control Básico Medio')
     await usuario.selectOptions(screen.getByLabelText('Categoría'), 'Ponderada')
     await calificarTodasConB(usuario)
     await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
@@ -237,7 +237,7 @@ describe('Registrar evaluación', () => {
       ),
     )
     const { usuario } = await abrirFormulario()
-    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Contacto Medio')
+    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Control Básico Medio')
     await usuario.selectOptions(screen.getByLabelText('Categoría'), 'Ponderada')
     await calificarTodasConB(usuario)
     await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))

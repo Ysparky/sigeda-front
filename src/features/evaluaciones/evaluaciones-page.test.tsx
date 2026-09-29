@@ -45,7 +45,7 @@ describe('Evaluaciones', () => {
     const fila = tabla.getByRole('link', { name: '555555-1' }).closest('tr') as HTMLElement
     expect(within(fila).getAllByRole('cell').slice(0, 8).map((celda) => celda.textContent)).toEqual([
       '555555-1',
-      'Ponderada Contacto Básico',
+      'Ponderada Control Básico 1',
       'Adaptación',
       'Juan Torres',
       '01/03/2024',
@@ -59,7 +59,7 @@ describe('Evaluaciones', () => {
     await iniciarComo('comandante.aguirre')
     const { usuario } = renderApp('/evaluaciones?alumno=%22555555%22&clasificacion=Bueno')
     expect(codigos(await tablaCargada())).toEqual(['555555-2'])
-    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Navegación')
+    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Circuitos y Maniobras')
     expect(await screen.findByText('No hay evaluaciones')).toBeInTheDocument()
   })
 

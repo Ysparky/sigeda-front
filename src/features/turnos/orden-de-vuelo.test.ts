@@ -6,7 +6,7 @@ function turno(id: number, aeronave: string, alumnos: [string, string, string][]
   return {
     id,
     nombre: `Turno ${id}`,
-    subfase: 'Navegación',
+    subfase: 'Circuitos y Maniobras',
     fase: 'Adaptación',
     fechaEval: '2026-09-26',
     programa: 'PDI',

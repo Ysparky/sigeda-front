@@ -116,10 +116,15 @@ describe('vocabulario de seguimiento', () => {
 })
 
 describe('ciclo de chequeo', () => {
-  it('M5-20 el criterio 1 rige Adaptación y Helitransportadas y el 2 Aerotácticas', () => {
+  // El criterio 2 en la fase FINAL del programa es una DECISIÓN registrada y no una lectura del PDI, que
+  // sólo reparte los dos criterios entre las tres fases del PCPH. Está explicada en `criterioDeFase` y en
+  // `EvaluacionPractica.esCriterio2()` del servidor, que es la copia que tiene que decir lo mismo.
+  it('M5-20 el criterio 1 rige las cuatro primeras fases y el 2 Vuelo por Instrumentos', () => {
     expect(criterioDeFase('Adaptación')).toBe(1)
-    expect(criterioDeFase('Operaciones HeliTransportadas')).toBe(1)
-    expect(criterioDeFase('Operaciones AeroTácticas')).toBe(2)
+    expect(criterioDeFase('Navegación Visual')).toBe(1)
+    expect(criterioDeFase('Emergencias y Maniobras Avanzadas')).toBe(1)
+    expect(criterioDeFase('Vuelo Nocturno')).toBe(1)
+    expect(criterioDeFase('Vuelo por Instrumentos')).toBe(2)
     expect(criterioDeFase('')).toBe(1)
   })
 
@@ -181,7 +186,7 @@ describe('textos fijos de la spec §17.3', () => {
   it('M5-9 los textos sin parámetros son los de la spec, byte a byte', () => {
     // CAMBIÓ RESPECTO DE LA SPEC §17.3 dos veces el 28 sep 2026, y la segunda vez enseña algo. El
     // texto original culpaba a la tabla de coeficientes de misión, que ya existe y el servidor usa
-    // (el NSF de Contacto de 555555 da 14.75 ponderado por el PDI). Se reemplazó por «ningún alumno
+    // (el NSF de Control Básico de 555555 da 14.70 ponderado por horas). Se reemplazó por «ningún alumno
     // tiene NFPI porque solo hay sub fases de Adaptación», y **ese texto duró unas horas**: la
     // semilla del servidor pasó a tener las diez sub fases del PDI y 555555 apareció con NFPI 16.47 y
     // puesto 1. Moraleja, y es por lo que el texto de ahora habla de la dependencia y no de los
@@ -257,7 +262,7 @@ describe('textos fijos de la spec §17.3', () => {
     expect(textoOrdenDeMeritoConsultado('26/09/2026', '09:15')).toBe(
       'Orden de mérito consultado el 26/09/2026 a las 09:15. El servidor lo calcula en cada consulta.',
     )
-    expect(textoSinNfpi('Sin nota en Operaciones AeroTácticas')).toBe('Sin NFPI: Sin nota en Operaciones AeroTácticas.')
+    expect(textoSinNfpi('Sin nota en Emergencias y Maniobras Avanzadas')).toBe('Sin NFPI: Sin nota en Emergencias y Maniobras Avanzadas.')
   })
 
   it('M5-9 la etiqueta de grupo con nombre lleva siempre el id con que filtra la pantalla', () => {
@@ -273,8 +278,8 @@ describe('textoSinNfpi', () => {
   // Las pruebas de pantalla llaman a textoSinNfpi en los dos lados de la aserción, así que el
   // punto doble les pasaba inadvertido. Acá se fija el literal.
   it('no duplica el punto cuando el motivo ya termina en uno', () => {
-    expect(textoSinNfpi('Sin nota en Operaciones HeliTransportadas ni en Operaciones AeroTácticas.')).toBe(
-      'Sin NFPI: Sin nota en Operaciones HeliTransportadas ni en Operaciones AeroTácticas.',
+    expect(textoSinNfpi('Sin nota en Navegación Visual ni en Emergencias y Maniobras Avanzadas.')).toBe(
+      'Sin NFPI: Sin nota en Navegación Visual ni en Emergencias y Maniobras Avanzadas.',
     )
   })
 

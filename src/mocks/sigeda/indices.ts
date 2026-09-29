@@ -9,7 +9,8 @@ export const D12_SIN_ALUMNOS_CON_INDICES = 'No existen alumnos con índices disp
 export const D17_FUERA_DE_ALCANCE = 'No tiene permiso para ver este grupo.'
 export const D18_GRUPO_NO_EXISTE = 'Grupo especificada no existe.'
 
-const MOTIVO_SIN_FASES = 'Sin nota en Operaciones HeliTransportadas ni en Operaciones AeroTácticas.'
+const MOTIVO_SIN_FASES =
+  'Sin nota en Navegación Visual, Emergencias y Maniobras Avanzadas, Vuelo Nocturno ni en Vuelo por Instrumentos.'
 const MOTIVO_SIN_DATOS = 'No tiene evaluaciones registradas.'
 const MOTIVO_SIN_MISIONES = 'El alumno no tiene ninguna misión calificada en esta sub fase.'
 const MOTIVO_UNIFORME =
@@ -22,10 +23,16 @@ const MOTIVO_NIA_UNIFORME =
 
 const CATEGORIAS_PONDERADAS = new Set(['Ponderada', 'Chequeo Sub Fase'])
 
+// LAS CINCO FASES DE LA TABLA 4, con el peso que el servidor PUBLICA: las horas de la fase sobre las
+// 94.0 del programa, a cuatro decimales. NO se pueden sumar para comprobarlos y eso es esperado —los de
+// las sub fases de Adaptación dan 1.0001—, porque el servidor pondera por HORAS con una sola división
+// al final y estos pesos son la cifra que se muestra, no el operando.
 const FASES = [
-  { fase: 'Adaptación', sigla: 'NFAD', peso: 0.4 },
-  { fase: 'Operaciones HeliTransportadas', sigla: 'NFOH', peso: 0.35 },
-  { fase: 'Operaciones AeroTácticas', sigla: 'NFOA', peso: 0.25 },
+  { fase: 'Adaptación', sigla: 'NFAD', peso: 0.2766 },
+  { fase: 'Navegación Visual', sigla: 'NFNV', peso: 0.234 },
+  { fase: 'Emergencias y Maniobras Avanzadas', sigla: 'NFEM', peso: 0.1596 },
+  { fase: 'Vuelo Nocturno', sigla: 'NFVN', peso: 0.1596 },
+  { fase: 'Vuelo por Instrumentos', sigla: 'NFVI', peso: 0.1702 },
 ] as const
 
 // `cobertura` es la suma de los coeficientes que entraron en el NSF: 1 es la sub fase terminada y
@@ -33,19 +40,19 @@ const FASES = [
 // sub fase cuyos turnos no tienen misión asignada, donde el NSF es un promedio simple. El mock los
 // FIJA, como el resto de §9.5, pero cubre los tres estados que la pantalla tiene que distinguir.
 const SUBFASES_NFAD = [
-  { idSubfase: 1, sigla: 'C', peso: 0.25, ponderacion: 'PDI', cobertura: 0.5714 },
-  { idSubfase: 2, sigla: 'N', peso: 0.25, ponderacion: 'uniforme', cobertura: null },
-  { idSubfase: 3, sigla: 'I', peso: 0.2, ponderacion: 'PDI', cobertura: 1 },
-  { idSubfase: 5, sigla: 'F', peso: 0.15, ponderacion: 'PDI', cobertura: 1 },
-  { idSubfase: 4, sigla: 'CX', peso: 0.15, ponderacion: 'PDI', cobertura: 1 },
+  { idSubfase: 1, sigla: 'CB', peso: 0.4231, ponderacion: 'PDI', cobertura: 0.4423 },
+  { idSubfase: 2, sigla: 'CM', peso: 0.3462, ponderacion: 'uniforme', cobertura: null },
+  { idSubfase: 3, sigla: 'CP', peso: 0.2308, ponderacion: 'PDI', cobertura: 1 },
 ] as const
 
 const ASIGNATURAS_CON_NOTA = [1, 2, 3]
 
 type Fijacion = {
   nfad: number | null
-  nfoh: number | null
-  nfoa: number | null
+  nfnv: number | null
+  nfem: number | null
+  nfvn: number | null
+  nfvi: number | null
   nia: number | null
   nct: number | null
   nei: number | null
@@ -53,14 +60,19 @@ type Fijacion = {
   nfpi: number | null
 }
 
+// EL NIA, EL NIT Y EL NFPI SON LOS DE §9.5 Y NO SE TOCAN: el empate de 111111 y 999999 en `nfpi` 15.28
+// con `nia` distinto —15.15 contra 15.40— es el fixture del desempate del orden de mérito, y está
+// afirmado en una decena de pruebas. LAS CINCO NOTAS DE FASE SÍ SE RECALCULARON, para que ponderadas por
+// las horas de la Tabla 4 (26 · 22 · 15 · 15 · 16 sobre 94) den EXACTAMENTE el `nia` de su fila. Las tres
+// que había —NFAD, NFOH, NFOA con 0.40/0.35/0.25— ya no cierran contra ninguna fórmula del sistema.
 const FIJACIONES: Record<string, Fijacion> = {
-  '222222': { nfad: 18, nfoh: 17, nfoa: 16, nia: 17.15, nct: 17, nei: 18, nit: 17.2, nfpi: 17.16 },
-  '555555': { nfad: 17, nfoh: 16, nfoa: 15, nia: 16.15, nct: 18, nei: 16, nit: 17.6, nfpi: 16.44 },
-  '999999': { nfad: 16, nfoh: 15, nfoa: 15, nia: 15.4, nct: 15, nei: 14, nit: 14.8, nfpi: 15.28 },
-  '111111': { nfad: 16, nfoh: 15, nfoa: 14, nia: 15.15, nct: 16, nei: 15, nit: 15.8, nfpi: 15.28 },
-  '777777': { nfad: 13, nfoh: 13, nfoa: 12, nia: 12.75, nct: 14, nei: 13, nit: 13.8, nfpi: 12.96 },
-  '666666': { nfad: 14, nfoh: null, nfoa: null, nia: null, nct: 13, nei: 12, nit: 12.8, nfpi: null },
-  '654321': { nfad: null, nfoh: null, nfoa: null, nia: null, nct: null, nei: null, nit: null, nfpi: null },
+  '222222': { nfad: 15.5, nfnv: 17, nfem: 17.5, nfvn: 18.44, nfvi: 18.5, nia: 17.15, nct: 17, nei: 18, nit: 17.2, nfpi: 17.16 },
+  '555555': { nfad: 14.5, nfnv: 16, nfem: 16.5, nfvn: 17.44, nfvi: 17.5, nia: 16.15, nct: 18, nei: 16, nit: 17.6, nfpi: 16.44 },
+  '999999': { nfad: 13.5, nfnv: 16.5, nfem: 15.5, nfvn: 16.34, nfvi: 16, nia: 15.4, nct: 15, nei: 14, nit: 14.8, nfpi: 15.28 },
+  '111111': { nfad: 13.5, nfnv: 15, nfem: 15.5, nfvn: 16.44, nfvi: 16.5, nia: 15.15, nct: 16, nei: 15, nit: 15.8, nfpi: 15.28 },
+  '777777': { nfad: 11, nfnv: 13.5, nfem: 12.5, nfvn: 13.6, nfvi: 14, nia: 12.75, nct: 14, nei: 13, nit: 13.8, nfpi: 12.96 },
+  '666666': { nfad: 14, nfnv: null, nfem: null, nfvn: null, nfvi: null, nia: null, nct: 13, nei: 12, nit: 12.8, nfpi: null },
+  '654321': { nfad: null, nfnv: null, nfem: null, nfvn: null, nfvi: null, nia: null, nct: null, nei: null, nit: null, nfpi: null },
 }
 
 const SIN_DATOS: Fijacion = FIJACIONES['654321']
@@ -138,7 +150,13 @@ function motivoDelNia(fijacion: Fijacion): string | null {
 }
 
 function bloqueNia(persona: PersonaMock, fijacion: Fijacion) {
-  const valores: Record<string, number | null> = { NFAD: fijacion.nfad, NFOH: fijacion.nfoh, NFOA: fijacion.nfoa }
+  const valores: Record<string, number | null> = {
+    NFAD: fijacion.nfad,
+    NFNV: fijacion.nfnv,
+    NFEM: fijacion.nfem,
+    NFVN: fijacion.nfvn,
+    NFVI: fijacion.nfvi,
+  }
   return {
     valor: dosDecimales(fijacion.nia),
     fases: FASES.map((fase) => ({

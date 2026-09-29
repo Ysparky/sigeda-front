@@ -21,7 +21,7 @@ describe('Detalle de maniobra', () => {
     expect(screen.getByText('Estandar 60')).toBeInTheDocument()
     expect(screen.getByText('Estandar 61')).toBeInTheDocument()
     await waitFor(() => expect(screen.getByText('· Adaptación')).toBeInTheDocument())
-    expect(screen.getByText('Instrumentos')).toBeInTheDocument()
+    expect(screen.getByText('Control Preciso')).toBeInTheDocument()
   })
 
   it('CA-MAN-03 si la respuesta no trae subfases lo indica', async () => {
@@ -60,17 +60,17 @@ describe('Detalle de maniobra', () => {
     const { usuario, router, queryClient } = renderApp('/programa/fases/1')
     queryClient.setDefaultOptions({ queries: { retry: false, staleTime: 30_000 }, mutations: { retry: false } })
     await waitFor(() =>
-      expect(screen.getByRole('region', { name: 'Contacto' })).toHaveTextContent('Sin maniobras asignadas.'),
+      expect(screen.getByRole('region', { name: 'Control Básico' })).toHaveTextContent('Sin maniobras asignadas.'),
     )
 
     await router.navigate({ to: '/programa/maniobras/$id/editar', params: { id: '11' } })
     await screen.findByLabelText('Nombre')
-    await usuario.click(await screen.findByRole('checkbox', { name: 'Contacto' }))
+    await usuario.click(await screen.findByRole('checkbox', { name: 'Control Básico' }))
     await usuario.click(screen.getByRole('button', { name: 'Guardar maniobra' }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/programa/maniobras/11'))
 
     await router.navigate({ to: '/programa/fases/$id', params: { id: '1' } })
-    await waitFor(() => expect(screen.getByRole('region', { name: 'Contacto' })).toHaveTextContent('Autorrotación'))
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Control Básico' })).toHaveTextContent('Autorrotación'))
 
     await router.navigate({ to: '/programa/maniobras/$id', params: { id: '11' } })
     await usuario.click(await screen.findByRole('button', { name: 'Eliminar' }))
@@ -79,7 +79,7 @@ describe('Detalle de maniobra', () => {
 
     await router.navigate({ to: '/programa/fases/$id', params: { id: '1' } })
     await waitFor(() =>
-      expect(screen.getByRole('region', { name: 'Contacto' })).toHaveTextContent('Sin maniobras asignadas.'),
+      expect(screen.getByRole('region', { name: 'Control Básico' })).toHaveTextContent('Sin maniobras asignadas.'),
     )
   })
 

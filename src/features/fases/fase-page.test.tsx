@@ -18,10 +18,10 @@ describe('Detalle de fase', () => {
   it('CA-FAS-03 muestra la fase, sus subfases y las maniobras de cada una', async () => {
     await abrirFase(1)
     expect(screen.getByRole('heading', { level: 1, name: 'Adaptación' })).toBeInTheDocument()
-    const instrumentos = await screen.findByRole('region', { name: 'Instrumentos' })
+    const instrumentos = await screen.findByRole('region', { name: 'Control Preciso' })
     await waitFor(() => expect(within(instrumentos).getByText('Maniobra 9')).toBeInTheDocument())
     expect(within(instrumentos).getByText('Maniobra 10')).toBeInTheDocument()
-    const contacto = screen.getByRole('region', { name: 'Contacto' })
+    const contacto = screen.getByRole('region', { name: 'Control Básico' })
     await waitFor(() => expect(within(contacto).getByText('Sin maniobras asignadas.')).toBeInTheDocument())
   })
 
@@ -32,21 +32,21 @@ describe('Detalle de fase', () => {
   })
 
   it('CA-FAS-05 una fase sin subfases se elimina con confirmación', async () => {
-    const { usuario, router } = await abrirFase(2)
+    const { usuario, router } = await abrirFase(3)
     await usuario.click(screen.getByRole('button', { name: 'Eliminar' }))
     const dialogo = await screen.findByRole('alertdialog')
-    expect(dialogo).toHaveTextContent('Se eliminará «Operaciones HeliTransportadas»')
+    expect(dialogo).toHaveTextContent('Se eliminará «Emergencias y Maniobras Avanzadas»')
     await usuario.click(within(dialogo).getByRole('button', { name: 'Eliminar' }))
     expect(await screen.findByText('Fase eliminada.')).toBeInTheDocument()
     await waitFor(() => expect(router.state.location.pathname).toBe('/programa/fases'))
     await waitFor(() =>
-      expect(screen.queryByRole('link', { name: 'Operaciones HeliTransportadas' })).not.toBeInTheDocument(),
+      expect(screen.queryByRole('link', { name: 'Emergencias y Maniobras Avanzadas' })).not.toBeInTheDocument(),
     )
   })
 
   it('CA-DEP-01 sin la dependencia 37 resuelta, eliminar está deshabilitada', async () => {
     vi.stubEnv('VITE_MOCK_API', 'false')
-    await abrirFase(2)
+    await abrirFase(3)
     expect(screen.getByRole('button', { name: 'Eliminar' })).toBeDisabled()
     expect(screen.getByText(MENSAJE_DEPENDENCIA_PENDIENTE)).toBeInTheDocument()
   })
@@ -60,7 +60,7 @@ describe('Detalle de fase', () => {
   it('si falla la carga de una subfase lo indica en su tarjeta', async () => {
     server.use(http.get(`${config.sigedaApiUrl}/api/subfases/:id`, () => HttpResponse.error()))
     await abrirFase(1)
-    const contacto = await screen.findByRole('region', { name: 'Contacto' })
+    const contacto = await screen.findByRole('region', { name: 'Control Básico' })
     expect(
       await within(contacto).findByText('No se pudieron cargar las maniobras de la subfase'),
     ).toBeInTheDocument()

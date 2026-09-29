@@ -213,7 +213,7 @@ describe('Legajo: historial práctico', () => {
 })
 
 describe('Legajo: índices del PDI', () => {
-  it('CA-LEG-13 muestra el NFPI y, desglosados, el NIT con su NCT y NEI y el NIA con sus tres fases', async () => {
+  it('CA-LEG-13 muestra el NFPI y, desglosados, el NIT con su NCT y NEI y el NIA con sus cinco fases', async () => {
     await abrirLegajo('555555')
     const indices = panel('Índices del PDI')
     expect(await indices.findByText('16.44')).toBeInTheDocument()
@@ -222,7 +222,7 @@ describe('Legajo: índices del PDI', () => {
     expect(dato(indices, 'NCT').getByText('18.00')).toBeInTheDocument()
     expect(dato(indices, 'NEI').getByText('16.00')).toBeInTheDocument()
     expect(dato(indices, 'NIA').getByText('16.15')).toBeInTheDocument()
-    for (const sigla of ['NFAD', 'NFOH', 'NFOA']) {
+    for (const sigla of ['NFAD', 'NFNV', 'NFEM', 'NFVN', 'NFVI']) {
       expect(indices.getByText(sigla)).toBeInTheDocument()
     }
   })
@@ -238,12 +238,12 @@ describe('Legajo: índices del PDI', () => {
       expect(mitadTeorica.getByText(sigla)).toBeInTheDocument()
       expect(mitadPractica.queryByText(sigla)).not.toBeInTheDocument()
     }
-    for (const sigla of ['NIA', 'NFAD', 'NFOH', 'NFOA']) {
+    for (const sigla of ['NIA', 'NFAD', 'NFNV', 'NFEM', 'NFVN', 'NFVI']) {
       expect(mitadPractica.getByText(sigla)).toBeInTheDocument()
       expect(mitadTeorica.queryByText(sigla)).not.toBeInTheDocument()
     }
     expect(dato(mitadTeorica, 'NEI').getByText('16.00')).toBeInTheDocument()
-    expect(dato(mitadPractica, 'NFOH').getByText('16.00')).toBeInTheDocument()
+    expect(dato(mitadPractica, 'NFNV').getByText('16.00')).toBeInTheDocument()
     expect(mitadTeorica.queryByText('NFPI')).not.toBeInTheDocument()
     expect(mitadPractica.queryByText('NFPI')).not.toBeInTheDocument()
   })
@@ -252,11 +252,11 @@ describe('Legajo: índices del PDI', () => {
     await abrirLegajo('777777')
     const indices = panel('Índices del PDI')
     const adaptacion = within(await indices.findByRole('table', { name: 'Sub fases de Adaptación' }))
-    expect(adaptacion.getAllByRole('row').slice(1)).toHaveLength(5)
-    const contacto = within(adaptacion.getByText('Contacto').closest('tr') as HTMLElement)
-    expect(contacto.getByText('0.25')).toBeInTheDocument()
-    expect(contacto.getByText('13.00')).toBeInTheDocument()
-    expect(indices.queryByRole('table', { name: 'Sub fases de Operaciones AeroTácticas' })).not.toBeInTheDocument()
+    expect(adaptacion.getAllByRole('row').slice(1)).toHaveLength(3)
+    const controlBasico = within(adaptacion.getByText('Control Básico').closest('tr') as HTMLElement)
+    expect(controlBasico.getByText('0.4231')).toBeInTheDocument()
+    expect(controlBasico.getByText('11.00')).toBeInTheDocument()
+    expect(indices.queryByRole('table', { name: 'Sub fases de Emergencias y Maniobras Avanzadas' })).not.toBeInTheDocument()
   })
 
   it('CA-LEG-13 la pantalla muestra el NFPI del servidor y no uno derivado de sus mitades', async () => {
@@ -289,7 +289,11 @@ describe('Legajo: índices del PDI', () => {
     expect(await indices.findByText('12.80')).toBeInTheDocument()
     expect(dato(indices, 'NFPI').getByText(TEXTO_SIN_DATOS_SUFICIENTES)).toBeInTheDocument()
     expect(dato(indices, 'NFAD').getByText('14.00')).toBeInTheDocument()
-    expect(indices.getByText('Sin nota en Operaciones HeliTransportadas ni en Operaciones AeroTácticas.')).toBeInTheDocument()
+    expect(
+      indices.getByText(
+        'Sin nota en Navegación Visual, Emergencias y Maniobras Avanzadas, Vuelo Nocturno ni en Vuelo por Instrumentos.',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('CA-LEG-13 sin asignaturas pendientes no queda el encabezado de la lista suelto', async () => {
@@ -325,18 +329,18 @@ describe('Legajo: índices del PDI', () => {
     await abrirLegajo('555555')
     const indices = panel('Índices del PDI')
     const adaptacion = within(await indices.findByRole('table', { name: 'Sub fases de Adaptación' }))
-    const contacto = within(adaptacion.getByText('Contacto').closest('tr') as HTMLElement)
-    expect(contacto.getByText('Ponderada por el PDI')).toBeInTheDocument()
-    expect(contacto.getByText('Calculada sobre el 57 % de la sub fase, que está incompleta.')).toBeInTheDocument()
+    const controlBasico = within(adaptacion.getByText('Control Básico').closest('tr') as HTMLElement)
+    expect(controlBasico.getByText('Ponderada por el PDI')).toBeInTheDocument()
+    expect(controlBasico.getByText('Calculada sobre el 44 % de la sub fase, que está incompleta.')).toBeInTheDocument()
   })
 
   it('CA-LEG-13 un NSF sin ponderar se presenta como promedio simple y no como nota de sub fase del PDI', async () => {
     await abrirLegajo('555555')
     const indices = panel('Índices del PDI')
     const adaptacion = within(await indices.findByRole('table', { name: 'Sub fases de Adaptación' }))
-    const navegacion = within(adaptacion.getByText('Navegación').closest('tr') as HTMLElement)
-    expect(navegacion.getByText('Promedio simple')).toBeInTheDocument()
-    expect(navegacion.queryByText('Ponderada por el PDI')).not.toBeInTheDocument()
+    const circuitos = within(adaptacion.getByText('Circuitos y Maniobras').closest('tr') as HTMLElement)
+    expect(circuitos.getByText('Promedio simple')).toBeInTheDocument()
+    expect(circuitos.queryByText('Ponderada por el PDI')).not.toBeInTheDocument()
   })
 
   it('CA-LEG-13 una cobertura mayor a 1 avisa que hay misiones calificadas dos veces', async () => {
@@ -368,7 +372,7 @@ describe('Legajo: índices del PDI', () => {
                 subfases: [
                   {
                     idSubfase: 1,
-                    subfase: 'Contacto',
+                    subfase: 'Control Básico',
                     sigla: 'C',
                     peso: 0.25,
                     nsf: 14.75,
@@ -410,7 +414,7 @@ describe('Legajo: índices del PDI', () => {
     await indices.findByRole('table', { name: 'Sub fases de Adaptación' })
     expect(
       indices.getByText(
-        'Navegación: Ninguna de las misiones calificadas tiene misión del PDI asignada en su turno, así que la nota de sub fase es el promedio simple de las notas.',
+        'Circuitos y Maniobras: Ninguna de las misiones calificadas tiene misión del PDI asignada en su turno, así que la nota de sub fase es el promedio simple de las notas.',
       ),
     ).toBeInTheDocument()
   })
@@ -494,7 +498,7 @@ describe('Legajo: reporte de sub fase', () => {
   it('CA-LEG-05 elegida una sub fase, el reporte muestra su cabecera, sus maniobras y sus notas', async () => {
     await abrirLegajo('777777', '?tab=practico&idSubfase=3')
     const reporte = panel('Reporte de sub fase')
-    expect(await reporte.findByText('Instrumentos')).toBeInTheDocument()
+    expect(await reporte.findByText('Control Preciso')).toBeInTheDocument()
     expect(reporte.getByText('Adaptación')).toBeInTheDocument()
     expect(reporte.getByText('Carlos Ramirez Sanchez')).toBeInTheDocument()
     const listaDeManiobras = within(reporte.getByRole('list'))
@@ -539,7 +543,7 @@ describe('Legajo: reporte de sub fase', () => {
     server.use(
       http.get(`${API}/api/evaluaciones/subfase/:id/persona/:cod`, () =>
         HttpResponse.json({
-          cabecera: { fase: 'Adaptación', subFase: 'Instrumentos', programa: 'PDI', alumno: 'Carlos Ramirez Sanchez' },
+          cabecera: { fase: 'Adaptación', subFase: 'Control Preciso', programa: 'PDI', alumno: 'Carlos Ramirez Sanchez' },
           maniobras: [
             { id: 9, nombre: 'Maniobra 9' },
             { id: 10, nombre: 'Maniobra 10' },
@@ -627,7 +631,7 @@ describe('Legajo: turnos realizados', () => {
     for (const columna of ['Turno', 'Sub fase', 'Programa', 'Fecha']) {
       expect(tabla.getByText(columna)).toBeInTheDocument()
     }
-    expect(tabla.getByText('Instrumentos Avanzados')).toBeInTheDocument()
+    expect(tabla.getByText('Control Preciso Inicial')).toBeInTheDocument()
     expect(turnos.getByText(TEXTO_TURNO_SIN_CANTIDAD)).toBeInTheDocument()
     expect(tabla.queryByText('Alumnos')).not.toBeInTheDocument()
   })
@@ -638,7 +642,7 @@ describe('Legajo: turnos realizados', () => {
     const tabla = within(await turnos.findByRole('table', { name: 'Turnos del alumno' }))
     expect(await turnos.findByText('Página 1 de 2 · 2 registros')).toBeInTheDocument()
     expect(tabla.getAllByRole('row').slice(1)).toHaveLength(1)
-    expect(tabla.getByText('Instrumentos Avanzados')).toBeInTheDocument()
+    expect(tabla.getByText('Control Preciso Inicial')).toBeInTheDocument()
     await usuario.click(turnos.getByRole('button', { name: 'Siguiente' }))
     await waitFor(() => expect(router.state.location.search).toMatchObject({ pageTurnos: 1 }))
     expect(await turnos.findByText('Página 2 de 2 · 2 registros')).toBeInTheDocument()
@@ -670,7 +674,7 @@ describe('Legajo: vuelos desaprobados', () => {
     expect(tabla.getAllByRole('row').slice(1)).toHaveLength(3)
     const fila = within(tabla.getByRole('link', { name: '777777-1' }).closest('tr') as HTMLElement)
     expect(fila.getByText('Malo')).toBeInTheDocument()
-    expect(fila.getByText('Instrumentos')).toBeInTheDocument()
+    expect(fila.getByText('Control Preciso')).toBeInTheDocument()
     expect(fila.getByText('PDI')).toBeInTheDocument()
     expect(tabla.getByRole('link', { name: '777777-1' })).toHaveAttribute('href', '/evaluaciones/777777-1')
   })
@@ -724,7 +728,7 @@ describe('Legajo: ciclo de chequeo', () => {
     expect(historial.getAllByRole('row').slice(1)).toHaveLength(1)
     const fila = within(historial.getAllByRole('row')[1]!)
     expect(fila.getByText('Aprobado')).toBeInTheDocument()
-    expect(fila.getByText('Contacto')).toBeInTheDocument()
+    expect(fila.getByText('Control Básico')).toBeInTheDocument()
     await reabrirLegajo('777777', '?tab=practico')
     expect(await panel('Ciclo de chequeo').findByText(TEXTO_SIN_CHEQUEOS)).toBeInTheDocument()
   })
@@ -957,7 +961,7 @@ describe('Legajo: propiedad y modo vivo', () => {
     vi.stubEnv('VITE_MOCK_API', 'false')
     const { usuario } = await abrirLegajo('777777', '?tab=practico&idSubfase=3')
     expect(await screen.findByRole('table', { name: 'Historial de evaluaciones' })).toBeInTheDocument()
-    expect(await panel('Reporte de sub fase').findByText('Instrumentos')).toBeInTheDocument()
+    expect(await panel('Reporte de sub fase').findByText('Control Preciso')).toBeInTheDocument()
     expect(await panel('Promedios de la sub fase').findByText('13.00')).toBeInTheDocument()
     expect(await panel('Vuelos desaprobados').findByRole('table', { name: 'Vuelos desaprobados del alumno' })).toBeInTheDocument()
     await usuario.click(screen.getByRole('link', { name: 'Resumen' }))

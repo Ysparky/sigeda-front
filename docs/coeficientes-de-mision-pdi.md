@@ -1,5 +1,26 @@
 # Coeficientes de misión del PDI EA-510 — la tabla que faltaba (dependencia 62)
 
+> # ⚠ DEROGADO el 29 sep 2026 — la estructura vigente es [la Tabla 4](estructura-programa-en-el-aire.md)
+>
+> **Lo que este documento describe ya no es la estructura que el sistema implementa.** El programa pasó
+> a ser el de la **Tabla 4 «Estructura del programa en el aire»**: cinco fases, doce sub fases, 73
+> misiones y 94.0 h, sin un solo nombre de sub fase en común con las diez de acá. La migración
+> `019-estructura-tabla-4.sql` la sustituye entera y deroga a las migraciones 014, 015, 016 y 017.
+>
+> **No se borra este documento y el motivo importa.** La extracción que describe es real y su
+> verificación se sostiene: las 16 sub fases de la hoja `ESTRUCTURA (2024)` suman exactamente las horas
+> que ella misma declara, sin una excepción. Eso sigue siendo cierto del **PCPH 2024**; lo que cambió es
+> qué programa implementa el sistema. Queda como el registro de cómo se resolvió la dependencia 62 —el
+> coeficiente de misión se DERIVA de las horas y no se guarda—, que es la decisión de diseño que la
+> Tabla 4 hereda tal cual.
+>
+> **Dónde difieren los dos documentos**, por si alguien compara: acá las 16 sub fases cuadran exactas;
+> en la Tabla 4, **dos de las doce no** —Control Básico declara 11.0 h y sus sesiones suman 10.4;
+> Circuitos y Maniobras declara 9.0 y suman 8.5—, y eso obligó a separar el denominador del peso del
+> denominador del coeficiente. Está explicado en el documento nuevo.
+>
+> Lo que sigue es el registro original, sin tocar.
+
 > **Estado: IMPLEMENTADA** — servidor en la tanda H y frontend el 28 sep 2026. Cómo quedó, y las
 > cinco decisiones que se tomaron, al final del documento.
 

@@ -102,7 +102,7 @@ describe('los cinco endpoints de desaprobados', () => {
       '/api/desaprobados/persona/777777',
     )
     expect(filas).toHaveLength(3)
-    expect(filas[0]).toMatchObject({ codigo: '777777-1', clasificacion: 'Malo', subfase: 'Instrumentos', idSubfase: 3 })
+    expect(filas[0]).toMatchObject({ codigo: '777777-1', clasificacion: 'Malo', subfase: 'Control Preciso', idSubfase: 3 })
     expect(filas[0]).toHaveProperty('programa', 'PDI')
     expect(filas[0]).not.toHaveProperty('persona')
   })

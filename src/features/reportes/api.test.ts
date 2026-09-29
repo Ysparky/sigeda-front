@@ -8,7 +8,7 @@ describe('capa de API de reportes', () => {
     const indices = await obtenerIndices('555555')
     expect(indices).toMatchObject({ codigo: '555555', programa: 'PDI', nfpi: 16.44 })
     expect(indices.nit).toMatchObject({ valor: 17.6, nct: 18, nei: 16 })
-    expect(indices.nia.fases.map((fase) => fase.valor)).toEqual([17, 16, 15])
+    expect(indices.nia.fases.map((fase) => fase.valor)).toEqual([14.5, 16, 16.5, 17.44, 17.5])
     expect(indices.nit.asignaturas.every((asignatura) => asignatura.na !== null)).toBe(true)
   })
 

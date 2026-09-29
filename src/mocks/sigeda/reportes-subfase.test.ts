@@ -15,7 +15,7 @@ describe('el reporte de subfase, que nunca tuvo handler', () => {
     const reporte = await sigeda.get<Reporte>('/api/evaluaciones/subfase/3/persona/777777')
     expect(reporte.cabecera).toEqual({
       fase: 'Adaptación',
-      subFase: 'Instrumentos',
+      subFase: 'Control Preciso',
       programa: 'PDI',
       alumno: 'Carlos Ramirez Sanchez',
     })

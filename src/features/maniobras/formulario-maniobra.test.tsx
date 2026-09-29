@@ -22,12 +22,12 @@ describe('Formulario de maniobra', () => {
     expect(grupo.getAllByRole('checkbox')).toHaveLength(5)
     await usuario.type(screen.getByLabelText('Nombre'), 'Autorrotación doble')
     await usuario.type(screen.getByLabelText('Descripción'), 'Aterrizaje sin potencia')
-    await usuario.click(grupo.getByRole('checkbox', { name: 'Navegación' }))
+    await usuario.click(grupo.getByRole('checkbox', { name: 'Circuitos y Maniobras' }))
     await usuario.click(screen.getByRole('button', { name: 'Guardar maniobra' }))
     expect(await screen.findByText('Maniobra registrada.')).toBeInTheDocument()
     await waitFor(() => expect(router.state.location.pathname).toBe('/programa/maniobras/12'))
     expect(await screen.findByRole('heading', { level: 1, name: 'Autorrotación doble' })).toBeInTheDocument()
-    expect(screen.getByText('Navegación')).toBeInTheDocument()
+    expect(screen.getByText('Circuitos y Maniobras')).toBeInTheDocument()
   })
 
   it('CA-MAN-02 exige el nombre y al menos una subfase', async () => {
@@ -40,14 +40,14 @@ describe('Formulario de maniobra', () => {
   it('CA-MAN-04 modificar precarga las subfases actuales y avisa sobre la descripción', async () => {
     const { usuario, router } = await abrir('/programa/maniobras/9/editar')
     expect(screen.getByLabelText('Nombre')).toHaveValue('Maniobra 9')
-    expect(screen.getByRole('checkbox', { name: 'Instrumentos' })).toBeChecked()
-    expect(screen.getByRole('checkbox', { name: 'Navegación' })).not.toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Control Preciso' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Circuitos y Maniobras' })).not.toBeChecked()
     expect(screen.getByText(TEXTO_DESCRIPCION_SE_CONSERVA)).toBeInTheDocument()
-    await usuario.click(screen.getByRole('checkbox', { name: 'Navegación' }))
+    await usuario.click(screen.getByRole('checkbox', { name: 'Circuitos y Maniobras' }))
     await usuario.click(screen.getByRole('button', { name: 'Guardar maniobra' }))
     expect(await screen.findByText('Maniobra modificada.')).toBeInTheDocument()
     await waitFor(() => expect(router.state.location.pathname).toBe('/programa/maniobras/9'))
-    await waitFor(() => expect(screen.getByText('Navegación')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Circuitos y Maniobras')).toBeInTheDocument())
   })
 
   it('CA-MAN-06 los errores del backend aparecen bajo su campo y bajo el selector de subfases', async () => {
@@ -70,7 +70,7 @@ describe('Formulario de maniobra', () => {
     )
     const { usuario } = await abrir('/programa/maniobras/nueva')
     await usuario.type(screen.getByLabelText('Nombre'), 'Autorrotación doble')
-    await usuario.click(screen.getByRole('checkbox', { name: 'Navegación' }))
+    await usuario.click(screen.getByRole('checkbox', { name: 'Circuitos y Maniobras' }))
     await usuario.click(screen.getByRole('button', { name: 'Guardar maniobra' }))
     expect(await screen.findByText('El nombre debe tener entre 3 y 35 caracteres.')).toBeInTheDocument()
     expect(screen.getByText('La subfase es requerida.')).toBeInTheDocument()

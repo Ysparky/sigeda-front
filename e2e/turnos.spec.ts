@@ -8,13 +8,13 @@ test.describe('Turnos prácticos contra el backend real', () => {
   test('la lista de turnos carga y muestra los sembrados', async ({ page }) => {
     await entrarComo(page, CUENTAS.operaciones)
     await page.goto('/turnos')
-    await expect(page.getByText('Contacto Básico').first()).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText('Control Básico Inicial').first()).toBeVisible({ timeout: 15_000 })
   })
 
   test('el detalle de un turno trae su instructor y su aeronave', async ({ page }) => {
     await entrarComo(page, CUENTAS.operaciones)
     await page.goto('/turnos/1')
-    await expect(page.getByText('Contacto Básico').first()).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText('Control Básico Inicial').first()).toBeVisible({ timeout: 15_000 })
   })
 
   // Dependencia 4: el backend le quitó `Manage Groups` al Jefe de Operaciones. Mientras
@@ -38,20 +38,21 @@ test.describe('Turnos prácticos contra el backend real', () => {
     await expect(page.getByLabel('Alumno 1').getByRole('option', { name: /Lopez/ })).toBeAttached({ timeout: 15_000 })
   })
 
-  // Dependencia 62, y contra el servidor porque es donde vale: el catálogo lo sirve
-  // `GET /api/subfases/2/misiones`, y `N/I-7` es la única misión del bloque que vale 1 h contra 1.5.
-  // Si el coeficiente se guardara en vez de derivarse de las horas, o si la respuesta llegara con otra
-  // forma, es la opción que no aparecería. El servidor manda el número como `0.1`: los cuatro
-  // decimales los pone la pantalla, así que esto también fija que no se muestre el crudo.
+  // El catálogo de misiones contra el servidor, porque es donde vale: lo sirve
+  // `GET /api/subfases/2/misiones`. Se fijan las dos misiones de Circuitos y Maniobras que tienen las
+  // horas extremas —`CM-1` con 1.0 h y `CM-4` con 1.5— porque sus coeficientes salen de dividir por la
+  // suma REAL de las horas de la sub fase, 8.5 h: si el coeficiente se guardara en vez de derivarse, o
+  // si el denominador fuera las 9.0 h que la Tabla 4 DECLARA, los dos números serían otros (0.1111 y
+  // 0.1667). Es la comprobación de que el denominador del coeficiente es la suma real y no lo declarado.
   test('el selector de misión trae el catálogo del PDI que sirve el servidor', async ({ page }) => {
     await entrarComo(page, CUENTAS.operaciones)
     await page.goto('/turnos/nuevo')
     await expect(page.getByRole('heading', { level: 1, name: 'Registrar turno' })).toBeVisible()
     await expect(page.getByLabel('Misión del PDI')).toBeDisabled()
-    await page.getByLabel('Sub fase').selectOption({ label: 'Navegación' })
+    await page.getByLabel('Sub fase').selectOption({ label: 'Circuitos y Maniobras' })
     const mision = page.getByLabel('Misión del PDI')
-    await expect(mision.getByRole('option', { name: 'N/I-7 · 1 h · coef. 0.1000' })).toBeAttached({ timeout: 15_000 })
-    await expect(mision.getByRole('option', { name: 'N/I-1 · 1.5 h · coef. 0.1500' })).toBeAttached()
+    await expect(mision.getByRole('option', { name: 'CM-1 · 1 h · coef. 0.1176' })).toBeAttached({ timeout: 15_000 })
+    await expect(mision.getByRole('option', { name: 'CM-4 · 1.5 h · coef. 0.1765' })).toBeAttached()
     await expect(mision.getByRole('option', { name: 'Sin misión asignada' })).toBeAttached()
     await expect(mision).toHaveValue('')
   })

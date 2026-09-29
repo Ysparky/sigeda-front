@@ -114,7 +114,7 @@ export function PanelDeIndices({ codAlumno }: Props) {
                     <div className="flex flex-wrap items-center gap-4">
                       <span className="text-sm text-muted-foreground">{fase.fase}</span>
                       <Dato etiqueta={fase.sigla} valor={fase.valor} />
-                      <span className="text-sm tabular-nums text-muted-foreground">Peso {fase.peso.toFixed(2)}</span>
+                      <span className="text-sm tabular-nums text-muted-foreground">Peso {fase.peso.toFixed(4)}</span>
                     </div>
                     {fase.subfases.length > 0 && (
                       <Table aria-label={`Sub fases de ${fase.fase}`}>
@@ -132,7 +132,7 @@ export function PanelDeIndices({ codAlumno }: Props) {
                             <TableRow key={subfase.idSubfase}>
                               <TableCell>{subfase.subfase}</TableCell>
                               <TableCell>{subfase.sigla}</TableCell>
-                              <TableCell className="tabular-nums">{subfase.peso.toFixed(2)}</TableCell>
+                              <TableCell className="tabular-nums">{subfase.peso.toFixed(4)}</TableCell>
                               <TableCell className="tabular-nums">
                                 <NotaDeSubfase subfase={subfase} />
                               </TableCell>

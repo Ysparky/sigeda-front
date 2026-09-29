@@ -158,14 +158,18 @@ describe('Reportes: el alumno sin NFPI y los estados de la pantalla', () => {
     expect(fila.getByText('666666')).toBeInTheDocument()
     expect(fila.getByText('Sin puesto')).toHaveAttribute(
       'title',
-      textoSinNfpi('Sin nota en Operaciones HeliTransportadas ni en Operaciones AeroTácticas.'),
+      textoSinNfpi(
+        'Sin nota en Navegación Visual, Emergencias y Maniobras Avanzadas, Vuelo Nocturno ni en Vuelo por Instrumentos.',
+      ),
     )
     expect(fila.getAllByText(TEXTO_SIN_DATOS_SUFICIENTES)).toHaveLength(2)
     expect(fila.getByText('12.80')).toBeInTheDocument()
     const marcador = fila.getByText('Sin puesto')
     const soloLectores = marcador.querySelector('.sr-only')
     expect(soloLectores?.textContent?.trim()).toBe(
-      textoSinNfpi('Sin nota en Operaciones HeliTransportadas ni en Operaciones AeroTácticas.'),
+      textoSinNfpi(
+        'Sin nota en Navegación Visual, Emergencias y Maniobras Avanzadas, Vuelo Nocturno ni en Vuelo por Instrumentos.',
+      ),
     )
   })
 

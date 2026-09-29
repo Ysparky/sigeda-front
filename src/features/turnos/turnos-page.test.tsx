@@ -34,29 +34,29 @@ describe('Programación de turnos', () => {
     expect(fila).not.toBeNull()
     expect(within(fila as HTMLElement).getAllByRole('cell').map((celda) => celda.textContent)).toEqual([
       'Navegación Nocturna',
-      'Navegación',
+      'Circuitos y Maniobras',
       'PDI',
       expect.stringMatching(/^\d{2}\/\d{2}\/\d{4}$/),
       '2',
       '4',
     ])
-    expect(tabla.getByRole('link', { name: 'Contacto Básico' })).toHaveAttribute('href', '/turnos/1')
+    expect(tabla.getByRole('link', { name: 'Control Básico Inicial' })).toHaveAttribute('href', '/turnos/1')
   })
 
   it('CA-TUR-01 filtra por sub fase y guarda el filtro en la URL', async () => {
     await iniciarComo('jefe.operaciones')
     const { router, usuario } = renderApp('/turnos')
     await tablaDeTurnos()
-    await usuario.selectOptions(await screen.findByLabelText('Sub fase'), 'Campos Extraños')
+    await usuario.selectOptions(await screen.findByLabelText('Sub fase'), 'Navegación Local')
     await waitFor(() => expect(router.state.location.search).toMatchObject({ idSubfase: 4, page: 0 }))
-    await waitFor(async () => expect(nombresEnTabla(await tablaDeTurnos())).toEqual(['Campos Tácticos']))
+    await waitFor(async () => expect(nombresEnTabla(await tablaDeTurnos())).toEqual(['Navegación Local Inicial']))
   })
 
   it('CA-TUR-01 aplica el rango de fechas que llega en la URL', async () => {
     await iniciarComo('jefe.operaciones')
     renderApp('/turnos?desde=2024-03-01&hasta=2024-03-15')
     await waitFor(async () =>
-      expect(nombresEnTabla(await tablaDeTurnos())).toEqual(['Contacto Básico', 'Contacto Intermedio', 'Contacto Avanzado']),
+      expect(nombresEnTabla(await tablaDeTurnos())).toEqual(['Control Básico Inicial', 'Control Básico Intermedio', 'Control Básico Avanzado']),
     )
     expect(screen.getByLabelText('Desde')).toHaveValue('2024-03-01')
     expect(screen.getByLabelText('Hasta')).toHaveValue('2024-03-15')
@@ -119,7 +119,7 @@ describe('Mis turnos', () => {
     renderApp('/mis-turnos')
     await screen.findByText(/^Página \d+ de \d+/)
     const tabla = within(screen.getByRole('table', { name: 'Mis turnos' }))
-    expect(nombresEnTabla(tabla)).toEqual(['Contacto Básico', 'Navegación Nocturna'])
+    expect(nombresEnTabla(tabla)).toEqual(['Control Básico Inicial', 'Navegación Nocturna'])
   })
 
   it('si no cargan sus turnos lo indica y permite reintentar', async () => {
@@ -137,7 +137,7 @@ describe('Mis turnos', () => {
     await usuario.click(screen.getByRole('button', { name: 'Reintentar' }))
     await screen.findByText(/^Página \d+ de \d+/)
     expect(nombresEnTabla(within(screen.getByRole('table', { name: 'Mis turnos' })))).toEqual([
-      'Contacto Básico',
+      'Control Básico Inicial',
       'Navegación Nocturna',
     ])
   })

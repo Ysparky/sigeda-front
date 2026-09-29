@@ -25,10 +25,10 @@ const COLORES = [
 ]
 
 const EVALUACIONES_DE_EJEMPLO = [
-  { codigo: '111111-7-1', alumno: 'López, Carlos', subfase: 'Contacto', fecha: '2026-09-14', promedio: 17.5, clasificacion: 'Bueno' },
-  { codigo: '222222-7-1', alumno: 'Falconi, Ana', subfase: 'Contacto', fecha: '2026-09-13', promedio: 15, clasificacion: 'Regular' },
-  { codigo: '555555-9-1', alumno: 'García, Luis', subfase: 'Formación', fecha: '2026-09-15', promedio: 12, clasificacion: 'Malo' },
-  { codigo: '666666-9-1', alumno: 'Torres, María', subfase: 'Formación', fecha: '2026-09-15', promedio: 20, clasificacion: 'Excelente' },
+  { codigo: '111111-7-1', alumno: 'López, Carlos', subfase: 'Control Básico', fecha: '2026-09-14', promedio: 17.5, clasificacion: 'Bueno' },
+  { codigo: '222222-7-1', alumno: 'Falconi, Ana', subfase: 'Control Básico', fecha: '2026-09-13', promedio: 15, clasificacion: 'Regular' },
+  { codigo: '555555-9-1', alumno: 'García, Luis', subfase: 'Navegación en Ruta', fecha: '2026-09-15', promedio: 12, clasificacion: 'Malo' },
+  { codigo: '666666-9-1', alumno: 'Torres, María', subfase: 'Navegación en Ruta', fecha: '2026-09-15', promedio: 20, clasificacion: 'Excelente' },
 ]
 
 function Seccion({ titulo, children }: { titulo: string; children: ReactNode }) {
@@ -112,7 +112,7 @@ export function GuiaPage() {
         <FieldGroup className="max-w-sm">
           <Field>
             <FieldLabel htmlFor="guia-nombre">Nombre del turno</FieldLabel>
-            <Input id="guia-nombre" defaultValue="Contacto 1" />
+            <Input id="guia-nombre" defaultValue="Control Básico 1" />
             <FieldDescription>De 10 a 30 caracteres.</FieldDescription>
           </Field>
           <Field data-invalid>

@@ -43,8 +43,8 @@ describe('api de turnos', () => {
     expect(porSubfase.items).toEqual([
       {
         id: 6,
-        nombre: 'Campos Tácticos',
-        subfase: 'Campos Extraños',
+        nombre: 'Navegación Local Inicial',
+        subfase: 'Navegación Local',
         fechaEval: '2024-04-05',
         programa: 'PDI',
         cantAlumno: 1,
@@ -95,18 +95,18 @@ describe('api de turnos', () => {
     await iniciarComo('jefe.operaciones')
     expect((await obtenerTurno(8)).idSubfase).toBe(2)
     expect(
-      aTurnoDetalle({ id: 1, nombre: 'Contacto Básico', subfase: 'Contacto', fechaEval: '2024-03-01', programa: 'PDI' })
+      aTurnoDetalle({ id: 1, nombre: 'Control Básico Inicial', subfase: 'Control Básico', fechaEval: '2024-03-01', programa: 'PDI' })
         .idSubfase,
     ).toBeUndefined()
   })
 
   it('tolera la forma actual del backend en la lista y en el detalle', () => {
     expect(
-      aTurnoResumen({ id: 1, nombre: 'Contacto Básico', subfase: 'Contacto', fechaEval: '2024-03-01', programa: 'PDI', cantGrupo: 2, cantManiobra: 6 })
+      aTurnoResumen({ id: 1, nombre: 'Control Básico Inicial', subfase: 'Control Básico', fechaEval: '2024-03-01', programa: 'PDI', cantGrupo: 2, cantManiobra: 6 })
         .cantAlumno,
     ).toBe(2)
     expect(
-      aTurnoDetalle({ id: 1, nombre: 'Contacto Básico', subfase: 'Contacto', fechaEval: '2024-03-01', programa: 'PDI' }),
+      aTurnoDetalle({ id: 1, nombre: 'Control Básico Inicial', subfase: 'Control Básico', fechaEval: '2024-03-01', programa: 'PDI' }),
     ).toMatchObject({ alumnos: [], maniobras: [], aeronave: null, codInstructor: null })
   })
 
@@ -122,7 +122,7 @@ describe('api de turnos', () => {
   it('M1-1 registra un turno y entiende la respuesta 201 del contrato', async () => {
     await iniciarComo('jefe.operaciones')
     await expect(crearTurno(cuerpoValido())).resolves.toEqual({ mensaje: 'Turno guardado con éxito.', id: 10 })
-    await expect(obtenerTurno(10)).resolves.toMatchObject({ nombre: 'Navegación Diurna', subfase: 'Navegación' })
+    await expect(obtenerTurno(10)).resolves.toMatchObject({ nombre: 'Navegación Diurna', subfase: 'Circuitos y Maniobras' })
   })
 
   it('el POST y el PUT devuelven idSubfase, con f minúscula como el GET y como el request', async () => {
@@ -184,7 +184,7 @@ describe('api de turnos', () => {
 
   it('dependencia 62 el servidor rechaza con 400 la misión que no es de la sub fase del turno', async () => {
     await iniciarComo('jefe.operaciones')
-    // La sub fase 2 tiene las misiones 8 a 14; la 1 es `C-1`, de Contacto.
+    // La sub fase 2 tiene las misiones 10 a 16; la 1 es `CB-1`, de Control Básico.
     await expect(crearTurno(cuerpoValido({ idMision: 1 }))).rejects.toMatchObject({
       status: 400,
       message: 'La misión asignada no pertenece a la subfase del turno.',

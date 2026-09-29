@@ -114,40 +114,31 @@ Recorrido sugerido:
 4. **Entrar como `jefe.operaciones`** → registrar un turno práctico. **Elegir la sub fase 2, 3 o 4**
    (ver el punto 1 de abajo), y probar el cruce de horarios poniendo al mismo alumno dos veces.
 
-## 7. Cuatro cosas que conviene saber antes de demostrar
+## 7. Tres cosas que conviene saber antes de demostrar
 
-1. **Al registrar un turno, elegir la sub fase 2, 3 o 4.** La semilla enlaza maniobras solo a esas
-   tres; las sub fases **1 (Contacto) y 5 (Formación) no tienen ninguna**, así que el selector de
-   maniobras sale vacío y `GET /api/maniobras/subfase/1` responde 404. No es un defecto: es la
-   semilla. (Y los siete turnos sembrados usan justamente la sub fase 1.)
+1. **Cualquier sub fase sirve para registrar un turno.** Desde la migración `019` las **doce** tienen
+   maniobras enlazadas (44 filas en `maniobras_subfase`), así que el selector de maniobras nunca sale
+   vacío. Antes sólo las tenían tres, y `GET /api/maniobras/subfase/1` respondía 404: esa advertencia ya
+   no aplica.
 2. **El panel de chequeos sale vacío.** `GET /api/personas/{cod}/chequeos` responde 404, que el
    frontend muestra como panel vacío, porque **la semilla no tiene ninguna fila en
    `chequeos_finales`**.
-3. **El orden de mérito está FUERA DE ALCANCE por ahora, y no se demuestra.** El endpoint está
-   implementado y probado, pero ningún alumno tiene `NFPI` calculable, así que el reporte devolvería
-   todas las filas sin puesto. **Un orden de mérito sin puestos no es un orden de mérito**, así que
-   no se presenta como funcionalidad terminada. La pantalla queda deshabilitada sola (la acción
-   exige la 62) y explica por qué.
+3. **El orden de mérito SÍ se demuestra**, y es lo que más cambió. `555555` sale **puesto 1** con
+   `nfpi` **16.34** y `nia` **15.83**; los otros cinco alumnos salen **sin puesto, cada uno con su
+   motivo**, que es la mitad útil de la pantalla: cuatro por la mitad teórica y `666666` porque le falta
+   nota de sub fase. Comprobado con `curl` contra PostgreSQL el 29 sep 2026.
 
-   **La razón cambió el 28 sep 2026, y conviene no contar la vieja en la demo:** ya **no** falta la
-   tabla de coeficientes de misión. Esa tabla estaba en el libro de trabajo del PDI como horas por
-   misión (`docs/coeficientes-de-mision-pdi.md`), el servidor la implementó en la tanda H y **la nota
-   de sub fase se calcula de verdad** — el legajo de `555555` muestra `14.63` en Contacto, ponderado
-   por el PDI sobre el 57 % de la sub fase, y lo dice. Lo que deja el `NIA` en `null` es que
-   **`NFOH` y `NFOA` no tienen ninguna sub fase en el sistema**: el NIA pondera las tres fases y solo
-   existen las de Adaptación. Eso es una decisión de alcance del proyecto, no un dato que falte en la
-   norma.
+   **La cadena completa, para contarla en orden:** el legajo de `555555` muestra **14.70** en Control
+   Básico —ponderado sobre el **44 %** de la sub fase, y la pantalla lo dice—, las cinco notas de fase
+   (**14.99 · 15.36 · 16.20 · 16.94 · 16.44**), el `nia` **15.83** y el `nfpi` **16.34**. El `nia.motivo`
+   viene en `null`: no queda nada que advertir, porque las doce sub fases que el NIA pondera tienen nota.
 
-   **Lo que sí se puede demostrar** es el legajo en ese estado mixto: un NSF real con su ponderación
-   declarada, un NIA en `null` y un motivo que nombra exactamente qué falta.
+   **El 14.70 no es un promedio y conviene decirlo:** las cuatro notas de Control Básico son 13, 15.5, 15
+   y 15, y su promedio simple daría **14.63**. Sale 14.70 porque `CB-1` vale 1.0 h y `CB-3` vale 1.2, o
+   sea que la ponderación por horas se **ve** en la cifra.
 
-   **⚠ Y unas horas después esto ya estaba a medio vencer: la semilla creció.** Comprobado con `curl`
-   el 28 sep 2026: la base pasó a tener **las 10 sub fases del PDI** y **68 misiones**, y con eso
-   `555555` da **`nfpi` 16.46, `nia` 15.97** y **puesto 1** en el orden de mérito. Los otros seis
-   alumnos siguen sin puesto, porque sus evaluaciones no cubren las diez sub fases. Antes de la demo,
-   **volver a pedir `/api/personas/555555/indices` y contar lo que devuelva ese día**: el legajo se ve
-   bien en los dos estados, pero la explicación de por qué el orden de mérito no se presenta depende
-   de cuál sea.
+   **Antes de la demo, volver a pedir `/api/personas/555555/indices`.** Las cifras dependen de la
+   semilla y la semilla se mueve; el guion de arriba vale para el estado del 29 sep 2026.
 4. **~~`NCT` y las causales salen vacíos.~~ ARREGLADO el 27 sep 2026.** Faltaba que la semilla
    tuviera un turno de tipo **`EXAMEN`** — `PE` solo se alimenta de ese tipo, así que ningún `NA`
    era calculable. Se sembraron un `TEST` y un `EXAMEN` de la materia 3 para el grupo 3

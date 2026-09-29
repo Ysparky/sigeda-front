@@ -281,7 +281,7 @@ describe('Alertas: tipos y destinos', () => {
               grupo: 'Grupo 3',
               programa: 'PDI',
               fecha: '2024-03-01',
-              detalle: 'Vuelo Regular en Contacto.',
+              detalle: 'Vuelo Regular en Control Básico.',
               codEvaluacion: null,
               idSubfase: 1,
               idMateria: null,

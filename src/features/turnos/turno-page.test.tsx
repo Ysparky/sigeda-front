@@ -128,7 +128,7 @@ describe('Detalle de turno', () => {
 
   it('CA-TUR-14 el alumno abre sus propios turnos', async () => {
     await abrirTurno('alumno.lopez', 1)
-    expect(screen.getByRole('heading', { level: 1, name: 'Contacto Básico' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Control Básico Inicial' })).toBeInTheDocument()
   })
 
   it('CA-TUR-14 en un turno compartido el alumno ve solo su propio vuelo', async () => {

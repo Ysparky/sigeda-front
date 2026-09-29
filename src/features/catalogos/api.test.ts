@@ -21,11 +21,11 @@ describe('catálogos para turnos y evaluaciones', () => {
     await iniciarComo('jefe.operaciones')
     const subfases = await listarSubfases()
     expect(subfases.map((subfase) => subfase.nombre)).toEqual([
-      'Contacto',
-      'Navegación',
-      'Instrumentos',
-      'Campos Extraños',
-      'Formación',
+      'Control Básico',
+      'Circuitos y Maniobras',
+      'Control Preciso',
+      'Navegación Local',
+      'Navegación en Ruta',
     ])
   })
 

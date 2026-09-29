@@ -61,7 +61,7 @@ describe('Modificar turno', () => {
         HttpResponse.json({
           id: 8,
           nombre: 'Navegación Nocturna',
-          subfase: 'Navegación',
+          subfase: 'Circuitos y Maniobras',
           fechaEval: sumarDias(hoyIso(), 7),
           programa: 'PDI',
           fase: 'Adaptación',

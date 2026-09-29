@@ -16,8 +16,8 @@ const COLUMNAS = ayudante.columns([
 
 const PAGINA: Pagina<Fila> = {
   items: [
-    { id: 1, nombre: 'Contacto Básico', fecha: '2024-03-01' },
-    { id: 2, nombre: 'Contacto Intermedio', fecha: '2024-03-08' },
+    { id: 1, nombre: 'Control Básico Inicial', fecha: '2024-03-01' },
+    { id: 2, nombre: 'Control Básico Intermedio', fecha: '2024-03-08' },
   ],
   page: 0,
   size: 2,

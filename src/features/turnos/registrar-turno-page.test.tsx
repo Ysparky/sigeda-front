@@ -15,14 +15,14 @@ async function abrirFormulario() {
   const vista = renderApp('/turnos/nuevo')
   await screen.findByRole('heading', { name: 'Registrar turno' })
   await screen.findByRole('option', { name: 'Robinson R22' })
-  await screen.findByRole('option', { name: 'Navegación' })
+  await screen.findByRole('option', { name: 'Circuitos y Maniobras' })
   return vista
 }
 
 async function llenarDatos(usuario: UserEvent, fecha = EN_DIEZ_DIAS) {
   await usuario.type(screen.getByLabelText('Nombre'), 'Navegación Diurna')
   await usuario.type(screen.getByLabelText('Fecha de evaluación'), fecha)
-  await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Navegación')
+  await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Circuitos y Maniobras')
   await usuario.selectOptions(await screen.findByLabelText('Instructor'), 'Juan Torres Perez')
   await usuario.selectOptions(screen.getByLabelText('Aeronave'), 'Robinson R22')
 }
@@ -83,7 +83,7 @@ describe('Registrar turno', () => {
   it('CA-TUR-05 ofrece solo las maniobras de la sub fase elegida', async () => {
     const { usuario } = await abrirFormulario()
     expect(screen.getByRole('button', { name: 'Agregar maniobra' })).toBeDisabled()
-    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Campos Extraños')
+    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Navegación Local')
     await usuario.click(screen.getByRole('button', { name: 'Agregar maniobra' }))
     const selector = await screen.findByLabelText('Maniobra 1')
     await waitFor(() =>
@@ -97,14 +97,14 @@ describe('Registrar turno', () => {
 
   it('CA-TUR-05 cambiar la sub fase pide confirmación y limpia las maniobras', async () => {
     const { usuario } = await abrirFormulario()
-    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Navegación')
+    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Circuitos y Maniobras')
     await agregarManiobra(usuario, 1, 'Maniobra 2', 'B')
-    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Instrumentos')
+    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Control Preciso')
     const dialogo = await screen.findByRole('alertdialog', { name: '¿Cambiar la sub fase?' })
     await usuario.click(within(dialogo).getByRole('button', { name: 'Conservar sub fase' }))
     expect(screen.getByLabelText('Sub fase')).toHaveValue('2')
     expect(screen.getByLabelText('Maniobra 1')).toHaveValue('2')
-    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Instrumentos')
+    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Control Preciso')
     await usuario.click(await screen.findByRole('button', { name: 'Cambiar y quitar maniobras' }))
     await waitFor(() => expect(screen.getByLabelText('Sub fase')).toHaveValue('3'))
     expect(screen.queryByLabelText('Maniobra 1')).not.toBeInTheDocument()
@@ -115,7 +115,7 @@ describe('Registrar turno', () => {
   it('dependencia 62 ofrece las misiones de la sub fase elegida, con su código, sus horas y su coeficiente', async () => {
     const { usuario } = await abrirFormulario()
     expect(screen.getByLabelText('Misión del PDI')).toBeDisabled()
-    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Navegación')
+    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Circuitos y Maniobras')
     const selector = screen.getByLabelText('Misión del PDI')
     await waitFor(() => expect(within(selector).getAllByRole('option')).toHaveLength(8))
     expect(within(selector).getAllByRole('option').map((opcion) => opcion.textContent)).toEqual([
@@ -133,11 +133,11 @@ describe('Registrar turno', () => {
 
   it('dependencia 62 cambiar la sub fase descarta la misión elegida, que era de la otra', async () => {
     const { usuario } = await abrirFormulario()
-    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Navegación')
+    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Circuitos y Maniobras')
     await waitFor(() => expect(within(screen.getByLabelText('Misión del PDI')).getAllByRole('option')).toHaveLength(8))
     await usuario.selectOptions(screen.getByLabelText('Misión del PDI'), 'N/I-3 · 1.5 h · coef. 0.1500')
     expect(screen.getByLabelText('Misión del PDI')).toHaveValue('10')
-    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Contacto')
+    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Control Básico')
     await waitFor(() => expect(screen.getByLabelText('Misión del PDI')).toHaveValue(''))
   })
 
@@ -162,7 +162,7 @@ describe('Registrar turno', () => {
 
   it('CA-TUR-06 la nota mínima solo ofrece D, I, R, B o E', async () => {
     const { usuario } = await abrirFormulario()
-    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Navegación')
+    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Circuitos y Maniobras')
     await usuario.click(screen.getByRole('button', { name: 'Agregar maniobra' }))
     const notas = within(await screen.findByLabelText('Nota mínima 1')).getAllByRole('option')
     expect(notas.map((opcion) => opcion.textContent)).toEqual(['—', 'D', 'I', 'R', 'B', 'E'])
@@ -229,7 +229,7 @@ describe('Registrar turno', () => {
     const instructor = screen.getByLabelText('Instructor').closest('[data-slot="field"]') as HTMLElement
     expect(await within(instructor).findByText('No se pudieron cargar los instructores.')).toBeInTheDocument()
     expect(await screen.findByText('No se pudieron cargar los alumnos.')).toBeInTheDocument()
-    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Navegación')
+    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Circuitos y Maniobras')
     expect(await screen.findByText('No se pudieron cargar las maniobras.')).toBeInTheDocument()
     expect(screen.queryByText('No se pudieron cargar las aeronaves.')).not.toBeInTheDocument()
     expect(screen.queryByText('No se pudieron cargar las sub fases.')).not.toBeInTheDocument()

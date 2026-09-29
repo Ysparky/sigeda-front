@@ -156,8 +156,14 @@ export const CRITERIOS_CHEQUEO = {
 
 export type Criterio = 1 | 2
 
+// EL CRITERIO 2, MÁS ESTRICTO, EN LA FASE FINAL DEL PROGRAMA. El PDI reparte los dos criterios entre
+// las TRES fases del PCPH —el 2 para Operaciones AeroTácticas, la última y más exigente— y la Tabla 4
+// tiene CINCO fases sin ninguno de esos nombres, así que el reparto hay que decidirlo. Se conserva la
+// forma del PDI y esa fase es ahora Vuelo por Instrumentos. Es la misma regla que
+// `EvaluacionPractica.esCriterio2()` en el servidor, y las dos se cambian juntas si la institución
+// decide otro reparto: si se separan, la pantalla dice un criterio y el servidor aplica otro.
 export function criterioDeFase(fase: string): Criterio {
-  return fase === 'Operaciones AeroTácticas' ? 2 : 1
+  return fase === 'Vuelo por Instrumentos' ? 2 : 1
 }
 
 export function ramasDeCriterio(criterio: Criterio): readonly string[] {
