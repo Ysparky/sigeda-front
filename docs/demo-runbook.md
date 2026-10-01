@@ -177,29 +177,45 @@ Todas con contraseña **`123`**.
 El **Alumno** también entra al módulo de Aprendizaje: las tres pantallas piden `Read` y ese permiso
 lo tienen los cinco roles.
 
-## 6. Lo que hoy NO se puede demostrar, y por qué
+## 6. El módulo de IA, comprobado de punta a punta
 
-**Las tres claves de IA del `.env` de `sigeda_chat_status` están vencidas.** Comprobado el 1 oct 2026
-llamando a cada proveedor directamente:
+**Las tres claves del `.env` de `sigeda_chat_status` son válidas y los tres caminos funcionan**,
+comprobado el 1 oct 2026 con `LLM_PROVIDER=anthropic` y `ANTHROPIC_MODEL=claude-haiku-4-5`:
 
-| Clave | Respuesta | Qué deja sin funcionar |
-|---|---|---|
-| `GEMINI_API_KEY` | 400 `API key not valid` | nada hoy: `LLM_PROVIDER` está en `anthropic` |
-| `ANTHROPIC_API_KEY` | 401 `authentication_error` | el **tagging** de documentos y la **generación de cuestionarios** |
-| `VOYAGE_API_KEY` | 401 `Provided API key is invalid` | la **indexación RAG**, y con ella las respuestas del chat |
+| Camino | Comprobación |
+|---|---|
+| Subir un documento | `ready` con **5 tags** y **1 chunk indexado**, el log lo dice |
+| Generar un cuestionario | 3 preguntas sobre el contenido real del documento |
+| Consultar (chat RAG) | responde citando `[1]` y devuelve la fuente con su `similarity` |
 
-El efecto es parcial y silencioso, que es lo peor de los dos mundos: **la subida de un documento
-igual termina en `ready`**, con `0 tags, 0 chunks indexados`, y sólo el log lo dice. Pedir un
-cuestionario o una consulta sobre ese documento sí falla a la vista.
+**No borres ninguna de las tres claves del `.env`, ni siquiera la que no se usa.** `GeminiService` y
+`EmbeddingsService` hacen `getOrThrow` **en el constructor**, y Nest los instancia aunque
+`LLM_PROVIDER` sea `anthropic`: sin `GEMINI_API_KEY` el backend **no arranca**, aunque Gemini no
+intervenga en nada. Que una clave esté vencida no impide arrancar; que falte, sí.
 
-Se arregla con una clave nueva en `.env` y un reinicio del backend de IA; no hay cambio de código.
-`LLM_PROVIDER` acepta `gemini`, `anthropic` u `ollama` (este último sin clave, contra un Ollama
-local en el 11434 — tampoco está instalado en esta máquina).
+**Anthropic no vende embeddings**, así que `VOYAGE_API_KEY` no es opcional ni sustituible por la de
+Anthropic: `EmbeddingsService` está cableado a `voyage-3` con 1024 dimensiones, que tienen que
+coincidir con el `vector(1024)` de `document_chunks.embedding`. Sin ella el chat **revienta con un
+500**, no se degrada: `RetrievalService.search()` se llama en `chat.service.ts:85` **fuera** del
+`try/catch`, que sólo cubre la llamada al modelo, y la sesión no puede abrirse sin documentos
+(`CreateChatSessionDto` exige `@ArrayMinSize(1)`), así que no hay forma de esquivar el embedding.
 
-**Tampoco hay pantalla de predicción.** `GET /prediction/students` y
-`GET /prediction/students/{id}` responden bien —`555555` da `evaluationCount: 16`,
-`latestScore: 17`, `riskLevel: "bajo"`, `trendDirection: "up"` y 10 filas de `maneuverBreakdown`—
-pero **ninguna vista del frontend los consume todavía**. Se demuestra con `curl`, no con el navegador.
+**Los documentos subidos antes de que las claves funcionaran no sirven y no se pueden arreglar:**
+quedaron con **0 chunks**, no hay ruta de reindexado (`/documents` sólo tiene upload, list, get y
+delete) y además su archivo vivía en el almacenamiento anterior, que ya no existe. Hay que
+**volver a subirlos**.
+
+**La predicción de desempeño responde bien pero no tiene pantalla.**
+`GET /prediction/students` y `GET /prediction/students/{id}` funcionan —`555555` da
+`evaluationCount: 16`, `latestScore: 17`, `riskLevel: "bajo"`, `trendDirection: "up"` y 10 filas de
+`maneuverBreakdown`— pero **ninguna vista del frontend los consume todavía**. Se demuestra con
+`curl`, no con el navegador.
+
+**Los tipos de pregunta del cuestionario son una sugerencia, no un contrato.** Pidiendo
+`["multiple_choice","true_false"]` volvió además una `fill_blank`: el prompt los **nombra** y el
+esquema Zod acepta los tres sin mirar lo pedido, así que nada obliga al modelo. No se endureció a
+propósito: validarlo estrictamente convertiría una pregunta de más en un fallo de generación tras
+tres reintentos, que es peor durante una demostración.
 
 ## 7. Un defecto que esta preparación encontró y arregló
 

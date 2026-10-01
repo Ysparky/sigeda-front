@@ -25,7 +25,7 @@ remite al caso que lo detalla.
 | 3 | `alumno.lopez` | rendir su examen pendiente | el turno teórico **3** está abierto **hoy**, 00:00–23:59, 5 preguntas, mínimo 18 | §7 |
 | 4 | `comandante.aguirre` | abrir el legajo de `555555` y el orden de mérito | 17 evaluaciones, las doce sub fases con nota | §8, §9 |
 | 5 | `jefe.operaciones` | dar de alta un turno práctico | cualquiera de las **12** sub fases sirve | §3 |
-| 6 | cualquiera | subir un documento en **Aprendizaje** | tres documentos de corridas anteriores | §10 |
+| 6 | cualquiera | subir un documento, generar un cuestionario y consultarlo | nada reutilizable: **hay que subir uno nuevo** | §10 |
 
 **Los turnos prácticos sin evaluar son seis**, y son los únicos donde §4 se puede ejercer:
 
@@ -306,10 +306,18 @@ de hasta 25 MB → el documento aparece en `processing` y pasa a `ready` en unos
 | Archivo que el extractor no puede leer | 200 al subir | el documento queda en `status: "error"` con `No se pudo procesar el documento. Intenta subirlo de nuevo.` |
 | Falta el bucket de MinIO, o falta `MINIO_DOMAIN` | **500** | `Internal server error`, y en el log `NoSuchBucket`. Ver `demo-runbook.md` §3.2 |
 
-**Generar un cuestionario y hacer una consulta NO funcionan hoy**, y conviene saberlo antes de
-abrir la pantalla: las claves de IA del `.env` están vencidas (`demo-runbook.md` §6). El efecto es
-parcial: la subida **igual termina en `ready`**, con `0 tags, 0 chunks indexados`, y sólo el log lo
-dice; pedir un cuestionario o una consulta sobre ese documento sí falla a la vista.
+**Camino feliz del cuestionario:** *Aprendizaje → Cuestionario de práctica*, elegir un documento
+`ready`, los tipos de pregunta y entre 2 y 20 preguntas → el cuestionario sale generado sobre el
+contenido real del documento. Ojo que **los tipos pedidos son una sugerencia**: el prompt los nombra
+y el esquema acepta los tres, así que puede volver una `fill_blank` aunque se hayan pedido sólo
+`multiple_choice` y `true_false`.
+
+**Camino feliz de la consulta:** *Aprendizaje → Consultas*, abrir una sesión con al menos un
+documento y preguntar → la respuesta cita `[1]`, `[2]`… y cada fuente trae su `similarity`.
+
+**Un documento subido antes de que las claves de IA funcionaran no sirve para ninguno de los dos.**
+Quedó en `ready` con **0 chunks**, así que el chat no encuentra nada en él; no hay ruta de
+reindexado y su archivo vivía en el almacenamiento anterior. Hay que volver a subirlo.
 
 **La predicción de desempeño responde bien pero no tiene pantalla.**
 `GET /prediction/students/{id}` de `555555` devuelve `evaluationCount: 16`, `discardedCount: 1`,
