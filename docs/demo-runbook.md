@@ -177,6 +177,9 @@ Todas con contraseña **`123`**.
 El **Alumno** también entra al módulo de Aprendizaje: las tres pantallas piden `Read` y ese permiso
 lo tienen los cinco roles.
 
+**Las once cuentas, con sus permisos y lo que cada alumno tiene sembrado, están en
+`cuentas-de-la-demo.md`.**
+
 ## 6. El módulo de IA, comprobado de punta a punta
 
 **Las tres claves del `.env` de `sigeda_chat_status` son válidas y los tres caminos funcionan**,
