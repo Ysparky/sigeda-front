@@ -1,25 +1,47 @@
 # Correr SIGEDA de punta a punta — guion de demostración
 
-**Todos los comandos de aquí se ejecutaron y funcionaron el 27 sep 2026.** No incluye el backend
-de IA (`sigeda_chat_status`): sus dependencias 39–50 no están hechas.
+**Todos los comandos de aquí se ejecutaron y funcionaron el 1 oct 2026**, ahora sí con los **tres**
+backends arriba: SIGEDA, el módulo de aprendizaje con IA, y sus dependencias. La versión anterior de
+este documento dejaba fuera `sigeda_chat_status` porque sus dependencias 39–50 no estaban hechas; ya
+lo están.
 
-## 1. PostgreSQL
+## 0. Lo que hay que tener corriendo
 
-El perfil `dev` apunta a `localhost:5432/sigeda`, pero **ese puerto puede estar ocupado** por
-contenedores de otros proyectos que Docker Desktop arranca solo. La base de la demo va en el
-**5544** y el backend se sobrescribe por variable de entorno, sin tocar configuración ni
-contenedores ajenos.
+| Proceso | Puerto | De dónde sale |
+|---|---|---|
+| PostgreSQL de SIGEDA (`sigeda-pg`) | **5544** | contenedor Docker |
+| **sigeda-back** (Spring) | **8080** | `sh ./mvnw -o spring-boot:run` |
+| PostgreSQL del módulo de aprendizaje (`learning-module-postgres`, con pgvector) | 5432 | `docker compose up -d` |
+| Redis (`learning-module-redis`) | 6379 | `docker compose up -d` |
+| **MinIO** (almacén S3 de los documentos) | 9000 / 9001 | `brew`, **no Docker** — ver §3.2 |
+| **sigeda_chat_status** (NestJS) | **3000** | `pnpm start:dev` |
+| **sigeda-web** (Vite) | 5173 | `pnpm dev` |
+
+Docker Desktop tiene que estar arriba antes de nada (`open -a Docker`), y el cliente necesita su
+helper de credenciales en el PATH:
 
 ```sh
-# el cliente docker necesita su helper de credenciales en el PATH
 export PATH="$PATH:/Applications/Docker.app/Contents/Resources/bin"
+```
 
+## 1. PostgreSQL de SIGEDA
+
+El perfil `dev` apunta a `localhost:5432/sigeda`, pero **ese puerto lo ocupa el Postgres del módulo
+de aprendizaje**. La base de la demo va en el **5544** y el backend se sobrescribe por variable de
+entorno, sin tocar configuración ni contenedores ajenos.
+
+```sh
+docker start sigeda-pg          # si ya existe de una corrida anterior
+until docker exec sigeda-pg pg_isready -U postgres -d sigeda_demo >/dev/null 2>&1; do sleep 1; done
+```
+
+La primera vez, en cambio:
+
+```sh
 docker run -d --name sigeda-pg \
   -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=sigeda \
   -p 5544:5432 postgres:16
-
 docker exec sigeda-pg psql -U postgres -c 'create database sigeda_demo'
-until docker exec sigeda-pg pg_isready -U postgres -d sigeda_demo >/dev/null 2>&1; do sleep 1; done
 ```
 
 **El esquema no se carga a mano.** Con el perfil `dev`, `spring.sql.init.mode=always` hace que el
@@ -27,10 +49,11 @@ backend ejecute `schema_prod.sql` y `data_prod.sql` en **cada arranque**, y `sch
 **empieza borrando las tablas**. Es reproducible, pero **lo que se cargue durante la demo se pierde
 al reiniciar**.
 
-## 2. El backend
+## 2. El backend de SIGEDA
 
 ```sh
 cd sigeda-back
+export JAVA_HOME=/opt/homebrew/opt/openjdk@17        # java no está en el PATH
 SPRING_DATASOURCE_URL='jdbc:postgresql://localhost:5544/sigeda_demo?prepareThreshold=0' \
   sh ./mvnw -o spring-boot:run -Dspring-boot.run.profiles=dev
 ```
@@ -44,136 +67,194 @@ curl -s -X POST http://localhost:8080/auth/login -H 'Content-Type: application/j
      -d '{"username":"admin.sistema","password":"123"}'                            # 200 + token
 ```
 
-## 3. El frontend
+## 3. El backend de IA (módulo de aprendizaje)
 
-Crear `sigeda-web/.env` (está en `.gitignore`):
+### 3.1. Postgres con pgvector, y Redis
+
+```sh
+cd sigeda_chat_status
+docker compose up -d            # learning-module-postgres (5432) y learning-module-redis (6379)
+docker compose ps               # esperar a que los dos digan healthy
+```
+
+### 3.2. MinIO — va por Homebrew, no por Docker
+
+`STORAGE_ENDPOINT` apunta a `http://localhost:9000`, o sea MinIO local. **La imagen de Docker ya no
+se puede bajar**: `minio/minio` responde `pull access denied`, `quay.io/minio/minio` responde 401 y
+`bitnami/minio` ya no existe, así que las instrucciones del README de ese repo (opción B, vía
+`docker-compose.yml`) **no funcionan hoy**. Por Homebrew sí:
+
+```sh
+brew install minio
+MINIO_ROOT_USER=minioadmin MINIO_ROOT_PASSWORD=minioadmin MINIO_DOMAIN=localhost \
+  /opt/homebrew/opt/minio/bin/minio server --address :9000 --console-address :9001 \
+  /opt/homebrew/var/minio
+```
+
+**`MINIO_DOMAIN=localhost` no es opcional, y sin él la subida de documentos falla con un 500 que no
+dice por qué.** `StorageService` construye su `S3Client` sin `forcePathStyle`, que es lo correcto
+para Cloudflare R2 y para S3; contra MinIO eso hace que el SDK pida
+`http://learning-module-documents.localhost:9000/...` —estilo *virtual host*—, y un MinIO sin
+`MINIO_DOMAIN` lee esa ruta como estilo *path*, se queda con el primer segmento como nombre del
+bucket y responde **`NoSuchBucket`** aunque el bucket exista. Con `MINIO_DOMAIN=localhost` MinIO
+reconoce el subdominio como bucket y la subida pasa. Comprobado en los dos sentidos el 1 oct 2026.
+
+El bucket hay que crearlo una vez. Desde `sigeda_chat_status` (usa su propio `@aws-sdk/client-s3`):
+
+```sh
+cat > crear-bucket.mjs <<'EOF'
+import { S3Client, CreateBucketCommand } from '@aws-sdk/client-s3'
+const s3 = new S3Client({
+  endpoint: 'http://localhost:9000', region: 'us-east-1', forcePathStyle: true,
+  credentials: { accessKeyId: 'minioadmin', secretAccessKey: 'minioadmin' },
+})
+await s3.send(new CreateBucketCommand({ Bucket: 'learning-module-documents' }))
+EOF
+node crear-bucket.mjs && rm crear-bucket.mjs
+```
+
+O a mano en la consola web, `http://localhost:9001` (`minioadmin` / `minioadmin`).
+
+### 3.3. Esquema y usuarios
+
+```sh
+pnpm prisma:generate
+pnpm prisma:migrate       # prisma migrate deploy
+pnpm seed:usuarios        # los 11 usuarios de sigeda-back, idempotente
+```
+
+`seed:usuarios` es el puente entre los dos backends: graba `users.sigeda_persona_code`, sin el cual
+`/prediction/**` responde 404 para alumnos que sí existen. Un token cuyo `username` no esté sembrado
+es un token válido que acá no sirve, y la respuesta es **401**.
+
+### 3.4. Levantarlo
+
+```sh
+pnpm start:dev            # Backend escuchando en http://localhost:3000
+```
+
+```sh
+TOKEN=$(curl -s http://localhost:8080/auth/login -H 'Content-Type: application/json' \
+  -d '{"username":"admin.sistema","password":"123"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["token"])')
+curl -s http://localhost:3000/documents -H "Authorization: Bearer $TOKEN"
+```
+
+**El JWT es el mismo de sigeda-back.** `SIGEDA_JWT_SECRET` tiene que valer exactamente lo mismo que
+`jwt.secret.key` en `application-dev.properties`, en base64 y sin decodificar a mano.
+
+## 4. El frontend
+
+`sigeda-web/.env` ya existe (está en `.gitignore`) y apunta a los dos backends:
 
 ```
 VITE_SIGEDA_API_URL=http://localhost:8080
 VITE_IA_API_URL=http://localhost:3000
 VITE_MOCK_API=false
-VITE_DEPENDENCIAS_RESUELTAS=1,2,5,6,7,12,13,14,15,16,17,18,19,20,21,22,24,52,53,54,55,58,61,63,64,65,66,67,68,70
+VITE_DEPENDENCIAS_RESUELTAS=1,2,4,5,6,7,12,13,14,15,16,17,18,19,20,21,22,24,30,32,33,37,39,41,43,45,46,47,49,50,51,52,53,54,55,56,57,58,61,62,63,64,65,66,67,68,70
 ```
 
 ```sh
 cd sigeda-web && pnpm dev     # http://localhost:5173
 ```
 
-`pnpm dev:mock` es lo contrario: usa `.env.mock` y no toca el servidor. El CORS del backend ya
-permite `http://localhost:5173` (comprobado).
+`pnpm dev:mock` es lo contrario: usa `.env.mock` y no toca ningún servidor. El CORS del backend ya
+permite `http://localhost:5173`.
 
-## 4. Las cuentas
+## 5. Las cuentas
 
 Todas con contraseña **`123`**.
 
-| Usuario | Rol | Para ver |
+| Usuario | Código | Rol | Para ver |
+|---|---|---|---|
+| `admin.sistema` | 000001 | Administrador Web | todo |
+| `comandante.aguirre` | 222444 | Comandante de Escuadrón | materias, seguimiento, legajo, orden de mérito |
+| `jefe.operaciones` | 333333 | Jefe de Operaciones | turnos, estándares |
+| `instructor.perez` | 444444 | Instructor | banco de preguntas, turnos teóricos, **evaluar sus turnos** |
+| `instructor.mendoza` | 888888 | Instructor | lo mismo, sobre los turnos 5, 6 y 7 |
+| `alumno.lopez` | 111111 | Alumno | sus turnos, **su examen abierto hoy**, su legajo |
+| `alumno.garcia` | 555555 | Alumno | el alumno completo: 17 evaluaciones y NFPI |
+
+El **Alumno** también entra al módulo de Aprendizaje: las tres pantallas piden `Read` y ese permiso
+lo tienen los cinco roles.
+
+## 6. Lo que hoy NO se puede demostrar, y por qué
+
+**Las tres claves de IA del `.env` de `sigeda_chat_status` están vencidas.** Comprobado el 1 oct 2026
+llamando a cada proveedor directamente:
+
+| Clave | Respuesta | Qué deja sin funcionar |
 |---|---|---|
-| `admin.sistema` | Administrador Web | todo |
-| `comandante.aguirre` | Comandante de Escuadrón | materias, seguimiento, legajo |
-| `jefe.operaciones` | Jefe de Operaciones | turnos, estándares (**grupos ya no**: la dependencia 4 dejó `Manage Groups` solo en el Administrador Web) |
-| `instructor.perez` | Instructor | banco de preguntas, turnos teóricos, evaluar |
-| `alumno.lopez` | Alumno | sus turnos, sus exámenes, su legajo |
+| `GEMINI_API_KEY` | 400 `API key not valid` | nada hoy: `LLM_PROVIDER` está en `anthropic` |
+| `ANTHROPIC_API_KEY` | 401 `authentication_error` | el **tagging** de documentos y la **generación de cuestionarios** |
+| `VOYAGE_API_KEY` | 401 `Provided API key is invalid` | la **indexación RAG**, y con ella las respuestas del chat |
 
-## 5. Lo que funciona, comprobado ruta por ruta
+El efecto es parcial y silencioso, que es lo peor de los dos mundos: **la subida de un documento
+igual termina en `ready`**, con `0 tags, 0 chunks indexados`, y sólo el log lo dice. Pedir un
+cuestionario o una consulta sobre ese documento sí falla a la vista.
 
-Las 22 rutas que se probaron con `curl` contra la base real devolvieron lo esperado, **incluidas
-las cinco de turnos que estaban caídas antes de la tanda E1**:
+Se arregla con una clave nueva en `.env` y un reinicio del backend de IA; no hay cambio de código.
+`LLM_PROVIDER` acepta `gemini`, `anthropic` u `ollama` (este último sin clave, contra un Ollama
+local en el 11434 — tampoco está instalado en esta máquina).
 
-- Turnos: la lista con sus cuatro ramas de filtro, el detalle, `/turnos/alumno`, aeronaves.
-- Teoría: materias, banco de preguntas, turnos teóricos, el catálogo de grupos, el detalle de
-  turno, los exámenes pendientes, el estado teórico.
-- Seguimiento: índices, orden de mérito, legajo, alertas, historial teórico.
-- Matrícula: personas, grupos, maniobras, fases, subfases, roles.
-- Seguridad: 401 sin token; **403 al pedir los datos de otro alumno** y 200 con los propios.
+**Tampoco hay pantalla de predicción.** `GET /prediction/students` y
+`GET /prediction/students/{id}` responden bien —`555555` da `evaluationCount: 16`,
+`latestScore: 17`, `riskLevel: "bajo"`, `trendDirection: "up"` y 10 filas de `maneuverBreakdown`—
+pero **ninguna vista del frontend los consume todavía**. Se demuestra con `curl`, no con el navegador.
 
-## 6. El recorrido, con las cifras que va a mostrar
+## 7. Un defecto que esta preparación encontró y arregló
 
-Los dos alumnos del **grupo 3** son la historia, y son deliberadamente opuestos:
+**Dar de alta un turno abortaba contra PostgreSQL**, con
 
-| | `555555` Pedro | `666666` Ana |
-|---|---|---|
-| Materia 3 (mínimo 18) | `PT` 18.00 · `PE` 18.00 → **`NA` 18.00**, aprueba | `PT` 12.00 · `PE` 12.00 → **`NA` 12.00**, desaprueba |
-| `NCT` · `NEI` | 18.00 · 20.00 | 12.00 · 12.00 |
-| **`NIT`** | **18.40** | **12.00** |
-| Causales | ninguna | **`PROMEDIO_ASIGNATURA`** en Adoctrinamiento de Vuelo (12.00 < 13) |
-| Bloqueo por subsanación | no | **sí**, con 3 exámenes desaprobados sin subsanar |
-| `NIA` · `NFPI` | `null` · `null` | `null` · `null` |
+```
+ERROR: duplicate key value violates unique constraint "turnos_pkey"
+Detail: Key (id)=(18) already exists.
+```
 
-Las diez asignaturas restantes salen en `asignaturasSinNota`, así que **la renormalización del
-`NCT` se ve funcionando**: se calcula sobre la única materia con nota, no sobre las once.
+La migración `019` sembró filas con id explícito —dos fases, dos sub fases, cinco misiones y dos
+turnos— y **no movió las secuencias** de las que Hibernate saca el id de una fila nueva. Las cuatro
+quedaron apuntando dentro del rango ya ocupado:
 
-Recorrido sugerido:
+| tabla | `max(id)` | arrancaba en | arranca en |
+|---|---|---|---|
+| `fases` | 5 | 4 | **6** |
+| `subfases` | 12 | 11 | **13** |
+| `misiones` | 73 | 69 | **74** |
+| `turnos` | 19 | 18 | **20** |
 
-1. **Entrar como `instructor.perez`** → banco de preguntas (24 preguntas, filtros, importar desde
-   IA deshabilitado porque es otro backend), y programar un turno teórico.
-2. **Entrar como `alumno.lopez`** → sus exámenes pendientes, rendir uno (autoguardado, cuenta
-   atrás), y ver el resultado. Intentar ver el legajo de otro alumno → **403**.
-3. **Entrar como `comandante.aguirre`** → materias (CRUD completo), y el **legajo de `666666`**:
-   el ciclo de chequeo, el estado teórico con su bloqueo y su causal, y los índices con el `NIT`
-   calculado y el `NIA` explicando qué falta.
-4. **Entrar como `jefe.operaciones`** → registrar un turno práctico. **Elegir la sub fase 2, 3 o 4**
-   (ver el punto 1 de abajo), y probar el cruce de horarios poniendo al mismo alumno dos veces.
+Son cuatro rutas de alta, no una. **Ninguna de las 1194 pruebas podía atraparlo**: la suite corre
+sobre H2 con `ddl-auto=create-drop`, donde Hibernate crea las secuencias a partir del `initialValue`
+de la entidad, así que el valor de `schema_prod.sql` —el que corre en dev y en producción— no
+participa. Arreglado en `schema_prod.sql` y en la migración `020-secuencias-de-la-tabla-4.sql`, con
+`setval` sobre `max(id)` y no con un literal, para que también sirva sobre una base viva. Lo cubre
+`unit_test/SecuenciasDeLaSemillaTest`, que compara los dos archivos sin base de datos.
 
-## 7. Tres cosas que conviene saber antes de demostrar
+Es otra vez la misma moraleja que la del `cast` de `/api/preguntas` y la del `flush()` del login:
+**una suite verde sobre H2 no dice que el sistema funcione sobre PostgreSQL.**
 
-1. **Cualquier sub fase sirve para registrar un turno.** Desde la migración `019` las **doce** tienen
-   maniobras enlazadas (44 filas en `maniobras_subfase`), así que el selector de maniobras nunca sale
-   vacío. Antes sólo las tenían tres, y `GET /api/maniobras/subfase/1` respondía 404: esa advertencia ya
-   no aplica.
-2. **El panel de chequeos sale vacío.** `GET /api/personas/{cod}/chequeos` responde 404, que el
-   frontend muestra como panel vacío, porque **la semilla no tiene ninguna fila en
-   `chequeos_finales`**.
-3. **El orden de mérito SÍ se demuestra**, y es lo que más cambió. `555555` sale **puesto 1** con
-   `nfpi` **16.34** y `nia` **15.83**; los otros cinco alumnos salen **sin puesto, cada uno con su
-   motivo**, que es la mitad útil de la pantalla: cuatro por la mitad teórica y `666666` porque le falta
-   nota de sub fase. Comprobado con `curl` contra PostgreSQL el 29 sep 2026.
+## 8. Lo que sigue sin poder demostrarse
 
-   **La cadena completa, para contarla en orden:** el legajo de `555555` muestra **14.70** en Control
-   Básico —ponderado sobre el **44 %** de la sub fase, y la pantalla lo dice—, las cinco notas de fase
-   (**14.99 · 15.36 · 16.20 · 16.94 · 16.44**), el `nia` **15.83** y el `nfpi` **16.34**. El `nia.motivo`
-   viene en `null`: no queda nada que advertir, porque las doce sub fases que el NIA pondera tienen nota.
-
-   **El 14.70 no es un promedio y conviene decirlo:** las cuatro notas de Control Básico son 13, 15.5, 15
-   y 15, y su promedio simple daría **14.63**. Sale 14.70 porque `CB-1` vale 1.0 h y `CB-3` vale 1.2, o
-   sea que la ponderación por horas se **ve** en la cifra.
-
-   **Antes de la demo, volver a pedir `/api/personas/555555/indices`.** Las cifras dependen de la
-   semilla y la semilla se mueve; el guion de arriba vale para el estado del 29 sep 2026.
-4. **~~`NCT` y las causales salen vacíos.~~ ARREGLADO el 27 sep 2026.** Faltaba que la semilla
-   tuviera un turno de tipo **`EXAMEN`** — `PE` solo se alimenta de ese tipo, así que ningún `NA`
-   era calculable. Se sembraron un `TEST` y un `EXAMEN` de la materia 3 para el grupo 3
-   (migración `010`), y **la mitad teórica ya se puede demostrar**, comprobado contra PostgreSQL.
-5. **Cada reinicio del backend re-siembra la base.** Ideal para repetir la demo, fatal si se quiere
-   conservar lo que se cargó en vivo.
-
-## 8. Lo que no se puede demostrar
-
-- **El módulo de aprendizaje con IA**: dependencias 39–50, en otro repositorio, sin empezar.
 - **Eliminar persona**: dependencia 30 incompleta — falla con FK si el usuario **alguna vez inició
   sesión**, porque `refresh_tokens` no tiene cascada.
-- **Modificar maniobra** (32, 33) y **eliminar fase** (37, que es **pérdida de datos**): siguen
-  deshabilitadas por el propio frontend.
-- **El `NFPI`**: ver el punto 3.
+- **El panel de chequeos sale vacío.** `GET /api/personas/{cod}/chequeos` responde 404, que el
+  frontend muestra como panel vacío, porque **la semilla no tiene ninguna fila en
+  `chequeos_finales`**.
+- **Cada reinicio del backend re-siembra la base.** Ideal para repetir la demo, fatal si se quiere
+  conservar lo que se cargó en vivo.
 
-## 9. Dos defectos que esta preparación encontró y arregló
+## 9. Dos defectos que la preparación anterior encontró
+
+Siguen valiendo como argumento de por qué este paso existe.
 
 `GET /api/preguntas` devolvía **500 contra PostgreSQL** siempre que el filtro `texto` viniera
 ausente o vacío — o sea **en la vista por defecto del banco de preguntas**. PostgreSQL no puede
 inferir el tipo de un parámetro nulo dentro de `concat()`, lo bindea como `bytea` y rechaza la
-comparación (`operator does not exist: text ~~ bytea`). **Ninguna prueba de las 900 podía
-atraparlo: H2 infiere el tipo y responde 200.** Arreglado con un `cast(:texto as String)`, y la
-razón quedó escrita sobre la consulta.
+comparación (`operator does not exist: text ~~ bytea`). Arreglado con un `cast(:texto as String)`.
 
-**Y antes de arrancar nada, leyendo:** el panel de estado teórico del legajo hacía
-`estado.data.causales.length` y `.map(...)` sobre un campo que **el backend real no manda** —
-`causales[]` es la dependencia 68 y el contrato la deja fuera de M4, pero **el mock sí la emite**.
-El tipo decía `causales: Causal[]`, o sea **TypeScript mintiendo**, porque `sigeda.get<T>` es un
-genérico sin validación en runtime. Esa pantalla pasaba contra el mock y **habría estallado la
-primera vez que tocara el servidor**. Arreglado con el campo opcional y una prueba que manda la
-respuesta real del backend.
+Y el panel de estado teórico del legajo hacía `estado.data.causales.length` sobre un campo que **el
+backend real no manda** — `causales[]` es la dependencia 68 y el contrato la deja fuera de M4, pero
+**el mock sí la emite**. El tipo decía `causales: Causal[]`, o sea **TypeScript mintiendo**, porque
+`sigeda.get<T>` es un genérico sin validación en runtime. Esa pantalla pasaba contra el mock y
+**habría estallado la primera vez que tocara el servidor**.
 
-Las dos comparten una moraleja: **el frontend no valida las respuestas en runtime**, así que una
+Las dos comparten moraleja: **el frontend no valida las respuestas en runtime**, así que una
 diferencia de forma entre el mock y el servidor no se ve hasta que se conectan de verdad.
-
-Es el argumento de por qué este paso existe: **una suite verde sobre H2 no dice que el sistema
-funcione sobre PostgreSQL.**

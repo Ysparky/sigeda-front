@@ -1,8 +1,9 @@
 # Casos de uso: camino feliz y alternativas
 
-**Todo lo de aquí se ejecutó contra el sistema real el 27 sep 2026** — backend Spring sobre
-PostgreSQL 16, no mocks. Las respuestas y los mensajes están copiados de lo que devolvió el
-servidor, no del contrato. Si un mensaje aquí no coincide con el sistema, el documento está mal.
+**Todo lo de aquí se ejecutó contra el sistema real el 1 oct 2026** — backend Spring sobre
+PostgreSQL 16 y backend de IA sobre NestJS, no mocks. Las respuestas y los mensajes están copiados de
+lo que devolvió el servidor, no del contrato. Si un mensaje aquí no coincide con el sistema, el
+documento está mal.
 
 Cómo leerlo: cada caso lleva su **actor**, su **camino feliz** y una tabla de **alternativas** con
 el código HTTP y lo que el usuario ve. Las alternativas están en el orden en que el servidor las
@@ -12,11 +13,40 @@ Para levantar el entorno, ver `demo-runbook.md`. Cuentas: contraseña `123` para
 
 ---
 
+## 0. El recorrido, en orden, con lo que la semilla tiene preparado
+
+Si se van a hacer las pruebas de corrido, este es el orden que no se pisa a sí mismo. Cada paso
+remite al caso que lo detalla.
+
+| # | Entrar como | Hacer | Lo que la semilla ya dejó listo | Caso |
+|---|---|---|---|---|
+| 1 | `instructor.perez` | recorrer el banco de preguntas y programar un turno teórico | **24** preguntas, cinco filtros combinables | §5, §6 |
+| 2 | `instructor.perez` | **evaluar el turno 4** (`Navegación Local Inicial`, alumna `666666`) | 6 maniobras, todas con estándar `B`; el turno **no tiene evaluación** | §4 |
+| 3 | `alumno.lopez` | rendir su examen pendiente | el turno teórico **3** está abierto **hoy**, 00:00–23:59, 5 preguntas, mínimo 18 | §7 |
+| 4 | `comandante.aguirre` | abrir el legajo de `555555` y el orden de mérito | 17 evaluaciones, las doce sub fases con nota | §8, §9 |
+| 5 | `jefe.operaciones` | dar de alta un turno práctico | cualquiera de las **12** sub fases sirve | §3 |
+| 6 | cualquiera | subir un documento en **Aprendizaje** | tres documentos de corridas anteriores | §10 |
+
+**Los turnos prácticos sin evaluar son seis**, y son los únicos donde §4 se puede ejercer:
+
+| Turno | Fecha | Sub fase | Instructor | Alumno |
+|---|---|---|---|---|
+| 1 | 2024-03-01 | Control Básico | `instructor.perez` | `111111` |
+| 2 | 2024-03-08 | Control Básico | `instructor.perez` | `222222` |
+| 4 | 2024-03-22 | Navegación Local | `instructor.perez` | `666666` |
+| 5 | 2024-03-29 | Procedimientos y Aproximación IFR | `instructor.mendoza` | `777777` |
+| 6 | 2024-04-05 | Circuitos y Maniobras | `instructor.mendoza` | `999999` |
+| 7 | 2024-04-12 | Control Preciso | `instructor.mendoza` | `999999` |
+
+Los otros trece son de `555555` y ya están evaluados: son los que hacen que su NFPI exista.
+
+---
+
 ## 1. Iniciar sesión
 
 **Actor:** cualquiera. **Camino feliz:** `admin.sistema` / `123` → **200** con el token y el
 refresh token. El mismo usuario puede entrar **tantas veces como quiera** (eso estaba roto y se
-arregló durante esta preparación; ver §9).
+arregló; ver §12).
 
 | Alternativa | HTTP | Qué pasa |
 |---|---|---|
@@ -24,6 +54,8 @@ arregló durante esta preparación; ver §9).
 | Usuario sin rol asignado | **401** | El seed trae `raul.paredes` solo en los mocks; en el backend real no existe |
 | Petición sin token a cualquier ruta | **401** | `{"error":"Unauthorized","message":"No authorization token found"}` |
 | Token inválido o vencido | **401** | `{"message":"Token is not valid"}` |
+
+La ruta es **`POST /auth/login`**, sin el prefijo `/api`.
 
 ---
 
@@ -52,14 +84,21 @@ Los errores de validación llegan como **arreglo JSON crudo** y la interfaz los 
 ## 3. Registrar un turno práctico
 
 **Actor:** Jefe de Operaciones (permiso `Manage Shifts`).
-**Precondición:** **elegir la sub fase 2, 3 o 4.** La semilla solo enlaza maniobras a esas tres;
-las sub fases 1 y 5 no tienen ninguna y el selector sale vacío.
-**Camino feliz:** nombre de 10 a 30 caracteres, fecha futura, programa, instructor, aeronave, al
-menos un alumno con horas `HH:mm` y al menos una maniobra con su nota mínima → **200** con el turno
-guardado.
+**Camino feliz:** nombre de 10 a 30 caracteres, fecha futura, programa, sub fase, misión,
+instructor, **la aeronave disponible**, al menos un alumno con horas `HH:mm` y al menos una maniobra
+con su nota mínima → **200** con el turno guardado.
+
+**Cualquiera de las doce sub fases sirve.** Desde la migración `019` todas tienen maniobras
+enlazadas —44 filas en `maniobras_subfase`, entre 2 y 6 por sub fase—, así que el selector de
+maniobras nunca sale vacío. La advertencia vieja de «elegir la 2, 3 o 4» ya no aplica.
+
+**De las tres aeronaves sembradas sólo una está disponible:** el **Robinson R22**. El Enstrom 280FX
+está `En_Mantenimiento` y el Schweizer S‑300C `No_Disponible`, y elegir cualquiera de los dos corta
+antes que toda validación de campo.
 
 | Alternativa | HTTP | Mensaje literal |
 |---|---|---|
+| Aeronave en mantenimiento o no disponible | **400** | `Asignar aeronave disponible.` — mensaje suelto, no de campo |
 | Fecha de hoy o anterior | 400 | `'fechaEval': La fecha del turno debe ser posterior a hoy.` |
 | El mismo alumno con horas que se cruzan | 400 | `'alumnosTurno[i].codAlumno': El alumno <cod> tiene un horario que se cruza con otro turno del mismo día.` — **la regla es del alumno, no de la aeronave** |
 | Nombre corto y sin maniobras | 400 | dos elementos: `'nombre': Nombre debe tener de 10 a 30 caracteres.` y `'maniobrasTurno': La asignación de maniobras es requerida` |
@@ -72,25 +111,40 @@ guardado.
 sabe cosas que el sistema no. Que un alumno esté en dos turnos a la vez **se rechaza**, porque es
 imposible.
 
+**Los 19 turnos sembrados son de 2024**, o sea todos pasados: ninguno se puede modificar ni borrar.
+El que se cree durante la demo, con fecha futura, sí.
+
 ---
 
 ## 4. Registrar una evaluación práctica
 
 **Actor:** **el instructor del turno**, y nadie más, para `Ponderada` y `Chequeo Sub Fase`.
-**Camino feliz:** entrar como `instructor.perez` (que es el `444444` de los turnos sembrados),
-enviar una nota por **cada** maniobra del turno con notas del DIRBE de su nota mínima → evaluación
-registrada, con su promedio y su clasificación calculados por el servidor.
+**Camino feliz:** entrar como `instructor.perez`, abrir el **turno 4** (`Navegación Local Inicial`,
+alumna `666666`) y poner una nota del DIRBE a **cada una** de sus seis maniobras, todas con estándar
+`B`, así que `B` o `E` en todas → evaluación registrada, con su promedio y su clasificación
+calculados por el servidor:
+
+```
+codigo        666666-4
+categoria     Ponderada          clasificacion  Bueno
+promedio      17.0               estadoAlumno   Apto
+fase          Navegación Visual  subFase        Navegación Local
+```
+
+El efecto se ve enseguida en §8: `666666` pasa a tener nota en Navegación Local, y su `nia.motivo`
+deja de nombrar esa sub fase entre las que le faltan.
 
 | Alternativa | HTTP | Mensaje literal |
 |---|---|---|
 | **Cualquier otro usuario**, incluido el Administrador | **403** | `Solo el instructor asignado al turno puede registrar esta evaluación.` — se evalúa **antes que todo lo demás**, y mira **quién llama**, no el `codEvaluador` del cuerpo |
-| Nota bajo el estándar sin justificar | 400 | tres elementos: `'calificaciones[0].causa': La causa es requerida para calificaciones bajo el estándar.`, más `observacion` y `recomendacion` |
+| Nota bajo el estándar sin justificar | 400 | **tres mensajes por cada calificación**: `'calificaciones[i].causa': La causa es requerida para calificaciones bajo el estándar.`, más `observacion` y `recomendacion` |
 | Nota que la maniobra no admite | 400 | `{"mensaje":["Las notas con id: 1 no utilizan el sistema de calificación."]}` |
 | Faltan calificaciones | 400 | `{"mensaje":"Todas las notas son requeridas."}` |
 | Nombre de menos de 10 caracteres | 400 | `'nombre': Nombre debe tener de 10 a 30 caracteres.` |
 
-«Bajo el estándar» es `RI`, `BI` y `BR`, tomado de `Dirbe.calificacionBajoEstandar` y no de una
-lista aparte, para que ampliarlo sea un solo cambio.
+«Bajo el estándar» es relativo y no absoluto: con estándar `B`, una `I` está **bajo**; con estándar
+`I`, la misma `I` está **al** estándar. Sale de `Dirbe.calificacionBajoEstandar` y no de una lista
+aparte, para que ampliarlo sea un solo cambio.
 
 ---
 
@@ -111,8 +165,7 @@ su tipo exige → **201** `{"mensaje":"Pregunta guardada con éxito.","pregunta"
 | Un Alumno entra al banco | 403 | `Acceso denegado` |
 
 **El filtro `texto` no distingue mayúsculas ni tildes**: buscar `adoctrinamiento` encuentra
-`Adoctrinamiento`. Ojo que la vista por defecto (sin filtro) **devolvía 500 en PostgreSQL** hasta
-esta preparación; ver §9.
+`Adoctrinamiento`.
 
 **Modificar una pregunta conserva el `id` de cada alternativa.** No es un detalle interno: la
 respuesta del alumno se guarda como el **id** de la alternativa, así que renumerarlas le borraría
@@ -140,14 +193,22 @@ Los grupos del instructor se derivan **por los alumnos con los que ya voló**
 instructor-grupo en el esquema**. El catálogo solo ofrece grupos **con alumnos**, precisamente para
 que no se pueda elegir uno que la validación va a rechazar.
 
+Los nueve turnos teóricos sembrados son todos de `instructor.perez`.
+
 ---
 
 ## 7. Rendir un examen teórico
 
 **Actor:** Alumno (permiso `Take Exams`).
 **Camino feliz:** `alumno.lopez` ve su examen pendiente → lo inicia → responde → se autoguarda →
-lo entrega → ve su nota, su mínimo aplicado y si aprobó. **Iniciar es idempotente**: recargar la
-página retoma el mismo examen con las respuestas guardadas, con **200** en vez de 201.
+lo entrega → ve su nota, su mínimo aplicado y si aprobó.
+
+La semilla deja **uno abierto a propósito**: el turno teórico **3**, `Semanal Adoctrinamiento de
+Vuelo`, grupo 1, ventana **00:00–23:59 del día en curso**, 5 preguntas, nota mínima **18**. Si la
+demo se corre otro día, hay que mover `fecha_examen` de esa fila o programar uno nuevo con §6.
+
+**Iniciar es idempotente**: recargar la página retoma el mismo examen con las respuestas guardadas,
+con **200** en vez de 201.
 
 | Alternativa | HTTP | Mensaje literal |
 |---|---|---|
@@ -183,43 +244,88 @@ Los dos alumnos del grupo 3 son la historia, y son opuestos a propósito:
 | `NCT` · `NEI` | 18.00 · 20.00 | 12.00 · 12.00 |
 | Causales | ninguna | **`PROMEDIO_ASIGNATURA`** en Adoctrinamiento de Vuelo |
 | Bloqueo por subsanación | no | **sí**, 3 exámenes desaprobados |
-| `NIA` · `NFPI` | `null` · `null` | `null` · `null` |
+| **`NIA`** | **15.83** | `null` |
+| **`NFPI`** | **16.34** | `null` |
+
+**La cadena completa de `555555`, para contarla en orden:** Control Básico da **14.70** —ponderado
+sobre el **44 %** de la sub fase, y la pantalla lo dice—, las cinco notas de fase salen
+**14.99 · 15.36 · 16.20 · 16.94 · 16.44**, el `nia` **15.83** y el `nfpi` **16.34**. El `nia.motivo`
+viene en `null`: no queda nada que advertir, porque las doce sub fases que el NIA pondera tienen
+nota.
+
+**El 14.70 no es un promedio y conviene decirlo:** las cuatro notas de Control Básico son 13, 15.5,
+15 y 15, y su promedio simple daría **14.63**. Sale 14.70 porque `CB-1` vale 1.0 h y `CB-3` 1.2, o
+sea que la ponderación por horas se **ve** en la cifra. Con el programa anterior no se veía: sus
+misiones de Contacto valían todas 1.0 h.
+
+Los pesos de fase salen en la pantalla a **cuatro decimales** —0.2766 · 0.2340 · 0.1596 · 0.1596 ·
+0.1702— porque se derivan de las horas de la Tabla 4 sobre 94.0 y a dos decimales no cerrarían.
 
 | Alternativa | HTTP | Qué pasa |
 |---|---|---|
 | Un alumno pide el legajo de otro | **403** | `Solo puede consultar su propia información.` — un único texto para los ocho controladores que emiten este 403 |
 | Un alumno pide **el suyo** | 200 | legajo completo |
-| Un alumno sin ningún chequeo | **404** | `No existen chequeos disponibles.` → la interfaz muestra el panel vacío |
+| Un alumno sin ningún chequeo | **404** | `No existen chequeos disponibles.` → la interfaz muestra el panel vacío. **Le pasa a todos**: la semilla no tiene ninguna fila en `chequeos_finales` |
 | Código de persona inexistente | 404 | `Persona especificada no existe.` |
 | Persona que **no es alumno** | **200** | con el bloqueo en `false` y los arreglos vacíos: «no calculable» y «no encontrado» son cosas distintas |
-| `NIA` y `NFPI` | 200 | `null`, con `nia.motivo` **variable** nombrando lo que falta: con la semilla, que `NFOH` y `NFOA` no tienen ninguna sub fase en el sistema. **La frase se muestra, no se compara** (tanda H, 28 sep 2026: la vieja culpaba a la tabla de coeficientes de misión, que ya está implementada) |
-| `nsf` de Control Básico de `555555` | 200 | **`14.70`**, `ponderacion: "PDI"`, `cobertura: 0.4423` — la nota de sub fase **sí** se calcula, renormalizada sobre las 4 de las 9 misiones que tienen nota, y la pantalla dice sobre qué porcentaje. No es el promedio de sus cuatro notas, que daría 14.63: `CB-1` vale 1.0 h y `CB-3` 1.2 |
+| `NIA` de un alumno sin notas de sub fase | 200 | `null`, con `nia.motivo` nombrando **las doce** sub fases que le faltan, fase por fase |
+| `nsf` de Control Básico de `555555` | 200 | **`14.70`**, `ponderacion: "PDI"`, `cobertura: 0.4423`, y un `motivo` que explica la renormalización |
 
 **Un índice ausente nunca vale 0.** Cero es una nota posible, y confundir las dos cosas es
 exactamente cómo se publica un orden de mérito falso. Por eso `null` se propaga hacia arriba:
 sin `NSF` no hay fase, sin fase no hay `NIA`, y sin `NIA` no hay `NFPI` **aunque el `NIT` exista**.
 
-**El orden de mérito está fuera de alcance** mientras falte la dependencia 62; ver el runbook.
+---
+
+## 9. Publicar el orden de mérito
+
+**Actor:** Comandante o Administrador (permiso `Create Reports`). `GET /api/reportes/orden-merito`.
+
+**Camino feliz:** `555555` sale **puesto 1**, con `nfpi` **16.34**, `nit` **18.40** y `nia`
+**15.83**. Los otros cinco alumnos salen **sin puesto, cada uno con su motivo**, y esa es la mitad
+útil de la pantalla: cuatro por la mitad teórica y `666666` porque le falta nota de sub fase.
+
+**Un alumno sin NFPI no se omite ni se pone último: se lista con `puesto: null` y el texto de lo que
+le falta.** El motivo es una frase completa que nombra cada fase y cada sub fase sin nota —se
+**muestra**, no se compara— y por eso cambia en cuanto se registra una evaluación con §4.
 
 ---
 
-## 9. Dos defectos que esta preparación encontró
+## 10. Estudiar con el módulo de aprendizaje
 
-Los dos solo aparecen contra PostgreSQL, y los dos están arreglados y empujados.
+**Actor:** cualquiera de los cinco roles (las tres pantallas piden `Read`). Backend
+`sigeda_chat_status` en el 3000, con **el mismo token** que emite `POST /auth/login`.
 
-1. **Un usuario no podía volver a iniciar sesión.** El primer login de cada usuario funcionaba y
-   **todos los siguientes devolvían un 403 con el cuerpo vacío**. `refresh_tokens` es única por
-   usuario y el servicio borraba e insertaba en la misma transacción; Hibernate ordena los INSERT
-   antes que los DELETE, así que el insert chocaba con la fila que el delete aún no había escrito.
-   Faltaba un `flush()`. **Ninguna de las 903 pruebas lo veía porque cada clase se autentica una
-   sola vez por usuario** — y la prueba nueva lo reproduce también en H2, así que lo único que hacía
-   falta era un segundo login.
-2. **El banco de preguntas devolvía 500 en su vista por defecto.** Sin filtro de texto, PostgreSQL
-   no puede inferir el tipo del parámetro nulo dentro de `concat()`, lo bindea como `bytea` y
-   rechaza la comparación. Faltaba un `cast`. **Aquí H2 sí difiere del motor real**: infiere el tipo
-   y responde 200, así que ninguna prueba de la suite podía atraparlo.
+**Camino feliz de la subida:** *Aprendizaje → Documentos → Subir*, con un `.txt`, `.pdf` o `.docx`
+de hasta 25 MB → el documento aparece en `processing` y pasa a `ready` en unos segundos.
 
-## 10. Alternativas que el servidor todavía no cubre
+| Alternativa | HTTP | Qué pasa |
+|---|---|---|
+| Sin encabezado `Authorization` | **401** | `{"statusCode":401,"message":"No autorizado.","error":"Unauthorized"}` |
+| Token válido de un usuario no sembrado acá | **401** | lo mismo; en el log, `Token válido de "<usuario>", que no tiene usuario en este servicio`. Se arregla con `pnpm seed:usuarios` |
+| Archivo que el extractor no puede leer | 200 al subir | el documento queda en `status: "error"` con `No se pudo procesar el documento. Intenta subirlo de nuevo.` |
+| Falta el bucket de MinIO, o falta `MINIO_DOMAIN` | **500** | `Internal server error`, y en el log `NoSuchBucket`. Ver `demo-runbook.md` §3.2 |
+
+**Generar un cuestionario y hacer una consulta NO funcionan hoy**, y conviene saberlo antes de
+abrir la pantalla: las claves de IA del `.env` están vencidas (`demo-runbook.md` §6). El efecto es
+parcial: la subida **igual termina en `ready`**, con `0 tags, 0 chunks indexados`, y sólo el log lo
+dice; pedir un cuestionario o una consulta sobre ese documento sí falla a la vista.
+
+**La predicción de desempeño responde bien pero no tiene pantalla.**
+`GET /prediction/students/{id}` de `555555` devuelve `evaluationCount: 16`, `discardedCount: 1`,
+`latestScore: 17`, `riskLevel: "bajo"`, `trendDirection: "up"` y 10 filas de `maneuverBreakdown`.
+Se demuestra con `curl`. Tres cosas de esa respuesta que no hay que rotular mal:
+
+- `latestScore` **no es un promedio**: es el `promedio` de la ÚLTIMA evaluación.
+- `latestEvaluation.sigedaClassification` es la clasificación de SIGEDA verbatim (Malo / Regular /
+  Bueno / Excelente). `predictedBand` tiene **tres** valores del motor (`optimo` / `regular` /
+  `deficiente`) y **no es la misma cosa**.
+- `maneuverBreakdown` son **conteos, no puntajes**, y `severe` es un **subconjunto** de `below`, no
+  una cuarta columna que se sume.
+
+---
+
+## 11. Alternativas que el servidor todavía no cubre
 
 Encontradas probando; **hoy las cubre la interfaz**, así que no se ven en la demostración, pero
 existen para cualquier otro cliente:
@@ -229,3 +335,30 @@ existen para cualquier otro cliente:
 | `horaFin` anterior a `horaInicio` en un alumno del turno | **200, lo guarda** | 400 de campo. La interfaz sí lo valida |
 | `codAlumno` inexistente en un turno | **500** con el error de FK de PostgreSQL en el mensaje | 404 o error de campo, y sin filtrar detalle de la base |
 | Una ruta que no existe bajo `/api` | **500** «Error inesperado» | 404 |
+
+---
+
+## 12. Tres defectos que estas preparaciones encontraron
+
+Los tres sólo aparecen contra PostgreSQL, y los tres están arreglados.
+
+1. **Dar de alta un turno abortaba** con `duplicate key value violates unique constraint
+   "turnos_pkey" · Key (id)=(18) already exists`. La migración `019` sembró filas con id explícito y
+   no movió las secuencias; cuatro quedaron apuntando dentro del rango ocupado (`fases`, `subfases`,
+   `misiones`, `turnos`). Son cuatro rutas de alta, no una. **La suite no podía verlo porque corre
+   sobre H2 con `ddl-auto=create-drop`**, donde Hibernate crea las secuencias a partir del
+   `initialValue` de la entidad y `schema_prod.sql` no participa. Detalle en `demo-runbook.md` §7.
+2. **Un usuario no podía volver a iniciar sesión.** El primer login de cada usuario funcionaba y
+   **todos los siguientes devolvían un 403 con el cuerpo vacío**. `refresh_tokens` es única por
+   usuario y el servicio borraba e insertaba en la misma transacción; Hibernate ordena los INSERT
+   antes que los DELETE, así que el insert chocaba con la fila que el delete aún no había escrito.
+   Faltaba un `flush()`. **Ninguna prueba lo veía porque cada clase se autentica una sola vez por
+   usuario.**
+3. **El banco de preguntas devolvía 500 en su vista por defecto.** Sin filtro de texto, PostgreSQL
+   no puede inferir el tipo del parámetro nulo dentro de `concat()`, lo bindea como `bytea` y
+   rechaza la comparación. Faltaba un `cast`. **Aquí H2 sí difiere del motor real**: infiere el tipo
+   y responde 200.
+
+Los tres dicen lo mismo: **una suite verde sobre H2 no dice que el sistema funcione sobre
+PostgreSQL**, y la diferencia no es de borde — son la pantalla por defecto del banco, el segundo
+login de cualquiera y el alta de un turno.
