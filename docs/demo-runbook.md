@@ -250,6 +250,34 @@ participa. Arreglado en `schema_prod.sql` y en la migración `020-secuencias-de-
 Es otra vez la misma moraleja que la del `cast` de `/api/preguntas` y la del `flush()` del login:
 **una suite verde sobre H2 no dice que el sistema funcione sobre PostgreSQL.**
 
+## 7 bis. El catálogo de maniobras dejó de ser relleno
+
+La semilla traía diez maniobras llamadas «Maniobra 1» … «Maniobra 10», y la `019` las repartió sobre
+las doce sub fases para que el selector nunca saliera vacío — con el resultado de que **la maniobra 1
+pertenecía a ocho sub fases**, Control Básico y Emergencias IFR entre ellas. La migración `021` las
+sustituye por **61 maniobras, cada una en una sola sub fase**, y pone la **escalada `D → I → R → B`**
+en los cuatro turnos que no tienen evaluación:
+
+```
+Circuitos y Maniobras  CM-1 D → CM-2 B        Control Preciso  CP-1 R → CP-2 B
+Navegación Local       NL-1 I → NL-2 B        Aprox. IFR       PA-1 R → PA-2 B
+```
+
+Eso hace demostrable una regla que el borrador de tesis afirma —«las maniobras nuevas dentro de una
+subfase se introducen como demostración … es natural que el nivel se vuelva más riguroso en turnos
+posteriores»— y que con `B` en los 71 registros no se veía en ninguna pantalla.
+
+**Los nombres son dato de demostración, no normativa.** La tesis dice que el catálogo lo define el
+Comandante de Escuadrón, así que no hay tabla publicada que cumplir. El `PCPH 2024.xlsx` sí trae uno
+completo con su escalada, pero es del Escuadrón Aéreo 510 de la FAP —tres fases, 14 sub fases, 118 h—
+y la tesis es sobre el Aeroclub Sudamericano de los Andes, escuela civil bajo RAP 141 con 94 h:
+importarlo habría afirmado una conformidad que no existe.
+
+**Control Básico se queda sin escalada** y no es un olvido: sus tres turnos están evaluados, y
+`calificaciones` guarda el estándar desnormalizado del que salió el promedio ya grabado. Cambiarlo
+movería el `14.70`, el `15.83` y el `16.34`. Las 55 calificaciones conservan nota y nota mínima
+idénticas; lo único que cambió en ellas es a qué maniobra apuntan.
+
 ## 8. Lo que sigue sin poder demostrarse
 
 - **Eliminar persona**: dependencia 30 incompleta — falla con FK si el usuario **alguna vez inició

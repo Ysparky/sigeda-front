@@ -13,13 +13,13 @@ describe('Hoja de briefing', () => {
         .slice(1)
         .map((fila) => {
           const [maniobra, , responsable] = within(fila).getAllByRole('cell')
-          return [within(maniobra as HTMLElement).getByText(/^Maniobra \d$/).textContent, responsable?.textContent]
+          return [maniobra?.firstElementChild?.textContent, responsable?.textContent]
         }),
     ).toEqual([
-      ['Maniobra 1', 'Explica: Instructor'],
-      ['Maniobra 2', 'Expone: Alumno'],
-      ['Maniobra 3', 'Expone: Alumno'],
-      ['Maniobra 4', 'Explica: Instructor'],
+      ['Ingreso al circuito de tránsito', 'Explica: Instructor'],
+      ['Circuito de tránsito completo', 'Expone: Alumno'],
+      ['Virajes a nivel', 'Expone: Alumno'],
+      ['Ascensos y descensos', 'Explica: Instructor'],
     ])
     expect(screen.getByText('Oscar Lopez · Navegación Nocturna')).toBeInTheDocument()
   })

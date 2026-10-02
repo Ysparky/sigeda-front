@@ -502,8 +502,8 @@ describe('Legajo: reporte de sub fase', () => {
     expect(reporte.getByText('Adaptación')).toBeInTheDocument()
     expect(reporte.getByText('Carlos Ramirez Sanchez')).toBeInTheDocument()
     const listaDeManiobras = within(reporte.getByRole('list'))
-    expect(listaDeManiobras.getByText('Maniobra 9')).toBeInTheDocument()
-    expect(listaDeManiobras.getByText('Maniobra 10')).toBeInTheDocument()
+    expect(listaDeManiobras.getByText('Estacionario fuera de efecto suelo')).toBeInTheDocument()
+    expect(listaDeManiobras.getByText('Aterrizaje en punto fijo')).toBeInTheDocument()
     expect(reporte.getAllByRole('article')).toHaveLength(5)
   })
 
@@ -545,8 +545,8 @@ describe('Legajo: reporte de sub fase', () => {
         HttpResponse.json({
           cabecera: { fase: 'Adaptación', subFase: 'Control Preciso', programa: 'PDI', alumno: 'Carlos Ramirez Sanchez' },
           maniobras: [
-            { id: 9, nombre: 'Maniobra 9' },
-            { id: 10, nombre: 'Maniobra 10' },
+            { id: 9, nombre: 'Estacionario fuera de efecto suelo' },
+            { id: 10, nombre: 'Aterrizaje en punto fijo' },
           ],
           notas: [
             {
@@ -573,8 +573,8 @@ describe('Legajo: reporte de sub fase', () => {
     expect(within(filas[0]!).getByText('Maniobra 1')).toBeInTheDocument()
     expect(within(filas[1]!).getByText('Maniobra 2')).toBeInTheDocument()
     expect(within(filas[2]!).getByText('Maniobra 3')).toBeInTheDocument()
-    expect(tabla.queryByText('Maniobra 9')).not.toBeInTheDocument()
-    expect(tabla.queryByText('Maniobra 10')).not.toBeInTheDocument()
+    expect(tabla.queryByText('Estacionario fuera de efecto suelo')).not.toBeInTheDocument()
+    expect(tabla.queryByText('Aterrizaje en punto fijo')).not.toBeInTheDocument()
   })
 })
 

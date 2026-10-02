@@ -16,7 +16,7 @@ async function abrirEstandares(id: number) {
 describe('Estándares de la maniobra', () => {
   it('CA-EST-02 y CA-EST-04 edita los estándares y vuelve al detalle con el aviso', async () => {
     const { usuario, router } = await abrirEstandares(9)
-    expect(screen.getByLabelText('Nombre 1')).toHaveValue('Estandar 60')
+    expect(screen.getByLabelText('Nombre 1')).toHaveValue('Altura sostenida sin efecto suelo')
     await usuario.type(screen.getByLabelText('Descripción 1'), 'Mantener altitud ±50 ft')
     await usuario.click(screen.getByRole('button', { name: 'Agregar estándar' }))
     await usuario.type(screen.getByLabelText('Nombre 3'), 'Mantener rumbo ±5°')

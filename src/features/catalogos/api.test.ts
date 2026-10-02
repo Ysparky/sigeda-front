@@ -31,7 +31,7 @@ describe('catálogos para turnos y evaluaciones', () => {
 
   it('CA-TUR-05 lista las maniobras de una sub fase y trata el 404 como lista vacía', async () => {
     await iniciarComo('jefe.operaciones')
-    expect((await listarManiobrasDeSubfase(4)).map((maniobra) => maniobra.nombre)).toEqual(['Maniobra 7', 'Maniobra 8'])
+    expect((await listarManiobrasDeSubfase(4)).map((maniobra) => maniobra.nombre)).toEqual(['Planeamiento de vuelo local', 'Referencias sobre el terreno'])
     await expect(listarManiobrasDeSubfase(1)).resolves.toEqual([])
   })
 

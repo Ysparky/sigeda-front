@@ -90,7 +90,7 @@ describe('api de evaluaciones', () => {
     expect(evaluacion).toMatchObject({ categoria: 'Ponderada', clasificacion: 'Bueno', promedio: 16.5 })
     expect(evaluacion.calificaciones[2]).toEqual({
       idManiobra: 3,
-      maniobra: 'Maniobra 3',
+      maniobra: 'Virajes a nivel',
       notaMin: 'B',
       nota: 'R',
       causa: 'Falta de coordinación en pedales',

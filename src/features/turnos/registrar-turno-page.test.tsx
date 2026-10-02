@@ -89,8 +89,8 @@ describe('Registrar turno', () => {
     await waitFor(() =>
       expect(within(selector).getAllByRole('option').map((opcion) => opcion.textContent)).toEqual([
         'Elija una maniobra',
-        'Maniobra 7',
-        'Maniobra 8',
+        'Planeamiento de vuelo local',
+        'Referencias sobre el terreno',
       ]),
     )
   })
@@ -98,7 +98,7 @@ describe('Registrar turno', () => {
   it('CA-TUR-05 cambiar la sub fase pide confirmación y limpia las maniobras', async () => {
     const { usuario } = await abrirFormulario()
     await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Circuitos y Maniobras')
-    await agregarManiobra(usuario, 1, 'Maniobra 2', 'B')
+    await agregarManiobra(usuario, 1, 'Circuito de tránsito completo', 'B')
     await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Control Preciso')
     const dialogo = await screen.findByRole('alertdialog', { name: '¿Cambiar la sub fase?' })
     await usuario.click(within(dialogo).getByRole('button', { name: 'Conservar sub fase' }))
@@ -154,7 +154,7 @@ describe('Registrar turno', () => {
     await waitFor(() => expect(within(screen.getByLabelText('Misión del PDI')).getAllByRole('option')).toHaveLength(8))
     await usuario.selectOptions(screen.getByLabelText('Misión del PDI'), 'N/I-7 · 1 h · coef. 0.1000')
     await agregarAlumno(usuario, 1, 'Juan Falconi Fernandez', '08:00', '09:30')
-    await agregarManiobra(usuario, 1, 'Maniobra 1', 'B')
+    await agregarManiobra(usuario, 1, 'Ingreso al circuito de tránsito', 'B')
     await guardar(usuario)
     await waitFor(() => expect(recibido).not.toBeNull())
     expect(recibido).toMatchObject({ idSubfase: 2, idMision: 14 })
@@ -187,7 +187,7 @@ describe('Registrar turno', () => {
     const { usuario, router } = await abrirFormulario()
     await llenarDatos(usuario)
     await agregarAlumno(usuario, 1, 'Juan Falconi Fernandez', '08:00', '09:30')
-    await agregarManiobra(usuario, 1, 'Maniobra 1', 'B')
+    await agregarManiobra(usuario, 1, 'Ingreso al circuito de tránsito', 'B')
     await guardar(usuario)
     expect(await screen.findByText('Turno guardado con éxito.')).toBeInTheDocument()
     await waitFor(() => expect(router.state.location.pathname).toBe('/turnos/10'))
@@ -198,7 +198,7 @@ describe('Registrar turno', () => {
     const { usuario } = await abrirFormulario()
     await llenarDatos(usuario, EN_UNA_SEMANA)
     await agregarAlumno(usuario, 1, 'Juan Falconi Fernandez', '08:00', '09:30')
-    await agregarManiobra(usuario, 1, 'Maniobra 1', 'B')
+    await agregarManiobra(usuario, 1, 'Ingreso al circuito de tránsito', 'B')
     const aviso = await screen.findByText('Horario superpuesto en la aeronave')
     expect(aviso.parentElement).toHaveTextContent('se cruza con «Instrumentos Básicos» (07:30–08:30)')
     expect(aviso.parentElement).toHaveTextContent('se cruza con «Navegación Nocturna» (09:00–12:30)')
@@ -266,7 +266,7 @@ describe('Registrar turno', () => {
     const { usuario } = await abrirFormulario()
     await llenarDatos(usuario)
     await agregarAlumno(usuario, 1, 'Ana Torres Martinez', '08:00', '09:30')
-    await agregarManiobra(usuario, 1, 'Maniobra 1', 'B')
+    await agregarManiobra(usuario, 1, 'Ingreso al circuito de tránsito', 'B')
     await guardar(usuario)
     const fila = (await screen.findByLabelText('Alumno 1')).closest('[data-slot="field"]') as HTMLElement
     expect(
@@ -296,7 +296,7 @@ describe('Registrar turno', () => {
     const { usuario } = await abrirFormulario()
     await llenarDatos(usuario)
     await agregarAlumno(usuario, 1, 'Juan Falconi Fernandez', '08:00', '09:30')
-    await agregarManiobra(usuario, 1, 'Maniobra 1', 'B')
+    await agregarManiobra(usuario, 1, 'Ingreso al circuito de tránsito', 'B')
     await guardar(usuario)
     expect(await screen.findByText('Revise los campos marcados.')).toBeInTheDocument()
     expect(screen.getByText('Nombre debe tener de 10 a 30 caracteres.')).toBeInTheDocument()

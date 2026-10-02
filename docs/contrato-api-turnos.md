@@ -224,7 +224,7 @@ GET /api/turnos/{id}   Read
     { "codAlumno": "111111", "alumno": "Oscar Lopez", "horaInicio": "13:00", "horaFin": "14:30" }
   ],
   "maniobrasTurno": [
-    { "nota_min": "B", "maniobra": { "id": 1, "nombre": "Maniobra 1", "descripcion": "Descripcion de Maniobra 1" } }
+    { "nota_min": "B", "maniobra": { "id": 1, "nombre": "Vuelo estacionario a efecto suelo", "descripcion": "Mantener posición, altura y rumbo en estacionario dentro del efecto suelo" } }
   ]
 }
 ```
@@ -399,7 +399,7 @@ GET /api/evaluaciones/subfase/{id}/persona/{cod}   Read
 ```json
 {
   "cabecera": { "fase": "Adaptación", "subFase": "Contacto", "programa": "PDI", "alumno": "Pedro Rodriguez" },
-  "maniobras": [ { "id": 1, "nombre": "Maniobra 1" } ],
+  "maniobras": [ { "id": 1, "nombre": "Vuelo estacionario a efecto suelo" } ],
   "notas": [
     { "codigo": "555555-1", "categoria": "Ponderada", "clasificacion": "Regular", "promedio": "14.0", "recomendacion": "Mejorar técnicas básicas",
       "calificaciones": [ { "notaMin": "B", "nota": "R" } ] }
@@ -445,7 +445,7 @@ GET /api/evaluaciones/{cod}   Read
   "codEvalPrevia": null, "codEvaluador": null, "evaluador": "Juan Torres", "codPersona": "555555", "alumno": "Pedro Rodriguez",
   "calificaciones": [
     { "codEvaluacion": "555555-1", "idManiobra": 1, "notaMin": "B", "nota": "R", "causa": null, "observacion": null, "recomendacion": null,
-      "maniobra": { "id": 1, "nombre": "Maniobra 1", "descripcion": "Descripcion de Maniobra 1" } }
+      "maniobra": { "id": 1, "nombre": "Vuelo estacionario a efecto suelo", "descripcion": "Mantener posición, altura y rumbo en estacionario dentro del efecto suelo" } }
   ]
 }
 ```
@@ -570,7 +570,7 @@ GET /api/subfases?page&size&direction&properties   Read
 ```
 GET /api/maniobras/subfase/{id}   Manage Shifts
 ```
-`List<IndexGeneral>`; 404 `ErrorResponse` "No existen maniobras disponibles." si vacío. Ejemplo `id=2` (Navegación) → maniobras 1–6 (`"Maniobra 1"`…`"Maniobra 6"`).
+`List<IndexGeneral>`; 404 `ErrorResponse` "No existen maniobras disponibles." si vacío. Ejemplo `id=2` (Circuitos y Maniobras) → sus **cinco** maniobras, de `Ingreso al circuito de tránsito` a `Parada rápida`. Desde la `021` **ninguna maniobra pertenece a más de una sub fase**.
 
 ### 4.2bis `GET /api/subfases/{id}/misiones` — **Nuevo (dependencia 62, tanda H, 28 sep 2026)**
 

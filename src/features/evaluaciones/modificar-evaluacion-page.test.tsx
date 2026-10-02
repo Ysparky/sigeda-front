@@ -22,15 +22,15 @@ describe('Modificar evaluación', () => {
     expect(await screen.findByLabelText('Nombre')).toHaveValue('Ponderada Control Básico 3')
     expect(screen.getByLabelText('Categoría')).toBeDisabled()
     expect(screen.getByLabelText('Categoría')).toHaveValue('Ponderada')
-    expect(maniobra('Maniobra 1').getByRole('radio', { name: 'R (Regular)' })).toHaveAttribute('aria-checked', 'true')
-    expect(maniobra('Maniobra 1').getByLabelText('Causa')).toBeInTheDocument()
+    expect(maniobra('Ingreso al circuito de tránsito').getByRole('radio', { name: 'R (Regular)' })).toHaveAttribute('aria-checked', 'true')
+    expect(maniobra('Ingreso al circuito de tránsito').getByLabelText('Causa')).toBeInTheDocument()
   })
 
   it('CA-EVA-12 guarda los cambios y muestra el resultado del backend', async () => {
     const { usuario, router } = await abrir('555555-3')
     await screen.findByLabelText('Nombre')
-    for (const numero of [1, 2, 3, 4]) {
-      await usuario.click(maniobra(`Maniobra ${numero}`).getByRole('radio', { name: 'B (Bueno)' }))
+    for (const nombre of ['Ingreso al circuito de tránsito', 'Circuito de tránsito completo', 'Virajes a nivel', 'Ascensos y descensos']) {
+      await usuario.click(maniobra(nombre).getByRole('radio', { name: 'B (Bueno)' }))
     }
     await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
     expect(await screen.findByText('Promedio: 17.00 · Clasificación: Bueno')).toBeInTheDocument()
@@ -59,8 +59,8 @@ describe('Modificar evaluación', () => {
     )
     const { usuario } = await abrir('555555-3')
     await screen.findByLabelText('Nombre')
-    for (const numero of [1, 2, 3, 4]) {
-      await usuario.click(maniobra(`Maniobra ${numero}`).getByRole('radio', { name: 'B (Bueno)' }))
+    for (const nombre of ['Ingreso al circuito de tránsito', 'Circuito de tránsito completo', 'Virajes a nivel', 'Ascensos y descensos']) {
+      await usuario.click(maniobra(nombre).getByRole('radio', { name: 'B (Bueno)' }))
     }
     await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
     expect(

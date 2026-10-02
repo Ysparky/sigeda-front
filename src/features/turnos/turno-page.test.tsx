@@ -29,10 +29,10 @@ describe('Detalle de turno', () => {
     expect(within(oscar).getAllByText('09:00 – 10:30').length).toBeGreaterThan(0)
     const maniobras = within(screen.getByRole('table', { name: 'Maniobras del turno' }))
     expect(maniobras.getAllByRole('row').slice(1).map((fila) => fila.textContent)).toEqual([
-      'Maniobra 1R (Regular)',
-      'Maniobra 2B (Bueno)',
-      'Maniobra 3E (Excelente)',
-      'Maniobra 4I (Insuficiente)',
+      'Ingreso al circuito de tránsitoR (Regular)',
+      'Circuito de tránsito completoB (Bueno)',
+      'Virajes a nivelE (Excelente)',
+      'Ascensos y descensosI (Insuficiente)',
     ])
   })
 

@@ -20,7 +20,7 @@ describe('Maniobras', () => {
   it('CA-MAN-01 muestra nombre y descripción y ofrece registrar con Manage Maneuvers', async () => {
     await abrirManiobras()
     expect(await screen.findByRole('table', { name: 'Maniobras del programa' })).toBeInTheDocument()
-    expect(filas()[0]).toEqual(['Maniobra 1', 'Descripcion de Maniobra 1'])
+    expect(filas()[0]).toEqual(['Ingreso al circuito de tránsito', 'Incorporación al circuito por el tramo y altura publicados'])
     expect(screen.getByRole('link', { name: 'Registrar maniobra' })).toHaveAttribute('href', '/programa/maniobras/nueva')
   })
 

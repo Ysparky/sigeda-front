@@ -88,9 +88,25 @@ Los errores de validación llegan como **arreglo JSON crudo** y la interfaz los 
 instructor, **la aeronave disponible**, al menos un alumno con horas `HH:mm` y al menos una maniobra
 con su nota mínima → **200** con el turno guardado.
 
-**Cualquiera de las doce sub fases sirve.** Desde la migración `019` todas tienen maniobras
-enlazadas —44 filas en `maniobras_subfase`, entre 2 y 6 por sub fase—, así que el selector de
-maniobras nunca sale vacío. La advertencia vieja de «elegir la 2, 3 o 4» ya no aplica.
+**Cualquiera de las doce sub fases sirve, y cada una ofrece sus propias maniobras.** Desde la
+migración `021` el catálogo son **61 maniobras y ninguna pertenece a más de una sub fase**: Control
+Básico ofrece siete —de `Vuelo estacionario a efecto suelo` a `Control de actitud y coordinación`—,
+Autorrotación cinco, Emergencias IFR y Recuperación cuatro. Antes eran diez llamadas «Maniobra 1» …
+«Maniobra 10» y la 1 pertenecía a ocho sub fases a la vez.
+
+**La exigencia no es `B` en todos lados, y se ve.** Una maniobra nueva entra como demostración y el
+nivel sube con la misión:
+
+| Sub fase | Turno anterior | Turno siguiente |
+|---|---|---|
+| Circuitos y Maniobras | `CM-1` exige **`D`** | `CM-2` exige **`B`** |
+| Navegación Local | `NL-1` exige **`I`** | `NL-2` exige **`B`** |
+| Control Preciso | `CP-1` exige **`R`** | `CP-2` exige **`B`** |
+| Procedimientos y Aproximación IFR | `PA-1` exige **`R`** | `PA-2` exige **`B`** |
+
+Las sub fases más tardías arrancan en `R` y no en `D` porque el alumno que llega ahí ya pasó por las
+anteriores. **Control Básico se queda sin escalada**: sus tres turnos están evaluados y mover su
+exigencia movería el `14.70` del que cuelgan el NIA y el NFPI.
 
 **De las tres aeronaves sembradas sólo una está disponible:** el **Robinson R22**. El Enstrom 280FX
 está `En_Mantenimiento` y el Schweizer S‑300C `No_Disponible`, y elegir cualquiera de los dos corta

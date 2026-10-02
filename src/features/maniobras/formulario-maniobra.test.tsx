@@ -39,7 +39,7 @@ describe('Formulario de maniobra', () => {
 
   it('CA-MAN-04 modificar precarga las subfases actuales y avisa sobre la descripción', async () => {
     const { usuario, router } = await abrir('/programa/maniobras/9/editar')
-    expect(screen.getByLabelText('Nombre')).toHaveValue('Maniobra 9')
+    expect(screen.getByLabelText('Nombre')).toHaveValue('Estacionario fuera de efecto suelo')
     expect(screen.getByRole('checkbox', { name: 'Control Preciso' })).toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Circuitos y Maniobras' })).not.toBeChecked()
     expect(screen.getByText(TEXTO_DESCRIPCION_SE_CONSERVA)).toBeInTheDocument()

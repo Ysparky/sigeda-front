@@ -19,7 +19,7 @@ describe('Detalle de evaluación', () => {
     const filas = tabla.getAllByRole('row').slice(1)
     expect(filas).toHaveLength(6)
     expect(within(filas[2] as HTMLElement).getAllByRole('cell').map((celda) => celda.textContent)).toEqual([
-      'Maniobra 3',
+      'Virajes a nivel',
       'B (Bueno)',
       'R (Regular)',
       'Falta de coordinación en pedales',

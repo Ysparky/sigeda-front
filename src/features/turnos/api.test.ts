@@ -84,10 +84,10 @@ describe('api de turnos', () => {
       ],
     })
     expect(turno.maniobras.map((item) => [item.maniobra.nombre, item.notaMin])).toEqual([
-      ['Maniobra 1', 'R'],
-      ['Maniobra 2', 'B'],
-      ['Maniobra 3', 'E'],
-      ['Maniobra 4', 'I'],
+      ['Ingreso al circuito de tránsito', 'R'],
+      ['Circuito de tránsito completo', 'B'],
+      ['Virajes a nivel', 'E'],
+      ['Ascensos y descensos', 'I'],
     ])
   })
 

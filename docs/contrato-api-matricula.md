@@ -645,8 +645,8 @@ GET /api/subfases/{id}   Read
   "nombre": "Instrumentos",
   "descripcion": "Manejo de instrumentos de vuelo",
   "maniobrasSubfase": [
-    { "maniobra": { "id": 9, "nombre": "Maniobra 9", "descripcion": "Descripcion de Maniobra 9" } },
-    { "maniobra": { "id": 10, "nombre": "Maniobra 10", "descripcion": "Descripcion de Maniobra 10" } }
+    { "maniobra": { "id": 9, "nombre": "Estacionario fuera de efecto suelo", "descripcion": "Estacionario sin asistencia del efecto suelo, con mayor demanda de potencia" } },
+    { "maniobra": { "id": 10, "nombre": "Giros sobre el eje del rotor", "descripcion": "Giro de 360° manteniendo el eje y la altura" } }
   ]
 }
 ```
@@ -672,7 +672,7 @@ No hay CRUD propio de estándares: se editan a través de la maniobra (§5.5).
 GET /api/maniobras?page=&size=&direction=&properties=   Read
 ```
 
-`PageWithSort`. 200 — `Page<IndexGeneral>` (`{id, nombre, descripcion}`); en el seed, `Maniobra 1` … `Maniobra 10` con descripción `"Descripcion de Maniobra N"`. 404 §B `"No existen maniobras disponibles."`. 400 §B si el paginado es inválido.
+`PageWithSort`. 200 — `Page<IndexGeneral>` (`{id, nombre, descripcion}`); en el seed, las **61** del catálogo de la migración `021`, de `Vuelo estacionario a efecto suelo` a `Descenso de emergencia bajo IMC`. 404 §B `"No existen maniobras disponibles."`. 400 §B si el paginado es inválido.
 
 ### 5.2 `GET /api/maniobras/{id}` — **Corrección**
 
@@ -684,11 +684,11 @@ GET /api/maniobras/{id}   Read
 ```json
 {
   "id": 9,
-  "nombre": "Maniobra 9",
-  "descripcion": "Descripcion de Maniobra 9",
+  "nombre": "Estacionario fuera de efecto suelo",
+  "descripcion": "Estacionario sin asistencia del efecto suelo, con mayor demanda de potencia",
   "estandares": [
-    { "id": 10, "nombre": "Estandar 60", "descripcion": null },
-    { "id": 11, "nombre": "Estandar 61", "descripcion": null }
+    { "id": 10, "nombre": "Altura y posición en tolerancia", "descripcion": null },
+    { "id": 11, "nombre": "Flare a la altura correcta", "descripcion": null }
   ],
   "subfases": [ { "id": 3, "nombre": "Instrumentos" } ]
 }
@@ -745,8 +745,8 @@ Request — `ManiobraDetail`, con la lista completa de estándares:
 ```json
 {
   "estandares": [
-    { "id": 10, "nombre": "Estandar 60", "descripcion": "Mantener altitud ±50 ft" },
-    { "id": 11, "nombre": "Estandar 61", "descripcion": null },
+    { "id": 10, "nombre": "Altura y posición en tolerancia", "descripcion": "Mantener altitud ±50 ft" },
+    { "id": 11, "nombre": "Flare a la altura correcta", "descripcion": null },
     { "id": 0, "nombre": "Mantener rumbo ±5°", "descripcion": null }
   ]
 }

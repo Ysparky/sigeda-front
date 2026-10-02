@@ -20,8 +20,8 @@ describe('el reporte de subfase, que nunca tuvo handler', () => {
       alumno: 'Carlos Ramirez Sanchez',
     })
     expect(reporte.maniobras).toEqual([
-      { id: 9, nombre: 'Maniobra 9' },
-      { id: 10, nombre: 'Maniobra 10' },
+      { id: 9, nombre: 'Estacionario fuera de efecto suelo' },
+      { id: 10, nombre: 'Aterrizaje en punto fijo' },
     ])
     expect(reporte.notas.map((nota) => nota.codigo)).toEqual([
       '777777-1',

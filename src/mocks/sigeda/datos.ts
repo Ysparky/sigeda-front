@@ -173,28 +173,36 @@ function persona(
   }
 }
 
+// Los nombres salen del catálogo de la semilla (migración 021) y cada uno encaja con la sub fase a la
+// que `maniobrasSubfase` lo enlaza más abajo. La 11 queda SIN enlazar a propósito: es la única
+// maniobra que se puede eliminar, y eso es lo que ejercita CA-MAN-04.
 const MANIOBRAS: ManiobraMock[] = [
-  ...Array.from({ length: 10 }, (_, indice) => ({
-    id: indice + 1,
-    nombre: `Maniobra ${indice + 1}`,
-    descripcion: `Descripcion de Maniobra ${indice + 1}`,
-  })),
+  { id: 1, nombre: 'Ingreso al circuito de tránsito', descripcion: 'Incorporación al circuito por el tramo y altura publicados' },
+  { id: 2, nombre: 'Circuito de tránsito completo', descripcion: 'Recorrido del circuito con tramos y alturas estables' },
+  { id: 3, nombre: 'Virajes a nivel', descripcion: 'Viraje coordinado manteniendo altura y velocidad' },
+  { id: 4, nombre: 'Ascensos y descensos', descripcion: 'Cambios de nivel con régimen y velocidad estables' },
+  { id: 5, nombre: 'Parada rápida', descripcion: 'Desaceleración controlada desde traslación hasta estacionario' },
+  { id: 6, nombre: 'Aproximación y aterrizaje normal', descripcion: 'Aproximación de ángulo constante hasta la toma' },
+  { id: 7, nombre: 'Planeamiento de vuelo local', descripcion: 'Preparación de ruta, combustible y alternativas en el área de la base' },
+  { id: 8, nombre: 'Referencias sobre el terreno', descripcion: 'Navegación por contacto con accidentes geográficos' },
+  { id: 9, nombre: 'Estacionario fuera de efecto suelo', descripcion: 'Estacionario sin asistencia del efecto suelo, con mayor demanda de potencia' },
+  { id: 10, nombre: 'Aterrizaje en punto fijo', descripcion: 'Toma dentro del área señalada sin corrección de última instancia' },
   { id: 11, nombre: 'Autorrotación', descripcion: 'Aterrizaje sin potencia' },
 ]
 
 const ESTANDARES: [number, string, number][] = [
-  [1, 'Estandar 11', 1],
-  [2, 'Estandar 22', 2],
-  [3, 'Estandar 23', 2],
-  [4, 'Estandar 34', 3],
-  [5, 'Estandar 45', 4],
-  [6, 'Estandar 46', 4],
-  [7, 'Estandar 47', 4],
-  [8, 'Estandar 48', 4],
-  [9, 'Estandar 59', 5],
-  [10, 'Estandar 60', 9],
-  [11, 'Estandar 61', 9],
-  [12, 'Estandar 62', 10],
+  [1, 'Incorporación por el tramo', 1],
+  [2, 'Circuito dentro de parámetros', 2],
+  [3, 'Altura de circuito sostenida', 2],
+  [4, 'Viraje coordinado sin perder altura', 3],
+  [5, 'Régimen de ascenso constante', 4],
+  [6, 'Velocidad de ascenso en tolerancia', 4],
+  [7, 'Descenso sin exceder el régimen', 4],
+  [8, 'Nivelado en la altura asignada', 4],
+  [9, 'Desaceleración sin perder el eje', 5],
+  [10, 'Altura sostenida sin efecto suelo', 9],
+  [11, 'Potencia dentro de límites', 9],
+  [12, 'Toma dentro del área señalada', 10],
 ]
 
 const MATERIAS: [string, number, number][] = [
@@ -241,6 +249,7 @@ function turnoSemilla(
   codAlumno: string,
   maniobras: number[],
   idMision: number | null,
+  notaMin = 'B',
 ): TurnoMock {
   return {
     id,
@@ -254,7 +263,7 @@ function turnoSemilla(
     idAeronave: 1,
     idMision,
     alumnos: [{ codAlumno, horaInicio: '13:00', horaFin: '14:30' }],
-    maniobras: maniobras.map((idManiobra) => ({ idManiobra, notaMin: 'B' })),
+    maniobras: maniobras.map((idManiobra) => ({ idManiobra, notaMin })),
   }
 }
 
@@ -359,13 +368,17 @@ export function crearDatos(hoy: string = hoyIso()): DatosMock {
     ],
     turnos: [
       // El último argumento es la misión del PDI asignada al turno, como la dejó la migración 016.
+      // La exigencia NO es siempre `B`: una maniobra nueva entra como demostración y el nivel se
+      // endurece en los turnos siguientes. Acá sólo la llevan los turnos 5 y 7, que son los únicos
+      // SIN evaluación: `calificaciones` guarda el estándar desnormalizado del turno, así que cambiar
+      // el de un turno evaluado lo dejaría contradiciendo su propia nota.
       turnoSemilla(1, '2024-03-01', 'Control Básico Inicial', 1, 'Adaptación', 'Control Básico', '444444', '111111', [1, 2, 3, 4, 5, 6], 1),
       turnoSemilla(2, '2024-03-08', 'Control Básico Intermedio', 1, 'Adaptación', 'Control Básico', '444444', '222222', [1, 2, 3, 4, 5, 6], 2),
       turnoSemilla(3, '2024-03-15', 'Control Básico Avanzado', 1, 'Adaptación', 'Control Básico', '444444', '555555', [1, 2, 3, 4, 5, 6], 3),
       turnoSemilla(4, '2024-03-22', 'Circuitos Inicial', 2, 'Adaptación', 'Circuitos y Maniobras', '444444', '666666', [1, 2, 3, 4, 5, 6], 8),
-      turnoSemilla(5, '2024-03-29', 'Control Preciso Inicial', 3, 'Adaptación', 'Control Preciso', '888888', '777777', [9, 10], 15),
+      turnoSemilla(5, '2024-03-29', 'Control Preciso Inicial', 3, 'Adaptación', 'Control Preciso', '888888', '777777', [9, 10], 15, 'R'),
       turnoSemilla(6, '2024-04-05', 'Navegación Local Inicial', 4, 'Navegación Visual', 'Navegación Local', '888888', '999999', [7, 8], 22),
-      turnoSemilla(7, '2024-04-12', 'Navegación en Ruta Inicial', 5, 'Navegación Visual', 'Navegación en Ruta', '888888', '999999', [1, 2, 3, 4, 5, 6], 30),
+      turnoSemilla(7, '2024-04-12', 'Navegación en Ruta Inicial', 5, 'Navegación Visual', 'Navegación en Ruta', '888888', '999999', [1, 2, 3, 4, 5, 6], 30, 'D'),
       {
         id: 8,
         nombre: 'Navegación Nocturna',

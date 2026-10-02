@@ -5,8 +5,8 @@ function valida(cambios: Partial<ValoresEvaluacion> = {}): ValoresEvaluacion {
   return {
     ...valoresDeEvaluacion(
       [
-        { idManiobra: 1, maniobra: 'Maniobra 1', notaMin: 'B', nota: 'B' },
-        { idManiobra: 2, maniobra: 'Maniobra 2', notaMin: 'D' },
+        { idManiobra: 1, maniobra: 'Ingreso al circuito de tránsito', notaMin: 'B', nota: 'B' },
+        { idManiobra: 2, maniobra: 'Circuito de tránsito completo', notaMin: 'D' },
       ],
       { nombre: 'Ponderada Navegación', categoria: 'Ponderada' },
     ),

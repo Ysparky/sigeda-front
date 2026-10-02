@@ -69,7 +69,7 @@ describe('Modificar turno', () => {
           instructor: 'Juan Torres',
           aeronave: { id: 1, nombre: 'Robinson R22', estado: 'Disponible' },
           alumnosTurno: [{ codAlumno: '111111', alumno: 'Oscar Lopez', horaInicio: '09:00', horaFin: '10:30' }],
-          maniobrasTurno: [{ nota_min: 'R', maniobra: { id: 1, nombre: 'Maniobra 1', descripcion: '' } }],
+          maniobrasTurno: [{ nota_min: 'R', maniobra: { id: 1, nombre: 'Ingreso al circuito de tránsito', descripcion: '' } }],
         }),
       ),
     )

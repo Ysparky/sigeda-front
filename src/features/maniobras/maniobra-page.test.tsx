@@ -17,9 +17,9 @@ async function abrirManiobra(id: number, username = 'comandante.aguirre') {
 describe('Detalle de maniobra', () => {
   it('CA-MAN-03 muestra la maniobra, sus estándares y sus subfases con su fase', async () => {
     await abrirManiobra(9)
-    expect(screen.getByRole('heading', { level: 1, name: 'Maniobra 9' })).toBeInTheDocument()
-    expect(screen.getByText('Estandar 60')).toBeInTheDocument()
-    expect(screen.getByText('Estandar 61')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Estacionario fuera de efecto suelo' })).toBeInTheDocument()
+    expect(screen.getByText('Altura sostenida sin efecto suelo')).toBeInTheDocument()
+    expect(screen.getByText('Potencia dentro de límites')).toBeInTheDocument()
     await waitFor(() => expect(screen.getByText('· Adaptación')).toBeInTheDocument())
     expect(screen.getByText('Control Preciso')).toBeInTheDocument()
   })
@@ -29,9 +29,9 @@ describe('Detalle de maniobra', () => {
       http.get(`${config.sigedaApiUrl}/api/maniobras/:id`, () =>
         HttpResponse.json({
           id: 9,
-          nombre: 'Maniobra 9',
-          descripcion: 'Descripcion de Maniobra 9',
-          estandares: [{ id: 10, nombre: 'Estandar 60', descripcion: null }],
+          nombre: 'Estacionario fuera de efecto suelo',
+          descripcion: 'Estacionario sin asistencia del efecto suelo, con mayor demanda de potencia',
+          estandares: [{ id: 10, nombre: 'Estacionario fuera de efecto suelo', descripcion: null }],
         }),
       ),
     )
