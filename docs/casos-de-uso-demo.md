@@ -45,18 +45,22 @@ remite al caso que lo detalla.
 > 111111 tiene una subsanación pendiente y no puede programar`. Es la regla funcionando, no un
 > defecto: para el paso 5 usá otro alumno, o hacé que el paso 3 apruebe.
 
-**Los turnos prácticos sin evaluar son seis**, y son los únicos donde §4 se puede ejercer:
+**Los turnos prácticos sin evaluar son cuatro**, y son los únicos donde §4 se puede ejercer:
 
-| Turno | Fecha | Sub fase | Instructor | Alumno |
-|---|---|---|---|---|
-| 1 | 2024-03-01 | Control Básico | `instructor.perez` | `111111` |
-| 2 | 2024-03-08 | Control Básico | `instructor.perez` | `222222` |
-| 4 | 2024-03-22 | Navegación Local | `instructor.perez` | `666666` |
-| 5 | 2024-03-29 | Procedimientos y Aproximación IFR | `instructor.mendoza` | `777777` |
-| 6 | 2024-04-05 | Circuitos y Maniobras | `instructor.mendoza` | `999999` |
-| 7 | 2024-04-12 | Control Preciso | `instructor.mendoza` | `999999` |
+| Turno | Fecha | Sub fase | Exige | Instructor | Alumno |
+|---|---|---|---|---|---|
+| **4** | 2024-03-22 | Navegación Local | **`R`** | `instructor.perez` | `666666` |
+| 5 | 2024-03-29 | Procedimientos y Aproximación IFR | `R` | `instructor.mendoza` | `777777` |
+| 6 | 2024-04-05 | Circuitos y Maniobras | `D` | `instructor.mendoza` | `999999` |
+| 7 | 2024-04-12 | Control Preciso | `I` | `instructor.mendoza` | `999999` |
 
-Los otros trece son de `555555` y ya están evaluados: son los que hacen que su NFPI exista.
+**Los turnos 1 y 2 PARECEN libres y no lo están.** Sus alumnos son `111111` y `222222`, pero las
+evaluaciones `555555-1` y `555555-2` ya ocupan esos turnos —el código de una evaluación es
+`{alumno}-{idTurno}`, y la semilla le dio a `555555` cinco evaluaciones de Control Básico sobre tres
+turnos—. Es una incoherencia vieja de la semilla, no de esta versión; lo que importa acá es que
+registrar otra evaluación sobre ellos choca con la que ya existe.
+
+Los otros trece turnos son de `555555` y están evaluados: son los que hacen que su NFPI exista.
 
 ---
 
