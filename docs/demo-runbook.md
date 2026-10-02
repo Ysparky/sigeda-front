@@ -259,9 +259,15 @@ sustituye por **61 maniobras, cada una en una sola sub fase**, y pone la **escal
 en los cuatro turnos que no tienen evaluación:
 
 ```
-Circuitos y Maniobras  CM-1 D → CM-2 B        Control Preciso  CP-1 R → CP-2 B
-Navegación Local       NL-1 I → NL-2 B        Aprox. IFR       PA-1 R → PA-2 B
+Circuitos y Maniobras (2)  CM-1 D → CM-2 B      Navegación Local (4)  NL-1 R → NL-2 B
+Control Preciso (3)        CP-1 I → CP-2 B      Aprox. IFR (11)       PA-1 R → PA-2 B
 ```
+
+El piso sube con el **orden del programa**. Y el mínimo **acota** además de exigir: el DIRBE prohíbe
+`ID`, `IB` e `IE`, así que una maniobra pedida en `I` sólo admite `I` o `R`, y una pedida en `D` se
+califica `D` y nada más. Por eso el turno que el guion usa para registrar una evaluación —el **4**—
+lleva `R`: ahí sí se puede calificar bajo, al y sobre el estándar. La tabla completa está en
+`casos-de-uso-demo.md` §4.
 
 Eso hace demostrable una regla que el borrador de tesis afirma —«las maniobras nuevas dentro de una
 subfase se introducen como demostración … es natural que el nivel se vuelva más riguroso en turnos

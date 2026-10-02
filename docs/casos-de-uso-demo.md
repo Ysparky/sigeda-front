@@ -18,14 +18,32 @@ Para levantar el entorno, ver `demo-runbook.md`. Cuentas: contraseña `123` para
 Si se van a hacer las pruebas de corrido, este es el orden que no se pisa a sí mismo. Cada paso
 remite al caso que lo detalla.
 
+**Los seis pasos se corrieron de punta a punta contra el servidor el 1 oct 2026 y los seis pasan.**
+
 | # | Entrar como | Hacer | Lo que la semilla ya dejó listo | Caso |
 |---|---|---|---|---|
-| 1 | `instructor.perez` | recorrer el banco de preguntas y programar un turno teórico | **24** preguntas, cinco filtros combinables | §5, §6 |
-| 2 | `instructor.perez` | **evaluar el turno 4** (`Navegación Local Inicial`, alumna `666666`) | 6 maniobras, todas con estándar `B`; el turno **no tiene evaluación** | §4 |
-| 3 | `alumno.lopez` | rendir su examen pendiente | el turno teórico **3** está abierto **hoy**, 00:00–23:59, 5 preguntas, mínimo 18 | §7 |
-| 4 | `comandante.aguirre` | abrir el legajo de `555555` y el orden de mérito | 17 evaluaciones, las doce sub fases con nota | §8, §9 |
-| 5 | `jefe.operaciones` | dar de alta un turno práctico | cualquiera de las **12** sub fases sirve | §3 |
+| 1 | `instructor.perez` | recorrer el banco de preguntas y programar un turno teórico | **24** preguntas, cinco filtros; tres grupos propios (1, 2 y 3) | §5, §6 |
+| 2 | `instructor.perez` | **evaluar el turno 4** (`Navegación Local Inicial`, alumna `666666`) | 6 maniobras con exigencia **`R`**; el turno **no tiene evaluación** | §4 |
+| 3 | `alumno.lopez` | rendir su examen pendiente | turno teórico **3**, 5 preguntas, mínimo 18 → **nota 20, aprobado** | §7 |
+| 4 | `comandante.aguirre` | abrir el legajo de `555555` y el orden de mérito | `nfpi` 16.34 · `nia` 15.83 · `nit` 18.4 · **puesto 1**, con 5 sin puesto | §8, §9 |
+| 5 | `jefe.operaciones` | dar de alta un turno práctico | cualquiera de las **12** sub fases, con las maniobras que le son propias | §3 |
 | 6 | cualquiera | subir un documento, generar un cuestionario y consultarlo | nada reutilizable: **hay que subir uno nuevo** | §10 |
+
+> ⚠️ **El paso 3 caduca a medianoche.** El turno teórico 3 tiene `fecha_examen = 2026-10-01` con
+> ventana 00:00–23:59, así que **otro día no hay ningún examen pendiente** y la pantalla del alumno
+> sale vacía. Antes de demostrar:
+>
+> ```sh
+> docker exec sigeda-pg psql -U postgres -d sigeda_demo \
+>   -c "update turnos_teoricos set fecha_examen = current_date where id = 3;"
+> ```
+>
+> No hace falta reiniciar el backend — pero **sí lo deshace**, porque el arranque vuelve a sembrar.
+
+> ⚠️ **El paso 3 puede romper el paso 5.** Si el alumno **desaprueba** el examen queda con
+> subsanación pendiente, y `POST /api/turnos` lo rechaza con `'alumnosTurno[0].codAlumno': El alumno
+> 111111 tiene una subsanación pendiente y no puede programar`. Es la regla funcionando, no un
+> defecto: para el paso 5 usá otro alumno, o hacé que el paso 3 apruebe.
 
 **Los turnos prácticos sin evaluar son seis**, y son los únicos donde §4 se puede ejercer:
 
@@ -97,14 +115,14 @@ Autorrotación cinco, Emergencias IFR y Recuperación cuatro. Antes eran diez ll
 **La exigencia no es `B` en todos lados, y se ve.** Una maniobra nueva entra como demostración y el
 nivel sube con la misión:
 
-| Sub fase | Turno anterior | Turno siguiente |
+| Sub fase (orden) | Turno libre | Turno siguiente |
 |---|---|---|
-| Circuitos y Maniobras | `CM-1` exige **`D`** | `CM-2` exige **`B`** |
-| Navegación Local | `NL-1` exige **`I`** | `NL-2` exige **`B`** |
-| Control Preciso | `CP-1` exige **`R`** | `CP-2` exige **`B`** |
-| Procedimientos y Aproximación IFR | `PA-1` exige **`R`** | `PA-2` exige **`B`** |
+| Circuitos y Maniobras (2) | turno **6** `CM-1` exige **`D`** | turno 10 `CM-2` exige `B` |
+| Control Preciso (3) | turno **7** `CP-1` exige **`I`** | turno 14 `CP-2` exige `B` |
+| Navegación Local (4) | turno **4** `NL-1` exige **`R`** | turno 8 `NL-2` exige `B` |
+| Procedimientos y Aproximación IFR (11) | turno **5** `PA-1` exige **`R`** | turno 9 `PA-2` exige `B` |
 
-Las sub fases más tardías arrancan en `R` y no en `D` porque el alumno que llega ahí ya pasó por las
+El piso sube con el **orden del programa**: el alumno que llega a una sub fase tardía ya pasó por las
 anteriores. **Control Básico se queda sin escalada**: sus tres turnos están evaluados y mover su
 exigencia movería el `14.70` del que cuelgan el NIA y el NFPI.
 
@@ -136,16 +154,32 @@ El que se cree durante la demo, con fecha futura, sí.
 
 **Actor:** **el instructor del turno**, y nadie más, para `Ponderada` y `Chequeo Sub Fase`.
 **Camino feliz:** entrar como `instructor.perez`, abrir el **turno 4** (`Navegación Local Inicial`,
-alumna `666666`) y poner una nota del DIRBE a **cada una** de sus seis maniobras, todas con estándar
-`B`, así que `B` o `E` en todas → evaluación registrada, con su promedio y su clasificación
-calculados por el servidor:
+alumna `666666`) y poner una nota del DIRBE a **cada una** de sus seis maniobras → evaluación
+registrada, con su promedio y su clasificación calculados por el servidor:
 
 ```
 codigo        666666-4
-categoria     Ponderada          clasificacion  Bueno
-promedio      17.0               estadoAlumno   Apto
+categoria     Ponderada          clasificacion  (la calcula el servidor)
+promedio      (lo calcula el servidor)          estadoAlumno   Apto
 fase          Navegación Visual  subFase        Navegación Local
 ```
+
+**El turno 4 exige `R`, no `B`, y eso decide qué notas se pueden poner.** El mínimo no sólo exige:
+también **acota**, porque el DIRBE declara inválidas siete combinaciones (`ID`, `IB`, `IE`, `RD`,
+`RE`, `BD`, `ED`):
+
+| Exigencia del turno | Notas que el servidor acepta | Bajo el estándar |
+|---|---|---|
+| **`D`** (turno 6) | sólo `D` — la nota se fuerza a `D` | ninguna |
+| **`I`** (turno 7) | `I` · `R` | ninguna |
+| **`R`** (turnos 4 y 5) | `I` · `R` · `B` | `I` |
+| **`B`** (el resto) | `I` · `R` · `B` · `E` | `I` · `R` |
+
+Una nota fuera de esa columna responde **400** `Las notas con id: N no utilizan el sistema de
+calificación.` Por eso el guion usa el **turno 4**: con exigencia `R` se puede calificar bajo, al y
+sobre el estándar, que es lo que hace demostrable la pantalla entera. Comprobado el 1 oct 2026:
+seis maniobras con una `I` justificada y el resto `R`/`B` dan `666666-4` **12.0 · Malo** —una sola
+`I` contra un mínimo de `R` fuerza Vuelo Malo—; con `R`/`B` en las seis, la evaluación aprueba.
 
 El efecto se ve enseguida en §8: `666666` pasa a tener nota en Navegación Local, y su `nia.motivo`
 deja de nombrar esa sub fase entre las que le faltan.
