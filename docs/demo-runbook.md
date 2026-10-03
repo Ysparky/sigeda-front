@@ -182,6 +182,8 @@ justo lo que hace que esto funcione a la primera.
 fijarla, y por eso no sirve para dejar algo publicado — para eso hace falta una VM
 (`despliegue-gratuito.md`).
 
+El recorrido clic por clic está en **`guion-de-la-demostracion.md`**.
+
 **El camino feliz completo se corrió por el túnel el 2 oct 2026 y los seis pasos pasan**, incluida
 la subida de un documento por `multipart` a través de Cloudflare, la generación de un cuestionario
 y una consulta que responde citando `[1]` con su fuente. Detalle en `casos-de-uso-demo.md` §0.

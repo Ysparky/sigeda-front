@@ -9,7 +9,8 @@ Cómo leerlo: cada caso lleva su **actor**, su **camino feliz** y una tabla de *
 el código HTTP y lo que el usuario ve. Las alternativas están en el orden en que el servidor las
 evalúa, que importa: la primera que se cumple es la que responde.
 
-Para levantar el entorno, ver `demo-runbook.md`. Cuentas: contraseña `123` para todas.
+Para levantar el entorno, ver `demo-runbook.md`. Para **hacer** el recorrido clic por clic, con qué
+escribir en cada campo, `guion-de-la-demostracion.md`. Cuentas: contraseña `123` para todas.
 
 ---
 
