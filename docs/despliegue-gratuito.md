@@ -103,3 +103,27 @@ Dos pasos de ese documento fallan **en silencio** y ningún proveedor los resuel
   en orden numérico. Hoy son **21**.
 - Sin `pnpm seed:usuarios`, el backend de IA arranca perfecto y **todas** sus peticiones responden
   401, con un síntoma idéntico al de un secreto mal configurado.
+
+## 7. Lo que falta en el código, que pesa más que el proveedor
+
+Relevado el 2 oct 2026 sobre el código, no sobre la infraestructura.
+
+**Arreglado hoy — el origen de CORS estaba fijo.** `SecurityConfig` tenía
+`setAllowedOrigins(List.of("http://localhost:5173"))` clavado, así que **el frontend publicado
+quedaba bloqueado por el navegador** y el backend ni se enteraba: el preflight muere en el cliente,
+no hay log, no hay 4xx en el servidor. Ahora sale de `cors.allowed-origins` / `CORS_ALLOWED_ORIGINS`
+y por omisión no cambia nada en desarrollo. **Hay que fijarla en el despliegue o no funciona nada.**
+
+**Lo que sigue pendiente, en orden de lo que más duele:**
+
+| Falta | Por qué importa al desplegar |
+|---|---|
+| **Migraciones automáticas** (Flyway o Liquibase) | hoy son **21 scripts a mano** con `psql`. `despliegue.md` ya avisa que saltarse uno no da error: deja la base sin la mitad de sus restricciones. Un arranque que las aplique y verifique convierte el riesgo operativo más grande en un no-problema |
+| **Endpoint de salud** | ni `sigeda-back` ni el de IA exponen uno. Sin él ninguna PaaS, balanceador ni `docker-compose healthcheck` puede decir si el servicio está vivo, y no hay despliegue sin corte |
+| **CORS del backend de IA** | `main.ts` hace `enableCors({ origin: true, credentials: true })`, que refleja **cualquier** origen. Es el extremo opuesto al de `sigeda-back` y merece la misma lista |
+| **`hikari.maximum-pool-size=20`** | contra una Postgres gratuita con tope de conexiones bajo, una sola instancia ya se lleva casi todo; dos instancias no entran |
+
+**Copias de seguridad: es lo único donde «ideal» pide de verdad más que una VM.**
+`evaluaciones_practicas` y `calificaciones` son el registro académico de un alumno piloto — el
+sistema no las recalcula, las guarda. Perderlas no es perder una demostración. Un `pg_dump` diario
+a R2 (que ya está en el plan y no cobra egreso) y una restauración **probada** cubren eso por 0 USD.
