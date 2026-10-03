@@ -29,16 +29,13 @@ remite al caso que lo detalla.
 | 5 | `jefe.operaciones` | dar de alta un turno práctico | cualquiera de las **12** sub fases, con las maniobras que le son propias | §3 |
 | 6 | cualquiera | subir un documento, generar un cuestionario y consultarlo | nada reutilizable: **hay que subir uno nuevo** | §10 |
 
-> ⚠️ **El paso 3 caduca a medianoche.** El turno teórico 3 tiene `fecha_examen = 2026-10-01` con
-> ventana 00:00–23:59, así que **otro día no hay ningún examen pendiente** y la pantalla del alumno
-> sale vacía. Antes de demostrar:
+> **El examen del paso 3 se abre solo, cualquier día.** La semilla no fija las fechas: el turno 3
+> es `current_date + 0` con ventana 00:00–23:59, y los demás son `current_date - 7`, `- 5`, `+ 3`.
+> Es deliberado y está explicado en `data_prod.sql`: `EstadoTurnoTeorico` se **deriva** del reloj y
+> no se guarda, así que con fechas fijas la semilla perdería sus tres estados al día siguiente.
 >
-> ```sh
-> docker exec sigeda-pg psql -U postgres -d sigeda_demo \
->   -c "update turnos_teoricos set fecha_examen = current_date where id = 3;"
-> ```
->
-> No hace falta reiniciar el backend — pero **sí lo deshace**, porque el arranque vuelve a sembrar.
+> El único caso en que queda viejo es un backend que lleve encendido desde antes de medianoche: la
+> fila se sembró ayer. **Reiniciarlo lo arregla**, porque vuelve a sembrar.
 
 > ⚠️ **El paso 3 puede romper el paso 5.** Si el alumno **desaprueba** el examen queda con
 > subsanación pendiente, y `POST /api/turnos` lo rechaza con `'alumnosTurno[0].codAlumno': El alumno

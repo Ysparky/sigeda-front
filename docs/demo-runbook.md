@@ -182,9 +182,9 @@ justo lo que hace que esto funcione a la primera.
 fijarla, y por eso no sirve para dejar algo publicado — para eso hace falta una VM
 (`despliegue-gratuito.md`).
 
-Comprobado de punta a punta el 2 oct 2026: página 200, `POST /auth/login` 200, `/api/materias` 200
-con token y **401 sin él**, `/documents` y `/prediction/students` 200 contra el backend de IA, y
-`555555` con `nfpi` 16.34 · `nia` 15.83 · `nit` 18.4 — todo a través del túnel.
+**El camino feliz completo se corrió por el túnel el 2 oct 2026 y los seis pasos pasan**, incluida
+la subida de un documento por `multipart` a través de Cloudflare, la generación de un cuestionario
+y una consulta que responde citando `[1]` con su fuente. Detalle en `casos-de-uso-demo.md` §0.
 
 ## 5. Las cuentas
 
