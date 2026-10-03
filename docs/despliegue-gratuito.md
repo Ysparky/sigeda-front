@@ -7,6 +7,12 @@ Cada cifra lleva su fuente al final.
 Esto decide **dónde** vive cada cosa. El **cómo** —migraciones, secreto compartido, siembra de
 usuarios y el orden entre servicios— está en `despliegue.md`, y no cambia según el proveedor.
 
+> **ESTO ES PARA LA TESIS, NO PARA USO REAL.** No hay alumnos de verdad, no hay registro académico
+> que perder y no hay nadie usándolo un martes a las tres. El único requisito que manda es que
+> **esté arriba y responda rápido cuando el jurado mire**, y que se pueda volver a levantar en
+> minutos si algo se cae. Alta disponibilidad, réplicas, observabilidad y copias de seguridad
+> **no aplican**, y perseguirlas acá es tiempo que no vuelve.
+
 ## 1. Qué hay que colocar
 
 Siete piezas, no tres:
@@ -123,7 +129,13 @@ y por omisión no cambia nada en desarrollo. **Hay que fijarla en el despliegue 
 | **CORS del backend de IA** | `main.ts` hace `enableCors({ origin: true, credentials: true })`, que refleja **cualquier** origen. Es el extremo opuesto al de `sigeda-back` y merece la misma lista |
 | **`hikari.maximum-pool-size=20`** | contra una Postgres gratuita con tope de conexiones bajo, una sola instancia ya se lleva casi todo; dos instancias no entran |
 
-**Copias de seguridad: es lo único donde «ideal» pide de verdad más que una VM.**
-`evaluaciones_practicas` y `calificaciones` son el registro académico de un alumno piloto — el
-sistema no las recalcula, las guarda. Perderlas no es perder una demostración. Un `pg_dump` diario
-a R2 (que ya está en el plan y no cobra egreso) y una restauración **probada** cubren eso por 0 USD.
+**Para la tesis, de esa tabla sólo pesa la primera fila, y a medias.** Las migraciones a mano hay
+que correrlas **una vez**, sobre una base que se puede recrear entera; automatizarlas con Flyway
+protege contra un error que, acá, se arregla volviendo a sembrar. El endpoint de salud sirve para
+desplegar sin corte, y un despliegue con corte no le molesta a nadie. El `pool-size` sólo se nota
+con carga que no va a existir.
+
+**Copias de seguridad: tampoco.** `evaluaciones_practicas` y `calificaciones` serían el registro
+académico de un alumno piloto si hubiera alumnos; acá son datos sembrados que se regeneran con
+`data_prod.sql`. Lo que sí conviene tener a mano es **cómo volver a levantar todo en diez minutos**,
+que es un `docker-compose up` y las 21 migraciones.
