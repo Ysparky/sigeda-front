@@ -174,9 +174,21 @@ El script descubre la URL, la escribe en `.env`, arranca Vite e imprime el enlac
 el túnel y restaura el `.env` de antes.** Los dos backends tienen que estar ya levantados.
 
 **Un solo túnel para las tres cosas.** Apunta a Vite, y `vite.config.ts` reparte `/api` y `/auth` al
-8080 y `/documents`, `/quizzes`, `/attempts`, `/chat` y `/prediction` al 3000. Todo queda en el
-**mismo origen**, así que **no hay CORS que configurar en ninguno de los dos backends** — que es
-justo lo que hace que esto funcione a la primera.
+8080 y `/documents`, `/quizzes`, `/attempts`, `/chat` y `/prediction` al 3000. Para el navegador todo
+es el **mismo origen**, así que no hay que tocar la lista de orígenes de ningún backend.
+
+**Pero el proxy tiene que BORRAR la cabecera `Origin`, y sin eso el navegador recibe 403.** El
+navegador no pide CORS porque la petición es del mismo origen, pero el proxy **reenvía el `Origin`**,
+Spring Security ve una cabecera que no está en su lista y responde **«Invalid CORS request»**. El
+proxy la quita y la petición queda como lo que ya es a esa altura: de servidor a servidor.
+
+**Esto no se ve con `curl`:** curl no manda `Origin`, así que todas las comprobaciones dan 200
+mientras el navegador recibe 403. Para verificarlo hay que mandar la cabecera a mano:
+
+```sh
+curl -s -o /dev/null -w '%{http_code}\n' -X POST "$URL/auth/login" -H "Origin: $URL" \
+     -H 'Content-Type: application/json' -d '{"username":"admin.sistema","password":"123"}'
+```
 
 **La URL cambia en cada corrida**: es un túnel efímero. Por eso el script la descubre en vez de
 fijarla, y por eso no sirve para dejar algo publicado — para eso hace falta una VM

@@ -3,7 +3,8 @@
 #
 # POR QUÉ UN SOLO TÚNEL Y NO TRES. El túnel apunta a Vite, y Vite reparte /api y /auth al backend
 # de SIGEDA y /documents, /quizzes, /attempts, /chat y /prediction al de IA (ver vite.config.ts).
-# Todo queda en el MISMO ORIGEN, así que no hay CORS que configurar en ninguno de los dos backends.
+# Para el navegador todo es el MISMO ORIGEN. El proxy además borra la cabecera `Origin`, sin lo cual
+# Spring Security responde 403 «Invalid CORS request» aunque el navegador no haya pedido CORS.
 #
 # LA URL CAMBIA EN CADA CORRIDA: es un túnel efímero de Cloudflare. Por eso este script la descubre
 # y la escribe en .env antes de arrancar Vite, que lee ese archivo UNA VEZ al iniciar.
