@@ -41,4 +41,4 @@ echo "  └───────────────────────
 echo
 echo "· Ctrl-C cierra el túnel y restaura el .env de antes."
 echo
-pnpm dev
+TUNEL=1 pnpm dev

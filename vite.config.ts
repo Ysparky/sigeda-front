@@ -22,6 +22,10 @@ export default defineConfig(({ mode }) => ({
     port: 5173,
     strictPort: true,
     allowedHosts: ['.trycloudflare.com'],
+    // Detrás del túnel el cliente llega por 443, no por 5173: sin esto el navegador del que abre el
+    // enlace intenta el websocket de HMR contra `wss://<host>:5173`, falla, y Vite le muestra un
+    // error de conexión encima de la página. La aplicación funciona igual, pero parece rota.
+    ...(process.env.TUNEL ? { hmr: { clientPort: 443, protocol: 'wss' as const } } : {}),
     proxy: Object.fromEntries(
       [
         ...['/api', '/auth'].map((ruta) => [ruta, 'http://localhost:8080'] as const),
