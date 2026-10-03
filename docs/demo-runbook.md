@@ -160,6 +160,32 @@ cd sigeda-web && pnpm dev     # http://localhost:5173
 `pnpm dev:mock` es lo contrario: usa `.env.mock` y no toca ningún servidor. El CORS del backend ya
 permite `http://localhost:5173`.
 
+## 4 bis. Publicarlo en una URL, sin desplegar nada
+
+Para la defensa no hace falta desplegar: un túnel efímero de Cloudflare da una URL **HTTPS** pública
+apuntando a la máquina donde ya corre todo. Sin cuenta, sin tarjeta, sin servidores.
+
+```sh
+brew install cloudflared          # una sola vez
+cd sigeda-web && sh scripts/tunel.sh
+```
+
+El script descubre la URL, la escribe en `.env`, arranca Vite e imprime el enlace. **Ctrl-C cierra
+el túnel y restaura el `.env` de antes.** Los dos backends tienen que estar ya levantados.
+
+**Un solo túnel para las tres cosas.** Apunta a Vite, y `vite.config.ts` reparte `/api` y `/auth` al
+8080 y `/documents`, `/quizzes`, `/attempts`, `/chat` y `/prediction` al 3000. Todo queda en el
+**mismo origen**, así que **no hay CORS que configurar en ninguno de los dos backends** — que es
+justo lo que hace que esto funcione a la primera.
+
+**La URL cambia en cada corrida**: es un túnel efímero. Por eso el script la descubre en vez de
+fijarla, y por eso no sirve para dejar algo publicado — para eso hace falta una VM
+(`despliegue-gratuito.md`).
+
+Comprobado de punta a punta el 2 oct 2026: página 200, `POST /auth/login` 200, `/api/materias` 200
+con token y **401 sin él**, `/documents` y `/prediction/students` 200 contra el backend de IA, y
+`555555` con `nfpi` 16.34 · `nia` 15.83 · `nit` 18.4 — todo a través del túnel.
+
 ## 5. Las cuentas
 
 Todas con contraseña **`123`**.

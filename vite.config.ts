@@ -11,6 +11,25 @@ export default defineConfig(({ mode }) => ({
     tailwindcss(),
   ],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
-  server: { port: 5173, strictPort: true },
+  // Un solo origen para las tres cosas, que es lo que hace posible demostrar por túnel: el navegador
+  // habla únicamente con Vite y Vite reparte. Al no haber petición entre orígenes, NO HAY CORS que
+  // configurar — ni el de `sigeda-back` ni el del backend de IA intervienen.
+  // En desarrollo este proxy está inerte: `.env` apunta a `localhost:8080` y `localhost:3000`, que
+  // son absolutos y no pasan por acá.
+  // Los prefijos no se pisan: `sigeda-back` vive bajo /api y /auth, y el de IA cuelga sus rutas de
+  // la raíz, así que se enumeran una por una.
+  server: {
+    port: 5173,
+    strictPort: true,
+    allowedHosts: ['.trycloudflare.com'],
+    proxy: Object.fromEntries(
+      [
+        ...['/api', '/auth'].map((ruta) => [ruta, 'http://localhost:8080'] as const),
+        ...['/documents', '/quizzes', '/attempts', '/chat', '/prediction'].map(
+          (ruta) => [ruta, 'http://localhost:3000'] as const,
+        ),
+      ].map(([ruta, destino]) => [ruta, { target: destino, changeOrigin: true }]),
+    ),
+  },
   publicDir: mode === 'mock' ? 'public-mock' : 'public',
 }))
