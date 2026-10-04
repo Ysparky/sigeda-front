@@ -230,12 +230,27 @@ la mitad útil de la pantalla, no un hueco.
 | **Nombre** | `Autorrotacion Inicial` — de 10 a 30 caracteres |
 | **Fecha de evaluación** | un día **futuro** (hoy no sirve) |
 | **Sub fase** | `Autorrotación` |
-| **Misión del PDI** | cualquiera de la sub fase |
+| **Misión del PDI** | `AU-1` (hay cinco: AU-1 a AU-5) |
 | **Instructor** | `Juan Torres` (`instructor.perez`) |
 | **Aeronave** | **`Robinson R22`** — ver abajo |
 
-**Agregar alumno** → en *Alumno 1* elegir `222222`, y las horas en *Inicio 1* y *Fin 1*.
-**Agregar maniobra**, dos veces → *Maniobra 1* y *Maniobra 2* con su *Nota mínima 1* y *2*.
+**Agregar alumno** → en *Alumno 1* elegir **`Juan Falconi`**, que es el `222222` del Grupo 2 —**el
+selector muestra el nombre, no el código**—, y las horas en *Inicio 1* y *Fin 1* (`09:00` y `10:00`).
+
+**Agregar maniobra**, dos veces. Al elegir `Autorrotación` el selector ofrece **sólo sus cinco
+maniobras**, que es lo que la migración `021` arregló:
+
+```
+Entrada en autorrotación · Autorrotación directa · Autorrotación con viraje de 180°
+Flare y toma en autorrotación · Recuperación con potencia
+```
+
+En *Nota mínima* el selector ofrece **las cinco letras del DIRBE**: `D` · `I` · `R` · `B` · `E`.
+
+**Qué poner, y por qué importa:** `AU-1` es la **primera** misión de la sub fase, así que lo coherente
+con el programa es **`D`** —maniobra nueva, entra como demostración—. Pero ojo con la consecuencia: con
+`D` la nota se fuerza a `D` al evaluar, y no hay nada que elegir. **Si pensás evaluar este turno
+después, poné `R`**, que es la exigencia donde se puede calificar bajo, al y sobre el estándar (§4).
 
 **Guardar turno.**
 

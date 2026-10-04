@@ -422,6 +422,7 @@ existen para cualquier otro cliente:
 | `horaFin` anterior a `horaInicio` en un alumno del turno | **200, lo guarda** | 400 de campo. La interfaz sí lo valida |
 | `codAlumno` inexistente en un turno | **500** con el error de FK de PostgreSQL en el mensaje | 404 o error de campo, y sin filtrar detalle de la base |
 | Una ruta que no existe bajo `/api` | **500** «Error inesperado» | 404 |
+| **Una maniobra que no pertenece a la sub fase del turno** | **200, lo guarda** — medido el 4 oct 2026: `POST /api/turnos` con `idSubfase: 7` (Autorrotación) y las maniobras 30 y 31, que son de Navegación Compleja | 400 de campo. La interfaz **sí** lo impide: el selector sólo ofrece las de la sub fase elegida |
 
 ---
 
