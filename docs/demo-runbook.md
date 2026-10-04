@@ -205,6 +205,43 @@ El recorrido clic por clic está en **`guion-de-la-demostracion.md`**.
 la subida de un documento por `multipart` a través de Cloudflare, la generación de un cuestionario
 y una consulta que responde citando `[1]` con su fuente. Detalle en `casos-de-uso-demo.md` §0.
 
+## 4 ter. Volver a dejar todo como al principio
+
+**Las dos bases se resetean distinto, y una sola no alcanza.**
+
+### SIGEDA: reiniciar el backend
+
+```sh
+# Ctrl-C en el proceso y volver a levantarlo
+cd sigeda-back
+export JAVA_HOME=/opt/homebrew/opt/openjdk@17
+SPRING_DATASOURCE_URL='jdbc:postgresql://localhost:5544/sigeda_demo?prepareThreshold=0' \
+  sh ./mvnw -o spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+Con el perfil `dev`, `spring.sql.init.mode=always` hace que `schema_prod.sql` **borre las 27 tablas y
+las vuelva a crear** y `data_prod.sql` las siembre. Tarda ~5 s y deja todo como al principio:
+evaluaciones, turnos, contadores de chequeo, exámenes sin entregar. **Y las fechas se recalculan**,
+así que el examen del paso 3 vuelve a abrirse hoy.
+
+### Módulo de aprendizaje: no se resetea solo
+
+`learning_module` **no la toca nadie al arrancar**: documentos, cuestionarios y conversaciones se
+acumulan entre demostraciones. Para vaciarla sin perder los usuarios sembrados:
+
+```sh
+docker exec learning-module-postgres psql -U learning_user -d learning_module -c \
+ "truncate documents, quizzes, quiz_attempts, chat_sessions, practical_evaluations,
+          performance_predictions, maneuvers restart identity cascade;"
+```
+
+El `cascade` arrastra las siete dependientes —`document_chunks`, `questions`, `chat_messages`…— y
+**`users` queda intacta**, que es lo que evita tener que volver a correr `pnpm seed:usuarios`.
+Comprobado el 4 oct 2026 dentro de una transacción deshecha: 0 documentos y los 16 usuarios en pie.
+
+**Los archivos del almacén no se borran con eso.** Quedan huérfanos en MinIO, sin consecuencia
+funcional. Si molestan, se borra el bucket y se vuelve a crear (§3.2).
+
 ## 5. Las cuentas
 
 Todas con contraseña **`123`**.
