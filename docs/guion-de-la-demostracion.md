@@ -127,7 +127,7 @@ múltiple, verdadero/falso y completar. **Las respuestas se guardan solas** mien
 
 ---
 
-## Paso 4 · El legajo y el orden de mérito
+## Paso 4 · El legajo, el chequeo, las alertas y el orden de mérito
 
 **Entrar como `comandante.aguirre`.**
 
@@ -157,7 +157,60 @@ que está calculada sobre el **44 %** de la sub fase, porque sólo 4 de sus 9 mi
 **Un índice que falta nunca vale 0**, y es deliberado: cero es una nota posible, y confundirlas es
 exactamente cómo se publica un orden de mérito falso.
 
-### 4.3 El orden de mérito
+### 4.3 El ciclo de chequeo, que es la otra mitad de la evaluación
+
+**Seguimiento → Escuadrón →** `555555`, panel **Ciclo de chequeo**.
+
+```
+contadores:   chequeo 1 · evaluaciones 5 · malos 1 · regulares 4
+criterio 2 (Vuelo por Instrumentos)   CUMPLIDO: «4 Regulares alternados»
+```
+
+**Esta es la pieza que conviene no saltarse, porque es la regla del PDI funcionando.** El sistema no
+espera a que alguien se dé cuenta: cuenta los vuelos bajo el estándar y, al alcanzar una de las ramas
+del criterio, marca que el alumno debe un chequeo **con otro instructor**.
+
+| | Ramas que disparan el chequeo |
+|---|---|
+| **Criterio 1** · las cuatro primeras fases | 3 Malos · 2M+2R · 1M+4R · 6R |
+| **Criterio 2** · Vuelo por Instrumentos | 2 Malos · 1M+2R · 4R |
+
+«Alternados» en el PDI significa **en cualquier orden**, no una condición de posición — el documento
+lo dice y el código lo cita. Son conteos.
+
+> **El dato de oro de la demostración: `555555` es puesto 1 del orden de mérito Y debe un chequeo.**
+> No es una contradicción ni un error: el orden de mérito mide el **promedio ponderado** y el ciclo de
+> chequeo mide la **acumulación de vuelos bajo el estándar**. Un alumno puede promediar bien y
+> llevar cuatro Regulares. Las dos cifras son correctas y miden cosas distintas, y poder explicar eso
+> es exactamente lo que se le pide a un sistema de evaluación.
+
+**Los contadores no son decorativos: salen de las evaluaciones.** `cont_malo` cuenta las ponderadas
+`Malo`, `cont_regular` las `Regular`, `cont_chequeo` las de categoría `Chequeo`. Se puede abrir el
+historial del alumno y contarlas a mano: el Malo es `555555-10` (12.0, Circuitos y Maniobras) y los
+cuatro Regulares son `555555-1`, `555555-3-2`, `555555-3-5` y `555555-11`.
+
+**El historial de chequeos sale vacío, y ahora eso es correcto:** nadie en la semilla cerró un ciclo.
+Un ciclo cerrado reinicia los cuatro contadores (`Persona.reiniciarCont`), así que archivar uno
+*aprobado* y a la vez mantener los contadores en 1 y 4 sería la contradicción que este paso evita.
+
+### 4.4 Las alertas
+
+**Seguimiento → Alertas.** Seis, ordenadas por severidad, y **todas con su fila detrás**:
+
+| Severidad | Alerta | Alumno |
+|---|---|---|
+| **ALTA** | `SUBSANACION_PENDIENTE` | `666666` |
+| MEDIA | `CAUSAL_TEORICO` | `666666` |
+| MEDIA | **`CHEQUEO_PENDIENTE`** | `555555` |
+| BAJA | `VUELO_DESAPROBADO` ×3 | `555555` |
+
+**Por qué ese orden y no otro:** la subsanación es lo único que **efectivamente detiene** al alumno
+—el PDI dice que quien desapruebe no podrá realizar operaciones aéreas hasta aprobar la
+subsanatoria—. Una causal teórica no bloquea nada: es materia del Consejo de Evaluación. Y un vuelo
+desaprobado es un hecho ya registrado que por sí mismo no pide acción; lo que pide acción es lo que
+acumula, y eso ya está en `CHEQUEO_PENDIENTE`.
+
+### 4.5 El orden de mérito
 
 **Seguimiento → Reportes y orden de mérito.**
 
@@ -243,8 +296,8 @@ contra el documento.
 
 ## Lo que no se puede demostrar, para no quedar en falta
 
-- **El panel de chequeos del legajo sale vacío para todos.** La semilla no tiene ninguna fila en
-  `chequeos_finales`; no depende del alumno que elijas.
+- **El HISTORIAL de chequeos sale vacío** —`chequeos_finales` no tiene filas—, pero el **ciclo** sí
+  dice algo (§4.3). Y el vacío es coherente, no un hueco: nadie cerró un ciclo todavía.
 - **La predicción de desempeño no tiene pantalla.** El backend responde —`555555` da 16
   evaluaciones, riesgo bajo y tendencia al alza— pero ninguna vista la consume todavía.
 - **Eliminar una persona falla** si el usuario alguna vez inició sesión, por una clave ajena sin

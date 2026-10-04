@@ -313,11 +313,38 @@ misiones de Contacto valían todas 1.0 h.
 Los pesos de fase salen en la pantalla a **cuatro decimales** —0.2766 · 0.2340 · 0.1596 · 0.1596 ·
 0.1702— porque se derivan de las horas de la Tabla 4 sobre 94.0 y a dos decimales no cerrarían.
 
+**El ciclo de chequeo es la otra mitad, y mide otra cosa.** Los cuatro contadores de `personas`
+—`cont_malo`, `cont_regular`, `cont_chequeo`, `cont_eval`— los escribe `ResultadoController` al
+registrar cada evaluación, y de ellos sale `criterioCumplido`:
+
+| | Ramas que disparan el chequeo |
+|---|---|
+| **Criterio 1** · las cuatro primeras fases | 3 Malos · 2M+2R · 1M+4R · 6R |
+| **Criterio 2** · Vuelo por Instrumentos | 2 Malos · 1M+2R · 4R |
+
+«Alternados» significa **en cualquier orden** y no una condición de posición: el PDI lo enuncia
+«(en cualquier orden)» y las reglas de vuelo dan **un** umbral, mientras la regla académica, que sí
+mira la posición, da dos («tres consecutivas o cinco alternadas»). Son conteos.
+
+**Con los contadores reales, `555555` cumple el criterio 2 por la rama «4 Regulares alternados».** Es
+el mismo alumno que sale **puesto 1** del orden de mérito, y las dos cosas son correctas: el mérito
+mide el promedio ponderado y el chequeo mide la acumulación de vuelos bajo el estándar. Se puede
+auditar a mano en su historial — el Malo es `555555-10` y los Regulares son `555555-1`, `555555-3-2`,
+`555555-3-5` y `555555-11`.
+
+**`cont_eval` no es un conteo de evaluaciones:** es el correlativo con que `EvaluacionController`
+sufija el código de una evaluación que no es Ponderada ni Chequeo Sub Fase (`codigo + "-" + contEval`).
+De ahí salen los códigos `555555-3-2` y `555555-3-5`, y por eso no puede quedar por debajo de 5.
+
+**Los contadores estaban inventados hasta la migración `022`**: cuatro alumnos declaraban Malos con
+cero evaluaciones y una instructora declaraba uno, así que el legajo podía anunciar un criterio de
+chequeo que su propio historial desmentía. Lo fija `unit_test/SemillaContadoresDeChequeoTest`.
+
 | Alternativa | HTTP | Qué pasa |
 |---|---|---|
 | Un alumno pide el legajo de otro | **403** | `Solo puede consultar su propia información.` — un único texto para los ocho controladores que emiten este 403 |
 | Un alumno pide **el suyo** | 200 | legajo completo |
-| Un alumno sin ningún chequeo | **404** | `No existen chequeos disponibles.` → la interfaz muestra el panel vacío. **Le pasa a todos**: la semilla no tiene ninguna fila en `chequeos_finales` |
+| Un alumno sin ningún chequeo cerrado | **404** | `No existen chequeos disponibles.` → el panel de HISTORIAL sale vacío. Le pasa a todos y es coherente: nadie cerró un ciclo. El **ciclo de chequeo** del legajo sí responde, con los contadores y el criterio |
 | Código de persona inexistente | 404 | `Persona especificada no existe.` |
 | Persona que **no es alumno** | **200** | con el bloqueo en `false` y los arreglos vacíos: «no calculable» y «no encontrado» son cosas distintas |
 | `NIA` de un alumno sin notas de sub fase | 200 | `null`, con `nia.motivo` nombrando **las doce** sub fases que le faltan, fase por fase |
