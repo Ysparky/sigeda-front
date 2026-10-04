@@ -129,6 +129,23 @@ describe('sesion', () => {
     expect(localStorage.getItem(CLAVE_REFRESH)).toBeNull()
   })
 
+  /**
+   * La guarda de `_app` manda a `/login?redirect=<página actual>` cuando no hay sesión, que es lo
+   * correcto al VENCER —el mismo usuario vuelve donde estaba— y lo incorrecto al CERRAR: mandaba al
+   * siguiente usuario a la página del anterior. Medido en el navegador: un administrador en /grupos
+   * cerró sesión y el alumno que entró después cayó en /grupos con «Acceso restringido».
+   */
+  it('distingue cerrar sesión de que la sesión venza, y lo dice una sola vez', async () => {
+    await sesion.iniciar('alumno.lopez', '123')
+    await sesion.cerrar()
+    expect(sesion.seCerroPorElUsuario()).toBe(true)
+    expect(sesion.seCerroPorElUsuario()).toBe(false)
+
+    await sesion.iniciar('alumno.lopez', '123')
+    sesion.expirar()
+    expect(sesion.seCerroPorElUsuario()).toBe(false)
+  })
+
   it('avisa a los suscriptores cuando cambia la sesión', async () => {
     const oyente = vi.fn()
     const desuscribir = sesion.suscribir(oyente)

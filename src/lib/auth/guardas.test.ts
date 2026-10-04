@@ -87,3 +87,31 @@ describe('destinoSeguro con rutas que se normalizan a otro origen', () => {
     expect(destinoSeguro('/turnos/../..//evil.com/a')).toBe('/')
   })
 })
+
+/**
+ * EL CASO QUE LO MOTIVÓ, medido en el navegador: `admin.sistema` estaba en /grupos, cerró sesión y
+ * la guarda lo mandó a `/login?redirect=%2Fgrupos`; al entrar `alumno.falconi` —que no tiene
+ * `Manage Groups`— aterrizó en /grupos con «Acceso restringido» en vez de en Inicio.
+ *
+ * El arreglo principal es que un cierre deliberado no lleve `redirect` (ver `_app.tsx`). Esto es la
+ * segunda mitad: aunque el `redirect` llegue —de una sesión vencida que otro retoma, o de un enlace
+ * guardado—, no se obedece si la sesión que entra no puede ver esa pantalla.
+ */
+describe('destinoSeguro con los permisos de quien entra', () => {
+  it('descarta la pantalla que la sesión nueva no puede ver', () => {
+    expect(destinoSeguro('/grupos?page=0', sesionDe('Alumno'), false)).toBe('/')
+  })
+
+  it('respeta la que sí puede ver, con su búsqueda', () => {
+    expect(destinoSeguro('/grupos?page=0', sesionDe('Administrador Web'), false)).toBe('/grupos?page=0')
+  })
+
+  it('deja pasar una ruta con parámetros, que no figura en el catálogo por su texto', () => {
+    expect(destinoSeguro('/seguimiento/555555', sesionDe('Alumno'), false)).toBe('/seguimiento/555555')
+  })
+
+  it('sin sesión se comporta como antes: sólo sanea el origen', () => {
+    expect(destinoSeguro('/grupos?page=0')).toBe('/grupos?page=0')
+    expect(destinoSeguro('https://evil.com', sesionDe('Alumno'), false)).toBe('/')
+  })
+})

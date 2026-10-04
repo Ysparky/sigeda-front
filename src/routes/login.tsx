@@ -8,7 +8,7 @@ const busqueda = z.object({ redirect: z.string().optional().catch(undefined) })
 export const Route = createFileRoute('/login')({
   validateSearch: busqueda,
   beforeLoad: ({ context, search }) => {
-    if (context.sesion.actual()) throw redirect({ href: destinoSeguro(search.redirect) })
+    if (context.sesion.actual()) throw redirect({ href: destinoSeguro(search.redirect, context.sesion.actual()) })
   },
   component: LoginPage,
 })

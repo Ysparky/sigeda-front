@@ -58,6 +58,17 @@ type RespuestaLogin = z.infer<typeof esquemaLogin>
 
 let actual: Sesion | null = null
 let aviso: string | null = null
+
+/**
+ * CERRAR SESIÓN NO ES LO MISMO QUE NO ESTAR AUTENTICADO, y confundirlos tenía una consecuencia a la
+ * vista: la guarda de `_app` manda a `/login?redirect=<la página actual>`, que es lo correcto cuando
+ * la sesión venció —el mismo usuario vuelve a donde estaba—, pero después de un cierre deliberado
+ * mandaba al SIGUIENTE usuario a la página del anterior. Un alumno entrando después de un
+ * administrador caía en /grupos y veía «Acceso restringido».
+ *
+ * Lo lee y lo apaga la guarda, una sola vez.
+ */
+let cerradaPorElUsuario = false
 const oyentes = new Set<() => void>()
 
 export function nombreDeSesion(persona: PersonaDeSesion): string {
@@ -156,9 +167,16 @@ export const sesion = {
   async cerrar(): Promise<void> {
     const refresh = tokens.refresh()
     if (refresh) await sigeda.post('/auth/logout', { refreshToken: refresh }).catch(() => undefined)
+    cerradaPorElUsuario = true
     tokens.limpiar()
     aviso = null
     fijar(null)
+  },
+  /** Verdadero una sola vez, y sólo si la sesión la cerró el usuario y no el vencimiento. */
+  seCerroPorElUsuario(): boolean {
+    const cerrada = cerradaPorElUsuario
+    cerradaPorElUsuario = false
+    return cerrada
   },
   expirar() {
     tokens.limpiar()
