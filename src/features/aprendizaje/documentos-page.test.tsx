@@ -70,9 +70,22 @@ describe('Documentos de estudio', () => {
         '—',
         '18/09/2026',
       ],
-      ['Procedimientos de emergencia.docx', 'DOCX', '180.0 KB', 'Listo', 'emergencias, autorrotación', '18/09/2026'],
-      ['PDI EA-510 Título III.pdf', 'PDF', '2.3 MB', 'Listo', 'instrucción, maniobras', '18/09/2026'],
+      ['Procedimientos de emergencia.docx', 'DOCX', '180.0 KB', 'Listo', 'emergenciasautorrotación', '18/09/2026'],
+      ['PDI EA-510 Título III.pdf', 'PDF', '2.3 MB', 'Listo', 'instrucciónmaniobras', '18/09/2026'],
     ])
+  })
+
+  /**
+   * `TableCell` trae `whitespace-nowrap`, así que una lista larga de etiquetas ensanchaba la tabla
+   * sin tope y metía la página entera en scroll horizontal — con el encabezado y el botón de subir
+   * desalineados del resto. Cada etiqueta es ahora su propio elemento dentro de una lista que
+   * envuelve, y por eso el texto de la celda ya no lleva comas.
+   */
+  it('CA-DOC-01 cada etiqueta es un elemento propio, para que la celda pueda envolver', async () => {
+    await abrirDocumentos()
+    const fila = screen.getByRole('row', { name: /Procedimientos de emergencia\.docx/ })
+    const etiquetas = within(fila).getAllByRole('listitem')
+    expect(etiquetas.map((item) => item.textContent)).toEqual(['emergencias', 'autorrotación'])
   })
 
   it('CA-DOC-01 sin documentos muestra A14', async () => {

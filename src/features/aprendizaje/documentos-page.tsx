@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/empty-state'
 import { PageHeader } from '@/components/page-header'
 import { StatusBadge } from '@/components/status-badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -120,7 +121,24 @@ export function DocumentosPage() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>{documento.tags.length === 0 ? '—' : documento.tags.join(', ')}</TableCell>
+                  {/* `TableCell` trae `whitespace-nowrap`, así que una lista larga de etiquetas
+                      ensanchaba la tabla sin límite y metía la página entera en scroll horizontal.
+                      Acá se acota el ancho y se deja envolver. */}
+                  <TableCell className="max-w-80 whitespace-normal">
+                    {documento.tags.length === 0 ? (
+                      '—'
+                    ) : (
+                      <ul className="flex flex-wrap gap-1">
+                        {documento.tags.map((etiqueta) => (
+                          <li key={etiqueta}>
+                            <Badge variant="outline" className="font-normal">
+                              {etiqueta}
+                            </Badge>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </TableCell>
                   <TableCell className="tabular-nums">{formatearFecha(documento.createdAt)}</TableCell>
                   <TableCell>
                     <div className="flex justify-end">
