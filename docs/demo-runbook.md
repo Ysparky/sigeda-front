@@ -1,4 +1,9 @@
-# Correr SIGEDA de punta a punta — guion de demostración
+# Levantar SIGEDA de punta a punta
+
+> **Este documento es el ENTORNO: qué levantar, en qué orden y en qué puerto.** Los pasos de la
+> demostración —qué clic, qué escribir, qué debe aparecer— están en `guion-de-la-demostracion.md`.
+> Antes se llamaba «guion de demostración» y se confundía con ése.
+
 
 **Todos los comandos de aquí se ejecutaron y funcionaron el 1 oct 2026**, ahora sí con los **tres**
 backends arriba: SIGEDA, el módulo de aprendizaje con IA, y sus dependencias. La versión anterior de
