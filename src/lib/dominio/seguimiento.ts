@@ -175,7 +175,7 @@ export const INDICES = [
   { clave: 'NIT', etiqueta: 'NIT', formula: 'NCT (0.8) + NEI (0.2)' },
   { clave: 'NCT', etiqueta: 'NCT', formula: 'Σ (NA × coeficiente)' },
   { clave: 'NEI', etiqueta: 'NEI', formula: 'Σ (notas) / cantidad rendida' },
-  { clave: 'NIA', etiqueta: 'NIA', formula: 'NFAD (0.40) + NFOH (0.35) + NFOA (0.25)' },
+  { clave: 'NIA', etiqueta: 'NIA', formula: 'Σ (NF × peso de la fase)' },
 ] as const
 
 export function formulaDeIndice(clave: string): string {

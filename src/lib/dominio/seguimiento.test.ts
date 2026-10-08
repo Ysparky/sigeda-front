@@ -177,7 +177,7 @@ describe('la única cifra derivada de M5', () => {
   it('M5-2 cada índice lleva su fórmula como texto y ninguna se evalúa', () => {
     expect(INDICES.map((indice) => indice.clave)).toEqual(['NFPI', 'NIT', 'NCT', 'NEI', 'NIA'])
     expect(formulaDeIndice('NFPI')).toBe('NIT (0.2) + NIA (0.8)')
-    expect(formulaDeIndice('NIA')).toBe('NFAD (0.40) + NFOH (0.35) + NFOA (0.25)')
+    expect(formulaDeIndice('NIA')).toBe('Σ (NF × peso de la fase)')
     expect(formulaDeIndice('NSF')).toBe('')
   })
 })
