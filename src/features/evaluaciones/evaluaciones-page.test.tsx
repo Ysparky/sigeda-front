@@ -34,6 +34,7 @@ describe('Evaluaciones', () => {
     expect(tabla.getAllByRole('columnheader').map((celda) => celda.textContent)).toEqual([
       'Código',
       'Nombre',
+      'Tipo',
       'Fase',
       'Evaluador',
       'Fecha',
@@ -43,9 +44,10 @@ describe('Evaluaciones', () => {
       'Acciones',
     ])
     const fila = tabla.getByRole('link', { name: '555555-1' }).closest('tr') as HTMLElement
-    expect(within(fila).getAllByRole('cell').slice(0, 8).map((celda) => celda.textContent)).toEqual([
+    expect(within(fila).getAllByRole('cell').slice(0, 9).map((celda) => celda.textContent)).toEqual([
       '555555-1',
       'Ponderada Control Básico 1',
+      'Ponderada',
       'Adaptación',
       'Juan Torres',
       '01/03/2024',

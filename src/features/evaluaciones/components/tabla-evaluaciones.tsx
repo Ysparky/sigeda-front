@@ -7,6 +7,7 @@ import { DataTable } from '@/components/data-table'
 import { EmptyState } from '@/components/empty-state'
 import { Enlace } from '@/components/enlace'
 import { StatusBadge } from '@/components/status-badge'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { ParametrosPagina } from '@/lib/api/pagina'
 import { formatearFecha, formatearNota } from '@/lib/formato'
@@ -41,6 +42,10 @@ export function TablaEvaluaciones({ codPersona, filtros, alCambiar, conAlumno, u
           ),
         }),
         ayudante.accessor('nombre', { header: 'Nombre' }),
+        ayudante.accessor('categoria', {
+          header: 'Tipo',
+          cell: (contexto) => <Badge variant="outline" className="font-normal">{contexto.getValue()}</Badge>,
+        }),
         ayudante.accessor('fase', { header: 'Fase' }),
         ayudante.accessor('evaluador', { header: 'Evaluador' }),
         ayudante.accessor('fecha', {
