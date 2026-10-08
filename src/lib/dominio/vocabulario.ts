@@ -79,6 +79,26 @@ export const NOTAS_DEL_PROMEDIO = {
   noCuenta: { etiqueta: 'Esta nota no cuenta para el promedio', tono: 'neutro' },
 } as const satisfies Record<string, Termino>
 
+export const NIVELES_DE_RIESGO = {
+  bajo: { etiqueta: 'Riesgo bajo', tono: 'exito' },
+  medio: { etiqueta: 'Riesgo medio', tono: 'aviso' },
+  alto: { etiqueta: 'Riesgo alto', tono: 'peligro' },
+} as const satisfies Record<string, Termino>
+
+// La banda del motor de proyección, que NO es la clasificación DIRBE de SIGEDA: son tres cortes
+// sobre el puntaje proyectado, no las cuatro clases que SIGEDA decide por contadores de notas.
+export const BANDAS_DE_PROYECCION = {
+  optimo: { etiqueta: 'Óptimo', tono: 'exito' },
+  regular: { etiqueta: 'Regular', tono: 'aviso' },
+  deficiente: { etiqueta: 'Deficiente', tono: 'peligro' },
+} as const satisfies Record<string, Termino>
+
+export const TENDENCIAS = {
+  up: { etiqueta: 'En ascenso', tono: 'exito' },
+  flat: { etiqueta: 'Estable', tono: 'neutro' },
+  down: { etiqueta: 'En descenso', tono: 'peligro' },
+} as const satisfies Record<string, Termino>
+
 export const ESTADOS_AERONAVE = {
   Disponible: { etiqueta: 'Disponible', tono: 'exito' },
   En_Mantenimiento: { etiqueta: 'En mantenimiento', tono: 'aviso' },
@@ -104,6 +124,9 @@ const VOCABULARIOS = {
   subsanacion: SUBSANACION,
   severidad: SEVERIDADES_ALERTA,
   tipoAlerta: TIPOS_DE_ALERTA,
+  riesgo: NIVELES_DE_RIESGO,
+  banda: BANDAS_DE_PROYECCION,
+  tendencia: TENDENCIAS,
 } as const
 
 export type Vocabulario = keyof typeof VOCABULARIOS

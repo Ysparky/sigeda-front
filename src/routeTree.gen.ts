@@ -46,6 +46,8 @@ import { Route as AppProgramaFasesIndexRouteImport } from './routes/_app/program
 import { Route as AppProgramaFasesNuevaRouteImport } from './routes/_app/programa/fases/nueva'
 import { Route as AppProgramaManiobrasIndexRouteImport } from './routes/_app/programa/maniobras/index'
 import { Route as AppProgramaManiobrasNuevaRouteImport } from './routes/_app/programa/maniobras/nueva'
+import { Route as AppSeguimientoProyeccionIndexRouteImport } from './routes/_app/seguimiento/proyeccion/index'
+import { Route as AppSeguimientoProyeccionStudentIdRouteImport } from './routes/_app/seguimiento/proyeccion/$studentId'
 import { Route as AppTeoriaTurnosIndexRouteImport } from './routes/_app/teoria/turnos/index'
 import { Route as AppTeoriaTurnosNuevoRouteImport } from './routes/_app/teoria/turnos/nuevo'
 import { Route as AppTurnosIdIndexRouteImport } from './routes/_app/turnos/$id/index'
@@ -250,6 +252,18 @@ const AppProgramaManiobrasNuevaRoute =
     path: '/programa/maniobras/nueva',
     getParentRoute: () => AppRoute,
   } as any)
+const AppSeguimientoProyeccionIndexRoute =
+  AppSeguimientoProyeccionIndexRouteImport.update({
+    id: '/seguimiento/proyeccion/',
+    path: '/seguimiento/proyeccion/',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppSeguimientoProyeccionStudentIdRoute =
+  AppSeguimientoProyeccionStudentIdRouteImport.update({
+    id: '/seguimiento/proyeccion/$studentId',
+    path: '/seguimiento/proyeccion/$studentId',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppTeoriaTurnosIndexRoute = AppTeoriaTurnosIndexRouteImport.update({
   id: '/teoria/turnos/',
   path: '/teoria/turnos/',
@@ -364,6 +378,7 @@ export interface FileRoutesByFullPath {
   '/grupos/$id/editar': typeof AppGruposIdEditarRoute
   '/programa/fases/nueva': typeof AppProgramaFasesNuevaRoute
   '/programa/maniobras/nueva': typeof AppProgramaManiobrasNuevaRoute
+  '/seguimiento/proyeccion/$studentId': typeof AppSeguimientoProyeccionStudentIdRoute
   '/teoria/turnos/nuevo': typeof AppTeoriaTurnosNuevoRoute
   '/turnos/$id/editar': typeof AppTurnosIdEditarRoute
   '/turnos/dia/$fecha': typeof AppTurnosDiaFechaRoute
@@ -372,6 +387,7 @@ export interface FileRoutesByFullPath {
   '/grupos/$id/': typeof AppGruposIdIndexRoute
   '/programa/fases/': typeof AppProgramaFasesIndexRoute
   '/programa/maniobras/': typeof AppProgramaManiobrasIndexRoute
+  '/seguimiento/proyeccion/': typeof AppSeguimientoProyeccionIndexRoute
   '/teoria/turnos/': typeof AppTeoriaTurnosIndexRoute
   '/turnos/$id/': typeof AppTurnosIdIndexRoute
   '/turnos/dia/': typeof AppTurnosDiaIndexRoute
@@ -417,6 +433,7 @@ export interface FileRoutesByTo {
   '/grupos/$id/editar': typeof AppGruposIdEditarRoute
   '/programa/fases/nueva': typeof AppProgramaFasesNuevaRoute
   '/programa/maniobras/nueva': typeof AppProgramaManiobrasNuevaRoute
+  '/seguimiento/proyeccion/$studentId': typeof AppSeguimientoProyeccionStudentIdRoute
   '/teoria/turnos/nuevo': typeof AppTeoriaTurnosNuevoRoute
   '/turnos/$id/editar': typeof AppTurnosIdEditarRoute
   '/turnos/dia/$fecha': typeof AppTurnosDiaFechaRoute
@@ -425,6 +442,7 @@ export interface FileRoutesByTo {
   '/grupos/$id': typeof AppGruposIdIndexRoute
   '/programa/fases': typeof AppProgramaFasesIndexRoute
   '/programa/maniobras': typeof AppProgramaManiobrasIndexRoute
+  '/seguimiento/proyeccion': typeof AppSeguimientoProyeccionIndexRoute
   '/teoria/turnos': typeof AppTeoriaTurnosIndexRoute
   '/turnos/$id': typeof AppTurnosIdIndexRoute
   '/turnos/dia': typeof AppTurnosDiaIndexRoute
@@ -472,6 +490,7 @@ export interface FileRoutesById {
   '/_app/grupos/$id/editar': typeof AppGruposIdEditarRoute
   '/_app/programa/fases/nueva': typeof AppProgramaFasesNuevaRoute
   '/_app/programa/maniobras/nueva': typeof AppProgramaManiobrasNuevaRoute
+  '/_app/seguimiento/proyeccion/$studentId': typeof AppSeguimientoProyeccionStudentIdRoute
   '/_app/teoria/turnos/nuevo': typeof AppTeoriaTurnosNuevoRoute
   '/_app/turnos/$id/editar': typeof AppTurnosIdEditarRoute
   '/_app/turnos/dia/$fecha': typeof AppTurnosDiaFechaRoute
@@ -480,6 +499,7 @@ export interface FileRoutesById {
   '/_app/grupos/$id/': typeof AppGruposIdIndexRoute
   '/_app/programa/fases/': typeof AppProgramaFasesIndexRoute
   '/_app/programa/maniobras/': typeof AppProgramaManiobrasIndexRoute
+  '/_app/seguimiento/proyeccion/': typeof AppSeguimientoProyeccionIndexRoute
   '/_app/teoria/turnos/': typeof AppTeoriaTurnosIndexRoute
   '/_app/turnos/$id/': typeof AppTurnosIdIndexRoute
   '/_app/turnos/dia/': typeof AppTurnosDiaIndexRoute
@@ -527,6 +547,7 @@ export interface FileRouteTypes {
     | '/grupos/$id/editar'
     | '/programa/fases/nueva'
     | '/programa/maniobras/nueva'
+    | '/seguimiento/proyeccion/$studentId'
     | '/teoria/turnos/nuevo'
     | '/turnos/$id/editar'
     | '/turnos/dia/$fecha'
@@ -535,6 +556,7 @@ export interface FileRouteTypes {
     | '/grupos/$id/'
     | '/programa/fases/'
     | '/programa/maniobras/'
+    | '/seguimiento/proyeccion/'
     | '/teoria/turnos/'
     | '/turnos/$id/'
     | '/turnos/dia/'
@@ -580,6 +602,7 @@ export interface FileRouteTypes {
     | '/grupos/$id/editar'
     | '/programa/fases/nueva'
     | '/programa/maniobras/nueva'
+    | '/seguimiento/proyeccion/$studentId'
     | '/teoria/turnos/nuevo'
     | '/turnos/$id/editar'
     | '/turnos/dia/$fecha'
@@ -588,6 +611,7 @@ export interface FileRouteTypes {
     | '/grupos/$id'
     | '/programa/fases'
     | '/programa/maniobras'
+    | '/seguimiento/proyeccion'
     | '/teoria/turnos'
     | '/turnos/$id'
     | '/turnos/dia'
@@ -634,6 +658,7 @@ export interface FileRouteTypes {
     | '/_app/grupos/$id/editar'
     | '/_app/programa/fases/nueva'
     | '/_app/programa/maniobras/nueva'
+    | '/_app/seguimiento/proyeccion/$studentId'
     | '/_app/teoria/turnos/nuevo'
     | '/_app/turnos/$id/editar'
     | '/_app/turnos/dia/$fecha'
@@ -642,6 +667,7 @@ export interface FileRouteTypes {
     | '/_app/grupos/$id/'
     | '/_app/programa/fases/'
     | '/_app/programa/maniobras/'
+    | '/_app/seguimiento/proyeccion/'
     | '/_app/teoria/turnos/'
     | '/_app/turnos/$id/'
     | '/_app/turnos/dia/'
@@ -922,6 +948,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProgramaManiobrasNuevaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/seguimiento/proyeccion/': {
+      id: '/_app/seguimiento/proyeccion/'
+      path: '/seguimiento/proyeccion'
+      fullPath: '/seguimiento/proyeccion/'
+      preLoaderRoute: typeof AppSeguimientoProyeccionIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/seguimiento/proyeccion/$studentId': {
+      id: '/_app/seguimiento/proyeccion/$studentId'
+      path: '/seguimiento/proyeccion/$studentId'
+      fullPath: '/seguimiento/proyeccion/$studentId'
+      preLoaderRoute: typeof AppSeguimientoProyeccionStudentIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/teoria/turnos/': {
       id: '/_app/teoria/turnos/'
       path: '/teoria/turnos'
@@ -1061,6 +1101,7 @@ interface AppRouteChildren {
   AppGruposIdEditarRoute: typeof AppGruposIdEditarRoute
   AppProgramaFasesNuevaRoute: typeof AppProgramaFasesNuevaRoute
   AppProgramaManiobrasNuevaRoute: typeof AppProgramaManiobrasNuevaRoute
+  AppSeguimientoProyeccionStudentIdRoute: typeof AppSeguimientoProyeccionStudentIdRoute
   AppTeoriaTurnosNuevoRoute: typeof AppTeoriaTurnosNuevoRoute
   AppTurnosIdEditarRoute: typeof AppTurnosIdEditarRoute
   AppTurnosDiaFechaRoute: typeof AppTurnosDiaFechaRoute
@@ -1069,6 +1110,7 @@ interface AppRouteChildren {
   AppGruposIdIndexRoute: typeof AppGruposIdIndexRoute
   AppProgramaFasesIndexRoute: typeof AppProgramaFasesIndexRoute
   AppProgramaManiobrasIndexRoute: typeof AppProgramaManiobrasIndexRoute
+  AppSeguimientoProyeccionIndexRoute: typeof AppSeguimientoProyeccionIndexRoute
   AppTeoriaTurnosIndexRoute: typeof AppTeoriaTurnosIndexRoute
   AppTurnosIdIndexRoute: typeof AppTurnosIdIndexRoute
   AppTurnosDiaIndexRoute: typeof AppTurnosDiaIndexRoute
@@ -1114,6 +1156,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppGruposIdEditarRoute: AppGruposIdEditarRoute,
   AppProgramaFasesNuevaRoute: AppProgramaFasesNuevaRoute,
   AppProgramaManiobrasNuevaRoute: AppProgramaManiobrasNuevaRoute,
+  AppSeguimientoProyeccionStudentIdRoute:
+    AppSeguimientoProyeccionStudentIdRoute,
   AppTeoriaTurnosNuevoRoute: AppTeoriaTurnosNuevoRoute,
   AppTurnosIdEditarRoute: AppTurnosIdEditarRoute,
   AppTurnosDiaFechaRoute: AppTurnosDiaFechaRoute,
@@ -1122,6 +1166,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppGruposIdIndexRoute: AppGruposIdIndexRoute,
   AppProgramaFasesIndexRoute: AppProgramaFasesIndexRoute,
   AppProgramaManiobrasIndexRoute: AppProgramaManiobrasIndexRoute,
+  AppSeguimientoProyeccionIndexRoute: AppSeguimientoProyeccionIndexRoute,
   AppTeoriaTurnosIndexRoute: AppTeoriaTurnosIndexRoute,
   AppTurnosIdIndexRoute: AppTurnosIdIndexRoute,
   AppTurnosDiaIndexRoute: AppTurnosDiaIndexRoute,

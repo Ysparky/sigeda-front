@@ -2,6 +2,7 @@ import type { RequestHandler } from 'msw'
 import { handlersConsultas } from './ia/consultas'
 import { handlersCuestionarios } from './ia/cuestionarios'
 import { handlersDocumentos } from './ia/documentos'
+import { handlersProyeccion } from './ia/proyeccion'
 import { handlersAlumnos } from './sigeda/alumnos'
 import { handlersAuth } from './sigeda/auth'
 import { handlersCatalogos } from './sigeda/catalogos'
@@ -37,6 +38,7 @@ export const handlers: RequestHandler[] = [
   ...handlersPreguntas,
   ...handlersTurnos,
   ...handlersTurnosTeoricos,
+  ...handlersProyeccion,
   ...handlersCuestionariosTeoria,
   ...handlersCuestionariosHistorial,
   ...handlersEstadoTeorico,

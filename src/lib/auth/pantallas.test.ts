@@ -92,6 +92,7 @@ describe('menuPara', () => {
       'Turnos teóricos',
       'Escuadrón',
       'Alertas',
+      'Proyección',
       'Reportes y orden de mérito',
       'Documentos',
       'Cuestionario de práctica',
