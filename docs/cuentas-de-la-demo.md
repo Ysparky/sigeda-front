@@ -32,7 +32,7 @@ estuvo roto y se arregló con un `flush()`, ver `casos-de-uso-demo.md` §12—.
 | `instructor.mendoza` | 888888 | Instructor | — | lo mismo, sobre los turnos 5, 6 y 7 |
 | `alumno.lopez` | 111111 | Alumno | 1 | **tiene el examen abierto hoy** |
 | `alumno.falconi` | 222222 | Alumno | 2 | alumno sin nada: sirve para ver los índices en `null` |
-| `alumno.garcia` | 555555 | Alumno | 3 | **el alumno completo**: 17 evaluaciones, NFPI, puesto 1 |
+| `alumno.garcia` | 555555 | Alumno | 3 | **el alumno "dato de oro"**: 17 evaluaciones, NFPI, puesto 3 y debe un chequeo |
 | `alumno.torres` | 666666 | Alumno | 3 | **el alumno con problemas**: bloqueado por subsanación |
 | `alumno.ramirez` | 777777 | Alumno | 4 | un turno sin evaluar, de `instructor.mendoza` |
 | `alumno.castro` | 999999 | Alumno | 6 | dos turnos sin evaluar y dos exámenes entregados |
@@ -121,8 +121,10 @@ Esto es lo que decide a quién abrirle el legajo para que la pantalla tenga algo
 | Bloqueado por subsanación | no | no | no | **sí** | no | no |
 
 **`555555` y `666666` son la historia, y son opuestos a propósito** — están en el mismo grupo 3 para
-que se comparen en la misma pantalla. `555555` es el único con las doce sub fases calificadas, que
-es lo que vuelve el NFPI un número y lo pone **puesto 1** del orden de mérito. `666666` desaprobó
+que se comparen en la misma pantalla. `555555` tiene las doce sub fases calificadas y la teoría
+aprobada, que es lo que vuelve el NFPI un número y lo pone en el orden de mérito (**puesto 3**, detrás
+de `222222` y `777777`, que también completaron el programa); figura en el ranking y a la vez debe un
+chequeo. `666666` desaprobó
 tres exámenes de Adoctrinamiento de Vuelo (12.00 contra un mínimo de 18) y queda bloqueada con el
 motivo *«Desaprobó Mensual Adoctrinamiento de Vuelo (12.00 / mínimo 18). Subsanación pendiente.»*
 

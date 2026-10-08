@@ -26,7 +26,7 @@ remite al caso que lo detalla.
 | 1 | `instructor.perez` | recorrer el banco de preguntas y programar un turno teórico | **24** preguntas, cinco filtros; tres grupos propios (1, 2 y 3) | §5, §6 |
 | 2 | `instructor.perez` | **evaluar el turno 4** (`Navegación Local Inicial`, alumna `666666`) | 6 maniobras con exigencia **`R`**; el turno **no tiene evaluación** | §4 |
 | 3 | `alumno.lopez` | rendir su examen pendiente | turno teórico **3**, 5 preguntas, mínimo 18 → **nota 20, aprobado** | §7 |
-| 4 | `comandante.aguirre` | abrir el legajo de `555555` y el orden de mérito | `nfpi` 16.34 · `nia` 15.83 · `nit` 18.4 · **puesto 1**, con 5 sin puesto | §8, §9 |
+| 4 | `comandante.aguirre` | abrir el legajo de `555555` y el orden de mérito | `nfpi` 16.34 · `nia` 15.83 · `nit` 18.4 · **puesto 3** (detrás de `222222` y `777777`), con 3 sin puesto | §8, §9 |
 | 5 | `jefe.operaciones` | dar de alta un turno práctico | cualquiera de las **12** sub fases, con las maniobras que le son propias | §3 |
 | 6 | cualquiera | subir un documento, generar un cuestionario y consultarlo | nada reutilizable: **hay que subir uno nuevo** | §10 |
 
@@ -327,8 +327,10 @@ registrar cada evaluación, y de ellos sale `criterioCumplido`:
 mira la posición, da dos («tres consecutivas o cinco alternadas»). Son conteos.
 
 **Con los contadores reales, `555555` cumple el criterio 2 por la rama «4 Regulares alternados».** Es
-el mismo alumno que sale **puesto 1** del orden de mérito, y las dos cosas son correctas: el mérito
-mide el promedio ponderado y el chequeo mide la acumulación de vuelos bajo el estándar. Se puede
+un alumno que figura en el **orden de mérito (puesto 3)** y a la vez **debe un chequeo**, y las dos
+cosas son correctas: el mérito mide el promedio ponderado y el chequeo mide la acumulación de vuelos
+bajo el estándar. De hecho son el mismo origen: sus vuelos bajo el estándar le bajan el `NIA` —por eso
+queda detrás de `222222` y `777777`— y al mismo tiempo disparan el criterio de chequeo. Se puede
 auditar a mano en su historial — el Malo es `555555-10` y los Regulares son `555555-1`, `555555-3-2`,
 `555555-3-5` y `555555-11`.
 
@@ -360,9 +362,11 @@ sin `NSF` no hay fase, sin fase no hay `NIA`, y sin `NIA` no hay `NFPI` **aunque
 
 **Actor:** Comandante o Administrador (permiso `Create Reports`). `GET /api/reportes/orden-merito`.
 
-**Camino feliz:** `555555` sale **puesto 1**, con `nfpi` **16.34**, `nit` **18.40** y `nia`
-**15.83**. Los otros cinco alumnos salen **sin puesto, cada uno con su motivo**, y esa es la mitad
-útil de la pantalla: cuatro por la mitad teórica y `666666` porque le falta nota de sub fase.
+**Camino feliz:** el orden de mérito rankea a los **tres alumnos con el programa completo**: `222222`
+**puesto 1** (`nfpi` **17.33**, `nit` 18.40, `nia` 17.06), `777777` **puesto 2** (**17.18**) y `555555`
+**puesto 3** (**16.34**, `nit` 18.40, `nia` 15.83). Los otros tres salen **sin puesto, cada uno con su
+motivo** —`111111`, `666666` y `999999` siguen en curso, sin la mitad teórica o sin todas las sub
+fases—, y esa es la mitad útil de la pantalla: muestra exactamente qué le falta a cada uno.
 
 **Un alumno sin NFPI no se omite ni se pone último: se lista con `puesto: null` y el texto de lo que
 le falta.** El motivo es una frase completa que nombra cada fase y cada sub fase sin nota —se
