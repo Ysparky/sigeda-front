@@ -12,6 +12,9 @@ import type { Clasificacion } from '@/lib/dominio/vocabulario'
 export type EvaluacionResumen = {
   codigo: string
   nombre: string
+  // El backend la manda ya como texto de presentación: Ponderada, Chequeo, Chequeo Sub Fase,
+  // Complementación. Se pinta tal cual en el historial.
+  categoria: string
   fase: string
   evaluador: string
   fecha: string

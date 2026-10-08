@@ -52,6 +52,7 @@ function resumen(evaluacion: EvaluacionMock) {
   return {
     codigo: evaluacion.codigo,
     nombre: evaluacion.nombre,
+    categoria: evaluacion.categoria,
     fase: evaluacion.fase,
     evaluador: evaluacion.evaluador,
     fecha: evaluacion.fecha,

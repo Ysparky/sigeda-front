@@ -46,6 +46,7 @@ describe('api de evaluaciones', () => {
     expect(todas.items[0]).toEqual({
       codigo: '555555-1',
       nombre: 'Ponderada Control Básico 1',
+      categoria: 'Ponderada',
       fase: 'Adaptación',
       evaluador: 'Juan Torres',
       fecha: '2024-03-01',

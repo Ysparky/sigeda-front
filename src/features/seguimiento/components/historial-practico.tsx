@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import { ayudanteDeColumnas } from '@/components/columnas-tabla'
+import { Badge } from '@/components/ui/badge'
 import { DataTable } from '@/components/data-table'
 import { Enlace } from '@/components/enlace'
 import { EmptyState } from '@/components/empty-state'
@@ -38,6 +39,10 @@ const columnas = ayudante.columns([
         {contexto.getValue()}
       </span>
     ),
+  }),
+  ayudante.accessor('categoria', {
+    header: 'Tipo',
+    cell: (contexto) => <Badge variant="outline" className="font-normal">{contexto.getValue()}</Badge>,
   }),
   ayudante.accessor('fase', { header: 'Fase' }),
   ayudante.accessor('evaluador', { header: 'Evaluador' }),
