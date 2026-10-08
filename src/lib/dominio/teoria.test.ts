@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   alternativasRequeridas,
+  distribuirPuntaje,
+  elegirAlAzar,
   estadoDeVentana,
   etiquetaDeDificultad,
   etiquetaDeOrigen,
@@ -85,6 +87,36 @@ describe('ventana del examen', () => {
     expect(formatearRestante(59_000)).toBe('00:59')
     expect(formatearRestante(0)).toBe('00:00')
     expect(formatearRestante(3_900_000)).toBe('1:05:00')
+  })
+})
+
+describe('autogenerado de preguntas al azar', () => {
+  it('reparte 20 en enteros ≥ 1 que suman 20, lo más parejos posible', () => {
+    expect(distribuirPuntaje(5)).toEqual([4, 4, 4, 4, 4])
+    expect(distribuirPuntaje(4)).toEqual([5, 5, 5, 5])
+    const siete = distribuirPuntaje(7)
+    expect(siete.reduce((total, valor) => total + valor, 0)).toBe(20)
+    expect(siete).toEqual([3, 3, 3, 3, 3, 3, 2])
+    expect(distribuirPuntaje(20)).toHaveLength(20)
+    expect(distribuirPuntaje(20).every((valor) => valor === 1)).toBe(true)
+  })
+
+  it('no hay reparto para una cantidad fuera de 1..20', () => {
+    expect(distribuirPuntaje(0)).toEqual([])
+    expect(distribuirPuntaje(21)).toEqual([])
+    expect(distribuirPuntaje(2.5)).toEqual([])
+  })
+
+  it('elige la cantidad pedida de elementos distintos, acotada al tamaño de la lista', () => {
+    const banco = [10, 20, 30, 40, 50]
+    const cola = [0.99, 0, 0.5, 0]
+    const aleatorio = () => cola.shift() ?? 0
+    const elegidas = elegirAlAzar(banco, 3, aleatorio)
+    expect(elegidas).toHaveLength(3)
+    expect(new Set(elegidas).size).toBe(3)
+    expect(elegidas.every((valor) => banco.includes(valor))).toBe(true)
+    expect(elegirAlAzar(banco, 99)).toHaveLength(banco.length)
+    expect(elegirAlAzar(banco, 0)).toEqual([])
   })
 })
 

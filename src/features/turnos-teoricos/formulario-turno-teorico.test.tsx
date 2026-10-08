@@ -308,6 +308,29 @@ describe('Registrar y modificar turno teórico', () => {
     expect(screen.queryByLabelText('Nombre')).not.toBeInTheDocument()
   })
 
+  it('autogenera preguntas al azar cuyos puntajes suman 20 y habilita Guardar', async () => {
+    const { usuario } = await abrirRegistrar()
+    await llenarCabecera(usuario, 'Adoctrinamiento de Vuelo')
+
+    await usuario.click(screen.getByRole('button', { name: 'Autogenerar al azar' }))
+
+    // Con el reparto por defecto quedan cinco preguntas, cada una con su pregunta y su puntaje.
+    for (let numero = 1; numero <= 5; numero++) {
+      expect((screen.getByLabelText(`Pregunta ${numero}`) as HTMLSelectElement).value).not.toBe('')
+      expect((screen.getByLabelText(`Puntaje ${numero}`) as HTMLInputElement).value).not.toBe('')
+    }
+    expect(screen.queryByLabelText('Pregunta 6')).not.toBeInTheDocument()
+    expect(screen.getByText(textoPuntajeAsignado(20))).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Guardar turno teórico' })).toBeEnabled()
+  })
+
+  it('al modificar un turno no se ofrece autogenerar', async () => {
+    await iniciarComo('instructor.perez')
+    renderApp('/teoria/turnos/5/editar')
+    await screen.findByLabelText('Nombre')
+    expect(screen.queryByRole('button', { name: 'Autogenerar al azar' })).not.toBeInTheDocument()
+  })
+
   it('CA-TUT-14 fuera del modo mock y sin la dependencia 6 Guardar queda deshabilitado', async () => {
     vi.stubEnv('VITE_MOCK_API', 'false')
     const { usuario } = await abrirRegistrar()

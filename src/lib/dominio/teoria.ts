@@ -49,6 +49,37 @@ export const MENSAJE_RESPUESTA_OBLIGATORIA = 'La respuesta es obligatoria.'
 export const PUNTAJE_TOTAL_EXAMEN = 20
 export const VENTANA_MINIMA_MINUTOS = 10
 
+// La cantidad por defecto que propone el autogenerado: cinco preguntas de cuatro puntos es el reparto
+// más limpio de los 20, y es el que trae la semilla.
+export const CANTIDAD_AUTOGENERADA_POR_DEFECTO = 5
+
+/**
+ * Reparte `total` puntos en `cantidad` enteros ≥ 1 lo más parejos posible: los primeros `resto` llevan
+ * uno más. El esquema del examen exige puntajes enteros entre 1 y 20 que sumen 20, así que repartir en
+ * partes iguales no alcanza cuando 20 no es divisible por la cantidad (p. ej. 7 → 3,3,3,3,3,3,2).
+ * Fuera de 1..total no hay reparto posible con enteros ≥ 1, y devuelve una lista vacía.
+ */
+export function distribuirPuntaje(cantidad: number, total = PUNTAJE_TOTAL_EXAMEN): number[] {
+  if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > total) return []
+  const base = Math.floor(total / cantidad)
+  const resto = total % cantidad
+  return Array.from({ length: cantidad }, (_, indice) => (indice < resto ? base + 1 : base))
+}
+
+/**
+ * Elige `cantidad` elementos distintos al azar con un Fisher–Yates parcial. `aleatorio` se inyecta para
+ * poder probar la selección de forma determinista.
+ */
+export function elegirAlAzar<T>(items: readonly T[], cantidad: number, aleatorio: () => number = Math.random): T[] {
+  const copia = items.slice()
+  const tope = Math.max(0, Math.min(cantidad, copia.length))
+  for (let i = 0; i < tope; i++) {
+    const j = i + Math.floor(aleatorio() * (copia.length - i))
+    ;[copia[i], copia[j]] = [copia[j], copia[i]]
+  }
+  return copia.slice(0, tope)
+}
+
 export function minutosEntre(horaInicio: string, horaFin: string): number {
   const [hi, mi] = horaInicio.split(':').map(Number)
   const [hf, mf] = horaFin.split(':').map(Number)

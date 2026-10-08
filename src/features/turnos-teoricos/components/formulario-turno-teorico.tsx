@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Plus, TriangleAlert, X } from 'lucide-react'
+import { Plus, Shuffle, TriangleAlert, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -28,6 +28,9 @@ import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { accionDisponible } from '@/lib/dependencias'
 import { sumarDias } from '@/lib/dominio/calendario'
 import {
+  CANTIDAD_AUTOGENERADA_POR_DEFECTO,
+  distribuirPuntaje,
+  elegirAlAzar,
   exigeTurnoOrigen,
   PUNTAJE_TOTAL_EXAMEN,
   TEXTO_MATERIA_SIN_PREGUNTAS,
@@ -48,6 +51,7 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
   const queryClient = useQueryClient()
   const [erroresGenerales, setErroresGenerales] = useState<string[]>([])
   const [materiaPendiente, setMateriaPendiente] = useState<string | null>(null)
+  const [cantidadAutogenerar, setCantidadAutogenerar] = useState(CANTIDAD_AUTOGENERADA_POR_DEFECTO)
   const esquema = useMemo(() => crearEsquemaTurnoTeorico(new Date()), [])
   const formulario = useForm<ValoresTurnoTeorico>({ resolver: zodResolver(esquema), defaultValues: valoresIniciales })
   const { errors } = formulario.formState
@@ -91,6 +95,25 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
     origenElegido !== undefined &&
     valores.fechaExamen > sumarDias(origenElegido.fechaExamen, 1)
   const materiaSinPreguntas = valores.idMateria !== '' && banco.data?.length === 0
+  // No se pueden repartir 20 puntos enteros ≥ 1 entre más de 20 preguntas, ni elegir más de las que
+  // tiene el banco: ese es el techo del autogenerado.
+  const maximoAutogenerable = Math.min(banco.data?.length ?? 0, PUNTAJE_TOTAL_EXAMEN)
+  // Sólo al crear: reemplazar al azar las preguntas de un examen ya armado sería una sorpresa, no una
+  // ayuda. Al modificar se siguen agregando a mano.
+  const puedeAutogenerar = !modificando && valores.idMateria !== '' && maximoAutogenerable > 0
+
+  function autogenerarPreguntas() {
+    const disponibles = banco.data ?? []
+    const cantidad = Math.min(Math.max(1, cantidadAutogenerar), maximoAutogenerable)
+    const elegidas = elegirAlAzar(disponibles, cantidad)
+    const puntajes = distribuirPuntaje(elegidas.length)
+    preguntas.replace(
+      elegidas.map((pregunta, indice) => ({
+        idPregunta: String(pregunta.id),
+        puntajeMaximo: String(puntajes[indice]),
+      })),
+    )
+  }
 
   function confirmarMateria() {
     if (materiaPendiente === null) return
@@ -308,20 +331,41 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2">
+        <CardHeader className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
           <CardTitle>
             <h2>Preguntas</h2>
           </CardTitle>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={valores.idMateria === '' || banco.data?.length === 0}
-            onClick={() => preguntas.append({ idPregunta: '', puntajeMaximo: '' })}
-          >
-            <Plus aria-hidden />
-            Agregar pregunta
-          </Button>
+          <div className="flex flex-wrap items-end gap-2">
+            {puedeAutogenerar && (
+              <div className="flex items-end gap-2">
+                <Field className="w-24">
+                  <FieldLabel htmlFor="turno-teorico-cantidad-azar">Cantidad</FieldLabel>
+                  <Input
+                    id="turno-teorico-cantidad-azar"
+                    type="number"
+                    min={1}
+                    max={maximoAutogenerable}
+                    value={cantidadAutogenerar}
+                    onChange={(evento) => setCantidadAutogenerar(Number(evento.target.value))}
+                  />
+                </Field>
+                <Button type="button" variant="outline" size="sm" onClick={autogenerarPreguntas}>
+                  <Shuffle aria-hidden />
+                  Autogenerar al azar
+                </Button>
+              </div>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={valores.idMateria === '' || banco.data?.length === 0}
+              onClick={() => preguntas.append({ idPregunta: '', puntajeMaximo: '' })}
+            >
+              <Plus aria-hidden />
+              Agregar pregunta
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="grid gap-4">
           {valores.idMateria === '' && (
