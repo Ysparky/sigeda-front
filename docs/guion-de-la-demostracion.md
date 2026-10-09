@@ -214,8 +214,8 @@ acumula, y eso ya está en `CHEQUEO_PENDIENTE`.
 
 **Seguimiento → Reportes y orden de mérito.**
 
-La tabla rankea a los tres alumnos con el programa completo: **`222222` puesto 1** (NFPI 17.33),
-**`777777` puesto 2** (17.18) y **`555555` puesto 3** (16.34). Los otros tres salen **sin puesto, cada
+La tabla rankea a los tres alumnos con el programa completo: **`222222` puesto 1** (NFPI 17.13),
+**`777777` puesto 2** (16.89) y **`555555` puesto 3** (16.34). Los otros tres salen **sin puesto, cada
 uno con su motivo** — siguen en curso, sin la mitad teórica o sin todas las sub fases —, y esa es la
 mitad útil de la pantalla, no un hueco. El dato que vale: `555555` figura en el ranking **y** debe un
 chequeo; los vuelos bajo el estándar que lo dejan tercero son los mismos que disparan el chequeo.

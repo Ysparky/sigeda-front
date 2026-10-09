@@ -363,7 +363,7 @@ sin `NSF` no hay fase, sin fase no hay `NIA`, y sin `NIA` no hay `NFPI` **aunque
 **Actor:** Comandante o Administrador (permiso `Create Reports`). `GET /api/reportes/orden-merito`.
 
 **Camino feliz:** el orden de mérito rankea a los **tres alumnos con el programa completo**: `222222`
-**puesto 1** (`nfpi` **17.33**, `nit` 18.40, `nia` 17.06), `777777` **puesto 2** (**17.18**) y `555555`
+**puesto 1** (`nfpi` **17.13**, `nit` 18.40, `nia` 16.81), `777777` **puesto 2** (**16.89**) y `555555`
 **puesto 3** (**16.34**, `nit` 18.40, `nia` 15.83). Los otros tres salen **sin puesto, cada uno con su
 motivo** —`111111`, `666666` y `999999` siguen en curso, sin la mitad teórica o sin todas las sub
 fases—, y esa es la mitad útil de la pantalla: muestra exactamente qué le falta a cada uno.
