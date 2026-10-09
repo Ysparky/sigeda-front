@@ -111,8 +111,8 @@ en unas y `B` en otras → **Guardar evaluación**.
 Las preguntas salen rotuladas **`Pregunta 1 · 4 puntos`** y van cuatro tipos distintos: opción
 múltiple, verdadero/falso y completar. **Las respuestas se guardan solas** mientras se contesta.
 
-**Para que apruebe** (nota 20): `El PDI EA-510` · la segunda alternativa de la pregunta 2 ·
-`Verdadero` · escribir **`Regular`** en la de completar · y la tercera alternativa de la pregunta 5.
+**Para que apruebe** (nota 20): `El PDI EA-510` · `El Jefe de Operaciones` (pregunta 2) ·
+`Verdadero` · escribir **`Regular`** en la de completar · y `E` en la pregunta 5.
 
 **Entregar** → **Ver el resultado**: sale **20.0**, mínimo **18**, aprobado, y
 **Detalle de sus respuestas** con el puntaje pregunta por pregunta (`Pregunta 1 · 4 de 4`).
