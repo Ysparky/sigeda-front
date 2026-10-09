@@ -1,8 +1,11 @@
 # Guion de la demostración, clic por clic
 
-Los seis pasos del camino feliz, con qué escribir en cada campo y **qué tiene que aparecer**. Las
-etiquetas de abajo son las que el sistema usa de verdad, sacadas del código, no aproximadas.
+Los pasos de la demostración, con qué escribir en cada campo y **qué tiene que aparecer**. El camino
+es feliz salvo en el **Paso 2**, que a propósito abre dos recorridos: una evaluación que sale bien y
+otra que **dispara el ciclo de chequeo en vivo**. Las etiquetas de abajo son las que el sistema usa
+de verdad, sacadas del código, no aproximadas.
 
+- **El discurso para decir en voz alta**, de corrido y por paso, está al final en **«El speech»**.
 - **El entorno** —qué levantar y en qué orden— está en `demo-runbook.md`.
 - **Las alternativas** —qué pasa cuando algo se rechaza, con el mensaje literal— están en
   `casos-de-uso-demo.md`.
@@ -54,8 +57,49 @@ ventana dura **menos de 10 minutos** también. Son dos errores que se ven bien e
 
 ## Paso 2 · Registrar una evaluación práctica
 
-**Seguir como `instructor.perez`** — y esto importa: **sólo el instructor del turno puede evaluarlo**,
-ni siquiera el Administrador.
+Esta pantalla tiene **dos recorridos**, y conviene darle **un instructor a cada uno** para que se
+vean como lo que son: el día a día y la excepción.
+
+- **El flujo feliz** (`instructor.mendoza`): una ponderada dentro del estándar, sin más consecuencia.
+- **El flujo de chequeo** (`instructor.perez`): una ponderada bajo el estándar que, al guardarse,
+  **dispara el ciclo de chequeo en vivo** — el núcleo de la aplicación. Rendir el chequeo después es
+  **opcional** (§2.3).
+
+Y esto importa en los dos: **sólo el instructor del turno puede registrar su ponderada**, ni siquiera
+el Administrador.
+
+### 2.1 El flujo feliz — una evaluación dentro del estándar
+
+**Entrar como `instructor.mendoza`.**
+
+**Operaciones de vuelo → Programación de turnos → turno 7** (`Control Preciso Inicial`, alumno
+`999999` Luis Diaz). En la tarjeta del alumno, **Registrar evaluación**.
+
+| Campo | Qué poner |
+|---|---|
+| **Nombre** | `Ponderada Control Preciso` — entre 10 y 30 caracteres |
+| **Categoría** | `Ponderada` |
+| **Recomendación general** | `Mantener el nivel alcanzado` |
+
+Las seis maniobras exigen **`I`**. Poné `R` (sobre el estándar) o `I` (al estándar) en todas →
+**Guardar evaluación**. Sale un **Bueno**, sin causa que llenar y sin consecuencias: Luis sigue
+`Apto` y el orden de mérito no se mueve —es «sin puesto»—. Es el caso de todos los días, y el
+frontend **no recalcula nada**: muestra el promedio y la clasificación que decidió el backend.
+
+> **Lo que más conviene demostrar acá** es que la exigencia del turno no sólo pide: también **acota**
+> el DIRBE. Con mínimo `I` el selector deja elegir sólo `I` y `R`; con mínimo `R` dejaría
+> `I`·`R`·`B`. No es un fallo, es la tabla de combinaciones válidas:
+>
+> | Exige | Deja elegir | Cuenta como bajo el estándar |
+> |---|---|---|
+> | `D` (turno 6) | sólo `D` | — |
+> | **`I` (turno 7)** | `I` · `R` | — |
+> | `R` (turnos 4 y 5) | `I` · `R` · `B` | `I` |
+> | `B` (el resto) | `I` · `R` · `B` · `E` | `I` · `R` |
+
+### 2.2 El flujo de chequeo — una evaluación que dispara el ciclo en vivo
+
+**Entrar como `instructor.perez`.**
 
 **Operaciones de vuelo → Programación de turnos → turno 4** (`Navegación Local Inicial`, alumna
 `666666` Ana Torres). En la tarjeta de la alumna, **Registrar evaluación**.
@@ -64,37 +108,48 @@ ni siquiera el Administrador.
 |---|---|
 | **Nombre** | `Ponderada Nav Local 1` — entre 10 y 30 caracteres |
 | **Categoría** | `Ponderada` |
-| **Recomendación general** | `Reforzar lectura de cartas` |
+| **Recomendación general** | `Repetir la maniobra crítica` |
 
-En **Calificación por maniobra** hay seis filas, una por maniobra, y todas exigen **`R`**. Poné `R`
-en unas y `B` en otras → **Guardar evaluación**.
+Las seis maniobras exigen **`R`**. Poné una **`I`** en una fila —está bajo el estándar, así que la
+fila **exige causa, observación y recomendación** antes de dejar guardar— y `R`/`B` en el resto. Una
+sola `I` contra un mínimo de `R` fuerza **Vuelo Malo**, promedio **12.0**. **Guardar evaluación.**
 
-**Qué tiene que aparecer:** el servidor devuelve el promedio y la clasificación; con tres `R` y tres
-`B` da **18.8 · Bueno**. El frontend **no recalcula nada**: muestra lo que el backend decidió.
+**Y acá está lo que hay que mirar.** Ana ya llevaba **dos Malos y un Regular**. Éste es su **tercer
+Malo**, y como la última evaluación cae en **Navegación Visual** —una de las cuatro primeras fases—
+el sistema aplica el **Criterio 1**, cuya rama «3 Malos» queda cumplida. **En el mismo guardado Ana
+pasa a `En Chequeo`**: el ciclo no espera a que nadie se dé cuenta.
 
-> **Esto es lo que más conviene demostrar de toda la pantalla.** La exigencia del turno no sólo
-> pide: también **acota**. Con mínimo `R`, el DIRBE deja elegir `I`, `R` y `B`, y **`D` y `E`
-> aparecen deshabilitadas** — no es un fallo, es la tabla de combinaciones válidas.
+**Qué tiene que aparecer** al abrir su legajo (**Seguimiento → Escuadrón → `666666`**, panel *Ciclo
+de chequeo*):
+
+```
+estado        En Chequeo
+contadores    chequeo 0 · evaluaciones 3 · malos 3 · regulares 1
+criterio 1 (primeras cuatro fases)   CUMPLIDO: «3 Malos»
+```
+
+### 2.3 (Opcional) Rendir el chequeo — y cerrar el ciclo
+
+El chequeo lo rinde **otro instructor** —la regla del PDI—, y acá es `instructor.mendoza`, que
+instruye el turno 5.
+
+**Entrar como `instructor.mendoza` → turno 5** (`Aproximación IFR Inicial`, alumna `666666` Ana). Al
+registrar la evaluación, como Ana está `En Chequeo`, la categoría **`Chequeo`** ya aparece sugerida.
+Las dos maniobras exigen `R`: poné `R` o `B` en las dos —ninguna bajo el estándar— → **Guardar**.
+
+Al aprobar el chequeo estando `En Chequeo`, Ana pasa a **`En Observación`** y el ciclo queda cerrado.
+Si en cambio se rinde con alguna nota bajo el estándar, **no cierra**: ésa es la otra mitad de la
+regla.
+
+> **Los cuatro turnos sin evaluar** son los únicos donde todo esto se puede hacer. El 4 es de Ana y
+> de `instructor.perez`; los otros tres son de `instructor.mendoza`:
 >
-> | Exige | Deja elegir | Cuenta como bajo el estándar |
-> |---|---|---|
-> | `D` (turno 6) | sólo `D` | — |
-> | `I` (turno 7) | `I` · `R` | — |
-> | **`R` (turnos 4 y 5)** | `I` · `R` · `B` | `I` |
-> | `B` (el resto) | `I` · `R` · `B` · `E` | `I` · `R` |
->
-> Y si ponés una **`I`**, que está bajo el estándar, la fila **exige causa, observación y
-> recomendación** antes de dejar guardar. Una sola `I` contra un mínimo de `R` fuerza **Vuelo Malo**
-> y el promedio cae a 12.0: vale la pena mostrar las dos versiones.
-
-**Los cuatro turnos sin evaluar** son los únicos donde esto se puede hacer:
-
-| Turno | Sub fase | Exige | Instructor | Alumno |
-|---|---|---|---|---|
-| **4** | Navegación Local | **`R`** | `instructor.perez` | `666666` |
-| 5 | Procedimientos y Aproximación IFR | `R` | `instructor.mendoza` | `777777` |
-| 6 | Circuitos y Maniobras | `D` | `instructor.mendoza` | `999999` |
-| 7 | Control Preciso | `I` | `instructor.mendoza` | `999999` |
+> | Turno | Sub fase | Exige | Instructor | Alumno |
+> |---|---|---|---|---|
+> | **4** | Navegación Local | **`R`** | `instructor.perez` | `666666` (chequeo) |
+> | **5** | Procedimientos y Aproximación IFR | `R` | `instructor.mendoza` | `666666` (chequeo) · `777777` |
+> | 6 | Circuitos y Maniobras | `D` | `instructor.mendoza` | `999999` |
+> | **7** | Control Preciso | `I` | `instructor.mendoza` | `999999` (flujo feliz) |
 
 ---
 
@@ -312,12 +367,160 @@ contra el documento.
 
 ---
 
+## Paso 7 · El módulo de proyección
+
+**Entrar como `comandante.aguirre`** — ve todo el escuadrón.
+
+**Seguimiento → Proyección.** Es un **módulo nuevo, al nivel del de aprendizaje**: lo sirve el
+**backend de IA**, que toma el historial práctico de cada alumno —lo cruza por su código de persona
+de SIGEDA— y proyecta hacia dónde va.
+
+### 7.1 La lista
+
+Una tarjeta por alumno a tu alcance, **ordenadas por riesgo** (`bajo` · `medio` · `alto`), cada una
+con su insignia de riesgo y su tendencia. Entrar a una abre su detalle.
+
+### 7.2 El detalle del alumno
+
+**Seguimiento → Proyección → un alumno.** Lo que tiene que aparecer:
+
+- **La insignia de riesgo** arriba (`bajo` / `medio` / `alto`), con el mismo vocabulario de color que
+  las alertas del Paso 4.
+- **Cifras clave** — los números que resumen su desempeño.
+- **Tendencia y proyección** — un gráfico con la serie de sus puntajes y la proyección hacia
+  adelante, sobre las bandas `óptimo` / `regular` / `deficiente`.
+- **Recomendaciones** — priorizadas (alta/media/baja), con los mismos tonos que la severidad de
+  alerta.
+- **Desglose por maniobra** — cuántas veces cada maniobra quedó **bajo**, **al** o **sobre** el
+  estándar exigido; «Severos» es un subconjunto de «bajo».
+
+> Si un alumno aún no tiene evaluaciones, la vista lo dice —*«Todavía no hay datos suficientes para
+> proyectar»*— en vez de inventar una proyección. Un dato que falta no se disfraza de dato, igual que
+> en el orden de mérito (§4.5).
+
+---
+
 ## Lo que no se puede demostrar, para no quedar en falta
 
 - **El HISTORIAL de chequeos sale vacío** —`chequeos_finales` no tiene filas—, pero el **ciclo** sí
   dice algo (§4.3). Y el vacío es coherente, no un hueco: nadie cerró un ciclo todavía.
-- **La predicción de desempeño no tiene pantalla.** El backend responde —`555555` da 16
-  evaluaciones, riesgo bajo y tendencia al alza— pero ninguna vista la consume todavía.
 - **Eliminar una persona falla** si el usuario alguna vez inició sesión, por una clave ajena sin
   cascada en `refresh_tokens`.
 - **Modificar maniobra y eliminar fase** están deshabilitadas por el propio frontend.
+
+---
+
+## El speech — para decir en voz alta
+
+> Guion hablado, en primera persona y de corrido. Cada bloque va con el paso del mismo número; se
+> puede leer entero para ensayar o por partes mientras se hace clic. Entre corchetes van las
+> acotaciones de qué mostrar, no se leen.
+
+### Apertura
+
+«Buenos días. Les voy a mostrar **SIGEDA**, el sistema de gestión académica que desarrollamos para el
+Aeroclub Sudamericano de los Andes, una escuela de vuelo de helicópteros que forma pilotos bajo el
+programa PDI. El problema que resuelve es concreto: hoy la escuela lleva las evaluaciones, los
+exámenes y el seguimiento de cada alumno en papel y en hojas de cálculo sueltas, y eso hace que una
+nota mal promediada o un chequeo que se pasó por alto no se detecten a tiempo. SIGEDA toma las reglas
+del PDI tal como están escritas y las hace cumplir solas. Se los enseño en vivo.»
+
+### 1 · El banco de preguntas y programar un examen
+
+«Primero la parte teórica. Entro como instructor. [Banco de preguntas.] Acá está el banco: son
+veinticuatro preguntas, y se filtran por materia, dificultad, tipo, origen y texto. Fíjense que si
+busco "adoctrinamiento" sin tilde y en minúscula igual lo encuentra —la búsqueda ignora tildes y
+mayúsculas—. Ahora programo un examen: elijo la materia, el tipo, la fecha, el grupo, y le agrego
+cinco preguntas con su puntaje. Y acá ya empieza a cuidarme: si los puntajes no suman veinte, no me
+deja; si la ventana del examen dura menos de diez minutos, tampoco. No son avisos cosméticos, son
+reglas del reglamento metidas en el formulario.»
+
+### 2 · El corazón del sistema: de la evaluación al chequeo
+
+«Esta es la pantalla más importante de toda la tesis, así que me voy a detener. Una evaluación de
+vuelo no es ponerle un número a un alumno: es calificar cada maniobra contra el estándar que ese
+turno exige, y de ahí salen consecuencias que el sistema dispara solo. Les muestro los dos caminos
+con dos instructores distintos.»
+
+**[2.1 · el día normal]** «Entro como el instructor Mendoza y evalúo un turno de Control Preciso de
+Luis Díaz. [Abrir la calificación por maniobra.] Miren esto: el turno exige "Insuficiente" como
+mínimo, y el sistema **solo me deja elegir Insuficiente o Regular** —las otras notas están
+deshabilitadas—. No es un error: es la tabla de combinaciones válidas del DIRBE. Califico dentro del
+estándar, guardo, y el servidor me devuelve la nota y la clasificación. Sale Bueno. El alumno sigue
+apto y no pasó nada más. Este es el caso de todos los días.»
+
+**[2.2 · el caso que importa]** «Ahora el otro camino, con el instructor Pérez, sobre la alumna Ana
+Torres. Ana viene arrastrando dos vuelos Malos y un Regular. [Abrir el turno 4, Navegación Local.]
+Acá el turno exige Regular, así que el sistema me deja calificar bajo, al o sobre el estándar. Le
+pongo una Insuficiente a una maniobra —y fíjense que apenas marco una nota bajo el estándar, la fila
+me **obliga a escribir causa, observación y recomendación**: no se puede reprobar a alguien sin
+justificarlo—. Una sola Insuficiente contra un mínimo de Regular fuerza un Vuelo Malo, promedio doce.
+Guardo… **y miren lo que pasa.** [Ir al legajo de Ana, panel Ciclo de chequeo.] Este era su tercer
+vuelo Malo, y como cayó en Navegación Visual, el sistema aplica el Criterio 1 del PDI y me avisa:
+"alcanzó el criterio de chequeo, tres vuelos Malos". **Ana pasó a "En Chequeo" sola, en el mismo
+guardado.** El sistema no espera a que alguien sume los Malos a mano; los cuenta y, al tocar una de
+las ramas del criterio, marca que ese alumno debe un chequeo con otro instructor. Eso es la regla del
+reglamento funcionando en tiempo real.»
+
+**[2.3 · cerrar el ciclo, opcional]** «Y lo puedo cerrar en el acto. Entro como otro instructor
+—porque el chequeo lo tiene que rendir otro, no el mismo—, abro el turno de Ana, y ahora la categoría
+**"Chequeo" ya me aparece sugerida** porque el sistema sabe que lo debe. Lo rinde sin notas bajo el
+estándar, lo aprueba, y Ana pasa a "En Observación". El ciclo quedó cerrado, de punta a punta, sin que
+yo tuviera que acordarme de ninguna regla.»
+
+### 3 · Rendir un examen
+
+«Cambio de rol: ahora soy el alumno. [Mis exámenes.] Abro el examen que programamos. Las respuestas se
+guardan solas mientras contesto —si recargo la página a la mitad, no pierdo nada—; la pregunta de
+completar me perdona tildes, mayúsculas y espacios de más. Entrego, y veo mi nota al toque, con el
+puntaje pregunta por pregunta. Y si intento entregar dos veces, no me deja.»
+
+### 4 · El legajo, el chequeo y el orden de mérito
+
+«Entro como comandante, que ve todo el escuadrón. [Legajo de 555555.] Acá está el expediente completo
+de un alumno. Y este es el dato que quiero que se lleven: su nota de Control Básico sale 14.70, no el
+promedio simple de sus notas, porque **cada misión pesa según sus horas de vuelo**. La pantalla
+además dice que esa nota está calculada sobre el 44% de la sub fase, porque todavía le faltan
+misiones. [Legajo de 666666.] En cambio Ana tiene el índice en blanco, no en cero: y es a propósito,
+porque **un índice que falta no vale cero** —cero es una nota posible, y confundir las dos cosas es
+exactamente cómo se arma un orden de mérito falso—. [Panel de ciclo y alertas.] Las alertas salen
+ordenadas por severidad: lo que detiene al alumno arriba, lo que solo informa abajo. [Orden de
+mérito.] Y acá el dato de oro: este alumno es el puesto uno Y a la vez debe un chequeo. No es
+contradicción: el orden de mérito mide el promedio ponderado y el ciclo de chequeo mide la
+acumulación de vuelos bajo el estándar. Son dos cosas distintas, las dos correctas, y poder
+explicarlas por separado es justo lo que se le pide a un sistema de evaluación.»
+
+### 5 · Dar de alta un turno de vuelo
+
+«Como jefe de operaciones, programo un turno nuevo. [Registrar turno.] Elijo la sub fase y el
+selector me ofrece **solo las maniobras de esa sub fase**; de las tres aeronaves, solo el Robinson
+está disponible, las otras dos salen deshabilitadas por mantenimiento. Si pongo al mismo alumno en
+dos horarios que se cruzan, me lo rechaza —un alumno no puede estar en dos lugares—; pero si dos
+turnos comparten aeronave solo me avisa y me deja seguir, porque una aeronave sí se puede reasignar.»
+
+### 6 · El módulo de aprendizaje con IA
+
+«SIGEDA también tiene un módulo de estudio con inteligencia artificial. [Subir un documento.] Subo un
+material aeronáutico; en unos segundos queda listo y **el modelo le pone etiquetas solo**, a partir
+del contenido. Con ese documento genero un cuestionario de práctica, y las preguntas salen sobre el
+texto real, no genéricas. Y acá lo consulto como un chat: le pregunto algo y me responde **citando la
+fuente** —ese corchete uno es el documento—. Esa cita es lo que lo distingue de un chatbot
+cualquiera: la respuesta se puede verificar contra el material.»
+
+### 7 · La proyección de desempeño
+
+«Y cierro con un módulo nuevo, al nivel del de aprendizaje: la proyección. [Seguimiento →
+Proyección.] Acá la IA toma el historial de vuelo de cada alumno y proyecta hacia dónde va, ordenando
+la lista por riesgo para saber a quién revisar primero. [Abrir a Ana.] Entro a Ana —la misma que
+acabo de reprobar hace un momento— y el módulo ya lo refleja: su última nota es ese doce, la tendencia
+va en descenso, y el modelo proyecta las próximas evaluaciones con su banda de confianza. Abajo está
+el desglose por maniobra: cuántas veces cada una quedó bajo, al o sobre el estándar. Y si un alumno no
+tiene datos suficientes, el módulo lo dice en vez de inventar una proyección —el mismo principio de
+antes: un dato que falta no se disfraza de dato—.»
+
+### Cierre
+
+«Eso es SIGEDA. Lo que quisimos mostrar no es que guarda notas —eso lo hace cualquier planilla—, sino
+que **entiende las reglas del PDI y las hace cumplir solo**: pondera por horas, dispara el chequeo
+cuando toca, no confunde un cero con un dato que falta, y encima proyecta hacia adelante. Gracias;
+quedo atento a sus preguntas.»

@@ -402,10 +402,11 @@ documento y preguntar → la respuesta cita `[1]`, `[2]`… y cada fuente trae s
 Quedó en `ready` con **0 chunks**, así que el chat no encuentra nada en él; no hay ruta de
 reindexado y su archivo vivía en el almacenamiento anterior. Hay que volver a subirlo.
 
-**La predicción de desempeño responde bien pero no tiene pantalla.**
-`GET /prediction/students/{id}` de `555555` devuelve `evaluationCount: 16`, `discardedCount: 1`,
+**La predicción de desempeño YA TIENE pantalla: el módulo de proyección** (`Seguimiento →
+Proyección`, guion Paso 7), que consume este mismo endpoint del backend de IA. `GET
+/prediction/students/{id}` de `555555` devuelve `evaluationCount: 16`, `discardedCount: 1`,
 `latestScore: 17`, `riskLevel: "bajo"`, `trendDirection: "up"` y 10 filas de `maneuverBreakdown`.
-Se demuestra con `curl`. Tres cosas de esa respuesta que no hay que rotular mal:
+Tres cosas de esa respuesta que la pantalla —y cualquier `curl`— no deben rotular mal:
 
 - `latestScore` **no es un promedio**: es el `promedio` de la ÚLTIMA evaluación.
 - `latestEvaluation.sigedaClassification` es la clasificación de SIGEDA verbatim (Malo / Regular /
