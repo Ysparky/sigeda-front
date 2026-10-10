@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { getRouteApi, Link } from '@tanstack/react-router'
+import { getRouteApi, Link, useNavigate } from '@tanstack/react-router'
 import { CalendarPlus, PlaneTakeoff } from 'lucide-react'
+import { useState } from 'react'
 import { AvisoDeError } from '@/components/aviso-de-error'
+import { CalendarioMensual } from '@/components/calendario-mensual'
 import { DataTable } from '@/components/data-table'
 import { EmptyState } from '@/components/empty-state'
 import { PageHeader } from '@/components/page-header'
@@ -11,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { consultasCatalogos, PROGRAMAS } from '@/features/catalogos/api'
 import { usePuede } from '@/lib/auth/use-sesion'
+import { hoyIso, primerDiaDelMes } from '@/lib/dominio/calendario'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasTurnos } from './api'
 import { COLUMNAS_TURNOS } from './columnas'
@@ -25,6 +28,23 @@ export function TurnosPage() {
   const subfases = useQuery(consultasCatalogos.subfases())
   const turnos = useQuery(consultasTurnos.lista(busqueda))
   const errorDeTurnos = errorDePrimeraCarga(turnos)
+
+  const navegarA = useNavigate()
+  const [vista, setVista] = useState<'tabla' | 'calendario'>('tabla')
+  const [mes, setMes] = useState(() => primerDiaDelMes(hoyIso()))
+  // En calendario se trae el mes de una (size 100 cubre el programa); el componente
+  // muestra los del mes visible. Respeta los mismos filtros que la tabla.
+  const turnosDelMes = useQuery({
+    ...consultasTurnos.lista({ ...busqueda, page: 0, size: 100 }),
+    enabled: vista === 'calendario',
+  })
+  const errorDelMes = errorDePrimeraCarga(turnosDelMes)
+  const eventosDelMes = (turnosDelMes.data?.items ?? []).map((turno) => ({
+    id: String(turno.id),
+    fecha: turno.fechaEval,
+    titulo: turno.nombre,
+    subtitulo: turno.subfase,
+  }))
 
   function cambiar(cambios: Partial<BusquedaTurnos>) {
     void navegar({ search: (previa) => ({ ...previa, page: 0, ...cambios }) })
@@ -120,7 +140,31 @@ export function TurnosPage() {
       {(busqueda.desde === undefined) !== (busqueda.hasta === undefined) && (
         <p className="text-sm text-muted-foreground">Indique ambas fechas para filtrar por rango.</p>
       )}
-      {errorDeTurnos !== null ? (
+      <div role="group" aria-label="Vista" className="flex gap-1">
+        <Button size="sm" variant={vista === 'tabla' ? 'default' : 'outline'} onClick={() => setVista('tabla')}>
+          Tabla
+        </Button>
+        <Button
+          size="sm"
+          variant={vista === 'calendario' ? 'default' : 'outline'}
+          onClick={() => setVista('calendario')}
+        >
+          Calendario
+        </Button>
+      </div>
+      {vista === 'calendario' ? (
+        errorDelMes !== null ? (
+          <AvisoDeError error={errorDelMes} alReintentar={() => void turnosDelMes.refetch()} />
+        ) : (
+          <CalendarioMensual
+            mes={mes}
+            onMes={setMes}
+            etiqueta="Turnos programados"
+            eventos={eventosDelMes}
+            onEvento={(evento) => void navegarA({ to: '/turnos/$id', params: { id: evento.id } })}
+          />
+        )
+      ) : errorDeTurnos !== null ? (
         <AvisoDeError error={errorDeTurnos} alReintentar={() => void turnos.refetch()} />
       ) : (
         <DataTable

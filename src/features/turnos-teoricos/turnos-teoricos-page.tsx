@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { getRouteApi, Link } from '@tanstack/react-router'
+import { getRouteApi, Link, useNavigate } from '@tanstack/react-router'
 import { CalendarPlus } from 'lucide-react'
+import { useState } from 'react'
 import { AvisoDeError } from '@/components/aviso-de-error'
 import { AvisoDeDependencia } from '@/components/aviso-de-dependencia'
+import { CalendarioMensual } from '@/components/calendario-mensual'
 import { DataTable } from '@/components/data-table'
 import { EmptyState } from '@/components/empty-state'
 import { PageHeader } from '@/components/page-header'
@@ -15,6 +17,7 @@ import { PANTALLAS } from '@/lib/auth/pantallas'
 import { accionDisponible, MENSAJE_DEPENDENCIA_PENDIENTE } from '@/lib/dependencias'
 import { ESTADOS_TURNO, TEXTO_SIN_TURNOS_TEORICOS, TEXTO_TEORIA_SOLO_MOCK, TIPOS_EXAMEN } from '@/lib/dominio/teoria'
 import { termino } from '@/lib/dominio/vocabulario'
+import { hoyIso, primerDiaDelMes } from '@/lib/dominio/calendario'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasTurnosTeoricos } from './api'
 import { COLUMNAS_TURNOS_TEORICOS } from './columnas'
@@ -51,6 +54,21 @@ export function TurnosTeoricosPage() {
   const grupos = useQuery(consultasTurnosTeoricos.grupos('PDI'))
   const turnos = useQuery(consultasTurnosTeoricos.lista(busqueda))
   const error = errorDePrimeraCarga(turnos)
+
+  const navegarA = useNavigate()
+  const [vista, setVista] = useState<'tabla' | 'calendario'>('tabla')
+  const [mes, setMes] = useState(() => primerDiaDelMes(hoyIso()))
+  const turnosDelMes = useQuery({
+    ...consultasTurnosTeoricos.lista({ ...busqueda, page: 0, size: 100 }),
+    enabled: vista === 'calendario',
+  })
+  const errorDelMes = errorDePrimeraCarga(turnosDelMes)
+  const eventosDelMes = (turnosDelMes.data?.items ?? []).map((turno) => ({
+    id: String(turno.id),
+    fecha: turno.fechaExamen,
+    titulo: turno.nombre,
+    subtitulo: `${turno.materia} · ${turno.grupo}`,
+  }))
 
   function cambiar(cambios: Partial<BusquedaTurnosTeoricos>) {
     void navegar({ search: (previa) => ({ ...previa, page: 0, ...cambios }) })
@@ -178,7 +196,31 @@ export function TurnosTeoricosPage() {
           Limpiar filtros
         </Button>
       </section>
-      {error !== null ? (
+      <div role="group" aria-label="Vista" className="flex gap-1">
+        <Button size="sm" variant={vista === 'tabla' ? 'default' : 'outline'} onClick={() => setVista('tabla')}>
+          Tabla
+        </Button>
+        <Button
+          size="sm"
+          variant={vista === 'calendario' ? 'default' : 'outline'}
+          onClick={() => setVista('calendario')}
+        >
+          Calendario
+        </Button>
+      </div>
+      {vista === 'calendario' ? (
+        errorDelMes !== null ? (
+          <AvisoDeError error={errorDelMes} alReintentar={() => void turnosDelMes.refetch()} />
+        ) : (
+          <CalendarioMensual
+            mes={mes}
+            onMes={setMes}
+            etiqueta="Turnos teóricos programados"
+            eventos={eventosDelMes}
+            onEvento={(evento) => void navegarA({ to: '/teoria/turnos/$id', params: { id: evento.id } })}
+          />
+        )
+      ) : error !== null ? (
         <AvisoDeError error={error} alReintentar={() => void turnos.refetch()} />
       ) : (
         <DataTable
