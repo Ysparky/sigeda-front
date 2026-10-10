@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOptGroup, NativeSelectOption } from '@/components/ui/native-select'
 import { agruparPorGrupo, consultasCatalogos, PROGRAMAS, type Programa } from '@/features/catalogos/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
-import { hoyIso } from '@/lib/dominio/calendario'
+import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
 import { NOTAS_DIRBE } from '@/lib/dominio/dirbe'
 import {
   conflictosDeAeronave,
@@ -137,6 +137,7 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
               <Input
                 id="turno-fecha"
                 type="date"
+                min={sumarDias(hoyIso(), 1)}
                 aria-invalid={Boolean(errors.fechaEval)}
                 {...formulario.register('fechaEval')}
               />

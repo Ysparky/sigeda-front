@@ -26,7 +26,7 @@ import { consultasMaterias } from '@/features/materias/api'
 import { consultasPreguntas } from '@/features/preguntas/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { accionDisponible } from '@/lib/dependencias'
-import { sumarDias } from '@/lib/dominio/calendario'
+import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
 import {
   CANTIDAD_AUTOGENERADA_POR_DEFECTO,
   distribuirPuntaje,
@@ -271,6 +271,7 @@ export function FormularioTurnoTeorico({ valoresIniciales, idTurno }: Props) {
               <Input
                 id="turno-teorico-fecha"
                 type="date"
+                min={hoyIso()}
                 aria-invalid={Boolean(errors.fechaExamen)}
                 {...formulario.register('fechaExamen')}
               />
