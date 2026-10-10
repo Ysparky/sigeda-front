@@ -69,9 +69,9 @@ describe('menuPara', () => {
   it('CA-TUR-14 el alumno ve Mis turnos y Mis evaluaciones, no la programación general', () => {
     expect(titulosDelMenu('Alumno')).toEqual([
       'Inicio',
+      'Mis exámenes',
       'Mis turnos',
       'Mis evaluaciones',
-      'Mis exámenes',
       'Mi legajo',
       'Documentos',
       'Cuestionario de práctica',
@@ -85,11 +85,11 @@ describe('menuPara', () => {
       'Fases y subfases',
       'Maniobras',
       'Materias',
+      'Banco de preguntas',
+      'Turnos teóricos',
       'Programación de turnos',
       'Orden de vuelo del día',
       'Evaluaciones',
-      'Banco de preguntas',
-      'Turnos teóricos',
       'Escuadrón',
       'Alertas',
       'Proyección',
@@ -118,16 +118,15 @@ describe('menuPara', () => {
       'General',
       'Matrícula',
       'Programa',
-      'Operaciones de vuelo',
-      'Evaluaciones',
       'Teoría',
+      'Operaciones de vuelo',
+      'Evaluaciones de vuelo',
       'Seguimiento',
       'Aprendizaje',
     ])
     expect(secciones[2]?.pantallas.map((pantalla) => pantalla.titulo)).toEqual([
       'Fases y subfases',
       'Maniobras',
-      'Materias',
     ])
   })
 })

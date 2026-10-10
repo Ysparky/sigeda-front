@@ -39,19 +39,23 @@ export type GrupoMenu =
   | 'General'
   | 'Matrícula'
   | 'Programa'
-  | 'Operaciones de vuelo'
-  | 'Evaluaciones'
   | 'Teoría'
+  | 'Operaciones de vuelo'
+  | 'Evaluaciones de vuelo'
   | 'Seguimiento'
   | 'Aprendizaje'
 
+// El orden sigue el flujo real del PDI: primero se configura (Matrícula, Programa);
+// después corre el programa en su secuencia —la instrucción en tierra (Teoría) es la
+// 1ª parte y va ANTES de volar, luego Operaciones de vuelo y sus Evaluaciones—; al
+// final Seguimiento, donde las dos mitades convergen (legajo, NFPI), y Aprendizaje.
 export const ORDEN_GRUPOS: readonly GrupoMenu[] = [
   'General',
   'Matrícula',
   'Programa',
-  'Operaciones de vuelo',
-  'Evaluaciones',
   'Teoría',
+  'Operaciones de vuelo',
+  'Evaluaciones de vuelo',
   'Seguimiento',
   'Aprendizaje',
 ]
@@ -176,7 +180,7 @@ export const PANTALLAS = {
     ruta: '/turnos/$id/evaluar/$alumno',
     titulo: 'Registrar evaluación',
     descripcion: 'Califique cada maniobra del turno.',
-    grupo: 'Evaluaciones',
+    grupo: 'Evaluaciones de vuelo',
     icono: ClipboardList,
     permiso: 'Write',
     padre: '/turnos/$id',
@@ -196,7 +200,7 @@ export const PANTALLAS = {
     ruta: '/evaluaciones',
     titulo: 'Evaluaciones',
     descripcion: 'Evaluaciones prácticas de cada alumno.',
-    grupo: 'Evaluaciones',
+    grupo: 'Evaluaciones de vuelo',
     icono: ClipboardList,
     permiso: 'Read',
     roles: PERSONAL,
@@ -206,7 +210,7 @@ export const PANTALLAS = {
     ruta: '/evaluaciones/$cod',
     titulo: 'Detalle de evaluación',
     descripcion: 'Calificación de cada maniobra de la evaluación.',
-    grupo: 'Evaluaciones',
+    grupo: 'Evaluaciones de vuelo',
     icono: ClipboardList,
     permiso: 'Read',
     padre: '/evaluaciones',
@@ -216,7 +220,7 @@ export const PANTALLAS = {
     ruta: '/evaluaciones/$cod/editar',
     titulo: 'Modificar evaluación',
     descripcion: 'Corrija la última evaluación del alumno.',
-    grupo: 'Evaluaciones',
+    grupo: 'Evaluaciones de vuelo',
     icono: ClipboardList,
     permiso: 'Modify Evaluations',
     padre: '/evaluaciones/$cod',
@@ -226,7 +230,7 @@ export const PANTALLAS = {
     ruta: '/mis-evaluaciones',
     titulo: 'Mis evaluaciones',
     descripcion: 'Sus evaluaciones prácticas y su clasificación.',
-    grupo: 'Evaluaciones',
+    grupo: 'Evaluaciones de vuelo',
     icono: ClipboardCheck,
     permiso: 'Read',
     roles: SOLO_ALUMNO,
@@ -396,7 +400,7 @@ export const PANTALLAS = {
     ruta: '/programa/materias',
     titulo: 'Materias',
     descripcion: 'Materias del curso en tierra con su nota mínima y coeficiente.',
-    grupo: 'Programa',
+    grupo: 'Teoría',
     icono: BookOpen,
     permiso: 'Read',
     roles: PERSONAL,
