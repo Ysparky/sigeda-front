@@ -27,7 +27,7 @@ export function ProyeccionPage() {
       <PageHeader titulo={PANTALLAS.proyeccion.titulo} descripcion={PANTALLAS.proyeccion.descripcion} />
       {error !== null ? (
         <AvisoDeError error={error} alReintentar={() => void proyecciones.refetch()} />
-      ) : proyecciones.isPending ? (
+      ) : proyecciones.isPending || !proyecciones.data ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, indice) => (
             <Skeleton key={indice} className="h-36 w-full" />

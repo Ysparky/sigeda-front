@@ -24,7 +24,7 @@ export function ProyeccionAlumnoPage({ studentId }: { studentId: string }) {
     )
   }
 
-  if (proyeccion.isPending) {
+  if (proyeccion.isPending || !proyeccion.data) {
     return (
       <>
         <PageHeader titulo="Proyección del alumno" />

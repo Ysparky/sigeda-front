@@ -80,7 +80,7 @@ const lopez = {
   insufficientData: true,
 }
 
-const PROYECCIONES = { [ID_PROY_GARCIA]: garcia, [ID_PROY_LOPEZ]: lopez }
+const PROYECCIONES: Record<string, unknown> = { [ID_PROY_GARCIA]: garcia, [ID_PROY_LOPEZ]: lopez }
 
 function resumen(proyeccion: typeof garcia | typeof lopez) {
   return {
