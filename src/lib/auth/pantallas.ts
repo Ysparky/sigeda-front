@@ -40,6 +40,7 @@ export type GrupoMenu =
   | 'Matrícula'
   | 'Programa'
   | 'Teoría'
+  | 'Vuelo'
   | 'Operaciones de vuelo'
   | 'Evaluaciones de vuelo'
   | 'Seguimiento'
@@ -54,6 +55,10 @@ export const ORDEN_GRUPOS: readonly GrupoMenu[] = [
   'Matrícula',
   'Programa',
   'Teoría',
+  // 'Vuelo' agrupa las pantallas del ALUMNO (Mis turnos + Mis evaluaciones), que de otro modo
+  // quedarían como dos grupos de un solo ítem. El personal no tiene ítems en 'Vuelo' —usa
+  // 'Operaciones de vuelo' y 'Evaluaciones de vuelo'—, así que el grupo no le aparece.
+  'Vuelo',
   'Operaciones de vuelo',
   'Evaluaciones de vuelo',
   'Seguimiento',
@@ -190,7 +195,7 @@ export const PANTALLAS = {
     ruta: '/mis-turnos',
     titulo: 'Mis turnos',
     descripcion: 'Sus turnos de vuelo programados.',
-    grupo: 'Operaciones de vuelo',
+    grupo: 'Vuelo',
     icono: Plane,
     permiso: 'Read',
     roles: SOLO_ALUMNO,
@@ -230,7 +235,7 @@ export const PANTALLAS = {
     ruta: '/mis-evaluaciones',
     titulo: 'Mis evaluaciones',
     descripcion: 'Sus evaluaciones prácticas y su clasificación.',
-    grupo: 'Evaluaciones de vuelo',
+    grupo: 'Vuelo',
     icono: ClipboardCheck,
     permiso: 'Read',
     roles: SOLO_ALUMNO,
