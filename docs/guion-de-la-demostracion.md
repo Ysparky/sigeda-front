@@ -325,6 +325,30 @@ después, poné `R`**, que es la exigencia donde se puede calificar bajo, al y s
 **Conservar sub fase** o **Cambiar y quitar maniobras**. Las maniobras son de la sub fase, así que
 no pueden sobrevivir al cambio.
 
+### 5.1 · El bloqueo cruzado: la teoría habilita (o no) el vuelo
+
+En el **mismo formulario de registro**, agregá un segundo alumno para mostrar las dos caras de la
+regla cruzada teoría→vuelo (PDI §3.4, dependencia 7). No depende de Ana —ella es el chequeo—: acá
+se contrastan dos alumnos distintos.
+
+**El que SÍ se puede programar (aprobó la teoría).** En *Alumno 1* ya está **`Juan Falconi`** (el
+`222222`). Tiene **toda la teoría aprobada**, así que **no aparece ningún aviso** bajo su fila y el
+botón **«Guardar turno» queda habilitado**.
+
+**El que NO se puede programar (reprobó → subsanación).** **Agregar alumno → Alumno 2 = `Luis Diaz`**
+(el `999999`; el selector muestra el nombre). Debajo de su fila aparece en rojo:
+
+> **Subsanación pendiente: Desaprobó Test Aerodinámica Aplicada a Helicópteros (10.00 / mínimo 16). Subsanación pendiente.**
+
+y **«Guardar turno» se deshabilita**: el sistema **no deja** programar a un alumno con la teoría sin
+subsanar. **Quitar a `Luis Diaz`** (dejar solo a Falconi) → el error desaparece, el botón se
+rehabilita y **se guarda**.
+
+**El remate, para decir en voz alta:** la nota de teoría no es un papel aparte —mientras Luis no
+subsane Aerodinámica, el sistema le **cierra la puerta al vuelo**; apenas la apruebe, se abre sola—.
+Y no es sólo un aviso de pantalla: si alguien forzara el guardado por la API, el backend **lo
+rechaza igual**, con el código del alumno en el mensaje (`POST`/`PUT /api/turnos`).
+
 ---
 
 ## Paso 6 · El módulo de aprendizaje

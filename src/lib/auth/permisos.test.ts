@@ -57,6 +57,29 @@ describe('permisosDeRol replica Role.java', () => {
     expect(permisosDeRol('Administrador Web').has('Take Exams')).toBe(false)
   })
 
+  it('Coordinador Académico gestiona cursos, matrículas, grupos y asistencia', () => {
+    const p = permisosDeRol('Coordinador Académico')
+    expect([...p].sort()).toEqual(
+      [
+        'Read',
+        'Manage Courses',
+        'Manage Enrollments',
+        'Manage Groups',
+        'Manage Attendance',
+        'Create Reports',
+        'View All Groups',
+      ].sort(),
+    )
+  })
+
+  it('Postulante solo ve su matrícula', () => {
+    expect([...permisosDeRol('Postulante')]).toEqual(['View My Enrollment'])
+  })
+
+  it('Instructor gana Manage Attendance para registrar asistencia por sesión', () => {
+    expect(permisosDeRol('Instructor').has('Manage Attendance')).toBe(true)
+  })
+
   it('un rol desconocido no tiene permisos', () => {
     expect(permisosDeRol('Visitante').size).toBe(0)
   })

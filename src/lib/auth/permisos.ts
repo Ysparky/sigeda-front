@@ -21,7 +21,15 @@ export const PERMISOS_BACKEND = [
 
 export const PERMISOS_CONTRATO = ['Manage Subjects', 'Manage Questions', 'Manage Exams', 'Take Exams'] as const
 
-export const PERMISOS = [...PERMISOS_BACKEND, ...PERMISOS_CONTRATO] as const
+// Tramo de entrada (landing, matrícula, asistencia): roles Coordinador Académico y Postulante.
+export const PERMISOS_INSCRIPCION = [
+  'Manage Courses',
+  'Manage Enrollments',
+  'Manage Attendance',
+  'View My Enrollment',
+] as const
+
+export const PERMISOS = [...PERMISOS_BACKEND, ...PERMISOS_CONTRATO, ...PERMISOS_INSCRIPCION] as const
 
 export type Permiso = (typeof PERMISOS)[number]
 
@@ -71,7 +79,18 @@ const PERMISOS_POR_ROL: Record<string, readonly Permiso[]> = {
     'View My Group',
     'Manage Questions',
     'Manage Exams',
+    'Manage Attendance',
   ],
+  'Coordinador Académico': [
+    'Read',
+    'Manage Courses',
+    'Manage Enrollments',
+    'Manage Groups',
+    'Manage Attendance',
+    'Create Reports',
+    'View All Groups',
+  ],
+  Postulante: ['View My Enrollment'],
   // Sin `Manage Groups`: la dependencia 4 lo dejó solo en el Administrador Web, porque gestionar
   // grupos es matrícula y no operaciones de vuelo. `contrato-api-turnos.md` lo documentaba al revés
   // como desvío deliberado; la 4 lo revirtió y esa línea es la que cedió. No rompe el formulario de
