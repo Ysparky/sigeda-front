@@ -83,12 +83,11 @@ const PERMISOS_POR_ROL: Record<string, readonly Permiso[]> = {
   ],
   'Coordinador Académico': [
     'Read',
+    'Update',
     'Manage Courses',
     'Manage Enrollments',
     'Manage Groups',
     'Manage Attendance',
-    'Create Reports',
-    'View All Groups',
   ],
   Postulante: ['View My Enrollment'],
   // Sin `Manage Groups`: la dependencia 4 lo dejó solo en el Administrador Web, porque gestionar

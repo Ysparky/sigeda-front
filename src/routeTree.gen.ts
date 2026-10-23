@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as BienvenidaRouteImport } from './routes/bienvenida'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MatriculaRouteImport } from './routes/matricula'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppCuentaRouteImport } from './routes/_app/cuenta'
 import { Route as AppGuiaRouteImport } from './routes/_app/guia'
@@ -68,9 +70,19 @@ const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BienvenidaRoute = BienvenidaRouteImport.update({
+  id: '/bienvenida',
+  path: '/bienvenida',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MatriculaRoute = MatriculaRouteImport.update({
+  id: '/matricula',
+  path: '/matricula',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -348,7 +360,9 @@ const AppTurnosIdEvaluarAlumnoRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/bienvenida': typeof BienvenidaRoute
   '/login': typeof LoginRoute
+  '/matricula': typeof MatriculaRoute
   '/cuenta': typeof AppCuentaRoute
   '/guia': typeof AppGuiaRoute
   '/mi-legajo': typeof AppMiLegajoRoute
@@ -402,7 +416,9 @@ export interface FileRoutesByFullPath {
   '/teoria/turnos/$id/': typeof AppTeoriaTurnosIdIndexRoute
 }
 export interface FileRoutesByTo {
+  '/bienvenida': typeof BienvenidaRoute
   '/login': typeof LoginRoute
+  '/matricula': typeof MatriculaRoute
   '/cuenta': typeof AppCuentaRoute
   '/guia': typeof AppGuiaRoute
   '/mi-legajo': typeof AppMiLegajoRoute
@@ -459,7 +475,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/bienvenida': typeof BienvenidaRoute
   '/login': typeof LoginRoute
+  '/matricula': typeof MatriculaRoute
   '/_app/cuenta': typeof AppCuentaRoute
   '/_app/guia': typeof AppGuiaRoute
   '/_app/mi-legajo': typeof AppMiLegajoRoute
@@ -517,7 +535,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/bienvenida'
     | '/login'
+    | '/matricula'
     | '/cuenta'
     | '/guia'
     | '/mi-legajo'
@@ -571,7 +591,9 @@ export interface FileRouteTypes {
     | '/teoria/turnos/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/bienvenida'
     | '/login'
+    | '/matricula'
     | '/cuenta'
     | '/guia'
     | '/mi-legajo'
@@ -627,7 +649,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_app'
+    | '/bienvenida'
     | '/login'
+    | '/matricula'
     | '/_app/cuenta'
     | '/_app/guia'
     | '/_app/mi-legajo'
@@ -684,7 +708,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  BienvenidaRoute: typeof BienvenidaRoute
   LoginRoute: typeof LoginRoute
+  MatriculaRoute: typeof MatriculaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -696,11 +722,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bienvenida': {
+      id: '/bienvenida'
+      path: '/bienvenida'
+      fullPath: '/bienvenida'
+      preLoaderRoute: typeof BienvenidaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/matricula': {
+      id: '/matricula'
+      path: '/matricula'
+      fullPath: '/matricula'
+      preLoaderRoute: typeof MatriculaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/': {
@@ -1185,7 +1225,9 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  BienvenidaRoute: BienvenidaRoute,
   LoginRoute: LoginRoute,
+  MatriculaRoute: MatriculaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

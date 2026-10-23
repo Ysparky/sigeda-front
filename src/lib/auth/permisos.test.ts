@@ -60,15 +60,7 @@ describe('permisosDeRol replica Role.java', () => {
   it('Coordinador Académico gestiona cursos, matrículas, grupos y asistencia', () => {
     const p = permisosDeRol('Coordinador Académico')
     expect([...p].sort()).toEqual(
-      [
-        'Read',
-        'Manage Courses',
-        'Manage Enrollments',
-        'Manage Groups',
-        'Manage Attendance',
-        'Create Reports',
-        'View All Groups',
-      ].sort(),
+      ['Read', 'Update', 'Manage Courses', 'Manage Enrollments', 'Manage Groups', 'Manage Attendance'].sort(),
     )
   })
 
