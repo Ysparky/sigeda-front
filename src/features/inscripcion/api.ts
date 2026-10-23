@@ -46,3 +46,69 @@ export const catalogoQuery = () => queryOptions({ queryKey: clavesInscripcion.ca
 
 export const cursoQuery = (id: number) =>
   queryOptions({ queryKey: clavesInscripcion.curso(id), queryFn: () => obtenerCurso(id) })
+
+// --- Matrícula ---
+
+export type EstadoMatricula = 'PENDIENTE' | 'VALIDADA' | 'RECHAZADA'
+
+export type DatosMatricula = {
+  idCurso: number
+  dni: string
+  nombres: string
+  aPaterno: string
+  aMaterno: string
+  correo: string
+  contacto: string
+  idHorario: number | null
+  password: string
+}
+
+export type MiMatricula = {
+  id: number
+  idCurso: number | null
+  dni: string
+  nombres: string
+  aPaterno: string
+  aMaterno: string
+  correo: string
+  contacto: string | null
+  idHorario: number | null
+  estado: EstadoMatricula
+  motivoRechazo: string | null
+}
+
+const esquemaMia = z.object({
+  id: z.number(),
+  idCurso: z.number().nullable(),
+  dni: z.string(),
+  nombres: z.string(),
+  aPaterno: z.string(),
+  aMaterno: z.string(),
+  correo: z.string(),
+  contacto: z.string().nullable(),
+  idHorario: z.number().nullable(),
+  estado: z.enum(['PENDIENTE', 'VALIDADA', 'RECHAZADA']),
+  motivoRechazo: z.string().nullable(),
+})
+
+export const clavesMia = { mia: () => [...clavesInscripcion.todo, 'mia'] as const }
+
+export async function crearMatricula(datos: DatosMatricula, comprobante: File): Promise<{ matriculaId: number }> {
+  const formulario = new FormData()
+  formulario.append('datos', new Blob([JSON.stringify(datos)], { type: 'application/json' }))
+  formulario.append('comprobante', comprobante, comprobante.name)
+  return sigeda.multipart('POST', '/api/public/matriculas', formulario)
+}
+
+export async function obtenerMiMatricula(): Promise<MiMatricula> {
+  return esquemaMia.parse(await sigeda.get<unknown>('/api/matriculas/mia'))
+}
+
+export async function reenviarComprobante(comprobante: File): Promise<{ mensaje: string }> {
+  const formulario = new FormData()
+  formulario.append('comprobante', comprobante, comprobante.name)
+  return sigeda.multipart('PUT', '/api/matriculas/mia', formulario)
+}
+
+export const miMatriculaQuery = () =>
+  queryOptions({ queryKey: clavesMia.mia(), queryFn: obtenerMiMatricula, retry: false })

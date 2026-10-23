@@ -19,6 +19,7 @@ type Metodo = 'GET' | 'POST' | 'PUT' | 'DELETE'
 type Opciones = {
   cuerpo?: unknown
   archivo?: File
+  formulario?: FormData
   parametros?: Parametros
   senal?: AbortSignal
   reintentar?: boolean
@@ -71,14 +72,18 @@ function esNoEncontrado(error: unknown) {
 
 export function crearCliente(base: string, autenticacion: Autenticacion) {
   async function solicitar<T>(metodo: Metodo, ruta: string, opciones: Opciones = {}): Promise<T> {
-    const { cuerpo, archivo, parametros, senal, reintentar = true } = opciones
+    const { cuerpo, archivo, formulario: formularioDado, parametros, senal, reintentar = true } = opciones
     const cabeceras: Record<string, string> = { Accept: 'application/json' }
     if (cuerpo !== undefined) cabeceras['Content-Type'] = 'application/json'
     const token = autenticacion.obtenerToken()
     if (token) cabeceras.Authorization = `Bearer ${token}`
 
     let carga: BodyInit | undefined
-    if (archivo !== undefined) {
+    if (formularioDado !== undefined) {
+      // Multipart ya armado (p. ej. una parte JSON + el comprobante). No se fija Content-Type: el
+      // navegador pone el boundary de multipart/form-data.
+      carga = formularioDado
+    } else if (archivo !== undefined) {
       const formulario = new FormData()
       formulario.append(CAMPO_ARCHIVO, archivo, archivo.name)
       carga = formulario
@@ -135,6 +140,10 @@ export function crearCliente(base: string, autenticacion: Autenticacion) {
     return solicitar<T>('POST', ruta, { archivo, senal })
   }
 
+  function multipart<T>(metodo: Metodo, ruta: string, formulario: FormData, senal?: AbortSignal) {
+    return solicitar<T>(metodo, ruta, { formulario, senal })
+  }
+
   async function pagina<T>(ruta: string, parametros?: Parametros): Promise<Pagina<T>> {
     try {
       return aPagina(validarEnvoltorio<T>(ruta, await get<unknown>(ruta, parametros)))
@@ -153,7 +162,7 @@ export function crearCliente(base: string, autenticacion: Autenticacion) {
     }
   }
 
-  return { get, post, put, eliminar, subirArchivo, pagina, lista }
+  return { get, post, put, eliminar, subirArchivo, multipart, pagina, lista }
 }
 
 export type ClienteHttp = ReturnType<typeof crearCliente>

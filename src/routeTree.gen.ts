@@ -13,6 +13,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as BienvenidaRouteImport } from './routes/bienvenida'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MatriculaRouteImport } from './routes/matricula'
+import { Route as MiMatriculaRouteImport } from './routes/mi-matricula'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppCuentaRouteImport } from './routes/_app/cuenta'
 import { Route as AppGuiaRouteImport } from './routes/_app/guia'
@@ -83,6 +84,11 @@ const LoginRoute = LoginRouteImport.update({
 const MatriculaRoute = MatriculaRouteImport.update({
   id: '/matricula',
   path: '/matricula',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MiMatriculaRoute = MiMatriculaRouteImport.update({
+  id: '/mi-matricula',
+  path: '/mi-matricula',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -363,6 +369,7 @@ export interface FileRoutesByFullPath {
   '/bienvenida': typeof BienvenidaRoute
   '/login': typeof LoginRoute
   '/matricula': typeof MatriculaRoute
+  '/mi-matricula': typeof MiMatriculaRoute
   '/cuenta': typeof AppCuentaRoute
   '/guia': typeof AppGuiaRoute
   '/mi-legajo': typeof AppMiLegajoRoute
@@ -419,6 +426,7 @@ export interface FileRoutesByTo {
   '/bienvenida': typeof BienvenidaRoute
   '/login': typeof LoginRoute
   '/matricula': typeof MatriculaRoute
+  '/mi-matricula': typeof MiMatriculaRoute
   '/cuenta': typeof AppCuentaRoute
   '/guia': typeof AppGuiaRoute
   '/mi-legajo': typeof AppMiLegajoRoute
@@ -478,6 +486,7 @@ export interface FileRoutesById {
   '/bienvenida': typeof BienvenidaRoute
   '/login': typeof LoginRoute
   '/matricula': typeof MatriculaRoute
+  '/mi-matricula': typeof MiMatriculaRoute
   '/_app/cuenta': typeof AppCuentaRoute
   '/_app/guia': typeof AppGuiaRoute
   '/_app/mi-legajo': typeof AppMiLegajoRoute
@@ -538,6 +547,7 @@ export interface FileRouteTypes {
     | '/bienvenida'
     | '/login'
     | '/matricula'
+    | '/mi-matricula'
     | '/cuenta'
     | '/guia'
     | '/mi-legajo'
@@ -594,6 +604,7 @@ export interface FileRouteTypes {
     | '/bienvenida'
     | '/login'
     | '/matricula'
+    | '/mi-matricula'
     | '/cuenta'
     | '/guia'
     | '/mi-legajo'
@@ -652,6 +663,7 @@ export interface FileRouteTypes {
     | '/bienvenida'
     | '/login'
     | '/matricula'
+    | '/mi-matricula'
     | '/_app/cuenta'
     | '/_app/guia'
     | '/_app/mi-legajo'
@@ -711,6 +723,7 @@ export interface RootRouteChildren {
   BienvenidaRoute: typeof BienvenidaRoute
   LoginRoute: typeof LoginRoute
   MatriculaRoute: typeof MatriculaRoute
+  MiMatriculaRoute: typeof MiMatriculaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -741,6 +754,13 @@ declare module '@tanstack/react-router' {
       path: '/matricula'
       fullPath: '/matricula'
       preLoaderRoute: typeof MatriculaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mi-matricula': {
+      id: '/mi-matricula'
+      path: '/mi-matricula'
+      fullPath: '/mi-matricula'
+      preLoaderRoute: typeof MiMatriculaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/': {
@@ -1228,6 +1248,7 @@ const rootRouteChildren: RootRouteChildren = {
   BienvenidaRoute: BienvenidaRoute,
   LoginRoute: LoginRoute,
   MatriculaRoute: MatriculaRoute,
+  MiMatriculaRoute: MiMatriculaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

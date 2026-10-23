@@ -27,19 +27,29 @@ export function exigirPantalla(pantalla: Pantalla, actual: Sesion | null, esDesa
  */
 export function destinoSeguro(destino: string | undefined, actual?: Sesion | null,
     esDesarrollo: boolean = import.meta.env.DEV): string {
-  if (!destino) return '/'
+  if (!destino) return hogarDe(actual)
   let url: URL
   try {
     url = new URL(destino, window.location.origin)
   } catch {
-    return '/'
+    return hogarDe(actual)
   }
-  if (url.origin !== window.location.origin) return '/'
-  if (url.pathname.startsWith('//')) return '/'
-  if (url.pathname.startsWith('/login')) return '/'
+  if (url.origin !== window.location.origin) return hogarDe(actual)
+  if (url.pathname.startsWith('//')) return hogarDe(actual)
+  if (url.pathname.startsWith('/login')) return hogarDe(actual)
 
   const pantalla = pantallaPorRuta(url.pathname)
-  if (pantalla && actual && !pantallaVisible(pantalla, actual, esDesarrollo)) return '/'
+  if (pantalla && actual && !pantallaVisible(pantalla, actual, esDesarrollo)) return hogarDe(actual)
 
   return url.pathname + url.search + url.hash
+}
+
+/**
+ * La página de inicio de una sesión. El Postulante (tramo de entrada) no tiene la pantalla de Inicio
+ * —solo «View My Enrollment»—, así que su hogar es el seguimiento de su matrícula y no `/`, donde
+ * caería en «Acceso restringido».
+ */
+function hogarDe(actual?: Sesion | null): string {
+  if (actual?.permisos.has('View My Enrollment')) return '/mi-matricula'
+  return '/'
 }
