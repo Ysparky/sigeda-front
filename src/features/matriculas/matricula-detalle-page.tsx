@@ -44,6 +44,11 @@ export function MatriculaDetallePage({ id }: { id: number }) {
     onError: (e) => toast.error(e instanceof Error ? e.message : 'No se pudo validar la matrícula.'),
   })
 
+  const verComprobante = useMutation({
+    mutationFn: () => abrirComprobante(id),
+    onError: () => toast.error('No se pudo abrir el comprobante.'),
+  })
+
   if (error !== null) return <AvisoDeError error={error} alReintentar={() => void matricula.refetch()} />
   if (!matricula.data) return <p className="text-sm text-muted-foreground">Cargando la matrícula…</p>
 
@@ -68,9 +73,15 @@ export function MatriculaDetallePage({ id }: { id: number }) {
             <Dato termino="Fecha de solicitud" valor={m.fecha} />
           </dl>
 
-          <Button type="button" variant="outline" className="w-fit" onClick={() => void abrirComprobante(id)}>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-fit"
+            disabled={verComprobante.isPending}
+            onClick={() => verComprobante.mutate()}
+          >
             <FileText aria-hidden />
-            Ver comprobante
+            {verComprobante.isPending ? 'Abriendo…' : 'Ver comprobante'}
           </Button>
 
           {m.estado === 'RECHAZADA' && m.motivoRechazo && (

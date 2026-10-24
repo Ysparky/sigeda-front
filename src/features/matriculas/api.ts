@@ -88,4 +88,6 @@ export async function abrirComprobante(id: number): Promise<void> {
   if (!respuesta.ok) throw new Error('No se pudo descargar el comprobante.')
   const url = URL.createObjectURL(await respuesta.blob())
   window.open(url, '_blank', 'noopener')
+  // El object URL se libera tras dar tiempo a que la pestaña nueva lo cargue.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
