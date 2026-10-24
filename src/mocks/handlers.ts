@@ -4,6 +4,7 @@ import { handlersCuestionarios } from './ia/cuestionarios'
 import { handlersDocumentos } from './ia/documentos'
 import { handlersProyeccion } from './ia/proyeccion'
 import { handlersAlumnos } from './sigeda/alumnos'
+import { handlersAsistencias } from './sigeda/asistencias'
 import { handlersAuth } from './sigeda/auth'
 import { handlersCatalogos } from './sigeda/catalogos'
 import { handlersChequeos } from './sigeda/chequeos'
@@ -29,6 +30,7 @@ import { handlersTurnosTeoricos } from './sigeda/turnos-teoricos'
 export const handlers: RequestHandler[] = [
   ...handlersAuth,
   ...handlersInscripcion,
+  ...handlersAsistencias,
   ...handlersCatalogos,
   ...handlersCuentas,
   ...handlersPersonas,

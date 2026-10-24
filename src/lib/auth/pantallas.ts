@@ -191,6 +191,16 @@ export const PANTALLAS = {
     padre: '/turnos/$id',
     enMenu: false,
   },
+  registrarAsistencia: {
+    ruta: '/turnos/$id/asistencia',
+    titulo: 'Asistencia del turno',
+    descripcion: 'Marca la presencia de cada alumno del turno práctico.',
+    grupo: 'Operaciones de vuelo',
+    icono: CalendarCheck,
+    permiso: 'Manage Attendance',
+    padre: '/turnos/$id',
+    enMenu: false,
+  },
   misTurnos: {
     ruta: '/mis-turnos',
     titulo: 'Mis turnos',
@@ -577,6 +587,15 @@ export const PANTALLAS = {
     permiso: 'View My Group',
     padre: '/seguimiento/proyeccion',
     enMenu: false,
+  },
+  asistencia: {
+    ruta: '/asistencias',
+    titulo: 'Asistencia',
+    descripcion: 'Inasistencia de vuelo por alumno y la condición EN RIESGO (> 30 %).',
+    grupo: 'Seguimiento',
+    icono: CalendarCheck,
+    permiso: 'Manage Attendance',
+    enMenu: true,
   },
   reportes: {
     ruta: '/reportes',

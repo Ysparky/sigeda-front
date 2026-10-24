@@ -93,6 +93,7 @@ describe('menuPara', () => {
       'Escuadrón',
       'Alertas',
       'Proyección',
+      'Asistencia',
       'Reportes y orden de mérito',
       'Documentos',
       'Cuestionario de práctica',
