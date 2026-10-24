@@ -6,11 +6,13 @@ import {
   Layers,
   Mail,
   MapPin,
+  Menu,
   Phone,
   Play,
   Plane,
   ShieldCheck,
   Users,
+  X,
 } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { AvisoDeError } from '@/components/aviso-de-error'
@@ -25,10 +27,9 @@ const BODY = '#5B6072'
 const MUTED = '#A6ACBE'
 const SURFACE = '#F8F8F8'
 
-const BTN_ORO =
-  'font-display inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-bold uppercase tracking-wider transition hover:brightness-95'
-const BTN_LINEA =
-  'font-display inline-flex items-center justify-center gap-2 rounded-full border px-7 py-3.5 text-sm font-bold uppercase tracking-wider transition hover:bg-white/10'
+const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D8B858] focus-visible:ring-offset-2'
+const BTN_ORO = `font-display inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-bold uppercase tracking-wider transition hover:brightness-95 ${FOCO}`
+const BTN_LINEA = `font-display inline-flex items-center justify-center gap-2 rounded-full border px-7 py-3.5 text-sm font-bold uppercase tracking-wider transition hover:bg-white/10 ${FOCO}`
 
 const NAV = [
   { href: '#inicio', texto: 'Inicio' },
@@ -145,45 +146,94 @@ export function LandingPage() {
 }
 
 function Nav({ activo }: { activo: string }) {
+  const [abierto, setAbierto] = useState(false)
   return (
     <header
       className="sticky top-0 z-50 border-b border-white/10 backdrop-blur"
       style={{ backgroundColor: 'rgba(16,26,60,0.92)' }}
     >
       <div className="mx-auto flex h-20 max-w-[1170px] items-center justify-between px-4 sm:px-6">
-        <Link to="/" aria-label="Aeroclub Sudamericano de los Andes — inicio" className="flex items-center">
+        <Link to="/" aria-label="Aeroclub Sudamericano de los Andes — inicio" className={`flex items-center rounded ${FOCO}`}>
           <span className="inline-flex rounded-md bg-white px-2.5 py-1.5">
             <img src="/asa-logo.png" alt="Aeroclub Sudamericano de los Andes" className="h-9 w-auto" />
           </span>
         </Link>
-        <div className="hidden items-center gap-7 lg:flex">
+        <nav aria-label="Secciones" className="hidden items-center gap-7 lg:flex">
           {NAV.map((item) => {
             const esActivo = activo === item.href.slice(1)
             return (
               <a
                 key={item.href}
                 href={item.href}
-                className="font-display text-sm font-bold uppercase tracking-wide text-white/90 hover:text-white"
+                aria-current={esActivo ? 'true' : undefined}
+                className={`font-display rounded text-sm font-bold uppercase tracking-wide text-white/90 hover:text-white ${FOCO}`}
                 style={esActivo ? { color: '#fff', borderBottom: `2px solid ${GOLD}`, paddingBottom: 2 } : undefined}
               >
                 {item.texto}
               </a>
             )
           })}
-        </div>
+        </nav>
         <div className="flex items-center gap-3">
-          <Link
-            to="/login"
-            search={{}}
-            className="font-display hidden text-sm font-bold uppercase tracking-wide text-white/90 hover:text-white sm:inline"
+          <div className="hidden items-center gap-4 lg:flex">
+            <Link
+              to="/login"
+              search={{}}
+              className={`font-display rounded text-sm font-bold uppercase tracking-wide text-white/90 hover:text-white ${FOCO}`}
+            >
+              Iniciar sesión
+            </Link>
+            <a href="#cursos" className={BTN_ORO} style={{ backgroundColor: GOLD, color: NAVY }}>
+              Inscríbete
+            </a>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAbierto((v) => !v)}
+            aria-expanded={abierto}
+            aria-controls="menu-movil"
+            aria-label={abierto ? 'Cerrar menú' : 'Abrir menú'}
+            className={`grid size-10 place-items-center rounded-md text-white lg:hidden ${FOCO}`}
           >
-            Iniciar sesión
-          </Link>
-          <a href="#cursos" className={BTN_ORO} style={{ backgroundColor: GOLD, color: NAVY }}>
-            Inscríbete
-          </a>
+            {abierto ? <X className="size-6" aria-hidden /> : <Menu className="size-6" aria-hidden />}
+          </button>
         </div>
       </div>
+
+      {abierto && (
+        <nav id="menu-movil" aria-label="Secciones" className="border-t border-white/10 px-4 pb-5 pt-2 lg:hidden">
+          {NAV.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              onClick={() => setAbierto(false)}
+              aria-current={activo === item.href.slice(1) ? 'true' : undefined}
+              className={`font-display block rounded px-2 py-3 text-sm font-bold uppercase tracking-wide ${FOCO}`}
+              style={{ color: activo === item.href.slice(1) ? GOLD : '#ffffffcc' }}
+            >
+              {item.texto}
+            </a>
+          ))}
+          <div className="mt-2 flex flex-col gap-3 border-t border-white/10 pt-4">
+            <Link
+              to="/login"
+              search={{}}
+              onClick={() => setAbierto(false)}
+              className={`font-display rounded px-2 text-sm font-bold uppercase tracking-wide text-white/80 ${FOCO}`}
+            >
+              Iniciar sesión
+            </Link>
+            <a
+              href="#cursos"
+              onClick={() => setAbierto(false)}
+              className={BTN_ORO}
+              style={{ backgroundColor: GOLD, color: NAVY }}
+            >
+              Inscríbete
+            </a>
+          </div>
+        </nav>
+      )}
     </header>
   )
 }
@@ -329,14 +379,13 @@ function SeccionMetodo() {
         </div>
         <div className="relative">
           <Foto ratio={1.1} className="h-full min-h-[20rem]" etiqueta="Video de la escuela" />
-          <button
-            type="button"
-            aria-label="Reproducir video"
-            className="absolute inset-0 m-auto grid size-20 place-items-center rounded-full text-white shadow-lg transition hover:scale-105"
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 m-auto grid size-20 place-items-center rounded-full shadow-lg"
             style={{ backgroundColor: GOLD, color: NAVY }}
           >
-            <Play className="size-7 translate-x-0.5 fill-current" aria-hidden />
-          </button>
+            <Play className="size-7 translate-x-0.5 fill-current" />
+          </span>
         </div>
       </div>
     </section>
