@@ -30,6 +30,7 @@ import { Route as AppEvaluacionesIndexRouteImport } from './routes/_app/evaluaci
 import { Route as AppExamenesIndexRouteImport } from './routes/_app/examenes/index'
 import { Route as AppGruposIndexRouteImport } from './routes/_app/grupos/index'
 import { Route as AppGruposNuevoRouteImport } from './routes/_app/grupos/nuevo'
+import { Route as AppMatriculasIndexRouteImport } from './routes/_app/matriculas/index'
 import { Route as AppPersonasIndexRouteImport } from './routes/_app/personas/index'
 import { Route as AppPersonasCodRouteImport } from './routes/_app/personas/$cod'
 import { Route as AppPersonasNuevaRouteImport } from './routes/_app/personas/nueva'
@@ -45,6 +46,7 @@ import { Route as AppExamenesIdIndexRouteImport } from './routes/_app/examenes/$
 import { Route as AppExamenesIdResultadoRouteImport } from './routes/_app/examenes/$id/resultado'
 import { Route as AppGruposIdIndexRouteImport } from './routes/_app/grupos/$id/index'
 import { Route as AppGruposIdEditarRouteImport } from './routes/_app/grupos/$id/editar'
+import { Route as AppMatriculasIdIndexRouteImport } from './routes/_app/matriculas/$id/index'
 import { Route as AppProgramaFasesIndexRouteImport } from './routes/_app/programa/fases/index'
 import { Route as AppProgramaFasesNuevaRouteImport } from './routes/_app/programa/fases/nueva'
 import { Route as AppProgramaManiobrasIndexRouteImport } from './routes/_app/programa/maniobras/index'
@@ -172,6 +174,11 @@ const AppGruposNuevoRoute = AppGruposNuevoRouteImport.update({
   path: '/grupos/nuevo',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMatriculasIndexRoute = AppMatriculasIndexRouteImport.update({
+  id: '/matriculas/',
+  path: '/matriculas/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPersonasIndexRoute = AppPersonasIndexRouteImport.update({
   id: '/personas/',
   path: '/personas/',
@@ -246,6 +253,11 @@ const AppGruposIdIndexRoute = AppGruposIdIndexRouteImport.update({
 const AppGruposIdEditarRoute = AppGruposIdEditarRouteImport.update({
   id: '/grupos/$id/editar',
   path: '/grupos/$id/editar',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMatriculasIdIndexRoute = AppMatriculasIdIndexRouteImport.update({
+  id: '/matriculas/$id/',
+  path: '/matriculas/$id/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProgramaFasesIndexRoute = AppProgramaFasesIndexRouteImport.update({
@@ -391,6 +403,7 @@ export interface FileRoutesByFullPath {
   '/evaluaciones/': typeof AppEvaluacionesIndexRoute
   '/examenes/': typeof AppExamenesIndexRoute
   '/grupos/': typeof AppGruposIndexRoute
+  '/matriculas/': typeof AppMatriculasIndexRoute
   '/personas/': typeof AppPersonasIndexRoute
   '/seguimiento/': typeof AppSeguimientoIndexRoute
   '/turnos/': typeof AppTurnosIndexRoute
@@ -406,6 +419,7 @@ export interface FileRoutesByFullPath {
   '/evaluaciones/$cod/': typeof AppEvaluacionesCodIndexRoute
   '/examenes/$id/': typeof AppExamenesIdIndexRoute
   '/grupos/$id/': typeof AppGruposIdIndexRoute
+  '/matriculas/$id/': typeof AppMatriculasIdIndexRoute
   '/programa/fases/': typeof AppProgramaFasesIndexRoute
   '/programa/maniobras/': typeof AppProgramaManiobrasIndexRoute
   '/seguimiento/proyeccion/': typeof AppSeguimientoProyeccionIndexRoute
@@ -449,6 +463,7 @@ export interface FileRoutesByTo {
   '/evaluaciones': typeof AppEvaluacionesIndexRoute
   '/examenes': typeof AppExamenesIndexRoute
   '/grupos': typeof AppGruposIndexRoute
+  '/matriculas': typeof AppMatriculasIndexRoute
   '/personas': typeof AppPersonasIndexRoute
   '/seguimiento': typeof AppSeguimientoIndexRoute
   '/turnos': typeof AppTurnosIndexRoute
@@ -464,6 +479,7 @@ export interface FileRoutesByTo {
   '/evaluaciones/$cod': typeof AppEvaluacionesCodIndexRoute
   '/examenes/$id': typeof AppExamenesIdIndexRoute
   '/grupos/$id': typeof AppGruposIdIndexRoute
+  '/matriculas/$id': typeof AppMatriculasIdIndexRoute
   '/programa/fases': typeof AppProgramaFasesIndexRoute
   '/programa/maniobras': typeof AppProgramaManiobrasIndexRoute
   '/seguimiento/proyeccion': typeof AppSeguimientoProyeccionIndexRoute
@@ -509,6 +525,7 @@ export interface FileRoutesById {
   '/_app/evaluaciones/': typeof AppEvaluacionesIndexRoute
   '/_app/examenes/': typeof AppExamenesIndexRoute
   '/_app/grupos/': typeof AppGruposIndexRoute
+  '/_app/matriculas/': typeof AppMatriculasIndexRoute
   '/_app/personas/': typeof AppPersonasIndexRoute
   '/_app/seguimiento/': typeof AppSeguimientoIndexRoute
   '/_app/turnos/': typeof AppTurnosIndexRoute
@@ -524,6 +541,7 @@ export interface FileRoutesById {
   '/_app/evaluaciones/$cod/': typeof AppEvaluacionesCodIndexRoute
   '/_app/examenes/$id/': typeof AppExamenesIdIndexRoute
   '/_app/grupos/$id/': typeof AppGruposIdIndexRoute
+  '/_app/matriculas/$id/': typeof AppMatriculasIdIndexRoute
   '/_app/programa/fases/': typeof AppProgramaFasesIndexRoute
   '/_app/programa/maniobras/': typeof AppProgramaManiobrasIndexRoute
   '/_app/seguimiento/proyeccion/': typeof AppSeguimientoProyeccionIndexRoute
@@ -569,6 +587,7 @@ export interface FileRouteTypes {
     | '/evaluaciones/'
     | '/examenes/'
     | '/grupos/'
+    | '/matriculas/'
     | '/personas/'
     | '/seguimiento/'
     | '/turnos/'
@@ -584,6 +603,7 @@ export interface FileRouteTypes {
     | '/evaluaciones/$cod/'
     | '/examenes/$id/'
     | '/grupos/$id/'
+    | '/matriculas/$id/'
     | '/programa/fases/'
     | '/programa/maniobras/'
     | '/seguimiento/proyeccion/'
@@ -627,6 +647,7 @@ export interface FileRouteTypes {
     | '/evaluaciones'
     | '/examenes'
     | '/grupos'
+    | '/matriculas'
     | '/personas'
     | '/seguimiento'
     | '/turnos'
@@ -642,6 +663,7 @@ export interface FileRouteTypes {
     | '/evaluaciones/$cod'
     | '/examenes/$id'
     | '/grupos/$id'
+    | '/matriculas/$id'
     | '/programa/fases'
     | '/programa/maniobras'
     | '/seguimiento/proyeccion'
@@ -686,6 +708,7 @@ export interface FileRouteTypes {
     | '/_app/evaluaciones/'
     | '/_app/examenes/'
     | '/_app/grupos/'
+    | '/_app/matriculas/'
     | '/_app/personas/'
     | '/_app/seguimiento/'
     | '/_app/turnos/'
@@ -701,6 +724,7 @@ export interface FileRouteTypes {
     | '/_app/evaluaciones/$cod/'
     | '/_app/examenes/$id/'
     | '/_app/grupos/$id/'
+    | '/_app/matriculas/$id/'
     | '/_app/programa/fases/'
     | '/_app/programa/maniobras/'
     | '/_app/seguimiento/proyeccion/'
@@ -875,6 +899,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGruposNuevoRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/matriculas/': {
+      id: '/_app/matriculas/'
+      path: '/matriculas'
+      fullPath: '/matriculas/'
+      preLoaderRoute: typeof AppMatriculasIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/personas/': {
       id: '/_app/personas/'
       path: '/personas'
@@ -978,6 +1009,13 @@ declare module '@tanstack/react-router' {
       path: '/grupos/$id/editar'
       fullPath: '/grupos/$id/editar'
       preLoaderRoute: typeof AppGruposIdEditarRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/matriculas/$id/': {
+      id: '/_app/matriculas/$id/'
+      path: '/matriculas/$id'
+      fullPath: '/matriculas/$id/'
+      preLoaderRoute: typeof AppMatriculasIdIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/programa/fases/': {
@@ -1153,6 +1191,7 @@ interface AppRouteChildren {
   AppEvaluacionesIndexRoute: typeof AppEvaluacionesIndexRoute
   AppExamenesIndexRoute: typeof AppExamenesIndexRoute
   AppGruposIndexRoute: typeof AppGruposIndexRoute
+  AppMatriculasIndexRoute: typeof AppMatriculasIndexRoute
   AppPersonasIndexRoute: typeof AppPersonasIndexRoute
   AppSeguimientoIndexRoute: typeof AppSeguimientoIndexRoute
   AppTurnosIndexRoute: typeof AppTurnosIndexRoute
@@ -1168,6 +1207,7 @@ interface AppRouteChildren {
   AppEvaluacionesCodIndexRoute: typeof AppEvaluacionesCodIndexRoute
   AppExamenesIdIndexRoute: typeof AppExamenesIdIndexRoute
   AppGruposIdIndexRoute: typeof AppGruposIdIndexRoute
+  AppMatriculasIdIndexRoute: typeof AppMatriculasIdIndexRoute
   AppProgramaFasesIndexRoute: typeof AppProgramaFasesIndexRoute
   AppProgramaManiobrasIndexRoute: typeof AppProgramaManiobrasIndexRoute
   AppSeguimientoProyeccionIndexRoute: typeof AppSeguimientoProyeccionIndexRoute
@@ -1208,6 +1248,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppEvaluacionesIndexRoute: AppEvaluacionesIndexRoute,
   AppExamenesIndexRoute: AppExamenesIndexRoute,
   AppGruposIndexRoute: AppGruposIndexRoute,
+  AppMatriculasIndexRoute: AppMatriculasIndexRoute,
   AppPersonasIndexRoute: AppPersonasIndexRoute,
   AppSeguimientoIndexRoute: AppSeguimientoIndexRoute,
   AppTurnosIndexRoute: AppTurnosIndexRoute,
@@ -1224,6 +1265,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppEvaluacionesCodIndexRoute: AppEvaluacionesCodIndexRoute,
   AppExamenesIdIndexRoute: AppExamenesIdIndexRoute,
   AppGruposIdIndexRoute: AppGruposIdIndexRoute,
+  AppMatriculasIdIndexRoute: AppMatriculasIdIndexRoute,
   AppProgramaFasesIndexRoute: AppProgramaFasesIndexRoute,
   AppProgramaManiobrasIndexRoute: AppProgramaManiobrasIndexRoute,
   AppSeguimientoProyeccionIndexRoute: AppSeguimientoProyeccionIndexRoute,

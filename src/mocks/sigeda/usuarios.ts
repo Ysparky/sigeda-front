@@ -17,6 +17,7 @@ export const ROLES_MOCK: RolMock[] = [
   { id: 3, nombre: 'Jefe de Operaciones', descripcion: 'Supervisión de operaciones y gestión de programas' },
   { id: 4, nombre: 'Instructor', descripcion: 'Evaluación y seguimiento de alumnos' },
   { id: 5, nombre: 'Comandante de Escuadrón', descripcion: 'Gestión de grupos y supervisión de instructores' },
+  { id: 6, nombre: 'Coordinador Académico', descripcion: 'Gestiona cursos, matrículas y grupos del tramo de entrada' },
 ]
 
 function usuario(id: number, username: string, correo: string, codPersona: string, idRol: number | null): UsuarioMock {
@@ -37,5 +38,6 @@ export function crearUsuarios(): UsuarioMock[] {
     usuario(10, 'admin.sistema', 'admin@sigeda.com', '000001', 2),
     usuario(11, 'comandante.aguirre', 'comandante@sigeda.com', '222444', 5),
     usuario(12, 'raul.paredes', 'raul.paredes@sigeda.com', '765432', null),
+    usuario(13, 'coordinador.rivas', 'coordinador@sigeda.com', '700000', 6),
   ]
 }

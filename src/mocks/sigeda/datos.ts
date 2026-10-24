@@ -304,6 +304,7 @@ export function crearDatos(hoy: string = hoyIso()): DatosMock {
     persona('222444', 'Jorge', 'Aguirre', 'Salas', '22244411', 'Mayor', null, null),
     persona('654321', 'Lucía', 'Mendoza', 'Ríos', '76543210', 'Cadete', 'Alumno', null),
     persona('765432', 'Raúl', 'Paredes', 'Soto', '75432109', 'Teniente', null, null),
+    persona('700000', 'Elena', 'Rivas', 'Campos', '70000070', null, null, null),
   ]
   for (const [codigo, ultima] of [
     ['111111', '111111-1'],

@@ -44,7 +44,9 @@ type MatriculaMock = {
   correo: string
   contacto: string | null
   idHorario: number | null
+  fecha: string
   estado: 'PENDIENTE' | 'VALIDADA' | 'RECHAZADA'
+  comprobanteTipo: string
   motivoRechazo: string | null
   codPersona: string | null
 }
@@ -69,7 +71,9 @@ export function sembrarMatriculaMock(matricula: Partial<MatriculaMock> & { codPe
     correo: 'rosa@correo.com',
     contacto: '999111222',
     idHorario: 1,
+    fecha: '2026-10-20',
     estado: 'PENDIENTE',
+    comprobanteTipo: 'application/pdf',
     motivoRechazo: null,
     ...matricula,
   }
@@ -108,6 +112,62 @@ export const handlersInscripcion = [
     fila.estado = 'PENDIENTE'
     fila.motivoRechazo = null
     return HttpResponse.json({ mensaje: 'Comprobante reenviado; tu matrícula volvió a estar pendiente.' })
+  }),
+
+  http.get(`${API}/api/matriculas`, ({ request }) => {
+    if (!usuarioAutenticado(request)) return errorResponse(401, 'Unauthorized', 'Token is not valid')
+    const estado = new URL(request.url).searchParams.get('estado')
+    const filas = matriculasMock
+      .filter((m) => !estado || m.estado === estado)
+      .map(({ id, idCurso, dni, nombres, aPaterno, aMaterno, correo, fecha, estado: e }) => ({
+        id,
+        idCurso,
+        dni,
+        nombres,
+        aPaterno,
+        aMaterno,
+        correo,
+        fecha,
+        estado: e,
+      }))
+    return HttpResponse.json(filas)
+  }),
+
+  http.get(`${API}/api/matriculas/:id/comprobante`, ({ request, params }) => {
+    if (!usuarioAutenticado(request)) return errorResponse(401, 'Unauthorized', 'Token is not valid')
+    const fila = matriculasMock.find((m) => String(m.id) === params.id)
+    if (!fila) return new HttpResponse(null, { status: 404 })
+    return HttpResponse.arrayBuffer(new Uint8Array([0x25, 0x50, 0x44, 0x46]).buffer, {
+      headers: { 'Content-Type': fila.comprobanteTipo },
+    })
+  }),
+
+  http.get(`${API}/api/matriculas/:id`, ({ request, params }) => {
+    if (!usuarioAutenticado(request)) return errorResponse(401, 'Unauthorized', 'Token is not valid')
+    const fila = matriculasMock.find((m) => String(m.id) === params.id)
+    if (!fila) return textoNoEncontrado('Matrícula especificada no existe.')
+    return HttpResponse.json(fila)
+  }),
+
+  http.put(`${API}/api/matriculas/:id/validar`, ({ request, params }) => {
+    if (!usuarioAutenticado(request)) return errorResponse(401, 'Unauthorized', 'Token is not valid')
+    const fila = matriculasMock.find((m) => String(m.id) === params.id)
+    if (!fila) return textoNoEncontrado('Matrícula especificada no existe.')
+    if (fila.estado !== 'PENDIENTE') return HttpResponse.text('La matrícula ya fue procesada.', { status: 409 })
+    fila.estado = 'VALIDADA'
+    fila.motivoRechazo = null
+    return HttpResponse.json({ mensaje: 'Matrícula validada con éxito.' })
+  }),
+
+  http.put(`${API}/api/matriculas/:id/rechazar`, async ({ request, params }) => {
+    if (!usuarioAutenticado(request)) return errorResponse(401, 'Unauthorized', 'Token is not valid')
+    const fila = matriculasMock.find((m) => String(m.id) === params.id)
+    if (!fila) return textoNoEncontrado('Matrícula especificada no existe.')
+    if (fila.estado !== 'PENDIENTE') return HttpResponse.text('La matrícula ya fue procesada.', { status: 409 })
+    const { motivo } = (await request.json()) as { motivo?: string }
+    fila.estado = 'RECHAZADA'
+    fila.motivoRechazo = motivo ?? null
+    return HttpResponse.json({ mensaje: 'Matrícula rechazada.' })
   }),
 
   http.get(`${API}/api/public/cursos`, () => {

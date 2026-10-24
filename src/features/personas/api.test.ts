@@ -11,7 +11,7 @@ describe('api de personas', () => {
   it('CA-PER-01 lista las personas paginadas con su tipo', async () => {
     await iniciarComo('admin.sistema')
     const pagina = await listarPersonas({ ...PAGINA, property: 'codigo' })
-    expect(pagina).toMatchObject({ page: 0, size: 10, total: 13 })
+    expect(pagina).toMatchObject({ page: 0, size: 10, total: 14 })
     expect(pagina.items[1]).toEqual({
       codigo: '111111',
       nombre: 'Oscar',

@@ -29,6 +29,7 @@ describe('api de cuentas', () => {
       'Jefe de Operaciones',
       'Instructor',
       'Comandante de Escuadrón',
+      'Coordinador Académico',
     ])
   })
 
