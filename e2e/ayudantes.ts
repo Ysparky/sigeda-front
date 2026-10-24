@@ -9,6 +9,7 @@ export const CUENTAS = {
   operaciones: { usuario: 'jefe.operaciones', clave: '123' },
   instructor: { usuario: 'instructor.perez', clave: '123' },
   alumno: { usuario: 'alumno.lopez', clave: '123' },
+  coordinador: { usuario: 'coordinador.rivas', clave: '123' },
 } satisfies Record<string, Cuenta>
 
 export async function entrarComo(page: Page, cuenta: Cuenta) {
