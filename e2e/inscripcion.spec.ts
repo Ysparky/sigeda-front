@@ -4,7 +4,7 @@ import { CUENTAS, entrarComo } from './ayudantes'
 
 test.describe('Tramo de entrada contra el backend real', () => {
   test('el landing público muestra el catálogo sin sesión', async ({ page }) => {
-    await page.goto('/bienvenida')
+    await page.goto('/')
     await expect(page.getByText('Piloto de Helicóptero').first()).toBeVisible({ timeout: 15_000 })
     await expect(page.getByText(/220 horas/)).toBeVisible()
     await page.getByRole('link', { name: 'Inscribirme' }).first().click()
