@@ -99,16 +99,25 @@ function Eyebrow({ children, centrado = false }: { children: ReactNode; centrado
   )
 }
 
-/** Hueco de imagen. En el template original estos espacios son marcadores grises; aquí van fotos de ASA. */
-function Foto({ ratio, className = '', etiqueta = 'Foto' }: { ratio: number; className?: string; etiqueta?: string }) {
+// Fotos propias de ASA (asa.edu.pe). Son de avión —la escuela no tiene aún fotos de helicóptero—,
+// así que sirven como imagen de aviación genérica y se pueden reemplazar por fotos de helicóptero.
+const FOTO_COCKPIT = '/asa/cockpit.webp'
+const FOTO_PILOTOS = '/asa/pilotos.webp'
+const FOTO_INSTRUMENTOS = '/asa/instrumentos.webp'
+
+/** Imagen de la sección. Con `src` muestra la foto; sin ella, un marcador gris. */
+function Foto({ ratio, className = '', src, alt = '' }: { ratio: number; className?: string; src?: string; alt?: string }) {
   return (
     <div
-      className={`grid place-items-center overflow-hidden rounded-xl bg-slate-200 text-slate-400 ${className}`}
+      className={`overflow-hidden rounded-xl ${src ? '' : 'grid place-items-center bg-slate-200 text-slate-400'} ${className}`}
       style={{ aspectRatio: String(ratio) }}
-      role="img"
-      aria-label={`Espacio para imagen (${etiqueta})`}
+      {...(src ? {} : { role: 'img', 'aria-label': 'Espacio para imagen' })}
     >
-      <Plane className="size-10 opacity-60" aria-hidden />
+      {src ? (
+        <img src={src} alt={alt} loading="lazy" className="size-full object-cover" />
+      ) : (
+        <Plane className="size-10 opacity-60" aria-hidden />
+      )}
     </div>
   )
 }
@@ -129,12 +138,16 @@ export function LandingPage() {
           cuerpo="El programa PDI EA-510 se recorre en cinco fases, de la adaptación hasta el vuelo por instrumentos. Cada maniobra se evalúa con estándares medibles para que avances con criterios claros."
           imagenDerecha
           ratio={1.25}
+          src={FOTO_COCKPIT}
+          alt="Cabina durante la instrucción de vuelo"
         />
         <SeccionImagenTexto
           eyebrow="Acompañamiento"
           titulo="Seguimiento académico de principio a fin"
           cuerpo="Llevamos el registro de tus índices, evaluaciones y ciclo de chequeo. Sabes en todo momento en qué fase estás y qué te falta para tu licencia."
           ratio={1.18}
+          src={FOTO_PILOTOS}
+          alt="Instructores de la escuela"
         />
         <SeccionMetodo />
         <SeccionCursos cursos={cursos} isPending={isPending} isError={isError} error={error} alReintentar={refetch} />
@@ -266,8 +279,10 @@ function Hero() {
   return (
     <section
       id="inicio"
-      className="relative overflow-hidden text-white"
-      style={{ background: `linear-gradient(135deg, #0a1230 0%, ${NAVY} 55%, #182a63 100%)` }}
+      className="relative overflow-hidden bg-cover bg-center text-white"
+      style={{
+        backgroundImage: `linear-gradient(135deg, rgba(10,18,48,0.94) 0%, rgba(16,34,78,0.84) 60%, rgba(24,42,99,0.82) 100%), url('${FOTO_COCKPIT}')`,
+      }}
     >
       <div aria-hidden className="pointer-events-none absolute -right-40 top-10 size-[46rem] rounded-full border" style={{ borderColor: `${GOLD}1f` }} />
       <div aria-hidden className="pointer-events-none absolute -right-20 top-28 size-[30rem] rounded-full border" style={{ borderColor: `${GOLD}26` }} />
@@ -301,9 +316,9 @@ function SeccionCompromiso() {
     <section className="mx-auto max-w-[1170px] px-4 py-20 sm:px-6">
       <div className="grid items-center gap-12 lg:grid-cols-2">
         <div className="relative">
-          <Foto ratio={1.95} etiqueta="Instrucción en vuelo" />
+          <Foto ratio={1.95} src={FOTO_PILOTOS} alt="Instructores de la escuela" />
           <div className="absolute -bottom-10 -right-6 hidden w-2/5 sm:block">
-            <Foto ratio={1.42} className="ring-8 ring-white" etiqueta="Flota" />
+            <Foto ratio={1.42} className="ring-8 ring-white" src={FOTO_INSTRUMENTOS} alt="Instrumentos de vuelo" />
           </div>
         </div>
         <div className="lg:pl-6">
@@ -335,6 +350,8 @@ function SeccionImagenTexto({
   cuerpo,
   imagenDerecha = false,
   ratio,
+  src,
+  alt,
 }: {
   id?: string
   eyebrow: string
@@ -342,8 +359,10 @@ function SeccionImagenTexto({
   cuerpo: string
   imagenDerecha?: boolean
   ratio: number
+  src?: string
+  alt?: string
 }) {
-  const foto = <Foto ratio={ratio} className="h-full min-h-[18rem]" />
+  const foto = <Foto ratio={ratio} className="h-full min-h-[18rem]" src={src} alt={alt} />
   const texto = (
     <div className={imagenDerecha ? 'lg:pr-10' : 'lg:pl-10'}>
       <Eyebrow>{eyebrow}</Eyebrow>
@@ -402,7 +421,7 @@ function SeccionMetodo() {
           </ul>
         </div>
         <div className="relative">
-          <Foto ratio={1.1} className="h-full min-h-[20rem]" etiqueta="Video de la escuela" />
+          <Foto ratio={1.1} className="h-full min-h-[20rem]" src={FOTO_COCKPIT} alt="La escuela en vuelo" />
           <span
             aria-hidden
             className="pointer-events-none absolute inset-0 m-auto grid size-20 place-items-center rounded-full shadow-lg"
@@ -460,7 +479,7 @@ function SeccionCursos({ cursos, isPending, isError, error, alReintentar }: Esta
 function TarjetaCurso({ curso }: { curso: CursoCatalogo }) {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl bg-white shadow-[0_10px_50px_rgba(149,155,177,0.15)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(149,155,177,0.3)] motion-reduce:transform-none motion-reduce:transition-none">
-      <Foto ratio={1.48} className="rounded-none" etiqueta="Curso" />
+      <Foto ratio={1.48} className="rounded-none" src={FOTO_INSTRUMENTOS} alt="Panel de instrumentos" />
       <div className="flex flex-1 flex-col gap-4 p-7">
         <span className="font-display text-xs font-bold uppercase tracking-widest" style={{ color: '#b6831a' }}>
           Programa PDI EA-510
