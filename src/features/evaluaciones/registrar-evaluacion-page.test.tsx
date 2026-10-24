@@ -77,7 +77,7 @@ describe('Registrar evaluación', () => {
     expect(screen.getByLabelText('Categoría')).toHaveValue('Chequeo')
     await usuario.clear(screen.getByLabelText('Código del evaluador'))
     await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
-    expect(await screen.findByText('Ingrese el código de 6 dígitos del evaluador.')).toBeInTheDocument()
+    expect(await screen.findByText('Ingrese el código de 6 caracteres del evaluador.')).toBeInTheDocument()
   })
 
   it('CA-EVA-11 si no cargan las categorías lo indica', async () => {

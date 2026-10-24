@@ -4,9 +4,10 @@ import { ApiError } from '@/lib/api/errors'
 import { SinPermisoError } from '@/lib/auth/guardas'
 import { veSoloLoPropio } from '@/lib/auth/pantallas'
 import type { Sesion } from '@/lib/auth/sesion'
+import { COD_PERSONA } from '@/lib/dominio/codigos'
 import { consultasEvaluaciones, type EvaluacionDetalle } from './api'
 
-const PATRON_CODIGO = /^\d{6}-\d+(-\d+)?$/
+const PATRON_CODIGO = new RegExp(`^${COD_PERSONA}-\\d+(-\\d+)?$`)
 
 export async function cargarEvaluacionVisible(
   queryClient: QueryClient,

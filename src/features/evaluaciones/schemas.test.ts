@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { aCuerpoEvaluacion, esquemaEvaluacion, valoresDeEvaluacion, type ValoresEvaluacion } from './schemas'
+import {
+  aCuerpoEvaluacion,
+  esquemaBusquedaEvaluaciones,
+  esquemaEvaluacion,
+  valoresDeEvaluacion,
+  type ValoresEvaluacion,
+} from './schemas'
 
 function valida(cambios: Partial<ValoresEvaluacion> = {}): ValoresEvaluacion {
   return {
@@ -58,9 +64,15 @@ describe('esquema de la evaluación', () => {
 
   it('CA-EVA-11 Chequeo y Complementación exigen el código del evaluador', () => {
     expect(mensajes(valida({ categoria: 'Chequeo', codEvaluador: '44' }))).toEqual([
-      'codEvaluador: Ingrese el código de 6 dígitos del evaluador.',
+      'codEvaluador: Ingrese el código de 6 caracteres del evaluador.',
     ])
     expect(mensajes(valida({ categoria: 'Complementacion', codEvaluador: '444444' }))).toEqual([])
+    expect(mensajes(valida({ categoria: 'Chequeo', codEvaluador: 'S92ZFX' }))).toEqual([])
+  })
+
+  it('el filtro por alumno admite el código alfanumérico de la matrícula', () => {
+    expect(esquemaBusquedaEvaluaciones.parse({ alumno: 'S92ZFX' }).alumno).toBe('S92ZFX')
+    expect(esquemaBusquedaEvaluaciones.parse({ alumno: 'no-es-codigo' }).alumno).toBeUndefined()
   })
 
   it('arma el cuerpo con la grafía de petición y sin evaluador en las programadas', () => {

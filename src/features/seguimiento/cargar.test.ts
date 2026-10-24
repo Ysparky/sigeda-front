@@ -36,4 +36,9 @@ describe('propiedad del legajo', () => {
     expect(() => cargarLegajoVisible(sesion('Instructor', '444444'), 'abc')).toThrow()
     expect(() => cargarLegajoVisible(sesion('Instructor', '444444'), '77777')).toThrow()
   })
+
+  it('acepta el código alfanumérico que genera la matrícula', () => {
+    expect(cargarLegajoVisible(sesion('Instructor', '444444'), 'S92ZFX')).toEqual({ codAlumno: 'S92ZFX' })
+    expect(() => cargarLegajoVisible(sesion('Instructor', '444444'), 'S92ZF')).toThrow()
+  })
 })

@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { PROGRAMAS } from '@/features/catalogos/api'
 import { esquemaPaginacion, numeroOpcional } from '@/lib/busqueda'
 import { esCategoria, requiereEvaluador } from '@/lib/dominio/categorias'
+import { esCodPersona, PATRON_COD_PERSONA } from '@/lib/dominio/codigos'
 import { esBajoEstandar, esCalificacionValida, esNotaDirbe, type NotaDirbe } from '@/lib/dominio/dirbe'
 import type { CuerpoEvaluacion } from './api'
 
@@ -18,7 +19,7 @@ export const esquemaBusquedaEvaluaciones = z.object({
   ...filtros,
   alumno: z.coerce
     .string()
-    .regex(/^\d{6}$/)
+    .regex(PATRON_COD_PERSONA)
     .optional()
     .catch(undefined),
 })
@@ -82,10 +83,10 @@ export const esquemaEvaluacion = z
     ),
   })
   .superRefine((valores, contexto) => {
-    if (esCategoria(valores.categoria) && requiereEvaluador(valores.categoria) && !/^\d{6}$/.test(valores.codEvaluador)) {
+    if (esCategoria(valores.categoria) && requiereEvaluador(valores.categoria) && !esCodPersona(valores.codEvaluador)) {
       contexto.addIssue({
         code: 'custom',
-        message: 'Ingrese el código de 6 dígitos del evaluador.',
+        message: 'Ingrese el código de 6 caracteres del evaluador.',
         path: ['codEvaluador'],
       })
     }
