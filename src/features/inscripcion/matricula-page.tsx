@@ -100,7 +100,10 @@ function FormularioMatricula({ idCurso }: { idCurso: number }) {
       <Pagina>
         <Card className="text-center">
           <CardContent className="flex flex-col items-center gap-4 py-10">
-            <span className="grid size-14 place-items-center rounded-full bg-primary/10 text-primary">
+            <span
+              className="grid size-14 place-items-center rounded-full"
+              style={{ backgroundColor: '#D8B85822', color: '#8a6d1f' }}
+            >
               <CheckCircle2 className="size-8" aria-hidden />
             </span>
             <h1 className="text-2xl font-semibold tracking-tight">Matrícula enviada</h1>
@@ -109,7 +112,7 @@ function FormularioMatricula({ idCurso }: { idCurso: number }) {
               cuenta con el correo que indicaste; inicia sesión para seguir su estado y, si hiciera falta, volver a
               subir tu comprobante.
             </p>
-            <Button asChild>
+            <Button asChild className="text-white hover:brightness-110" style={{ backgroundColor: '#101A3C' }}>
               <Link to="/login" search={{}}>
                 Iniciar sesión
               </Link>
@@ -130,18 +133,18 @@ function FormularioMatricula({ idCurso }: { idCurso: number }) {
       </Button>
 
       <div className="mb-6">
-        <Badge variant="secondary" className="mb-2">
+        <Badge variant="secondary" className="mb-2" style={{ backgroundColor: '#D8B85822', color: '#8a6d1f' }}>
           Inscripción
         </Badge>
         <h1 className="text-3xl font-semibold tracking-tight">{detalle.data?.nombre ?? 'Matrícula'}</h1>
         {detalle.data && (
           <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <Clock className="size-4 text-primary" aria-hidden />
+              <Clock className="size-4" style={{ color: '#b6831a' }} aria-hidden />
               {detalle.data.duracion} horas
             </span>
             <span className="flex items-center gap-1.5">
-              <Layers className="size-4 text-primary" aria-hidden />
+              <Layers className="size-4" style={{ color: '#b6831a' }} aria-hidden />
               Programa PDI EA-510
             </span>
           </div>
@@ -239,7 +242,12 @@ function FormularioMatricula({ idCurso }: { idCurso: number }) {
             </Field>
           </CardContent>
         </Card>
-        <Button type="submit" disabled={guardar.isPending} className="w-fit">
+        <Button
+          type="submit"
+          disabled={guardar.isPending}
+          className="w-fit text-white hover:brightness-110"
+          style={{ backgroundColor: '#101A3C' }}
+        >
           {guardar.isPending ? 'Enviando…' : 'Enviar matrícula'}
         </Button>
       </form>

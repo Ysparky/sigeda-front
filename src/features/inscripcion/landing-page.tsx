@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import {
   ArrowRight,
+  ArrowUp,
   ChevronRight,
   Layers,
   Mail,
@@ -141,7 +142,30 @@ export function LandingPage() {
         <SeccionPasos />
       </main>
       <PieDePagina />
+      <BotonArriba />
     </div>
+  )
+}
+
+function BotonArriba() {
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const alScroll = () => setVisible(window.scrollY > 700)
+    alScroll()
+    window.addEventListener('scroll', alScroll, { passive: true })
+    return () => window.removeEventListener('scroll', alScroll)
+  }, [])
+  if (!visible) return null
+  return (
+    <button
+      type="button"
+      onClick={() => window.scrollTo({ top: 0 })}
+      aria-label="Volver arriba"
+      className={`fixed bottom-6 right-6 z-40 grid size-12 place-items-center rounded-full text-white shadow-lg transition hover:brightness-110 ${FOCO}`}
+      style={{ backgroundColor: NAVY }}
+    >
+      <ArrowUp className="size-5" aria-hidden />
+    </button>
   )
 }
 
@@ -435,7 +459,7 @@ function SeccionCursos({ cursos, isPending, isError, error, alReintentar }: Esta
 
 function TarjetaCurso({ curso }: { curso: CursoCatalogo }) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl bg-white shadow-[0_10px_50px_rgba(149,155,177,0.15)]">
+    <div className="flex flex-col overflow-hidden rounded-xl bg-white shadow-[0_10px_50px_rgba(149,155,177,0.15)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(149,155,177,0.3)] motion-reduce:transform-none motion-reduce:transition-none">
       <Foto ratio={1.48} className="rounded-none" etiqueta="Curso" />
       <div className="flex flex-1 flex-col gap-4 p-7">
         <span className="font-display text-xs font-bold uppercase tracking-widest" style={{ color: '#b6831a' }}>
@@ -515,7 +539,10 @@ function SeccionPasos() {
         </div>
         <ol className="mt-14 grid gap-8 md:grid-cols-3">
           {PASOS.map((paso, i) => (
-            <li key={paso.titulo} className="rounded-2xl bg-white p-8 shadow-[0_10px_50px_rgba(149,155,177,0.12)]">
+            <li
+              key={paso.titulo}
+              className="rounded-2xl bg-white p-8 shadow-[0_10px_50px_rgba(149,155,177,0.12)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(149,155,177,0.22)] motion-reduce:transform-none motion-reduce:transition-none"
+            >
               <span className="font-display grid size-12 place-items-center rounded-full text-xl font-bold" style={{ backgroundColor: GOLD, color: NAVY }}>
                 {i + 1}
               </span>
