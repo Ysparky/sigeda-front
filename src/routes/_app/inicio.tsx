@@ -3,7 +3,7 @@ import { InicioPage } from '@/features/inicio/inicio-page'
 import { exigirPantalla } from '@/lib/auth/guardas'
 import { PANTALLAS } from '@/lib/auth/pantallas'
 
-export const Route = createFileRoute('/_app/')({
+export const Route = createFileRoute('/_app/inicio')({
   beforeLoad: ({ context }) => exigirPantalla(PANTALLAS.inicio, context.sesion.actual()),
   component: InicioPage,
 })

@@ -56,7 +56,7 @@ describe('Iniciar sesión', () => {
       ),
     )
     await sesion.restaurar()
-    renderApp('/')
+    renderApp('/inicio')
     expect(await screen.findByRole('heading', { name: 'Iniciar sesión' })).toBeInTheDocument()
     expect(screen.getByText(MENSAJE_SIN_ROL)).toBeInTheDocument()
   })

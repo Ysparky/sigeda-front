@@ -2,9 +2,9 @@ import { screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { renderApp } from '@/test/render'
 
-describe('LandingPage (/bienvenida)', () => {
+describe('LandingPage (/)', () => {
   it('muestra el catálogo público sin necesidad de sesión', async () => {
-    renderApp('/bienvenida')
+    renderApp('/')
 
     const tarjeta = await screen.findByText('Piloto de Helicóptero')
     const seccion = tarjeta.closest('section') ?? document.body
@@ -13,7 +13,7 @@ describe('LandingPage (/bienvenida)', () => {
   })
 
   it('el botón "Inscribirme" lleva al formulario de matrícula del curso', async () => {
-    const { usuario } = renderApp('/bienvenida')
+    const { usuario } = renderApp('/')
 
     const boton = await screen.findByRole('link', { name: 'Inscribirme' })
     await usuario.click(boton)

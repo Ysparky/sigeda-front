@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { ApiError } from '@/lib/api/errors'
 import { sesion } from '@/lib/auth/sesion'
 import { clavesMia, miMatriculaQuery, reenviarComprobante, type EstadoMatricula } from './api'
+import { BarraPublica } from './barra-publica'
 import { errorDeComprobante } from './schemas'
 
 const ETIQUETA: Record<EstadoMatricula, { texto: string; variante: 'secondary' | 'default' | 'destructive' }> = {
@@ -29,15 +30,19 @@ export function MiMatriculaPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Mi matrícula</h1>
-        <Button variant="ghost" size="sm" onClick={() => void salir()}>
-          Cerrar sesión
-        </Button>
-      </div>
+    <div className="flex min-h-dvh flex-col bg-muted/20">
+      <BarraPublica
+        accion={
+          <Button variant="ghost" size="sm" onClick={() => void salir()}>
+            Cerrar sesión
+          </Button>
+        }
+      />
+      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10 sm:px-6">
+        <h1 className="mb-1 text-2xl font-semibold tracking-tight">Mi matrícula</h1>
+        <p className="mb-6 text-sm text-muted-foreground">El estado de tu inscripción en el Aeroclub.</p>
 
-      {isPending ? (
+        {isPending ? (
         <p className="text-sm text-muted-foreground">Cargando tu matrícula…</p>
       ) : isError ? (
         <Alert>
@@ -81,8 +86,9 @@ export function MiMatriculaPage() {
             {data.estado === 'RECHAZADA' && <ReenvioComprobante motivo={data.motivoRechazo} />}
           </CardContent>
         </Card>
-      )}
-    </main>
+        )}
+      </main>
+    </div>
   )
 }
 

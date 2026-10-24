@@ -68,23 +68,23 @@ describe('destinoSeguro', () => {
   })
 
   it('descarta destinos externos, vacíos o de vuelta al login', () => {
-    expect(destinoSeguro(undefined)).toBe('/')
-    expect(destinoSeguro('https://evil.com')).toBe('/')
-    expect(destinoSeguro('//evil.com')).toBe('/')
-    expect(destinoSeguro('/login?redirect=%2F')).toBe('/')
+    expect(destinoSeguro(undefined)).toBe('/inicio')
+    expect(destinoSeguro('https://evil.com')).toBe('/inicio')
+    expect(destinoSeguro('//evil.com')).toBe('/inicio')
+    expect(destinoSeguro('/login?redirect=%2F')).toBe('/inicio')
   })
 
   it('descarta destinos que abusan de barras invertidas o de esquemas peligrosos', () => {
-    expect(destinoSeguro('/\\evil.com')).toBe('/')
-    expect(destinoSeguro('/\t/evil.com')).toBe('/')
-    expect(destinoSeguro('javascript:alert(1)')).toBe('/')
+    expect(destinoSeguro('/\\evil.com')).toBe('/inicio')
+    expect(destinoSeguro('/\t/evil.com')).toBe('/inicio')
+    expect(destinoSeguro('javascript:alert(1)')).toBe('/inicio')
   })
 })
 
 describe('destinoSeguro con rutas que se normalizan a otro origen', () => {
   it('descarta una ruta cuyo pathname resuelto empieza con //', () => {
-    expect(destinoSeguro('/x/..//evil.com')).toBe('/')
-    expect(destinoSeguro('/turnos/../..//evil.com/a')).toBe('/')
+    expect(destinoSeguro('/x/..//evil.com')).toBe('/inicio')
+    expect(destinoSeguro('/turnos/../..//evil.com/a')).toBe('/inicio')
   })
 })
 
@@ -99,7 +99,7 @@ describe('destinoSeguro con rutas que se normalizan a otro origen', () => {
  */
 describe('destinoSeguro con los permisos de quien entra', () => {
   it('descarta la pantalla que la sesión nueva no puede ver', () => {
-    expect(destinoSeguro('/grupos?page=0', sesionDe('Alumno'), false)).toBe('/')
+    expect(destinoSeguro('/grupos?page=0', sesionDe('Alumno'), false)).toBe('/inicio')
   })
 
   it('respeta la que sí puede ver, con su búsqueda', () => {
@@ -112,6 +112,6 @@ describe('destinoSeguro con los permisos de quien entra', () => {
 
   it('sin sesión se comporta como antes: sólo sanea el origen', () => {
     expect(destinoSeguro('/grupos?page=0')).toBe('/grupos?page=0')
-    expect(destinoSeguro('https://evil.com', sesionDe('Alumno'), false)).toBe('/')
+    expect(destinoSeguro('https://evil.com', sesionDe('Alumno'), false)).toBe('/inicio')
   })
 })

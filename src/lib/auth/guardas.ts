@@ -45,11 +45,11 @@ export function destinoSeguro(destino: string | undefined, actual?: Sesion | nul
 }
 
 /**
- * La página de inicio de una sesión. El Postulante (tramo de entrada) no tiene la pantalla de Inicio
- * —solo «View My Enrollment»—, así que su hogar es el seguimiento de su matrícula y no `/`, donde
- * caería en «Acceso restringido».
+ * La página de inicio de una sesión. `/` es el landing público; el tablero autenticado vive en
+ * `/inicio`. El Postulante (tramo de entrada) no tiene la pantalla de Inicio —solo
+ * «View My Enrollment»—, así que su hogar es el seguimiento de su matrícula.
  */
-function hogarDe(actual?: Sesion | null): string {
+export function hogarDe(actual?: Sesion | null): string {
   if (actual?.permisos.has('View My Enrollment')) return '/mi-matricula'
-  return '/'
+  return '/inicio'
 }

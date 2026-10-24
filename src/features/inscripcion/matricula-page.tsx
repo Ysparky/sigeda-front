@@ -1,10 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
+import { ArrowLeft, CheckCircle2, Clock, Layers } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { AvisoDeError } from '@/components/aviso-de-error'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -15,23 +17,33 @@ import { aplicarErroresDeCampo } from '@/lib/formularios'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { Route } from '@/routes/matricula'
 import { crearMatricula, cursoQuery, type DatosMatricula } from './api'
+import { BarraPublica } from './barra-publica'
 import { errorDeComprobante, esquemaMatricula, matriculaVacia, type ValoresMatricula } from './schemas'
+
+function Pagina({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-dvh flex-col bg-muted/20">
+      <BarraPublica />
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">{children}</main>
+    </div>
+  )
+}
 
 export function MatriculaPage() {
   const { curso } = Route.useSearch()
 
   if (!curso) {
     return (
-      <main className="mx-auto max-w-2xl px-4 py-10">
+      <Pagina>
         <h1 className="text-2xl font-semibold tracking-tight">Matrícula</h1>
         <p className="mt-2 text-muted-foreground">
           Elige un curso en el{' '}
-          <Link to="/bienvenida" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link to="/" className="font-medium text-primary underline-offset-4 hover:underline">
             catálogo
           </Link>{' '}
           para inscribirte.
         </p>
-      </main>
+      </Pagina>
     )
   }
 
@@ -78,45 +90,65 @@ function FormularioMatricula({ idCurso }: { idCurso: number }) {
   const errorDetalle = errorDePrimeraCarga(detalle)
   if (errorDetalle !== null)
     return (
-      <main className="mx-auto max-w-2xl px-4 py-10">
+      <Pagina>
         <AvisoDeError error={errorDetalle} alReintentar={() => void detalle.refetch()} />
-      </main>
+      </Pagina>
     )
 
   if (enviado) {
     return (
-      <main className="mx-auto max-w-2xl px-4 py-10">
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <h1>Matrícula enviada</h1>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3 text-sm">
-            <p>
-              Tu matrícula quedó <strong>pendiente de validación</strong>. Creamos tu cuenta con el correo que
-              indicaste.
+      <Pagina>
+        <Card className="text-center">
+          <CardContent className="flex flex-col items-center gap-4 py-10">
+            <span className="grid size-14 place-items-center rounded-full bg-primary/10 text-primary">
+              <CheckCircle2 className="size-8" aria-hidden />
+            </span>
+            <h1 className="text-2xl font-semibold tracking-tight">Matrícula enviada</h1>
+            <p className="max-w-md text-sm text-muted-foreground">
+              Tu matrícula quedó <strong className="text-foreground">pendiente de validación</strong>. Creamos tu
+              cuenta con el correo que indicaste; inicia sesión para seguir su estado y, si hiciera falta, volver a
+              subir tu comprobante.
             </p>
-            <p>
-              Inicia sesión para seguir su estado y, si hiciera falta, volver a subir tu comprobante.
-            </p>
-            <Button asChild className="w-fit">
+            <Button asChild>
               <Link to="/login" search={{}}>
                 Iniciar sesión
               </Link>
             </Button>
           </CardContent>
         </Card>
-      </main>
+      </Pagina>
     )
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight">
-        Inscripción{detalle.data ? ` — ${detalle.data.nombre}` : ''}
-      </h1>
-      <form noValidate onSubmit={formulario.handleSubmit(enviar)} className="mt-6 grid gap-6">
+    <Pagina>
+      <Button asChild variant="ghost" size="sm" className="-ml-2 mb-4 w-fit text-muted-foreground">
+        <Link to="/">
+          <ArrowLeft className="size-4" aria-hidden />
+          Volver al catálogo
+        </Link>
+      </Button>
+
+      <div className="mb-6">
+        <Badge variant="secondary" className="mb-2">
+          Inscripción
+        </Badge>
+        <h1 className="text-3xl font-semibold tracking-tight">{detalle.data?.nombre ?? 'Matrícula'}</h1>
+        {detalle.data && (
+          <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Clock className="size-4 text-primary" aria-hidden />
+              {detalle.data.duracion} horas
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Layers className="size-4 text-primary" aria-hidden />
+              Programa PDI EA-510
+            </span>
+          </div>
+        )}
+      </div>
+
+      <form noValidate onSubmit={formulario.handleSubmit(enviar)} className="grid gap-6">
         {guardar.error && (
           <Alert variant="destructive">
             <AlertTitle>No se pudo enviar la matrícula</AlertTitle>
@@ -211,6 +243,6 @@ function FormularioMatricula({ idCurso }: { idCurso: number }) {
           {guardar.isPending ? 'Enviando…' : 'Enviar matrícula'}
         </Button>
       </form>
-    </main>
+    </Pagina>
   )
 }

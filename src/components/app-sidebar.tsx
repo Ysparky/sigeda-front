@@ -25,7 +25,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link to="/">
+              <Link to="/inicio">
                 <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <Plane className="size-4" aria-hidden />
                 </span>
@@ -49,7 +49,7 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild tooltip={pantalla.titulo}>
                       <Link
                         to={pantalla.ruta}
-                        activeOptions={{ exact: pantalla.ruta === '/' }}
+                        activeOptions={{ exact: pantalla.ruta === '/inicio' }}
                         activeProps={{ 'data-active': true, 'aria-current': 'page' }}
                       >
                         <pantalla.icono aria-hidden />

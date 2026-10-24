@@ -28,7 +28,7 @@ export function Migas({ className }: { className?: string }) {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link to="/">Inicio</Link>
+            <Link to="/inicio">Inicio</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         {cadena.map((pantalla, indice) => (

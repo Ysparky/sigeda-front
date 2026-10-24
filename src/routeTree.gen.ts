@@ -9,14 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
-import { Route as BienvenidaRouteImport } from './routes/bienvenida'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MatriculaRouteImport } from './routes/matricula'
 import { Route as MiMatriculaRouteImport } from './routes/mi-matricula'
-import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppCuentaRouteImport } from './routes/_app/cuenta'
 import { Route as AppGuiaRouteImport } from './routes/_app/guia'
+import { Route as AppInicioRouteImport } from './routes/_app/inicio'
 import { Route as AppMiLegajoRouteImport } from './routes/_app/mi-legajo'
 import { Route as AppMisEvaluacionesRouteImport } from './routes/_app/mis-evaluaciones'
 import { Route as AppMisTurnosRouteImport } from './routes/_app/mis-turnos'
@@ -71,13 +71,13 @@ import { Route as AppTeoriaTurnosIdEditarRouteImport } from './routes/_app/teori
 import { Route as AppTurnosIdBriefingAlumnoRouteImport } from './routes/_app/turnos/$id/briefing/$alumno'
 import { Route as AppTurnosIdEvaluarAlumnoRouteImport } from './routes/_app/turnos/$id/evaluar/$alumno'
 
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BienvenidaRoute = BienvenidaRouteImport.update({
-  id: '/bienvenida',
-  path: '/bienvenida',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -95,11 +95,6 @@ const MiMatriculaRoute = MiMatriculaRouteImport.update({
   path: '/mi-matricula',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppIndexRoute = AppIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppCuentaRoute = AppCuentaRouteImport.update({
   id: '/cuenta',
   path: '/cuenta',
@@ -108,6 +103,11 @@ const AppCuentaRoute = AppCuentaRouteImport.update({
 const AppGuiaRoute = AppGuiaRouteImport.update({
   id: '/guia',
   path: '/guia',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInicioRoute = AppInicioRouteImport.update({
+  id: '/inicio',
+  path: '/inicio',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMiLegajoRoute = AppMiLegajoRouteImport.update({
@@ -389,13 +389,13 @@ const AppTurnosIdEvaluarAlumnoRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AppIndexRoute
-  '/bienvenida': typeof BienvenidaRoute
+  '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/matricula': typeof MatriculaRoute
   '/mi-matricula': typeof MiMatriculaRoute
   '/cuenta': typeof AppCuentaRoute
   '/guia': typeof AppGuiaRoute
+  '/inicio': typeof AppInicioRoute
   '/mi-legajo': typeof AppMiLegajoRoute
   '/mis-evaluaciones': typeof AppMisEvaluacionesRoute
   '/mis-turnos': typeof AppMisTurnosRoute
@@ -451,17 +451,17 @@ export interface FileRoutesByFullPath {
   '/teoria/turnos/$id/': typeof AppTeoriaTurnosIdIndexRoute
 }
 export interface FileRoutesByTo {
-  '/bienvenida': typeof BienvenidaRoute
+  '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/matricula': typeof MatriculaRoute
   '/mi-matricula': typeof MiMatriculaRoute
   '/cuenta': typeof AppCuentaRoute
   '/guia': typeof AppGuiaRoute
+  '/inicio': typeof AppInicioRoute
   '/mi-legajo': typeof AppMiLegajoRoute
   '/mis-evaluaciones': typeof AppMisEvaluacionesRoute
   '/mis-turnos': typeof AppMisTurnosRoute
   '/reportes': typeof AppReportesRoute
-  '/': typeof AppIndexRoute
   '/aprendizaje/consultas': typeof AppAprendizajeConsultasRoute
   '/aprendizaje/cuestionario': typeof AppAprendizajeCuestionarioRoute
   '/banco/importar': typeof AppBancoImportarRoute
@@ -514,18 +514,18 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
-  '/bienvenida': typeof BienvenidaRoute
   '/login': typeof LoginRoute
   '/matricula': typeof MatriculaRoute
   '/mi-matricula': typeof MiMatriculaRoute
   '/_app/cuenta': typeof AppCuentaRoute
   '/_app/guia': typeof AppGuiaRoute
+  '/_app/inicio': typeof AppInicioRoute
   '/_app/mi-legajo': typeof AppMiLegajoRoute
   '/_app/mis-evaluaciones': typeof AppMisEvaluacionesRoute
   '/_app/mis-turnos': typeof AppMisTurnosRoute
   '/_app/reportes': typeof AppReportesRoute
-  '/_app/': typeof AppIndexRoute
   '/_app/aprendizaje/consultas': typeof AppAprendizajeConsultasRoute
   '/_app/aprendizaje/cuestionario': typeof AppAprendizajeCuestionarioRoute
   '/_app/banco/importar': typeof AppBancoImportarRoute
@@ -580,12 +580,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/bienvenida'
     | '/login'
     | '/matricula'
     | '/mi-matricula'
     | '/cuenta'
     | '/guia'
+    | '/inicio'
     | '/mi-legajo'
     | '/mis-evaluaciones'
     | '/mis-turnos'
@@ -641,17 +641,17 @@ export interface FileRouteTypes {
     | '/teoria/turnos/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/bienvenida'
+    | '/'
     | '/login'
     | '/matricula'
     | '/mi-matricula'
     | '/cuenta'
     | '/guia'
+    | '/inicio'
     | '/mi-legajo'
     | '/mis-evaluaciones'
     | '/mis-turnos'
     | '/reportes'
-    | '/'
     | '/aprendizaje/consultas'
     | '/aprendizaje/cuestionario'
     | '/banco/importar'
@@ -703,18 +703,18 @@ export interface FileRouteTypes {
     | '/teoria/turnos/$id'
   id:
     | '__root__'
+    | '/'
     | '/_app'
-    | '/bienvenida'
     | '/login'
     | '/matricula'
     | '/mi-matricula'
     | '/_app/cuenta'
     | '/_app/guia'
+    | '/_app/inicio'
     | '/_app/mi-legajo'
     | '/_app/mis-evaluaciones'
     | '/_app/mis-turnos'
     | '/_app/reportes'
-    | '/_app/'
     | '/_app/aprendizaje/consultas'
     | '/_app/aprendizaje/cuestionario'
     | '/_app/banco/importar'
@@ -767,8 +767,8 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
-  BienvenidaRoute: typeof BienvenidaRoute
   LoginRoute: typeof LoginRoute
   MatriculaRoute: typeof MatriculaRoute
   MiMatriculaRoute: typeof MiMatriculaRoute
@@ -776,18 +776,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app': {
       id: '/_app'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bienvenida': {
-      id: '/bienvenida'
-      path: '/bienvenida'
-      fullPath: '/bienvenida'
-      preLoaderRoute: typeof BienvenidaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -811,13 +811,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MiMatriculaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/': {
-      id: '/_app/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/cuenta': {
       id: '/_app/cuenta'
       path: '/cuenta'
@@ -830,6 +823,13 @@ declare module '@tanstack/react-router' {
       path: '/guia'
       fullPath: '/guia'
       preLoaderRoute: typeof AppGuiaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/inicio': {
+      id: '/_app/inicio'
+      path: '/inicio'
+      fullPath: '/inicio'
+      preLoaderRoute: typeof AppInicioRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/mi-legajo': {
@@ -1209,11 +1209,11 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppCuentaRoute: typeof AppCuentaRoute
   AppGuiaRoute: typeof AppGuiaRoute
+  AppInicioRoute: typeof AppInicioRoute
   AppMiLegajoRoute: typeof AppMiLegajoRoute
   AppMisEvaluacionesRoute: typeof AppMisEvaluacionesRoute
   AppMisTurnosRoute: typeof AppMisTurnosRoute
   AppReportesRoute: typeof AppReportesRoute
-  AppIndexRoute: typeof AppIndexRoute
   AppAprendizajeConsultasRoute: typeof AppAprendizajeConsultasRoute
   AppAprendizajeCuestionarioRoute: typeof AppAprendizajeCuestionarioRoute
   AppBancoImportarRoute: typeof AppBancoImportarRoute
@@ -1268,11 +1268,11 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppCuentaRoute: AppCuentaRoute,
   AppGuiaRoute: AppGuiaRoute,
+  AppInicioRoute: AppInicioRoute,
   AppMiLegajoRoute: AppMiLegajoRoute,
   AppMisEvaluacionesRoute: AppMisEvaluacionesRoute,
   AppMisTurnosRoute: AppMisTurnosRoute,
   AppReportesRoute: AppReportesRoute,
-  AppIndexRoute: AppIndexRoute,
   AppAprendizajeConsultasRoute: AppAprendizajeConsultasRoute,
   AppAprendizajeCuestionarioRoute: AppAprendizajeCuestionarioRoute,
   AppBancoImportarRoute: AppBancoImportarRoute,
@@ -1328,8 +1328,8 @@ const AppRouteChildren: AppRouteChildren = {
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
-  BienvenidaRoute: BienvenidaRoute,
   LoginRoute: LoginRoute,
   MatriculaRoute: MatriculaRoute,
   MiMatriculaRoute: MiMatriculaRoute,

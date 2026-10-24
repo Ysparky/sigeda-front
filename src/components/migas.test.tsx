@@ -12,7 +12,7 @@ describe('migas de pan', () => {
     renderApp('/turnos/8/briefing/111111')
     const nav = await migas()
     expect(await nav.findByText('Hoja de briefing')).toHaveAttribute('aria-current', 'page')
-    expect(nav.getByRole('link', { name: 'Inicio' })).toHaveAttribute('href', '/')
+    expect(nav.getByRole('link', { name: 'Inicio' })).toHaveAttribute('href', '/inicio')
     expect(nav.getByRole('link', { name: 'Programación de turnos' })).toHaveAttribute('href', '/turnos')
     expect(nav.getByRole('link', { name: 'Detalle de turno' })).toHaveAttribute('href', '/turnos/8')
   })

@@ -85,7 +85,7 @@ const SOLO_ALUMNO = ['Alumno'] as const
 
 export const PANTALLAS = {
   inicio: {
-    ruta: '/',
+    ruta: '/inicio',
     titulo: 'Inicio',
     descripcion: 'Resumen de su actividad en SIGEDA.',
     grupo: 'General',
@@ -677,7 +677,7 @@ export function migasPara(
   pantallas: readonly Pantalla[] = TODAS,
 ): Pantalla[] {
   const actual = pantallaPorRuta(ruta, pantallas)
-  if (!actual || actual.ruta === '/') return []
+  if (!actual || actual.ruta === '/inicio') return []
   const ancestros: Pantalla[] = []
   let padre = actual.padre ? pantallaPorRuta(actual.padre, pantallas) : undefined
   while (padre) {

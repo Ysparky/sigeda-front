@@ -5,31 +5,31 @@ import { iniciarComo, renderApp } from '@/test/render'
 
 describe('navegación protegida', () => {
   it('sin sesión, una ruta protegida redirige a /login conservando el destino', async () => {
-    const { router } = renderApp('/')
+    const { router } = renderApp('/inicio')
     expect(await screen.findByRole('heading', { name: 'Iniciar sesión' })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/login')
-    expect(router.state.location.search).toEqual({ redirect: '/' })
+    expect(router.state.location.search).toEqual({ redirect: '/inicio' })
   })
 
   it('con sesión, /login lleva al destino solicitado', async () => {
     await iniciarComo('alumno.lopez')
-    const { router } = renderApp('/login?redirect=%2F')
+    const { router } = renderApp('/login?redirect=%2Finicio')
     expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
-    expect(router.state.location.pathname).toBe('/')
+    expect(router.state.location.pathname).toBe('/inicio')
   })
 
   it('ignora destinos externos después del login', async () => {
     await iniciarComo('alumno.lopez')
     const { router } = renderApp('/login?redirect=%2F%2Fevil.com')
     expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
-    expect(router.state.location.href).toBe('/')
+    expect(router.state.location.pathname).toBe('/inicio')
   })
 
   it('ignora un redirect que no es texto y lleva a Inicio', async () => {
     await iniciarComo('alumno.lopez')
     const { router } = renderApp('/login?redirect=123')
     expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
-    expect(router.state.location.href).toBe('/')
+    expect(router.state.location.pathname).toBe('/inicio')
   })
 
   it('al expirar la sesión vuelve al login', async () => {
