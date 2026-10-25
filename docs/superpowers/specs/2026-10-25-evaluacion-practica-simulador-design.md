@@ -214,17 +214,21 @@ generado/mockeado con esta forma.
 - UI web: dónde se marca el `medio` al crear el turno y cómo se visualiza el desvío medido
   junto a cada letra propuesta en la pantalla de evaluación.
 
-## 8. Decisiones del usuario (pendientes — requieren su respuesta)
+## 8. Decisiones del usuario (resueltas, 2026-10-25)
 
-Estas cambian lo que se construye y solo el usuario puede resolverlas:
-
-1. **Horas de simulador vs. Tabla 4.** ¿Las horas voladas en simulador cuentan igual que las
-   de aeronave real para `HORAS_DEL_PROGRAMA = 94.0`, o hay un tope/tratamiento distinto? Si
-   es distinto, el `medio` sí tocaría la ponderación (hoy el diseño asume que **no** la toca).
-2. **Aceptación regulatoria.** ¿DGAC/RAP 141 acepta nota auto-propuesta por simulador con
-   confirmación del instructor? (Afecta la defensa de tesis; el diseño ya deja al instructor
-   como firmante único, que es la postura conservadora.)
-3. **Simulador real vs. hipotético.** ¿ASA usa un FSTD/FNPT concreto, o es un escenario de
-   tesis? Determina si vale la pena un adaptador real o basta el archivo mockeado para el demo.
-4. **Catálogo de maniobras simulables.** ¿Todas las maniobras son evaluables en simulador, o
-   solo un subconjunto? (Define para cuáles se cargan `ParametroManiobra`.)
+1. **Horas de simulador vs. Tabla 4 — cuentan igual.** Las horas voladas en simulador cuentan
+   como las de aeronave real para `HORAS_DEL_PROGRAMA = 94.0`. **Confirma que `medio` NO toca la
+   ponderación** (NSF/NIA/NFPI intactos). Sin tope en alcance; un eventual cap de horas-sim es
+   follow-on, no v1.
+2. **Maniobras simulables — subconjunto por progresión, data-driven.** No todas. El criterio es
+   de sentido común: el alumno que recién inicia entrena primero en simulador, no salta a la
+   aeronave → las fases tempranas son sim-first. En el modelo, "simulable" = la maniobra tiene
+   `ParametroManiobra` cargados (lo define el Jefe de Operaciones). Para el demo se siembran como
+   simulables las maniobras de la **fase Adaptación (NFAD)**; las fases avanzadas quedan para
+   aeronave real. Las no simulables llegan en blanco a la propuesta (§4.4).
+3. **Simulador real.** ASA usa un dispositivo de simulación real (modelo/formato de export por
+   confirmar). La ingesta se implementa **agnóstica** vía el contrato JSON (§5); para el demo se
+   alimenta con un archivo de telemetría con esa forma. El **adaptador** del dispositivo real
+   concreto (su export → contrato JSON) es follow-on, fuera de v1.
+4. **Aceptación regulatoria — proceder.** Se construye con el instructor como **firmante único**
+   de la evaluación (postura conservadora, defendible). Sin ruta de calificación autónoma.
