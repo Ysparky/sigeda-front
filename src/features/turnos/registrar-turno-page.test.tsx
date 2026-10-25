@@ -303,4 +303,35 @@ describe('Registrar turno', () => {
     expect(screen.getByText('La hora debe estar en formato HH:mm (09:00, 14:00)')).toBeInTheDocument()
     expect(screen.getByLabelText('Nombre')).toHaveAttribute('aria-invalid', 'true')
   })
+
+  it('al elegir Simulador oculta la aeronave y pide el dispositivo', async () => {
+    const { usuario } = await abrirFormulario()
+    expect(screen.getByLabelText('Aeronave')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Dispositivo')).not.toBeInTheDocument()
+    await usuario.selectOptions(screen.getByLabelText('Medio'), 'Simulador')
+    expect(await screen.findByLabelText('Dispositivo')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Aeronave')).not.toBeInTheDocument()
+  })
+
+  it('un turno de simulador se guarda sin aeronave', async () => {
+    let recibido: Record<string, unknown> | null = null
+    server.use(
+      http.post(`${config.sigedaApiUrl}/api/turnos`, async ({ request }) => {
+        recibido = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ mensaje: 'Turno guardado con éxito.', turno: { id: 10 } }, { status: 201 })
+      }),
+    )
+    const { usuario } = await abrirFormulario()
+    await usuario.type(screen.getByLabelText('Nombre'), 'Hover en Simulador')
+    await usuario.type(screen.getByLabelText('Fecha de evaluación'), EN_DIEZ_DIAS)
+    await usuario.selectOptions(screen.getByLabelText('Sub fase'), 'Circuitos y Maniobras')
+    await usuario.selectOptions(await screen.findByLabelText('Instructor'), 'Juan Torres Perez')
+    await usuario.selectOptions(screen.getByLabelText('Medio'), 'Simulador')
+    await usuario.type(await screen.findByLabelText('Dispositivo'), 'FNPT II H135')
+    await agregarAlumno(usuario, 1, 'Juan Falconi Fernandez', '08:00', '09:30')
+    await agregarManiobra(usuario, 1, 'Ingreso al circuito de tránsito', 'B')
+    await guardar(usuario)
+    await waitFor(() => expect(recibido).not.toBeNull())
+    expect(recibido).toMatchObject({ medio: 'SIMULADOR', dispositivo: 'FNPT II H135', aeronave: null })
+  })
 })

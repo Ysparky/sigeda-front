@@ -62,10 +62,11 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
   const { errors } = formulario.formState
   const alumnos = useFieldArray({ control: formulario.control, name: 'alumnosTurno' })
   const maniobras = useFieldArray({ control: formulario.control, name: 'maniobrasTurno' })
-  const [programa, idSubfase, fechaEval, idAeronave, horarios] = useWatch({
+  const [programa, idSubfase, fechaEval, idAeronave, horarios, medio] = useWatch({
     control: formulario.control,
-    name: ['programa', 'idSubfase', 'fechaEval', 'idAeronave', 'alumnosTurno'],
+    name: ['programa', 'idSubfase', 'fechaEval', 'idAeronave', 'alumnosTurno', 'medio'],
   })
+  const esSimulador = medio === 'SIMULADOR'
   const programaActual: Programa = programa === 'PDE' ? 'PDE' : 'PDI'
 
   const instructores = useQuery(consultasCatalogos.instructores(programaActual))
@@ -251,27 +252,53 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
               )}
               <FieldError errors={[errors.codInstructor]} />
             </Field>
-            <Field data-invalid={Boolean(errors.idAeronave)}>
-              <FieldLabel htmlFor="turno-aeronave">Aeronave</FieldLabel>
-              <NativeSelect
-                id="turno-aeronave"
-                className="w-full"
-                aria-invalid={Boolean(errors.idAeronave)}
-                {...formulario.register('idAeronave')}
-              >
-                <NativeSelectOption value="">Elija una aeronave</NativeSelectOption>
-                {(aeronaves.data ?? []).map((aeronave) => (
-                  <NativeSelectOption key={aeronave.id} value={aeronave.id} disabled={aeronave.estado !== 'Disponible'}>
-                    {aeronave.estado === 'Disponible'
-                      ? aeronave.nombre
-                      : `${aeronave.nombre} · ${termino('aeronave', aeronave.estado).etiqueta}`}
-                  </NativeSelectOption>
-                ))}
+            <Field>
+              <FieldLabel htmlFor="turno-medio">Medio</FieldLabel>
+              <NativeSelect id="turno-medio" className="w-full" {...formulario.register('medio')}>
+                <NativeSelectOption value="AERONAVE">Aeronave</NativeSelectOption>
+                <NativeSelectOption value="SIMULADOR">Simulador</NativeSelectOption>
               </NativeSelect>
-              <FieldDescription>Solo se pueden elegir aeronaves disponibles.</FieldDescription>
-              {errorDePrimeraCarga(aeronaves) !== null && <FieldError>No se pudieron cargar las aeronaves.</FieldError>}
-              <FieldError errors={[errors.idAeronave]} />
+              <FieldDescription>
+                {esSimulador
+                  ? 'El turno se realiza en simulador; su telemetría puede autocalificar la evaluación.'
+                  : 'El turno se realiza en aeronave real.'}
+              </FieldDescription>
             </Field>
+            {esSimulador ? (
+              <Field data-invalid={Boolean(errors.dispositivo)}>
+                <FieldLabel htmlFor="turno-dispositivo">Dispositivo</FieldLabel>
+                <Input
+                  id="turno-dispositivo"
+                  aria-invalid={Boolean(errors.dispositivo)}
+                  placeholder="FNPT II H135"
+                  {...formulario.register('dispositivo')}
+                />
+                <FieldDescription>Identificador del simulador (opcional).</FieldDescription>
+                <FieldError errors={[errors.dispositivo]} />
+              </Field>
+            ) : (
+              <Field data-invalid={Boolean(errors.idAeronave)}>
+                <FieldLabel htmlFor="turno-aeronave">Aeronave</FieldLabel>
+                <NativeSelect
+                  id="turno-aeronave"
+                  className="w-full"
+                  aria-invalid={Boolean(errors.idAeronave)}
+                  {...formulario.register('idAeronave')}
+                >
+                  <NativeSelectOption value="">Elija una aeronave</NativeSelectOption>
+                  {(aeronaves.data ?? []).map((aeronave) => (
+                    <NativeSelectOption key={aeronave.id} value={aeronave.id} disabled={aeronave.estado !== 'Disponible'}>
+                      {aeronave.estado === 'Disponible'
+                        ? aeronave.nombre
+                        : `${aeronave.nombre} · ${termino('aeronave', aeronave.estado).etiqueta}`}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+                <FieldDescription>Solo se pueden elegir aeronaves disponibles.</FieldDescription>
+                {errorDePrimeraCarga(aeronaves) !== null && <FieldError>No se pudieron cargar las aeronaves.</FieldError>}
+                <FieldError errors={[errors.idAeronave]} />
+              </Field>
+            )}
           </FieldGroup>
         </CardContent>
       </Card>
