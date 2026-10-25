@@ -56,6 +56,14 @@ export function ManiobraPage({ id }: { id: number }) {
                 </Link>
               </Button>
             )}
+            {puedeEstandares && (
+              <Button variant="outline" asChild>
+                <Link to="/programa/maniobras/$id/parametros" params={{ id: String(maniobra.id) }}>
+                  <Ruler aria-hidden />
+                  Editar tolerancias
+                </Link>
+              </Button>
+            )}
             {puedeGestionar &&
               (puedeModificar ? (
                 <Button variant="outline" asChild>

@@ -66,6 +66,7 @@ import { Route as AppProgramaFasesIdEditarRouteImport } from './routes/_app/prog
 import { Route as AppProgramaManiobrasIdIndexRouteImport } from './routes/_app/programa/maniobras/$id/index'
 import { Route as AppProgramaManiobrasIdEditarRouteImport } from './routes/_app/programa/maniobras/$id/editar'
 import { Route as AppProgramaManiobrasIdEstandaresRouteImport } from './routes/_app/programa/maniobras/$id/estandares'
+import { Route as AppProgramaManiobrasIdParametrosRouteImport } from './routes/_app/programa/maniobras/$id/parametros'
 import { Route as AppTeoriaTurnosIdIndexRouteImport } from './routes/_app/teoria/turnos/$id/index'
 import { Route as AppTeoriaTurnosIdEditarRouteImport } from './routes/_app/teoria/turnos/$id/editar'
 import { Route as AppTurnosIdBriefingAlumnoRouteImport } from './routes/_app/turnos/$id/briefing/$alumno'
@@ -365,6 +366,12 @@ const AppProgramaManiobrasIdEstandaresRoute =
     path: '/programa/maniobras/$id/estandares',
     getParentRoute: () => AppRoute,
   } as any)
+const AppProgramaManiobrasIdParametrosRoute =
+  AppProgramaManiobrasIdParametrosRouteImport.update({
+    id: '/programa/maniobras/$id/parametros',
+    path: '/programa/maniobras/$id/parametros',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppTeoriaTurnosIdIndexRoute = AppTeoriaTurnosIdIndexRouteImport.update({
   id: '/teoria/turnos/$id/',
   path: '/teoria/turnos/$id/',
@@ -443,6 +450,7 @@ export interface FileRoutesByFullPath {
   '/programa/fases/$id/editar': typeof AppProgramaFasesIdEditarRoute
   '/programa/maniobras/$id/editar': typeof AppProgramaManiobrasIdEditarRoute
   '/programa/maniobras/$id/estandares': typeof AppProgramaManiobrasIdEstandaresRoute
+  '/programa/maniobras/$id/parametros': typeof AppProgramaManiobrasIdParametrosRoute
   '/teoria/turnos/$id/editar': typeof AppTeoriaTurnosIdEditarRoute
   '/turnos/$id/briefing/$alumno': typeof AppTurnosIdBriefingAlumnoRoute
   '/turnos/$id/evaluar/$alumno': typeof AppTurnosIdEvaluarAlumnoRoute
@@ -505,6 +513,7 @@ export interface FileRoutesByTo {
   '/programa/fases/$id/editar': typeof AppProgramaFasesIdEditarRoute
   '/programa/maniobras/$id/editar': typeof AppProgramaManiobrasIdEditarRoute
   '/programa/maniobras/$id/estandares': typeof AppProgramaManiobrasIdEstandaresRoute
+  '/programa/maniobras/$id/parametros': typeof AppProgramaManiobrasIdParametrosRoute
   '/teoria/turnos/$id/editar': typeof AppTeoriaTurnosIdEditarRoute
   '/turnos/$id/briefing/$alumno': typeof AppTurnosIdBriefingAlumnoRoute
   '/turnos/$id/evaluar/$alumno': typeof AppTurnosIdEvaluarAlumnoRoute
@@ -569,6 +578,7 @@ export interface FileRoutesById {
   '/_app/programa/fases/$id/editar': typeof AppProgramaFasesIdEditarRoute
   '/_app/programa/maniobras/$id/editar': typeof AppProgramaManiobrasIdEditarRoute
   '/_app/programa/maniobras/$id/estandares': typeof AppProgramaManiobrasIdEstandaresRoute
+  '/_app/programa/maniobras/$id/parametros': typeof AppProgramaManiobrasIdParametrosRoute
   '/_app/teoria/turnos/$id/editar': typeof AppTeoriaTurnosIdEditarRoute
   '/_app/turnos/$id/briefing/$alumno': typeof AppTurnosIdBriefingAlumnoRoute
   '/_app/turnos/$id/evaluar/$alumno': typeof AppTurnosIdEvaluarAlumnoRoute
@@ -633,6 +643,7 @@ export interface FileRouteTypes {
     | '/programa/fases/$id/editar'
     | '/programa/maniobras/$id/editar'
     | '/programa/maniobras/$id/estandares'
+    | '/programa/maniobras/$id/parametros'
     | '/teoria/turnos/$id/editar'
     | '/turnos/$id/briefing/$alumno'
     | '/turnos/$id/evaluar/$alumno'
@@ -695,6 +706,7 @@ export interface FileRouteTypes {
     | '/programa/fases/$id/editar'
     | '/programa/maniobras/$id/editar'
     | '/programa/maniobras/$id/estandares'
+    | '/programa/maniobras/$id/parametros'
     | '/teoria/turnos/$id/editar'
     | '/turnos/$id/briefing/$alumno'
     | '/turnos/$id/evaluar/$alumno'
@@ -758,6 +770,7 @@ export interface FileRouteTypes {
     | '/_app/programa/fases/$id/editar'
     | '/_app/programa/maniobras/$id/editar'
     | '/_app/programa/maniobras/$id/estandares'
+    | '/_app/programa/maniobras/$id/parametros'
     | '/_app/teoria/turnos/$id/editar'
     | '/_app/turnos/$id/briefing/$alumno'
     | '/_app/turnos/$id/evaluar/$alumno'
@@ -1175,6 +1188,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProgramaManiobrasIdEstandaresRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/programa/maniobras/$id/parametros': {
+      id: '/_app/programa/maniobras/$id/parametros'
+      path: '/programa/maniobras/$id/parametros'
+      fullPath: '/programa/maniobras/$id/parametros'
+      preLoaderRoute: typeof AppProgramaManiobrasIdParametrosRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/teoria/turnos/$id/': {
       id: '/_app/teoria/turnos/$id/'
       path: '/teoria/turnos/$id'
@@ -1257,6 +1277,7 @@ interface AppRouteChildren {
   AppProgramaFasesIdEditarRoute: typeof AppProgramaFasesIdEditarRoute
   AppProgramaManiobrasIdEditarRoute: typeof AppProgramaManiobrasIdEditarRoute
   AppProgramaManiobrasIdEstandaresRoute: typeof AppProgramaManiobrasIdEstandaresRoute
+  AppProgramaManiobrasIdParametrosRoute: typeof AppProgramaManiobrasIdParametrosRoute
   AppTeoriaTurnosIdEditarRoute: typeof AppTeoriaTurnosIdEditarRoute
   AppTurnosIdBriefingAlumnoRoute: typeof AppTurnosIdBriefingAlumnoRoute
   AppTurnosIdEvaluarAlumnoRoute: typeof AppTurnosIdEvaluarAlumnoRoute
@@ -1317,6 +1338,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProgramaFasesIdEditarRoute: AppProgramaFasesIdEditarRoute,
   AppProgramaManiobrasIdEditarRoute: AppProgramaManiobrasIdEditarRoute,
   AppProgramaManiobrasIdEstandaresRoute: AppProgramaManiobrasIdEstandaresRoute,
+  AppProgramaManiobrasIdParametrosRoute: AppProgramaManiobrasIdParametrosRoute,
   AppTeoriaTurnosIdEditarRoute: AppTeoriaTurnosIdEditarRoute,
   AppTurnosIdBriefingAlumnoRoute: AppTurnosIdBriefingAlumnoRoute,
   AppTurnosIdEvaluarAlumnoRoute: AppTurnosIdEvaluarAlumnoRoute,

@@ -430,6 +430,16 @@ export const PANTALLAS = {
     padre: '/programa/maniobras/$id',
     enMenu: false,
   },
+  parametros: {
+    ruta: '/programa/maniobras/$id/parametros',
+    titulo: 'Tolerancias de la maniobra',
+    descripcion: 'Tolerancias numéricas con las que el simulador autocalifica la maniobra.',
+    grupo: 'Programa',
+    icono: Ruler,
+    permiso: 'Manage Standards',
+    padre: '/programa/maniobras/$id',
+    enMenu: false,
+  },
   materias: {
     ruta: '/programa/materias',
     titulo: 'Materias',
