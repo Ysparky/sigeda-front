@@ -220,12 +220,18 @@ generado/mockeado con esta forma.
    como las de aeronave real para `HORAS_DEL_PROGRAMA = 94.0`. **Confirma que `medio` NO toca la
    ponderación** (NSF/NIA/NFPI intactos). Sin tope en alcance; un eventual cap de horas-sim es
    follow-on, no v1.
-2. **Maniobras simulables — subconjunto por progresión, data-driven.** No todas. El criterio es
-   de sentido común: el alumno que recién inicia entrena primero en simulador, no salta a la
-   aeronave → las fases tempranas son sim-first. En el modelo, "simulable" = la maniobra tiene
-   `ParametroManiobra` cargados (lo define el Jefe de Operaciones). Para el demo se siembran como
-   simulables las maniobras de la **fase Adaptación (NFAD)**; las fases avanzadas quedan para
-   aeronave real. Las no simulables llegan en blanco a la propuesta (§4.4).
+2. **Maniobras simulables — subconjunto, data-driven.** No todas. "Simulable" se decide por tres
+   ejes: **progresión** (el novato entrena primero en sim), **seguridad** (maniobras peligrosas de
+   repetir en aeronave real) y **telemetría limpia** (maniobras definidas por parámetros numéricos
+   claros, que el motor puede autocalificar bien). En el modelo, "simulable" = la maniobra tiene
+   `ParametroManiobra` cargados (lo define el Jefe de Operaciones). Para el demo se siembra una
+   **terna**, una maniobra por eje, para demostrar el motor con parámetros de distinta naturaleza:
+   - **Adaptación (NFAD)** — eje progresión (p. ej. vuelo estacionario/hover): altitud, deriva, rumbo.
+   - **Emergencias (NFEM), autorrotación** — eje seguridad: RPM de rotor, régimen de descenso, velocidad.
+   - **Instrumentos (NFVI), aproximación ILS** — eje telemetría: senda (desvío de GS/LOC), altitud, rumbo, velocidad.
+
+   Navegación visual y nocturno quedan fuera (telemetría pobre, dependen de referencias externas).
+   Las maniobras no simulables del turno llegan en blanco a la propuesta (§4.4).
 3. **Simulador real.** ASA usa un dispositivo de simulación real (modelo/formato de export por
    confirmar). La ingesta se implementa **agnóstica** vía el contrato JSON (§5); para el demo se
    alimenta con un archivo de telemetría con esa forma. El **adaptador** del dispositivo real
