@@ -22,6 +22,8 @@ export type ManiobraDelTurno = { notaMin: NotaDirbe; maniobra: { id: number; nom
 
 export type AeronaveDelTurno = { id: number; nombre: string; estado: string }
 
+export type Medio = 'AERONAVE' | 'SIMULADOR'
+
 export type TurnoDetalle = {
   id: number
   nombre: string
@@ -32,6 +34,8 @@ export type TurnoDetalle = {
   programa: string
   codInstructor: string | null
   instructor: string | null
+  medio: Medio
+  dispositivo: string | null
   aeronave: AeronaveDelTurno | null
   alumnos: AlumnoDelTurno[]
   maniobras: ManiobraDelTurno[]
@@ -51,7 +55,9 @@ export type CuerpoTurno = {
   // llega**: omitirla borra la asignación, porque §1.6 reemplaza el turno y no lo parchea. Por eso
   // `modificarTurno` la manda siempre, aunque sea `null`.
   idMision?: number | null
-  aeronave: { id: number }
+  medio?: Medio
+  dispositivo?: string | null
+  aeronave: { id: number } | null
   alumnosTurno: { codAlumno: string; horaInicio: string; horaFin: string }[]
   maniobrasTurno: { idManiobra: number; nota_min: NotaDirbe }[]
 }
@@ -70,6 +76,8 @@ type DetalleTurnoApi = {
   fase?: string | null
   codInstructor?: string | null
   instructor?: string | null
+  medio?: string | null
+  dispositivo?: string | null
   aeronave?: { id: number; nombre: string; estado?: string | null } | null
   alumnosTurno?: { codAlumno: string; alumno?: string | null; horaInicio: string; horaFin: string }[] | null
   maniobrasTurno?: { nota_min: string; maniobra: { id: number; nombre: string; descripcion?: string | null } }[] | null
@@ -107,6 +115,8 @@ export function aTurnoDetalle(turno: DetalleTurnoApi): TurnoDetalle {
     programa: turno.programa,
     codInstructor: turno.codInstructor ?? null,
     instructor: turno.instructor ?? null,
+    medio: turno.medio === 'SIMULADOR' ? 'SIMULADOR' : 'AERONAVE',
+    dispositivo: turno.dispositivo ?? null,
     aeronave: turno.aeronave
       ? { id: turno.aeronave.id, nombre: turno.aeronave.nombre, estado: turno.aeronave.estado ?? 'Desconocido' }
       : null,
@@ -208,13 +218,15 @@ export async function crearTurno(cuerpo: CuerpoTurno): Promise<TurnoGuardado> {
 }
 
 export async function modificarTurno(id: number, cuerpo: CuerpoTurno): Promise<TurnoGuardado> {
-  const { nombre, fechaEval, codInstructor, idMision, aeronave, alumnosTurno, maniobrasTurno } = cuerpo
+  const { nombre, fechaEval, codInstructor, idMision, medio, dispositivo, aeronave, alumnosTurno, maniobrasTurno } = cuerpo
   return aTurnoGuardado(
     await sigeda.put<unknown>(`/api/turnos/${encodeURIComponent(id)}`, {
       nombre,
       fechaEval,
       codInstructor,
       idMision: idMision ?? null,
+      medio,
+      dispositivo: dispositivo ?? null,
       aeronave,
       alumnosTurno,
       maniobrasTurno,

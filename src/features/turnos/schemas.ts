@@ -48,9 +48,12 @@ export function crearEsquemaTurno(hoy: string, aeronavesDisponibles: ReadonlySet
       // ella, y entonces su nota de sub fase sale como promedio simple en vez de ponderada.
       idMision: z.string(),
       codInstructor: z.string().min(1, 'Instructor debe ser asignado.'),
+      medio: z.enum(['AERONAVE', 'SIMULADOR']),
+      dispositivo: z.string(),
+      // La aeronave solo se exige para turnos AERONAVE (regla en el superRefine): un turno de
+      // simulador no la lleva. Acá solo se valida que, si se eligió, esté disponible.
       idAeronave: z
         .string()
-        .min(1, 'La asignación de aeronave es requerida.')
         .refine((valor) => valor === '' || aeronavesDisponibles.has(Number(valor)), 'Asignar aeronave disponible.'),
       alumnosTurno: z
         .array(
@@ -71,6 +74,9 @@ export function crearEsquemaTurno(hoy: string, aeronavesDisponibles: ReadonlySet
         .min(1, 'La asignación de maniobras es requerida'),
     })
     .superRefine((valores, contexto) => {
+      if (valores.medio === 'AERONAVE' && valores.idAeronave === '') {
+        contexto.addIssue({ code: 'custom', message: 'La asignación de aeronave es requerida.', path: ['idAeronave'] })
+      }
       valores.alumnosTurno.forEach((alumno, indice) => {
         if (esHora(alumno.horaInicio) && esHora(alumno.horaFin) && alumno.horaFin <= alumno.horaInicio) {
           contexto.addIssue({
@@ -107,6 +113,8 @@ export function turnoVacio(programa: Programa = 'PDI'): ValoresTurno {
     idSubfase: '',
     idMision: '',
     codInstructor: '',
+    medio: 'AERONAVE',
+    dispositivo: '',
     idAeronave: '',
     alumnosTurno: [],
     maniobrasTurno: [],
@@ -128,6 +136,8 @@ export function valoresDesdeTurno(turno: TurnoDetalle, idSubfase: number | undef
     idSubfase: idSubfase === undefined ? '' : String(idSubfase),
     idMision: '',
     codInstructor: turno.codInstructor ?? '',
+    medio: turno.medio,
+    dispositivo: turno.dispositivo ?? '',
     idAeronave: turno.aeronave ? String(turno.aeronave.id) : '',
     alumnosTurno: turno.alumnos.map(({ codAlumno, horaInicio, horaFin }) => ({ codAlumno, horaInicio, horaFin })),
     maniobrasTurno: turno.maniobras.map((item) => ({ idManiobra: String(item.maniobra.id), notaMin: item.notaMin })),
@@ -142,7 +152,9 @@ export function aCuerpoTurno(valores: ValoresTurno): CuerpoTurno {
     idSubfase: Number(valores.idSubfase),
     idMision: valores.idMision === '' ? null : Number(valores.idMision),
     codInstructor: valores.codInstructor,
-    aeronave: { id: Number(valores.idAeronave) },
+    medio: valores.medio,
+    dispositivo: valores.medio === 'SIMULADOR' ? valores.dispositivo.trim() || null : null,
+    aeronave: valores.medio === 'SIMULADOR' ? null : { id: Number(valores.idAeronave) },
     alumnosTurno: valores.alumnosTurno.map(({ codAlumno, horaInicio, horaFin }) => ({ codAlumno, horaInicio, horaFin })),
     maniobrasTurno: valores.maniobrasTurno.flatMap((maniobra) =>
       esNotaDirbe(maniobra.notaMin) ? [{ idManiobra: Number(maniobra.idManiobra), nota_min: maniobra.notaMin }] : [],

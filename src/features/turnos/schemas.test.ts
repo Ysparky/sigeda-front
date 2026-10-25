@@ -89,10 +89,26 @@ describe('esquema del turno', () => {
       idSubfase: 2,
       idMision: null,
       codInstructor: '444444',
+      medio: 'AERONAVE',
+      dispositivo: null,
       aeronave: { id: 1 },
       alumnosTurno: [{ codAlumno: '222222', horaInicio: '08:00', horaFin: '09:30' }],
       maniobrasTurno: [{ idManiobra: 1, nota_min: 'B' }],
     })
+  })
+
+  it('un turno de simulador no exige aeronave y viaja sin ella', () => {
+    expect(mensajes(valido({ medio: 'SIMULADOR', idAeronave: '', dispositivo: 'FNPT II H135' }))).toEqual([])
+    const cuerpo = aCuerpoTurno(valido({ medio: 'SIMULADOR', idAeronave: '', dispositivo: 'FNPT II H135' }))
+    expect(cuerpo.medio).toBe('SIMULADOR')
+    expect(cuerpo.aeronave).toBeNull()
+    expect(cuerpo.dispositivo).toBe('FNPT II H135')
+  })
+
+  it('un turno de aeronave sigue exigiendo aeronave', () => {
+    expect(mensajes(valido({ medio: 'AERONAVE', idAeronave: '' }))).toContain(
+      'idAeronave: La asignación de aeronave es requerida.',
+    )
   })
 
   it('dependencia 62 la misión es opcional y el selector vacío viaja como null, no como 0', () => {

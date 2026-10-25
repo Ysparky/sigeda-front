@@ -18,6 +18,42 @@ export type CuerpoManiobra = { nombre: string; descripcion: string; subfases: { 
 
 export type CuerpoEstandares = { estandares: { id: number; nombre: string; descripcion: string }[] }
 
+export type TipoClave = 'LINEAL' | 'ANGULAR'
+
+export type ParametroDeManiobra = {
+  id: number
+  clave: string
+  tipo: TipoClave
+  unidad: string | null
+  objetivo: number
+  tolExcelente: number
+  tolBueno: number
+  tolRegular: number
+}
+
+export type CuerpoParametros = {
+  parametros: Array<{
+    clave: string
+    tipo: TipoClave
+    unidad: string
+    objetivo: number
+    tolExcelente: number
+    tolBueno: number
+    tolRegular: number
+  }>
+}
+
+const esquemaParametro = z.object({
+  id: z.number(),
+  clave: z.string(),
+  tipo: z.enum(['LINEAL', 'ANGULAR']),
+  unidad: z.string().nullish(),
+  objetivo: z.number(),
+  tolExcelente: z.number(),
+  tolBueno: z.number(),
+  tolRegular: z.number(),
+})
+
 const esquemaFila = z.object({ id: z.number(), nombre: z.string(), descripcion: z.string().nullish() })
 
 const esquemaDetalle = esquemaFila.extend({
@@ -29,6 +65,7 @@ export const clavesManiobras = {
   todo: ['maniobras'] as const,
   lista: (parametros: ParametrosPagina) => [...clavesManiobras.todo, 'lista', parametros] as const,
   detalle: (id: number) => [...clavesManiobras.todo, 'detalle', id] as const,
+  parametros: (id: number) => [...clavesManiobras.todo, 'parametros', id] as const,
 }
 
 function aFila(maniobra: z.infer<typeof esquemaFila>): ManiobraFila {
@@ -68,6 +105,15 @@ export async function guardarEstandares(id: number, cuerpo: CuerpoEstandares): P
   await sigeda.put<unknown>(`/api/maniobras/${encodeURIComponent(id)}/estandar`, cuerpo)
 }
 
+export async function obtenerParametros(id: number): Promise<ParametroDeManiobra[]> {
+  const datos = z.array(esquemaParametro).parse(await sigeda.get(`/api/maniobras/${encodeURIComponent(id)}/parametros`))
+  return datos.map((parametro) => ({ ...parametro, unidad: parametro.unidad ?? null }))
+}
+
+export async function guardarParametros(id: number, cuerpo: CuerpoParametros): Promise<void> {
+  await sigeda.put<unknown>(`/api/maniobras/${encodeURIComponent(id)}/parametros`, cuerpo)
+}
+
 export async function eliminarManiobra(id: number): Promise<void> {
   await sigeda.eliminar<unknown>(`/api/maniobras/${encodeURIComponent(id)}`)
 }
@@ -81,4 +127,6 @@ export const consultasManiobras = {
     }),
   detalle: (id: number) =>
     queryOptions({ queryKey: clavesManiobras.detalle(id), queryFn: () => obtenerManiobra(id) }),
+  parametros: (id: number) =>
+    queryOptions({ queryKey: clavesManiobras.parametros(id), queryFn: () => obtenerParametros(id) }),
 }
