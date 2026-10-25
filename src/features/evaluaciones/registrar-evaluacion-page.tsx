@@ -8,10 +8,12 @@ import { PageHeader } from '@/components/page-header'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { consultasSimulador } from '@/features/simulador/api'
 import { consultasTurnos } from '@/features/turnos/api'
 import { useSesion } from '@/lib/auth/use-sesion'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasEvaluaciones, useRegistrarEvaluacion } from './api'
+import { CargarSesionSimulador } from './components/cargar-sesion'
 import { FormularioEvaluacion } from './components/formulario-evaluacion'
 import { valoresDeEvaluacion } from './schemas'
 
@@ -31,8 +33,10 @@ export function RegistrarEvaluacionPage({ id, codAlumno }: { id: number; codAlum
   const { data: turno } = useSuspenseQuery(consultasTurnos.detalle(id))
   const actual = useSesion()
   const esSuInstructor = actual?.codPersona != null && actual.codPersona === turno.codInstructor
+  const esSimulador = turno.medio === 'SIMULADOR'
   const existentes = useQuery({ ...consultasEvaluaciones.delTurno(codAlumno, id), enabled: esSuInstructor })
   const categorias = useQuery({ ...consultasEvaluaciones.sugerencias(codAlumno), enabled: esSuInstructor })
+  const propuesta = useQuery(consultasSimulador.propuesta(id, codAlumno, esSuInstructor && esSimulador))
   const guardar = useRegistrarEvaluacion(id, codAlumno)
   const alumno = turno.alumnos.find((candidato) => candidato.codAlumno === codAlumno)
   const volver = (
@@ -49,7 +53,8 @@ export function RegistrarEvaluacionPage({ id, codAlumno }: { id: number; codAlum
 
   function contenido() {
     if (!esSuInstructor) return <Aviso titulo="No disponible">{MENSAJE_SOLO_INSTRUCTOR}</Aviso>
-    if (existentes.isPending || categorias.isPending) return <Skeleton className="h-64 w-full" />
+    if (existentes.isPending || categorias.isPending || (esSimulador && propuesta.isPending))
+      return <Skeleton className="h-64 w-full" />
     const enCurso = guardar.isPending || guardar.isSuccess
     const registrada = existentes.data?.[0]
     if (registrada && !enCurso) {
@@ -80,24 +85,42 @@ export function RegistrarEvaluacionPage({ id, codAlumno }: { id: number; codAlum
         </Aviso>
       )
     }
+    const propuestaPorManiobra = new Map((propuesta.data?.calificaciones ?? []).map((item) => [item.idManiobra, item]))
+    const hayPropuesta = [...propuestaPorManiobra.values()].some((item) => item.notaPropuesta !== null)
     return (
-      <FormularioEvaluacion
-        valoresIniciales={valoresDeEvaluacion(
-          turno.maniobras.map((item) => ({
-            idManiobra: item.maniobra.id,
-            maniobra: item.maniobra.nombre,
-            notaMin: item.notaMin,
-          })),
-          { categoria: sugeridas.length === 1 ? sugeridas[0] : '', codEvaluador: actual?.codPersona ?? '' },
+      <div className="grid gap-6">
+        {esSimulador && (
+          <CargarSesionSimulador idTurno={id} codAlumno={codAlumno} dispositivo={turno.dispositivo} />
         )}
-        categorias={sugeridas}
-        guardar={guardar}
-        cancelar={
-          <Link to="/turnos/$id" params={{ id: String(id) }}>
-            Cancelar
-          </Link>
-        }
-      />
+        {esSimulador && hayPropuesta && (
+          <Aviso titulo="Calificación propuesta por el simulador">
+            Las letras vienen prellenadas de la telemetría; revíselas y corrija lo que haga falta antes de firmar. Las
+            maniobras sin medición quedan en blanco.
+          </Aviso>
+        )}
+        <FormularioEvaluacion
+          valoresIniciales={valoresDeEvaluacion(
+            turno.maniobras.map((item) => {
+              const propuesto = propuestaPorManiobra.get(item.maniobra.id)
+              return {
+                idManiobra: item.maniobra.id,
+                maniobra: item.maniobra.nombre,
+                notaMin: item.notaMin,
+                nota: propuesto?.notaPropuesta ?? undefined,
+                observacion: propuesto?.observacion ?? undefined,
+              }
+            }),
+            { categoria: sugeridas.length === 1 ? sugeridas[0] : '', codEvaluador: actual?.codPersona ?? '' },
+          )}
+          categorias={sugeridas}
+          guardar={guardar}
+          cancelar={
+            <Link to="/turnos/$id" params={{ id: String(id) }}>
+              Cancelar
+            </Link>
+          }
+        />
+      </div>
     )
   }
 

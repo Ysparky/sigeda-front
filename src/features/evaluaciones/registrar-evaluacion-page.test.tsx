@@ -31,6 +31,28 @@ async function calificarTodasConB(usuario: UserEvent) {
   for (const nombre of ['Ingreso al circuito de tránsito', 'Circuito de tránsito completo', 'Virajes a nivel', 'Ascensos y descensos', 'Parada rápida', 'Aproximación y aterrizaje normal']) await calificar(usuario, nombre, 'B')
 }
 
+function turnoSimuladorApi() {
+  return {
+    id: 2,
+    nombre: 'Hover en Simulador',
+    idSubfase: 2,
+    subfase: 'Circuitos y Maniobras',
+    fase: 'Adaptación',
+    fechaEval: '2099-01-01',
+    programa: 'PDI',
+    codInstructor: '444444',
+    instructor: 'Juan Perez',
+    medio: 'SIMULADOR',
+    dispositivo: 'FNPT II H135',
+    aeronave: null,
+    alumnosTurno: [{ codAlumno: '222222', alumno: 'Juan Falconi', horaInicio: '08:00', horaFin: '09:30' }],
+    maniobrasTurno: [
+      { nota_min: 'I', maniobra: { id: 1, nombre: 'Ingreso al circuito de tránsito', descripcion: '' } },
+      { nota_min: 'I', maniobra: { id: 2, nombre: 'Circuito de tránsito completo', descripcion: '' } },
+    ],
+  }
+}
+
 describe('Registrar evaluación', () => {
   it('CA-EVA-02 solo el instructor asignado al turno puede registrarla', async () => {
     await abrir('instructor.mendoza', '/turnos/2/evaluar/222222')
@@ -242,5 +264,50 @@ describe('Registrar evaluación', () => {
     await calificarTodasConB(usuario)
     await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
     expect(await maniobra('Virajes a nivel').findByText('Ingresar calificación de maniobra.')).toBeInTheDocument()
+  })
+
+  it('un turno de simulador prellena las letras propuestas y deja en blanco las sin medición', async () => {
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/turnos/2`, () => HttpResponse.json(turnoSimuladorApi())),
+      http.get(`${config.sigedaApiUrl}/api/turnos/2/persona/222222/propuesta-simulador`, () =>
+        HttpResponse.json({
+          calificaciones: [
+            { idManiobra: 1, maniobra: 'Ingreso al circuito de tránsito', notaMin: 'I', notaPropuesta: 'B', observacion: 'ALTITUD 1012 ft (desvío 12)' },
+            { idManiobra: 2, maniobra: 'Circuito de tránsito completo', notaMin: 'I', notaPropuesta: null, observacion: null },
+          ],
+        }),
+      ),
+    )
+    await abrirFormulario('instructor.perez', '/turnos/2/evaluar/222222')
+    expect(screen.getByText('Calificación propuesta por el simulador')).toBeInTheDocument()
+    expect(maniobra('Ingreso al circuito de tránsito').getByRole('radio', { name: /^B \(/ })).toHaveAttribute('aria-checked', 'true')
+    const sinMedir = screen.getByRole('radiogroup', { name: 'Calificación de Circuito de tránsito completo' })
+    expect(within(sinMedir).queryByRole('radio', { checked: true })).not.toBeInTheDocument()
+  })
+
+  it('un turno de aeronave no muestra la carga de telemetría ni la propuesta', async () => {
+    await abrirFormulario()
+    expect(screen.queryByText('Telemetría del simulador')).not.toBeInTheDocument()
+    expect(screen.queryByText('Calificación propuesta por el simulador')).not.toBeInTheDocument()
+  })
+
+  it('carga la telemetría pegada y la ingiere con el alumno del turno', async () => {
+    let recibido: Record<string, unknown> | null = null
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/turnos/2`, () => HttpResponse.json(turnoSimuladorApi())),
+      http.get(`${config.sigedaApiUrl}/api/turnos/2/persona/222222/propuesta-simulador`, () =>
+        HttpResponse.json({ calificaciones: [] }),
+      ),
+      http.post(`${config.sigedaApiUrl}/api/turnos/2/sesiones-simulador`, async ({ request }) => {
+        recibido = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ mensaje: 'Sesión de simulador ingerida.', id: 1 }, { status: 201 })
+      }),
+    )
+    const { usuario } = await abrirFormulario('instructor.perez', '/turnos/2/evaluar/222222')
+    await usuario.click(screen.getByLabelText('Sesión de simulador (JSON)'))
+    await usuario.paste('{"maniobras":[{"idManiobra":1,"mediciones":[{"clave":"ALTITUD","valor":1012}]}]}')
+    await usuario.click(screen.getByRole('button', { name: 'Cargar telemetría' }))
+    await waitFor(() => expect(recibido).not.toBeNull())
+    expect(recibido).toMatchObject({ codAlumno: '222222' })
   })
 })
