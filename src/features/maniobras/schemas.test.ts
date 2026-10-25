@@ -38,6 +38,17 @@ describe('esquema de parámetros de maniobra', () => {
     expect(mensajes(valido({ objetivo: 'abc' }))).toContain('Ingrese un objetivo numérico')
   })
 
+  it('rechaza bandas no monótonas (Excelente ≤ Bueno ≤ Regular)', () => {
+    expect(mensajes(valido({ tolExcelente: '100', tolBueno: '20', tolRegular: '50' }))).toContain(
+      'Las bandas deben cumplir Excelente ≤ Bueno ≤ Regular',
+    )
+  })
+
+  it('rechaza claves repetidas en la misma maniobra', () => {
+    const base = { ...PARAMETRO_VACIO, clave: 'ALTITUD', unidad: 'ft', objetivo: '1000', tolExcelente: '20', tolBueno: '50', tolRegular: '100' }
+    expect(mensajes({ parametros: [base, { ...base }] })).toContain('La clave está repetida')
+  })
+
   it('convierte las cadenas del formulario a números para el backend', () => {
     expect(aCuerpoParametros(valido())).toEqual({
       parametros: [

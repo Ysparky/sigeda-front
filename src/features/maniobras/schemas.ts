@@ -26,21 +26,42 @@ export type ValoresEstandares = z.input<typeof esquemaEstandares>
 const esNumero = (valor: string) => valor.trim() !== '' && Number.isFinite(Number(valor))
 const esPositivo = (valor: string) => esNumero(valor) && Number(valor) > 0
 
-export const esquemaParametros = z.object({
-  parametros: z
-    .array(
-      z.object({
-        clave: z.string().trim().min(1, 'La clave es requerida'),
-        tipo: z.enum(['LINEAL', 'ANGULAR']),
-        unidad: z.string().trim().min(1, 'La unidad es requerida'),
-        objetivo: z.string().refine(esNumero, 'Ingrese un objetivo numérico'),
-        tolExcelente: z.string().refine(esPositivo, 'La banda Excelente debe ser un número positivo'),
-        tolBueno: z.string().refine(esPositivo, 'La banda Bueno debe ser un número positivo'),
-        tolRegular: z.string().refine(esPositivo, 'La banda Regular debe ser un número positivo'),
-      }),
-    )
-    .min(1, 'La asignación de parámetros es requerida'),
-})
+export const esquemaParametros = z
+  .object({
+    parametros: z
+      .array(
+        z.object({
+          clave: z.string().trim().min(1, 'La clave es requerida'),
+          tipo: z.enum(['LINEAL', 'ANGULAR']),
+          unidad: z.string().trim().min(1, 'La unidad es requerida'),
+          objetivo: z.string().refine(esNumero, 'Ingrese un objetivo numérico'),
+          tolExcelente: z.string().refine(esPositivo, 'La banda Excelente debe ser un número positivo'),
+          tolBueno: z.string().refine(esPositivo, 'La banda Bueno debe ser un número positivo'),
+          tolRegular: z.string().refine(esPositivo, 'La banda Regular debe ser un número positivo'),
+        }),
+      )
+      .min(1, 'La asignación de parámetros es requerida'),
+  })
+  .superRefine((valores, contexto) => {
+    const vistas = new Set<string>()
+    valores.parametros.forEach((parametro, indice) => {
+      const clave = parametro.clave.trim()
+      if (clave !== '' && vistas.has(clave)) {
+        contexto.addIssue({ code: 'custom', message: 'La clave está repetida', path: ['parametros', indice, 'clave'] })
+      }
+      vistas.add(clave)
+      const e = Number(parametro.tolExcelente)
+      const b = Number(parametro.tolBueno)
+      const r = Number(parametro.tolRegular)
+      if ([e, b, r].every(Number.isFinite) && (e > b || b > r)) {
+        contexto.addIssue({
+          code: 'custom',
+          message: 'Las bandas deben cumplir Excelente ≤ Bueno ≤ Regular',
+          path: ['parametros', indice, 'tolExcelente'],
+        })
+      }
+    })
+  })
 
 export type ValoresParametros = z.input<typeof esquemaParametros>
 
