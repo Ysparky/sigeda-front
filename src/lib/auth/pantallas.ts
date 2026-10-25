@@ -107,7 +107,7 @@ export const PANTALLAS = {
     descripcion: 'Referencia visual de componentes y estados del dominio.',
     grupo: 'General',
     icono: Palette,
-    enMenu: true,
+    enMenu: false,
     soloDesarrollo: true,
   },
   turnos: {

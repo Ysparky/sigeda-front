@@ -1,4 +1,4 @@
-import { ChevronsUpDown, KeyRound, LogOut, Monitor, Moon, Sun } from 'lucide-react'
+import { ChevronsUpDown, KeyRound, LogOut, Monitor, Moon, Palette, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Link } from '@tanstack/react-router'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -58,6 +58,14 @@ export function MenuUsuario() {
             Cambiar contraseña
           </Link>
         </DropdownMenuItem>
+        {import.meta.env.DEV && (
+          <DropdownMenuItem asChild>
+            <Link to="/guia">
+              <Palette aria-hidden />
+              Guía de estilo
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Tema</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={theme ?? 'system'} onValueChange={setTheme}>
