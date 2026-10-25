@@ -23,9 +23,15 @@ type CuerpoTurno = {
   idSubfase?: unknown
   idMision?: unknown
   codInstructor?: unknown
+  medio?: unknown
+  dispositivo?: unknown
   aeronave?: { id?: unknown } | null
   alumnosTurno?: { codAlumno?: unknown; horaInicio?: unknown; horaFin?: unknown }[]
   maniobrasTurno?: { idManiobra?: unknown; nota_min?: unknown }[]
+}
+
+function medioDe(cuerpo: CuerpoTurno): 'AERONAVE' | 'SIMULADOR' {
+  return cuerpo.medio === 'SIMULADOR' ? 'SIMULADOR' : 'AERONAVE'
 }
 
 const MENSAJE_HORA = 'La hora debe estar en formato HH:mm (09:00, 14:00)'
@@ -60,6 +66,8 @@ export function detalleTurno(turno: TurnoMock) {
     fase: turno.fase,
     codInstructor: turno.codInstructor,
     instructor: instructor ? nombreCorto(instructor) : null,
+    medio: turno.medio,
+    dispositivo: turno.dispositivo,
     aeronave: aeronave ? { id: aeronave.id, nombre: aeronave.nombre, estado: aeronave.estado } : null,
     alumnosTurno: turno.alumnos.map((alumno) => {
       const persona = buscarPersona(alumno.codAlumno)
@@ -103,7 +111,8 @@ function validarCampos(cuerpo: CuerpoTurno, conProgramaYSubfase: boolean): strin
     if (!(Number(cuerpo.idSubfase) > 0)) errores.push("'idSubfase': La subfase es requerida.")
   }
   if (texto(cuerpo.codInstructor).trim() === '') errores.push("'codInstructor': Instructor debe ser asignado.")
-  if (!cuerpo.aeronave) errores.push("'aeronave': La asignación de aeronave es requerida.")
+  if (medioDe(cuerpo) !== 'SIMULADOR' && !cuerpo.aeronave)
+    errores.push("'aeronave': La asignación de aeronave es requerida.")
   const alumnos = cuerpo.alumnosTurno ?? []
   if (alumnos.length === 0) errores.push("'alumnosTurno': La asignación de alumnos es requerida")
   alumnos.forEach((alumno, indice) => {
@@ -214,7 +223,9 @@ function aplicar(turno: TurnoMock, cuerpo: CuerpoTurno) {
   turno.nombre = texto(cuerpo.nombre)
   turno.fechaEval = texto(cuerpo.fechaEval)
   turno.codInstructor = texto(cuerpo.codInstructor)
-  turno.idAeronave = Number(cuerpo.aeronave?.id)
+  turno.medio = medioDe(cuerpo)
+  turno.dispositivo = turno.medio === 'SIMULADOR' ? (cuerpo.dispositivo == null ? null : texto(cuerpo.dispositivo)) : null
+  turno.idAeronave = cuerpo.aeronave ? Number(cuerpo.aeronave.id) : null
   // Se escribe TAL CUAL LLEGA, también en el `PUT`: §1.6 reemplaza el turno y no lo parchea, así que
   // omitir `idMision` borra la asignación. Conservar la anterior acá haría que el mock perdonara lo
   // que el servidor no perdona.
@@ -294,6 +305,8 @@ export const handlersTurnos = [
       codInstructor: null,
       idAeronave: null,
       idMision: null,
+      medio: 'AERONAVE',
+      dispositivo: null,
       alumnos: [],
       maniobras: [],
     }

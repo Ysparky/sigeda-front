@@ -51,6 +51,10 @@ export function textoProhibido(mensaje: string) {
   return HttpResponse.text(mensaje, { status: 403 })
 }
 
+export function conflicto(mensaje: string) {
+  return errorResponse(409, 'Conflicto', mensaje)
+}
+
 export function erroresDeCampo(errores: readonly string[]) {
   return HttpResponse.json(errores, { status: 400 })
 }

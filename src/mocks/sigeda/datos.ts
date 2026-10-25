@@ -69,6 +69,8 @@ export type TurnoMock = {
   codInstructor: string | null
   idAeronave: number | null
   idMision: number | null
+  medio: 'AERONAVE' | 'SIMULADOR'
+  dispositivo: string | null
   alumnos: AlumnoTurnoMock[]
   maniobras: ManiobraTurnoMock[]
 }
@@ -262,6 +264,8 @@ function turnoSemilla(
     codInstructor,
     idAeronave: 1,
     idMision,
+    medio: 'AERONAVE',
+    dispositivo: null,
     alumnos: [{ codAlumno, horaInicio: '13:00', horaFin: '14:30' }],
     maniobras: maniobras.map((idManiobra) => ({ idManiobra, notaMin })),
   }
@@ -391,6 +395,8 @@ export function crearDatos(hoy: string = hoyIso()): DatosMock {
         codInstructor: '444444',
         idAeronave: 1,
         idMision: null,
+        medio: 'AERONAVE',
+        dispositivo: null,
         alumnos: [
           { codAlumno: '111111', horaInicio: '09:00', horaFin: '10:30' },
           { codAlumno: '666666', horaInicio: '11:00', horaFin: '12:30' },
@@ -413,6 +419,8 @@ export function crearDatos(hoy: string = hoyIso()): DatosMock {
         codInstructor: '888888',
         idAeronave: 1,
         idMision: null,
+        medio: 'AERONAVE',
+        dispositivo: null,
         alumnos: [{ codAlumno: '777777', horaInicio: '07:30', horaFin: '08:30' }],
         maniobras: [
           { idManiobra: 9, notaMin: 'B' },
