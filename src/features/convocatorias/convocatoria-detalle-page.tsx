@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { cambiarEstadoConvocatoria, clavesConvocatorias, convocatoriaQuery, type EstadoConvocatoria } from './api'
-import { ETIQUETA_ESTADO_CONVOCATORIA } from './convocatorias-page'
+import { ETIQUETA_ESTADO_CONVOCATORIA } from './estado'
 
 // El siguiente estado alcanzable y su etiqueta de acción.
 const SIGUIENTE: Partial<Record<EstadoConvocatoria, { estado: EstadoConvocatoria; accion: string }>> = {

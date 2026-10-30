@@ -3,13 +3,13 @@ import { describe, expect, it } from 'vitest'
 import { renderApp } from '@/test/render'
 
 describe('MatriculaPage (/matricula)', () => {
-  it('sin curso, invita a elegir uno del catálogo', async () => {
+  it('sin convocatoria, invita a elegir una del catálogo', async () => {
     renderApp('/matricula')
-    expect(await screen.findByText(/Elige un curso/)).toBeInTheDocument()
+    expect(await screen.findByText(/Elige una convocatoria abierta/)).toBeInTheDocument()
   })
 
   it('envía la matrícula y muestra el estado pendiente', async () => {
-    const { usuario } = renderApp('/matricula?curso=1')
+    const { usuario } = renderApp('/matricula?convocatoria=1')
 
     await usuario.type(await screen.findByLabelText('DNI'), '71234567')
     await usuario.type(screen.getByLabelText('Nombres'), 'Rosa')
@@ -29,7 +29,7 @@ describe('MatriculaPage (/matricula)', () => {
   })
 
   it('no envía sin comprobante y pide adjuntarlo', async () => {
-    const { usuario } = renderApp('/matricula?curso=1')
+    const { usuario } = renderApp('/matricula?convocatoria=1')
 
     await usuario.type(await screen.findByLabelText('DNI'), '71234567')
     await usuario.type(screen.getByLabelText('Nombres'), 'Rosa')

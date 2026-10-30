@@ -8,17 +8,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { errorDePrimeraCarga } from '@/lib/query'
-import { convocatoriasQuery, type EstadoConvocatoria } from './api'
-
-export const ETIQUETA_ESTADO_CONVOCATORIA: Record<
-  EstadoConvocatoria,
-  { texto: string; variante: 'secondary' | 'default' | 'destructive' }
-> = {
-  BORRADOR: { texto: 'Borrador', variante: 'secondary' },
-  PUBLICADA: { texto: 'Publicada', variante: 'default' },
-  CERRADA: { texto: 'Cerrada', variante: 'secondary' },
-  FINALIZADA: { texto: 'Finalizada', variante: 'destructive' },
-}
+import { convocatoriasQuery } from './api'
+import { ETIQUETA_ESTADO_CONVOCATORIA } from './estado'
 
 export function ConvocatoriasPage() {
   const convocatorias = useQuery(convocatoriasQuery())

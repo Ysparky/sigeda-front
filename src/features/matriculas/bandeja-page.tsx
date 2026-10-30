@@ -34,8 +34,10 @@ export function BandejaPage() {
               }
             >
               <NativeSelectOption value="PENDIENTE">Pendientes</NativeSelectOption>
+              <NativeSelectOption value="OBSERVADA">Observadas</NativeSelectOption>
               <NativeSelectOption value="VALIDADA">Validadas</NativeSelectOption>
               <NativeSelectOption value="RECHAZADA">Rechazadas</NativeSelectOption>
+              <NativeSelectOption value="NO_ADMITIDO">No admitidas</NativeSelectOption>
             </NativeSelect>
           </label>
         }

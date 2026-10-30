@@ -12,10 +12,10 @@ describe('LandingPage (/)', () => {
     expect(within(seccion).getByText(/médico aeronáutico/)).toBeInTheDocument()
   })
 
-  it('el botón "Inscribirme" lleva al formulario de matrícula del curso', async () => {
+  it('el botón "Postular" lleva al formulario de la convocatoria', async () => {
     const { usuario } = renderApp('/')
 
-    const boton = await screen.findByRole('link', { name: 'Inscribirme' })
+    const boton = await screen.findByRole('link', { name: 'Postular' })
     await usuario.click(boton)
 
     await waitFor(() => expect(screen.getByLabelText('DNI')).toBeInTheDocument())

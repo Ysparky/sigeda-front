@@ -16,7 +16,7 @@ import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { aplicarErroresDeCampo } from '@/lib/formularios'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { Route } from '@/routes/matricula'
-import { crearMatricula, cursoQuery, type DatosMatricula } from './api'
+import { convocatoriaPublicaQuery, crearMatricula, cursoQuery, type DatosMatricula } from './api'
 import { BarraPublica } from './barra-publica'
 import { errorDeComprobante, esquemaMatricula, matriculaVacia, type ValoresMatricula } from './schemas'
 
@@ -30,28 +30,30 @@ function Pagina({ children }: { children: React.ReactNode }) {
 }
 
 export function MatriculaPage() {
-  const { curso } = Route.useSearch()
+  const { convocatoria } = Route.useSearch()
 
-  if (!curso) {
+  if (!convocatoria) {
     return (
       <Pagina>
-        <h1 className="text-2xl font-semibold tracking-tight">Matrícula</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Postulación</h1>
         <p className="mt-2 text-muted-foreground">
-          Elige un curso en el{' '}
+          Elige una convocatoria abierta en el{' '}
           <Link to="/" className="font-medium text-primary underline-offset-4 hover:underline">
             catálogo
           </Link>{' '}
-          para inscribirte.
+          para postular.
         </p>
       </Pagina>
     )
   }
 
-  return <FormularioMatricula idCurso={curso} />
+  return <FormularioMatricula idConvocatoria={convocatoria} />
 }
 
-function FormularioMatricula({ idCurso }: { idCurso: number }) {
-  const detalle = useQuery(cursoQuery(idCurso))
+function FormularioMatricula({ idConvocatoria }: { idConvocatoria: number }) {
+  const convocatoria = useQuery(convocatoriaPublicaQuery(idConvocatoria))
+  const idCurso = convocatoria.data?.idCurso ?? null
+  const detalle = useQuery({ ...cursoQuery(idCurso ?? 0), enabled: idCurso !== null })
   const [archivo, setArchivo] = useState<File | null>(null)
   const [errorArchivo, setErrorArchivo] = useState<string | null>(null)
   const [enviado, setEnviado] = useState(false)
@@ -62,7 +64,7 @@ function FormularioMatricula({ idCurso }: { idCurso: number }) {
   const guardar = useMutation({
     mutationFn: (valores: ValoresMatricula) => {
       const datos: DatosMatricula = {
-        idCurso,
+        idConvocatoria,
         dni: valores.dni,
         nombres: valores.nombres,
         aPaterno: valores.aPaterno,
@@ -87,7 +89,7 @@ function FormularioMatricula({ idCurso }: { idCurso: number }) {
     guardar.mutate(valores)
   }
 
-  const errorDetalle = errorDePrimeraCarga(detalle)
+  const errorDetalle = errorDePrimeraCarga(convocatoria) ?? errorDePrimeraCarga(detalle)
   if (errorDetalle !== null)
     return (
       <Pagina>
@@ -134,9 +136,11 @@ function FormularioMatricula({ idCurso }: { idCurso: number }) {
 
       <div className="mb-6">
         <Badge variant="secondary" className="mb-2" style={{ backgroundColor: '#D8B85822', color: '#8a6d1f' }}>
-          Inscripción
+          Postulación
         </Badge>
-        <h1 className="text-3xl font-semibold tracking-tight">{detalle.data?.nombre ?? 'Matrícula'}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {convocatoria.data?.nombre ?? detalle.data?.nombre ?? 'Postulación'}
+        </h1>
         {detalle.data && (
           <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
@@ -218,6 +222,20 @@ function FormularioMatricula({ idCurso }: { idCurso: number }) {
             </FieldGroup>
           </CardContent>
         </Card>
+        {convocatoria.data?.documentosRequeridos && (
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                <h2>Documentos requeridos</h2>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="whitespace-pre-line text-sm text-muted-foreground">
+                {convocatoria.data.documentosRequeridos}
+              </p>
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardHeader>
             <CardTitle>
