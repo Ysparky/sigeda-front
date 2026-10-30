@@ -219,6 +219,8 @@ export const handlersSimulador = [
     if (permitido instanceof Response) return permitido
     const fila = escenariosMock.find((e) => String(e.id) === params.id)
     if (!fila) return textoNoEncontrado('Escenario')
+    if (sesionesMock.some((s) => s.idEscenario === fila.id && s.estado === 'COMPLETADA'))
+      return HttpResponse.text('No se puede modificar un escenario con sesiones ya calificadas.', { status: 409 })
     const cuerpo = (await request.json()) as Partial<EscenarioMock>
     Object.assign(fila, {
       nombre: cuerpo.nombre ?? fila.nombre,
@@ -369,9 +371,14 @@ export const handlersSesionSimulador = [
       resultados?: ResultadoSesionMock[]
     }
     const validos = new Set((escenarioPorId(fila.idEscenario)?.indicadores ?? []).map((i) => i.id))
-    for (const r of cuerpo.resultados ?? [])
+    const vistos = new Set<number>()
+    for (const r of cuerpo.resultados ?? []) {
       if (!validos.has(r.idIndicador))
         return HttpResponse.text('Hay un indicador que no pertenece al escenario de la sesión.', { status: 400 })
+      if (vistos.has(r.idIndicador))
+        return HttpResponse.text('Hay un indicador calificado más de una vez.', { status: 400 })
+      vistos.add(r.idIndicador)
+    }
     fila.resultados = (cuerpo.resultados ?? []).map((r) => ({
       idIndicador: r.idIndicador,
       calificacion: r.calificacion,
