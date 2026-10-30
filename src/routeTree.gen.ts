@@ -39,6 +39,8 @@ import { Route as AppProgramaMateriasRouteImport } from './routes/_app/programa/
 import { Route as AppSeguimientoIndexRouteImport } from './routes/_app/seguimiento/index'
 import { Route as AppSeguimientoAlumnoRouteImport } from './routes/_app/seguimiento/$alumno'
 import { Route as AppSeguimientoAlertasRouteImport } from './routes/_app/seguimiento/alertas'
+import { Route as AppSimuladoresIndexRouteImport } from './routes/_app/simuladores/index'
+import { Route as AppSimuladoresNuevaRouteImport } from './routes/_app/simuladores/nueva'
 import { Route as AppTurnosIndexRouteImport } from './routes/_app/turnos/index'
 import { Route as AppTurnosNuevoRouteImport } from './routes/_app/turnos/nuevo'
 import { Route as AppEvaluacionesCodIndexRouteImport } from './routes/_app/evaluaciones/$cod/index'
@@ -54,6 +56,8 @@ import { Route as AppProgramaManiobrasIndexRouteImport } from './routes/_app/pro
 import { Route as AppProgramaManiobrasNuevaRouteImport } from './routes/_app/programa/maniobras/nueva'
 import { Route as AppSeguimientoProyeccionIndexRouteImport } from './routes/_app/seguimiento/proyeccion/index'
 import { Route as AppSeguimientoProyeccionStudentIdRouteImport } from './routes/_app/seguimiento/proyeccion/$studentId'
+import { Route as AppSimuladoresIdIndexRouteImport } from './routes/_app/simuladores/$id/index'
+import { Route as AppSimuladoresIdEditarRouteImport } from './routes/_app/simuladores/$id/editar'
 import { Route as AppTeoriaTurnosIndexRouteImport } from './routes/_app/teoria/turnos/index'
 import { Route as AppTeoriaTurnosNuevoRouteImport } from './routes/_app/teoria/turnos/nuevo'
 import { Route as AppTurnosIdIndexRouteImport } from './routes/_app/turnos/$id/index'
@@ -221,6 +225,16 @@ const AppSeguimientoAlertasRoute = AppSeguimientoAlertasRouteImport.update({
   path: '/seguimiento/alertas',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSimuladoresIndexRoute = AppSimuladoresIndexRouteImport.update({
+  id: '/simuladores/',
+  path: '/simuladores/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSimuladoresNuevaRoute = AppSimuladoresNuevaRouteImport.update({
+  id: '/simuladores/nueva',
+  path: '/simuladores/nueva',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppTurnosIndexRoute = AppTurnosIndexRouteImport.update({
   id: '/turnos/',
   path: '/turnos/',
@@ -301,6 +315,16 @@ const AppSeguimientoProyeccionStudentIdRoute =
     path: '/seguimiento/proyeccion/$studentId',
     getParentRoute: () => AppRoute,
   } as any)
+const AppSimuladoresIdIndexRoute = AppSimuladoresIdIndexRouteImport.update({
+  id: '/simuladores/$id/',
+  path: '/simuladores/$id/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSimuladoresIdEditarRoute = AppSimuladoresIdEditarRouteImport.update({
+  id: '/simuladores/$id/editar',
+  path: '/simuladores/$id/editar',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppTeoriaTurnosIndexRoute = AppTeoriaTurnosIndexRouteImport.update({
   id: '/teoria/turnos/',
   path: '/teoria/turnos/',
@@ -409,6 +433,7 @@ export interface FileRoutesByFullPath {
   '/programa/materias': typeof AppProgramaMateriasRoute
   '/seguimiento/$alumno': typeof AppSeguimientoAlumnoRoute
   '/seguimiento/alertas': typeof AppSeguimientoAlertasRoute
+  '/simuladores/nueva': typeof AppSimuladoresNuevaRoute
   '/turnos/nuevo': typeof AppTurnosNuevoRoute
   '/aprendizaje/': typeof AppAprendizajeIndexRoute
   '/asistencias/': typeof AppAsistenciasIndexRoute
@@ -419,6 +444,7 @@ export interface FileRoutesByFullPath {
   '/matriculas/': typeof AppMatriculasIndexRoute
   '/personas/': typeof AppPersonasIndexRoute
   '/seguimiento/': typeof AppSeguimientoIndexRoute
+  '/simuladores/': typeof AppSimuladoresIndexRoute
   '/turnos/': typeof AppTurnosIndexRoute
   '/evaluaciones/$cod/editar': typeof AppEvaluacionesCodEditarRoute
   '/examenes/$id/resultado': typeof AppExamenesIdResultadoRoute
@@ -426,6 +452,7 @@ export interface FileRoutesByFullPath {
   '/programa/fases/nueva': typeof AppProgramaFasesNuevaRoute
   '/programa/maniobras/nueva': typeof AppProgramaManiobrasNuevaRoute
   '/seguimiento/proyeccion/$studentId': typeof AppSeguimientoProyeccionStudentIdRoute
+  '/simuladores/$id/editar': typeof AppSimuladoresIdEditarRoute
   '/teoria/turnos/nuevo': typeof AppTeoriaTurnosNuevoRoute
   '/turnos/$id/asistencia': typeof AppTurnosIdAsistenciaRoute
   '/turnos/$id/editar': typeof AppTurnosIdEditarRoute
@@ -437,6 +464,7 @@ export interface FileRoutesByFullPath {
   '/programa/fases/': typeof AppProgramaFasesIndexRoute
   '/programa/maniobras/': typeof AppProgramaManiobrasIndexRoute
   '/seguimiento/proyeccion/': typeof AppSeguimientoProyeccionIndexRoute
+  '/simuladores/$id/': typeof AppSimuladoresIdIndexRoute
   '/teoria/turnos/': typeof AppTeoriaTurnosIndexRoute
   '/turnos/$id/': typeof AppTurnosIdIndexRoute
   '/turnos/dia/': typeof AppTurnosDiaIndexRoute
@@ -471,6 +499,7 @@ export interface FileRoutesByTo {
   '/programa/materias': typeof AppProgramaMateriasRoute
   '/seguimiento/$alumno': typeof AppSeguimientoAlumnoRoute
   '/seguimiento/alertas': typeof AppSeguimientoAlertasRoute
+  '/simuladores/nueva': typeof AppSimuladoresNuevaRoute
   '/turnos/nuevo': typeof AppTurnosNuevoRoute
   '/aprendizaje': typeof AppAprendizajeIndexRoute
   '/asistencias': typeof AppAsistenciasIndexRoute
@@ -481,6 +510,7 @@ export interface FileRoutesByTo {
   '/matriculas': typeof AppMatriculasIndexRoute
   '/personas': typeof AppPersonasIndexRoute
   '/seguimiento': typeof AppSeguimientoIndexRoute
+  '/simuladores': typeof AppSimuladoresIndexRoute
   '/turnos': typeof AppTurnosIndexRoute
   '/evaluaciones/$cod/editar': typeof AppEvaluacionesCodEditarRoute
   '/examenes/$id/resultado': typeof AppExamenesIdResultadoRoute
@@ -488,6 +518,7 @@ export interface FileRoutesByTo {
   '/programa/fases/nueva': typeof AppProgramaFasesNuevaRoute
   '/programa/maniobras/nueva': typeof AppProgramaManiobrasNuevaRoute
   '/seguimiento/proyeccion/$studentId': typeof AppSeguimientoProyeccionStudentIdRoute
+  '/simuladores/$id/editar': typeof AppSimuladoresIdEditarRoute
   '/teoria/turnos/nuevo': typeof AppTeoriaTurnosNuevoRoute
   '/turnos/$id/asistencia': typeof AppTurnosIdAsistenciaRoute
   '/turnos/$id/editar': typeof AppTurnosIdEditarRoute
@@ -499,6 +530,7 @@ export interface FileRoutesByTo {
   '/programa/fases': typeof AppProgramaFasesIndexRoute
   '/programa/maniobras': typeof AppProgramaManiobrasIndexRoute
   '/seguimiento/proyeccion': typeof AppSeguimientoProyeccionIndexRoute
+  '/simuladores/$id': typeof AppSimuladoresIdIndexRoute
   '/teoria/turnos': typeof AppTeoriaTurnosIndexRoute
   '/turnos/$id': typeof AppTurnosIdIndexRoute
   '/turnos/dia': typeof AppTurnosDiaIndexRoute
@@ -535,6 +567,7 @@ export interface FileRoutesById {
   '/_app/programa/materias': typeof AppProgramaMateriasRoute
   '/_app/seguimiento/$alumno': typeof AppSeguimientoAlumnoRoute
   '/_app/seguimiento/alertas': typeof AppSeguimientoAlertasRoute
+  '/_app/simuladores/nueva': typeof AppSimuladoresNuevaRoute
   '/_app/turnos/nuevo': typeof AppTurnosNuevoRoute
   '/_app/aprendizaje/': typeof AppAprendizajeIndexRoute
   '/_app/asistencias/': typeof AppAsistenciasIndexRoute
@@ -545,6 +578,7 @@ export interface FileRoutesById {
   '/_app/matriculas/': typeof AppMatriculasIndexRoute
   '/_app/personas/': typeof AppPersonasIndexRoute
   '/_app/seguimiento/': typeof AppSeguimientoIndexRoute
+  '/_app/simuladores/': typeof AppSimuladoresIndexRoute
   '/_app/turnos/': typeof AppTurnosIndexRoute
   '/_app/evaluaciones/$cod/editar': typeof AppEvaluacionesCodEditarRoute
   '/_app/examenes/$id/resultado': typeof AppExamenesIdResultadoRoute
@@ -552,6 +586,7 @@ export interface FileRoutesById {
   '/_app/programa/fases/nueva': typeof AppProgramaFasesNuevaRoute
   '/_app/programa/maniobras/nueva': typeof AppProgramaManiobrasNuevaRoute
   '/_app/seguimiento/proyeccion/$studentId': typeof AppSeguimientoProyeccionStudentIdRoute
+  '/_app/simuladores/$id/editar': typeof AppSimuladoresIdEditarRoute
   '/_app/teoria/turnos/nuevo': typeof AppTeoriaTurnosNuevoRoute
   '/_app/turnos/$id/asistencia': typeof AppTurnosIdAsistenciaRoute
   '/_app/turnos/$id/editar': typeof AppTurnosIdEditarRoute
@@ -563,6 +598,7 @@ export interface FileRoutesById {
   '/_app/programa/fases/': typeof AppProgramaFasesIndexRoute
   '/_app/programa/maniobras/': typeof AppProgramaManiobrasIndexRoute
   '/_app/seguimiento/proyeccion/': typeof AppSeguimientoProyeccionIndexRoute
+  '/_app/simuladores/$id/': typeof AppSimuladoresIdIndexRoute
   '/_app/teoria/turnos/': typeof AppTeoriaTurnosIndexRoute
   '/_app/turnos/$id/': typeof AppTurnosIdIndexRoute
   '/_app/turnos/dia/': typeof AppTurnosDiaIndexRoute
@@ -599,6 +635,7 @@ export interface FileRouteTypes {
     | '/programa/materias'
     | '/seguimiento/$alumno'
     | '/seguimiento/alertas'
+    | '/simuladores/nueva'
     | '/turnos/nuevo'
     | '/aprendizaje/'
     | '/asistencias/'
@@ -609,6 +646,7 @@ export interface FileRouteTypes {
     | '/matriculas/'
     | '/personas/'
     | '/seguimiento/'
+    | '/simuladores/'
     | '/turnos/'
     | '/evaluaciones/$cod/editar'
     | '/examenes/$id/resultado'
@@ -616,6 +654,7 @@ export interface FileRouteTypes {
     | '/programa/fases/nueva'
     | '/programa/maniobras/nueva'
     | '/seguimiento/proyeccion/$studentId'
+    | '/simuladores/$id/editar'
     | '/teoria/turnos/nuevo'
     | '/turnos/$id/asistencia'
     | '/turnos/$id/editar'
@@ -627,6 +666,7 @@ export interface FileRouteTypes {
     | '/programa/fases/'
     | '/programa/maniobras/'
     | '/seguimiento/proyeccion/'
+    | '/simuladores/$id/'
     | '/teoria/turnos/'
     | '/turnos/$id/'
     | '/turnos/dia/'
@@ -661,6 +701,7 @@ export interface FileRouteTypes {
     | '/programa/materias'
     | '/seguimiento/$alumno'
     | '/seguimiento/alertas'
+    | '/simuladores/nueva'
     | '/turnos/nuevo'
     | '/aprendizaje'
     | '/asistencias'
@@ -671,6 +712,7 @@ export interface FileRouteTypes {
     | '/matriculas'
     | '/personas'
     | '/seguimiento'
+    | '/simuladores'
     | '/turnos'
     | '/evaluaciones/$cod/editar'
     | '/examenes/$id/resultado'
@@ -678,6 +720,7 @@ export interface FileRouteTypes {
     | '/programa/fases/nueva'
     | '/programa/maniobras/nueva'
     | '/seguimiento/proyeccion/$studentId'
+    | '/simuladores/$id/editar'
     | '/teoria/turnos/nuevo'
     | '/turnos/$id/asistencia'
     | '/turnos/$id/editar'
@@ -689,6 +732,7 @@ export interface FileRouteTypes {
     | '/programa/fases'
     | '/programa/maniobras'
     | '/seguimiento/proyeccion'
+    | '/simuladores/$id'
     | '/teoria/turnos'
     | '/turnos/$id'
     | '/turnos/dia'
@@ -724,6 +768,7 @@ export interface FileRouteTypes {
     | '/_app/programa/materias'
     | '/_app/seguimiento/$alumno'
     | '/_app/seguimiento/alertas'
+    | '/_app/simuladores/nueva'
     | '/_app/turnos/nuevo'
     | '/_app/aprendizaje/'
     | '/_app/asistencias/'
@@ -734,6 +779,7 @@ export interface FileRouteTypes {
     | '/_app/matriculas/'
     | '/_app/personas/'
     | '/_app/seguimiento/'
+    | '/_app/simuladores/'
     | '/_app/turnos/'
     | '/_app/evaluaciones/$cod/editar'
     | '/_app/examenes/$id/resultado'
@@ -741,6 +787,7 @@ export interface FileRouteTypes {
     | '/_app/programa/fases/nueva'
     | '/_app/programa/maniobras/nueva'
     | '/_app/seguimiento/proyeccion/$studentId'
+    | '/_app/simuladores/$id/editar'
     | '/_app/teoria/turnos/nuevo'
     | '/_app/turnos/$id/asistencia'
     | '/_app/turnos/$id/editar'
@@ -752,6 +799,7 @@ export interface FileRouteTypes {
     | '/_app/programa/fases/'
     | '/_app/programa/maniobras/'
     | '/_app/seguimiento/proyeccion/'
+    | '/_app/simuladores/$id/'
     | '/_app/teoria/turnos/'
     | '/_app/turnos/$id/'
     | '/_app/turnos/dia/'
@@ -986,6 +1034,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSeguimientoAlertasRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/simuladores/': {
+      id: '/_app/simuladores/'
+      path: '/simuladores'
+      fullPath: '/simuladores/'
+      preLoaderRoute: typeof AppSimuladoresIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/simuladores/nueva': {
+      id: '/_app/simuladores/nueva'
+      path: '/simuladores/nueva'
+      fullPath: '/simuladores/nueva'
+      preLoaderRoute: typeof AppSimuladoresNuevaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/turnos/': {
       id: '/_app/turnos/'
       path: '/turnos'
@@ -1089,6 +1151,20 @@ declare module '@tanstack/react-router' {
       path: '/seguimiento/proyeccion/$studentId'
       fullPath: '/seguimiento/proyeccion/$studentId'
       preLoaderRoute: typeof AppSeguimientoProyeccionStudentIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/simuladores/$id/': {
+      id: '/_app/simuladores/$id/'
+      path: '/simuladores/$id'
+      fullPath: '/simuladores/$id/'
+      preLoaderRoute: typeof AppSimuladoresIdIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/simuladores/$id/editar': {
+      id: '/_app/simuladores/$id/editar'
+      path: '/simuladores/$id/editar'
+      fullPath: '/simuladores/$id/editar'
+      preLoaderRoute: typeof AppSimuladoresIdEditarRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/teoria/turnos/': {
@@ -1223,6 +1299,7 @@ interface AppRouteChildren {
   AppProgramaMateriasRoute: typeof AppProgramaMateriasRoute
   AppSeguimientoAlumnoRoute: typeof AppSeguimientoAlumnoRoute
   AppSeguimientoAlertasRoute: typeof AppSeguimientoAlertasRoute
+  AppSimuladoresNuevaRoute: typeof AppSimuladoresNuevaRoute
   AppTurnosNuevoRoute: typeof AppTurnosNuevoRoute
   AppAprendizajeIndexRoute: typeof AppAprendizajeIndexRoute
   AppAsistenciasIndexRoute: typeof AppAsistenciasIndexRoute
@@ -1233,6 +1310,7 @@ interface AppRouteChildren {
   AppMatriculasIndexRoute: typeof AppMatriculasIndexRoute
   AppPersonasIndexRoute: typeof AppPersonasIndexRoute
   AppSeguimientoIndexRoute: typeof AppSeguimientoIndexRoute
+  AppSimuladoresIndexRoute: typeof AppSimuladoresIndexRoute
   AppTurnosIndexRoute: typeof AppTurnosIndexRoute
   AppEvaluacionesCodEditarRoute: typeof AppEvaluacionesCodEditarRoute
   AppExamenesIdResultadoRoute: typeof AppExamenesIdResultadoRoute
@@ -1240,6 +1318,7 @@ interface AppRouteChildren {
   AppProgramaFasesNuevaRoute: typeof AppProgramaFasesNuevaRoute
   AppProgramaManiobrasNuevaRoute: typeof AppProgramaManiobrasNuevaRoute
   AppSeguimientoProyeccionStudentIdRoute: typeof AppSeguimientoProyeccionStudentIdRoute
+  AppSimuladoresIdEditarRoute: typeof AppSimuladoresIdEditarRoute
   AppTeoriaTurnosNuevoRoute: typeof AppTeoriaTurnosNuevoRoute
   AppTurnosIdAsistenciaRoute: typeof AppTurnosIdAsistenciaRoute
   AppTurnosIdEditarRoute: typeof AppTurnosIdEditarRoute
@@ -1251,6 +1330,7 @@ interface AppRouteChildren {
   AppProgramaFasesIndexRoute: typeof AppProgramaFasesIndexRoute
   AppProgramaManiobrasIndexRoute: typeof AppProgramaManiobrasIndexRoute
   AppSeguimientoProyeccionIndexRoute: typeof AppSeguimientoProyeccionIndexRoute
+  AppSimuladoresIdIndexRoute: typeof AppSimuladoresIdIndexRoute
   AppTeoriaTurnosIndexRoute: typeof AppTeoriaTurnosIndexRoute
   AppTurnosIdIndexRoute: typeof AppTurnosIdIndexRoute
   AppTurnosDiaIndexRoute: typeof AppTurnosDiaIndexRoute
@@ -1282,6 +1362,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProgramaMateriasRoute: AppProgramaMateriasRoute,
   AppSeguimientoAlumnoRoute: AppSeguimientoAlumnoRoute,
   AppSeguimientoAlertasRoute: AppSeguimientoAlertasRoute,
+  AppSimuladoresNuevaRoute: AppSimuladoresNuevaRoute,
   AppTurnosNuevoRoute: AppTurnosNuevoRoute,
   AppAprendizajeIndexRoute: AppAprendizajeIndexRoute,
   AppAsistenciasIndexRoute: AppAsistenciasIndexRoute,
@@ -1292,6 +1373,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMatriculasIndexRoute: AppMatriculasIndexRoute,
   AppPersonasIndexRoute: AppPersonasIndexRoute,
   AppSeguimientoIndexRoute: AppSeguimientoIndexRoute,
+  AppSimuladoresIndexRoute: AppSimuladoresIndexRoute,
   AppTurnosIndexRoute: AppTurnosIndexRoute,
   AppEvaluacionesCodEditarRoute: AppEvaluacionesCodEditarRoute,
   AppExamenesIdResultadoRoute: AppExamenesIdResultadoRoute,
@@ -1300,6 +1382,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProgramaManiobrasNuevaRoute: AppProgramaManiobrasNuevaRoute,
   AppSeguimientoProyeccionStudentIdRoute:
     AppSeguimientoProyeccionStudentIdRoute,
+  AppSimuladoresIdEditarRoute: AppSimuladoresIdEditarRoute,
   AppTeoriaTurnosNuevoRoute: AppTeoriaTurnosNuevoRoute,
   AppTurnosIdAsistenciaRoute: AppTurnosIdAsistenciaRoute,
   AppTurnosIdEditarRoute: AppTurnosIdEditarRoute,
@@ -1311,6 +1394,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProgramaFasesIndexRoute: AppProgramaFasesIndexRoute,
   AppProgramaManiobrasIndexRoute: AppProgramaManiobrasIndexRoute,
   AppSeguimientoProyeccionIndexRoute: AppSeguimientoProyeccionIndexRoute,
+  AppSimuladoresIdIndexRoute: AppSimuladoresIdIndexRoute,
   AppTeoriaTurnosIndexRoute: AppTeoriaTurnosIndexRoute,
   AppTurnosIdIndexRoute: AppTurnosIdIndexRoute,
   AppTurnosDiaIndexRoute: AppTurnosDiaIndexRoute,

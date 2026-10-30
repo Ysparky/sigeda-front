@@ -26,6 +26,7 @@ describe('permisosDeRol replica Role.java', () => {
       'View My Group',
       'Manage Shifts',
       'Manage Standards',
+      'Manage Simulator',
     ])
   })
 

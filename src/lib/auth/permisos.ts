@@ -29,7 +29,15 @@ export const PERMISOS_INSCRIPCION = [
   'View My Enrollment',
 ] as const
 
-export const PERMISOS = [...PERMISOS_BACKEND, ...PERMISOS_CONTRATO, ...PERMISOS_INSCRIPCION] as const
+// Módulo simulador (standalone): Jefe de Operaciones e Instructor.
+export const PERMISOS_SIMULADOR = ['Manage Simulator'] as const
+
+export const PERMISOS = [
+  ...PERMISOS_BACKEND,
+  ...PERMISOS_CONTRATO,
+  ...PERMISOS_INSCRIPCION,
+  ...PERMISOS_SIMULADOR,
+] as const
 
 export type Permiso = (typeof PERMISOS)[number]
 
@@ -80,6 +88,7 @@ const PERMISOS_POR_ROL: Record<string, readonly Permiso[]> = {
     'Manage Questions',
     'Manage Exams',
     'Manage Attendance',
+    'Manage Simulator',
   ],
   'Coordinador Académico': [
     'Read',
@@ -94,7 +103,15 @@ const PERMISOS_POR_ROL: Record<string, readonly Permiso[]> = {
   // grupos es matrícula y no operaciones de vuelo. `contrato-api-turnos.md` lo documentaba al revés
   // como desvío deliberado; la 4 lo revirtió y esa línea es la que cedió. No rompe el formulario de
   // turno práctico: `fuenteDeAlumnos` manda al Jefe de Operaciones por `Manage Shifts`.
-  'Jefe de Operaciones': ['Read', 'Write', 'Update', 'View My Group', 'Manage Shifts', 'Manage Standards'],
+  'Jefe de Operaciones': [
+    'Read',
+    'Write',
+    'Update',
+    'View My Group',
+    'Manage Shifts',
+    'Manage Standards',
+    'Manage Simulator',
+  ],
   Alumno: ['Read', 'Update', 'Take Exams'],
 }
 

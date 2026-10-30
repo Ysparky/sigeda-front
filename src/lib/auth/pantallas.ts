@@ -15,6 +15,7 @@ import {
   LineChart,
   ListChecks,
   MessagesSquare,
+  MonitorPlay,
   Palette,
   Plane,
   PlaneTakeoff,
@@ -43,6 +44,7 @@ export type GrupoMenu =
   | 'Vuelo'
   | 'Operaciones de vuelo'
   | 'Evaluaciones de vuelo'
+  | 'Simulador'
   | 'Seguimiento'
   | 'Aprendizaje'
 
@@ -61,6 +63,8 @@ export const ORDEN_GRUPOS: readonly GrupoMenu[] = [
   'Vuelo',
   'Operaciones de vuelo',
   'Evaluaciones de vuelo',
+  // Módulo autónomo de evaluación por simulador (CBTA), separado del ciclo académico.
+  'Simulador',
   'Seguimiento',
   'Aprendizaje',
 ]
@@ -634,6 +638,45 @@ export const PANTALLAS = {
     permiso: 'Read',
     padre: '/aprendizaje',
     enMenu: true,
+  },
+  simuladores: {
+    ruta: '/simuladores',
+    titulo: 'Simuladores',
+    descripcion: 'Dispositivos de simulación para las sesiones de entrenamiento.',
+    grupo: 'Simulador',
+    icono: MonitorPlay,
+    permiso: 'Manage Simulator',
+    enMenu: true,
+  },
+  simuladorNuevo: {
+    ruta: '/simuladores/nueva',
+    titulo: 'Nuevo simulador',
+    descripcion: 'Registre un dispositivo de simulación.',
+    grupo: 'Simulador',
+    icono: MonitorPlay,
+    permiso: 'Manage Simulator',
+    padre: '/simuladores',
+    enMenu: false,
+  },
+  simulador: {
+    ruta: '/simuladores/$id',
+    titulo: 'Detalle del simulador',
+    descripcion: 'Datos del dispositivo de simulación.',
+    grupo: 'Simulador',
+    icono: MonitorPlay,
+    permiso: 'Manage Simulator',
+    padre: '/simuladores',
+    enMenu: false,
+  },
+  simuladorEditar: {
+    ruta: '/simuladores/$id/editar',
+    titulo: 'Modificar simulador',
+    descripcion: 'Actualice los datos del dispositivo.',
+    grupo: 'Simulador',
+    icono: MonitorPlay,
+    permiso: 'Manage Simulator',
+    padre: '/simuladores/$id',
+    enMenu: false,
   },
 } satisfies Record<string, Pantalla>
 

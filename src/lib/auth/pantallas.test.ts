@@ -90,6 +90,7 @@ describe('menuPara', () => {
       'Programación de turnos',
       'Orden de vuelo del día',
       'Evaluaciones',
+      'Simuladores',
       'Escuadrón',
       'Alertas',
       'Proyección',
