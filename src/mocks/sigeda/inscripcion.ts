@@ -239,8 +239,8 @@ export const handlersInscripcion = [
     if (!usuarioAutenticado(request)) return errorResponse(401, 'Unauthorized', 'Token is not valid')
     const fila = matriculasMock.find((m) => String(m.id) === params.id)
     if (!fila) return textoNoEncontrado('Matrícula especificada no existe.')
-    if (fila.estado !== 'PENDIENTE' && fila.estado !== 'OBSERVADA')
-      return HttpResponse.text('La matrícula ya fue procesada.', { status: 409 })
+    if (fila.estado !== 'PENDIENTE')
+      return HttpResponse.text('Solo una matrícula en revisión se puede observar.', { status: 409 })
     const { observaciones } = (await request.json()) as { observaciones?: string }
     fila.estado = 'OBSERVADA'
     fila.observaciones = observaciones ?? null

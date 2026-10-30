@@ -127,7 +127,7 @@ export function MatriculaDetallePage({ id }: { id: number }) {
               <Button disabled={validar.isPending} onClick={() => validar.mutate()}>
                 {validar.isPending ? 'Validando…' : 'Validar documentación'}
               </Button>
-              <DialogoObservar id={id} alObservar={volverALaBandeja} />
+              {m.estado === 'PENDIENTE' && <DialogoObservar id={id} alObservar={volverALaBandeja} />}
               <DialogoRechazo id={id} alRechazar={volverALaBandeja} />
             </div>
           )}
@@ -185,7 +185,7 @@ function DialogoObservar({ id, alObservar }: { id: number; alObservar: () => Pro
         <DialogHeader>
           <DialogTitle>Observar postulación</DialogTitle>
           <DialogDescription>
-            El postulante verá las observaciones y podrá subsanar sus datos y volver a enviar.
+            El postulante verá las observaciones y podrá volver a enviar su comprobante.
           </DialogDescription>
         </DialogHeader>
         <Field data-invalid={Boolean(problema)}>
