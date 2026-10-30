@@ -4,7 +4,9 @@ import { sigeda } from '@/lib/api/sigeda'
 import { tokens } from '@/lib/auth/tokens'
 import { config } from '@/lib/config'
 
-export type EstadoMatricula = 'PENDIENTE' | 'VALIDADA' | 'RECHAZADA'
+export type EstadoMatricula = 'PENDIENTE' | 'OBSERVADA' | 'VALIDADA' | 'RECHAZADA' | 'NO_ADMITIDO'
+
+export type ResultadoAdmision = 'ADMITIDO' | 'NO_ADMITIDO'
 
 export type MatriculaBandeja = {
   id: number
@@ -19,14 +21,17 @@ export type MatriculaBandeja = {
 }
 
 export type MatriculaDetalle = MatriculaBandeja & {
+  idConvocatoria: number | null
   contacto: string | null
   idHorario: number | null
   comprobanteTipo: string | null
   motivoRechazo: string | null
+  observaciones: string | null
+  resultado: ResultadoAdmision | null
   codPersona: string | null
 }
 
-const esquemaEstado = z.enum(['PENDIENTE', 'VALIDADA', 'RECHAZADA'])
+const esquemaEstado = z.enum(['PENDIENTE', 'OBSERVADA', 'VALIDADA', 'RECHAZADA', 'NO_ADMITIDO'])
 
 const esquemaBandeja = z.object({
   id: z.number(),
@@ -41,10 +46,13 @@ const esquemaBandeja = z.object({
 })
 
 const esquemaDetalle = esquemaBandeja.extend({
+  idConvocatoria: z.number().nullish().transform((v) => v ?? null),
   contacto: z.string().nullable(),
   idHorario: z.number().nullable(),
   comprobanteTipo: z.string().nullable(),
   motivoRechazo: z.string().nullable(),
+  observaciones: z.string().nullish().transform((v) => v ?? null),
+  resultado: z.enum(['ADMITIDO', 'NO_ADMITIDO']).nullish().transform((v) => v ?? null),
   codPersona: z.string().nullable(),
 })
 
@@ -69,6 +77,18 @@ export function validarMatricula(id: number): Promise<{ mensaje: string }> {
 
 export function rechazarMatricula(id: number, motivo: string): Promise<{ mensaje: string }> {
   return sigeda.put<{ mensaje: string }>(`/api/matriculas/${id}/rechazar`, { motivo })
+}
+
+export function observarMatricula(id: number, observaciones: string): Promise<{ mensaje: string }> {
+  return sigeda.put<{ mensaje: string }>(`/api/matriculas/${id}/observar`, { observaciones })
+}
+
+export function registrarResultado(
+  id: number,
+  resultado: ResultadoAdmision,
+  observaciones: string,
+): Promise<{ mensaje: string }> {
+  return sigeda.post<{ mensaje: string }>(`/api/matriculas/${id}/resultado`, { resultado, observaciones })
 }
 
 export const bandejaQuery = (estado: EstadoMatricula) =>

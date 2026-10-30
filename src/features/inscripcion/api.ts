@@ -47,12 +47,51 @@ export const catalogoQuery = () => queryOptions({ queryKey: clavesInscripcion.ca
 export const cursoQuery = (id: number) =>
   queryOptions({ queryKey: clavesInscripcion.curso(id), queryFn: () => obtenerCurso(id) })
 
+// --- Convocatorias (catálogo público) ---
+
+export type ConvocatoriaPublica = {
+  id: number
+  idCurso: number | null
+  nombre: string
+  descripcion: string | null
+  fechaInicio: string
+  fechaFin: string
+  vacantes: number
+  documentosRequeridos: string | null
+}
+
+const esquemaConvocatoriaPublica = z.object({
+  id: z.number(),
+  idCurso: z.number().nullish().transform((v) => v ?? null),
+  nombre: z.string(),
+  descripcion: z.string().nullish().transform((v) => v ?? null),
+  fechaInicio: z.string(),
+  fechaFin: z.string(),
+  vacantes: z.number(),
+  documentosRequeridos: z.string().nullish().transform((v) => v ?? null),
+})
+
+export async function listarConvocatoriasPublicas(): Promise<ConvocatoriaPublica[]> {
+  const datos = await sigeda.lista<unknown>('/api/public/convocatorias')
+  return datos.map((c) => esquemaConvocatoriaPublica.parse(c))
+}
+
+export async function obtenerConvocatoriaPublica(id: number): Promise<ConvocatoriaPublica> {
+  return esquemaConvocatoriaPublica.parse(await sigeda.get<unknown>(`/api/public/convocatorias/${id}`))
+}
+
+export const convocatoriasPublicasQuery = () =>
+  queryOptions({ queryKey: [...clavesInscripcion.todo, 'convocatorias'], queryFn: listarConvocatoriasPublicas })
+
+export const convocatoriaPublicaQuery = (id: number) =>
+  queryOptions({ queryKey: [...clavesInscripcion.todo, 'convocatoria', id], queryFn: () => obtenerConvocatoriaPublica(id) })
+
 // --- Matrícula ---
 
-export type EstadoMatricula = 'PENDIENTE' | 'VALIDADA' | 'RECHAZADA'
+export type EstadoMatricula = 'PENDIENTE' | 'OBSERVADA' | 'VALIDADA' | 'RECHAZADA' | 'NO_ADMITIDO'
 
 export type DatosMatricula = {
-  idCurso: number
+  idConvocatoria: number
   dni: string
   nombres: string
   aPaterno: string
@@ -75,6 +114,8 @@ export type MiMatricula = {
   idHorario: number | null
   estado: EstadoMatricula
   motivoRechazo: string | null
+  observaciones: string | null
+  resultado: 'ADMITIDO' | 'NO_ADMITIDO' | null
 }
 
 const esquemaMia = z.object({
@@ -87,8 +128,10 @@ const esquemaMia = z.object({
   correo: z.string(),
   contacto: z.string().nullable(),
   idHorario: z.number().nullable(),
-  estado: z.enum(['PENDIENTE', 'VALIDADA', 'RECHAZADA']),
+  estado: z.enum(['PENDIENTE', 'OBSERVADA', 'VALIDADA', 'RECHAZADA', 'NO_ADMITIDO']),
   motivoRechazo: z.string().nullable(),
+  observaciones: z.string().nullish().transform((v) => v ?? null),
+  resultado: z.enum(['ADMITIDO', 'NO_ADMITIDO']).nullish().transform((v) => v ?? null),
 })
 
 export const clavesMia = { mia: () => [...clavesInscripcion.todo, 'mia'] as const }
