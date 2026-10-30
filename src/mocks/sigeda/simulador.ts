@@ -370,6 +370,8 @@ export const handlersSesionSimulador = [
       autoevaluacionAlumno?: string
       resultados?: ResultadoSesionMock[]
     }
+    if ((cuerpo.resultados ?? []).length === 0)
+      return HttpResponse.text('Debe calificar al menos un indicador.', { status: 400 })
     const validos = new Set((escenarioPorId(fila.idEscenario)?.indicadores ?? []).map((i) => i.id))
     const vistos = new Set<number>()
     for (const r of cuerpo.resultados ?? []) {
