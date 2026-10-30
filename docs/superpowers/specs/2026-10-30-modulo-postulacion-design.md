@@ -178,3 +178,10 @@ para ti:
 3. **`vacantes`**: lo dejé **impuesto** como tope en la admisión (no admitir más que las vacantes → 409).
    ¿Confirmas, o lo prefieres informativo?
 4. **Separar `Persona`/`Alumno`** (del doc): ¿se difiere para después, como propongo?
+
+### Respuestas (30 oct 2026) — "dale, seguimos el plan del doc"
+1. **Confirmado:** `validar` ya no promueve; la promoción a alumno va en `registrarResultado` ADMITIDO.
+2. **Confirmado (mi propuesta):** un `comprobante` + `documentosRequeridos` declarativo; subsanar re-sube el
+   comprobante **y** corrige datos editables (nombres, apellidos, dni, contacto; NO el correo=login).
+3. **Confirmado:** `vacantes` impuestas como tope en la admisión (409 al llenarse).
+4. **Diferido:** separar `Persona`/`Alumno` queda como refactor transversal aparte, fuera de este módulo.
