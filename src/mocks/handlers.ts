@@ -18,7 +18,7 @@ import { handlersFases } from './sigeda/fases'
 import { handlersGrupos } from './sigeda/grupos'
 import { handlersIndices } from './sigeda/indices'
 import { handlersInscripcion } from './sigeda/inscripcion'
-import { handlersSimulador } from './sigeda/simulador'
+import { handlersSesionSimulador, handlersSimulador } from './sigeda/simulador'
 import { handlersManiobras } from './sigeda/maniobras'
 import { handlersMaterias } from './sigeda/materias'
 import { handlersPersonas } from './sigeda/personas'
@@ -57,4 +57,5 @@ export const handlers: RequestHandler[] = [
   ...handlersCuestionarios,
   ...handlersConsultas,
   ...handlersSimulador,
+  ...handlersSesionSimulador,
 ]
