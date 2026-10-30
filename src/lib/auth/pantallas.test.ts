@@ -91,6 +91,7 @@ describe('menuPara', () => {
       'Orden de vuelo del día',
       'Evaluaciones',
       'Simuladores',
+      'Escenarios',
       'Escuadrón',
       'Alertas',
       'Proyección',
