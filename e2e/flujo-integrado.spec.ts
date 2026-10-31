@@ -20,7 +20,7 @@ test.describe('Flujo integrado entrada→desarrollo contra el backend real', () 
     const dni = `9${sufijo}`
     const correo = `aspirante.${sufijo}@correo.com`
 
-    await page.goto('/matricula?curso=1')
+    await page.goto('/matricula?convocatoria=1')
     await page.getByLabel('DNI').fill(dni)
     await page.getByLabel('Nombres').fill('Aspirante')
     await page.getByLabel('Apellido paterno').fill('Integra')
@@ -40,16 +40,17 @@ test.describe('Flujo integrado entrada→desarrollo contra el backend real', () 
     await expect(page.getByRole('heading', { level: 1, name: 'Matrículas' })).toBeVisible({ timeout: 15_000 })
     await page.getByRole('link', { name: dni }).click()
     await expect(page.getByRole('heading', { level: 1, name: /Aspirante Integra/ })).toBeVisible({ timeout: 15_000 })
+    // Validar la documentación redirige a la bandeja; la matrícula, ya VALIDADA, se reabre para admitir.
     await page.getByRole('button', { name: 'Validar documentación' }).click()
-    const admitir = page.getByRole('button', { name: 'Admitir' })
-    await expect(admitir).toBeVisible({ timeout: 15_000 })
-    await admitir.click()
-    await expect(page.getByText('Admitido')).toBeVisible({ timeout: 15_000 })
+    await page.goto('/matriculas?estado=VALIDADA')
+    await page.getByRole('link', { name: dni }).click()
+    await expect(page.getByRole('heading', { level: 1, name: /Aspirante Integra/ })).toBeVisible({ timeout: 15_000 })
+    await page.getByRole('button', { name: 'Admitir', exact: true }).click() // 'Admitir' sin casar 'No admitir'
+    await expect(page).toHaveURL(/\/matriculas/, { timeout: 15_000 }) // admisión registrada: vuelve a la bandeja
 
-    // Con la admisión, la persona es Alumno de la cohorte en inscripción: aparece en "Promoción 2026-I".
-    await page.goto('/grupos')
-    await page.getByRole('link', { name: 'Promoción 2026-I' }).click()
+    // Con la admisión, la persona es Alumno de la cohorte 2026-I (grupo 7): figura en sus alumnos.
+    await page.goto('/grupos/7')
     await expect(page.getByRole('heading', { level: 1, name: 'Promoción 2026-I' })).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByText(/Aspirante Integra/)).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByRole('table', { name: 'Alumnos del grupo' })).toContainText('Aspirante Integra')
   })
 })
