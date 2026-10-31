@@ -39,6 +39,7 @@ function detalleGrupo(grupo: GrupoMock) {
     nombre: grupo.nombre,
     descripcion: grupo.descripcion,
     programa: grupo.programa,
+    estado: grupo.estado,
     personas: datos()
       .personas.filter((persona) => persona.idGrupo === grupo.id)
       .map(entidadPersona),
@@ -88,6 +89,7 @@ export const handlersGrupos = [
       nombre: texto(cuerpo.nombre),
       descripcion: texto(cuerpo.descripcion),
       programa: cuerpo.programa === 'PDE' ? 'PDE' : ('PDI' as ProgramaMock),
+      estado: 'EN_INSCRIPCION',
     }
     datos().grupos.push(grupo)
     for (const elegida of personas) {
@@ -102,6 +104,19 @@ export const handlersGrupos = [
     const grupo = datos().grupos.find((candidato) => candidato.id === Number(params.id))
     if (!grupo) return textoNoEncontrado('Grupo especificada no existe.')
     return HttpResponse.json(detalleGrupo(grupo))
+  }),
+  http.put(`${API}/api/grupos/:id/estado`, async ({ request, params }) => {
+    const permitido = autorizar(request, 'Manage Enrollments')
+    if (permitido instanceof Response) return permitido
+    const grupo = datos().grupos.find((candidato) => candidato.id === Number(params.id))
+    if (!grupo) return textoNoEncontrado('Grupo especificada no existe.')
+    const { estado } = (await request.json()) as { estado: string }
+    const permitida =
+      (grupo.estado === 'EN_INSCRIPCION' && estado === 'EN_PROGRESO') ||
+      (grupo.estado === 'EN_PROGRESO' && estado === 'CERRADA')
+    if (!permitida) return HttpResponse.text('Transición de estado de la cohorte no permitida.', { status: 409 })
+    grupo.estado = estado
+    return HttpResponse.json({ mensaje: 'Estado de la cohorte actualizado.' })
   }),
   http.put(`${API}/api/grupos/:id`, async ({ request, params }) => {
     const permitido = autorizar(request, 'Manage Groups')

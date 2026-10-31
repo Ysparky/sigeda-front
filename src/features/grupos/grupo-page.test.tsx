@@ -40,6 +40,15 @@ describe('Detalle de grupo', () => {
     await waitFor(() => expect(screen.queryByRole('link', { name: 'Grupo 3' })).not.toBeInTheDocument())
   })
 
+  it('el Coordinador cierra una cohorte en progreso', async () => {
+    await iniciarComo('coordinador.rivas')
+    const { usuario } = renderApp('/grupos/1')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Grupo 1' })).toBeInTheDocument()
+    expect(screen.getByText('En progreso')).toBeInTheDocument()
+    await usuario.click(screen.getByRole('button', { name: 'Cerrar cohorte' }))
+    expect(await screen.findByText('Cerrada')).toBeInTheDocument()
+  })
+
   it('CA-GRU-08 un grupo inexistente muestra la página no encontrada', async () => {
     await iniciarComo('admin.sistema')
     renderApp('/grupos/99')

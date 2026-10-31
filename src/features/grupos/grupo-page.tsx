@@ -9,12 +9,26 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
-import { clavesGrupos, consultasGrupos, eliminarGrupo } from './api'
+import { cambiarEstadoGrupo, clavesGrupos, consultasGrupos, eliminarGrupo } from './api'
+
+const ETIQUETA_ESTADO_COHORTE: Record<string, string> = {
+  EN_INSCRIPCION: 'En inscripción',
+  EN_PROGRESO: 'En progreso',
+  CERRADA: 'Cerrada',
+}
 
 export function GrupoPage({ id }: { id: number }) {
   const { data: grupo } = useSuspenseQuery(consultasGrupos.detalle(id))
   const queryClient = useQueryClient()
   const navegar = useNavigate()
+  const cerrar = useMutation({
+    mutationFn: () => cambiarEstadoGrupo(grupo.id, 'CERRADA'),
+    onSuccess: async (mensaje) => {
+      toast.success(mensaje)
+      await queryClient.invalidateQueries({ queryKey: clavesGrupos.detalle(grupo.id) })
+    },
+    onError: (error) => toast.error(error instanceof ApiError ? error.message : MENSAJE_GENERICO),
+  })
   const eliminar = useMutation({
     mutationFn: () => eliminarGrupo(grupo.id),
     onSuccess: async (mensaje) => {
@@ -32,6 +46,11 @@ export function GrupoPage({ id }: { id: number }) {
         descripcion={grupo.descripcion || grupo.programa}
         acciones={
           <>
+            {grupo.estado === 'EN_PROGRESO' && (
+              <Button variant="outline" disabled={cerrar.isPending} onClick={() => cerrar.mutate()}>
+                {cerrar.isPending ? 'Cerrando…' : 'Cerrar cohorte'}
+              </Button>
+            )}
             <Button variant="outline" asChild>
               <Link to="/grupos/$id/editar" params={{ id: String(grupo.id) }}>
                 <Pencil aria-hidden />
@@ -73,6 +92,12 @@ export function GrupoPage({ id }: { id: number }) {
             <div className="grid gap-0.5">
               <dt className="text-xs text-muted-foreground">Programa</dt>
               <dd className="text-sm font-medium">{grupo.programa}</dd>
+            </div>
+            <div className="grid gap-0.5">
+              <dt className="text-xs text-muted-foreground">Estado de la cohorte</dt>
+              <dd className="text-sm font-medium">
+                {grupo.estado ? (ETIQUETA_ESTADO_COHORTE[grupo.estado] ?? grupo.estado) : '—'}
+              </dd>
             </div>
           </dl>
         </CardContent>

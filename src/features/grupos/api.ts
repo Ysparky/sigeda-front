@@ -14,6 +14,7 @@ export type GrupoDetalle = {
   nombre: string
   descripcion: string | null
   programa: string
+  estado: string | null
   alumnos: AlumnoDeGrupo[]
 }
 
@@ -42,6 +43,7 @@ const esquemaFila = z.object({
 })
 
 const esquemaDetalle = esquemaFila.extend({
+  estado: z.string().nullish(),
   personas: z
     .array(
       z.object({
@@ -84,6 +86,7 @@ export async function obtenerGrupo(id: number): Promise<GrupoDetalle> {
     nombre: grupo.nombre,
     descripcion: grupo.descripcion ?? null,
     programa: grupo.programa ?? '',
+    estado: grupo.estado ?? null,
     alumnos: (grupo.personas ?? []).map((persona) => ({
       codigo: persona.codigo,
       nombreCompleto: [persona.nombre, persona.aPaterno, persona.aMaterno].filter(Boolean).join(' '),
@@ -123,6 +126,10 @@ export async function modificarGrupo(id: number, cuerpo: CuerpoGrupoModificado):
 export async function eliminarGrupo(id: number): Promise<string> {
   const respuesta = await sigeda.eliminar<unknown>(`/api/grupos/${encodeURIComponent(id)}`)
   return typeof respuesta === 'string' && respuesta.trim() !== '' ? respuesta : MENSAJE_GRUPO_ELIMINADO
+}
+
+export async function cambiarEstadoGrupo(id: number, estado: string): Promise<string> {
+  return soloMensaje(await sigeda.put<unknown>(`/api/grupos/${encodeURIComponent(id)}/estado`, { estado }))
 }
 
 export const consultasGrupos = {

@@ -28,7 +28,7 @@ export type PersonaMock = {
   codEvalRealizada: string | null
 }
 
-export type GrupoMock = { id: number; nombre: string; descripcion: string; programa: ProgramaMock }
+export type GrupoMock = { id: number; nombre: string; descripcion: string; programa: ProgramaMock; estado: string }
 
 export type FaseMock = { id: number; nombre: string; descripcion: string | null }
 
@@ -321,12 +321,12 @@ export function crearDatos(hoy: string = hoyIso()): DatosMock {
     personas,
     usuarios: crearUsuarios(),
     grupos: [
-      { id: 1, nombre: 'Grupo 1', descripcion: 'Instrucción básica - Nuevos ingresantes', programa: 'PDI' },
-      { id: 2, nombre: 'Grupo 2', descripcion: 'Instrucción avanzada - Fase final', programa: 'PDI' },
-      { id: 3, nombre: 'Grupo 3', descripcion: 'Entrenamiento especializado - Nivel 1', programa: 'PDI' },
-      { id: 4, nombre: 'Grupo 4', descripcion: 'Entrenamiento avanzado - Nivel 2', programa: 'PDI' },
-      { id: 5, nombre: 'Grupo 5', descripcion: 'Instrucción intermedia - Fase media', programa: 'PDI' },
-      { id: 6, nombre: 'Promoción 2026-A', descripcion: 'Entrenamiento especializado - Nivel 2', programa: 'PDI' },
+      { id: 1, nombre: 'Grupo 1', descripcion: 'Instrucción básica - Nuevos ingresantes', programa: 'PDI', estado: 'EN_PROGRESO' },
+      { id: 2, nombre: 'Grupo 2', descripcion: 'Instrucción avanzada - Fase final', programa: 'PDI', estado: 'EN_PROGRESO' },
+      { id: 3, nombre: 'Grupo 3', descripcion: 'Entrenamiento especializado - Nivel 1', programa: 'PDI', estado: 'EN_PROGRESO' },
+      { id: 4, nombre: 'Grupo 4', descripcion: 'Entrenamiento avanzado - Nivel 2', programa: 'PDI', estado: 'EN_PROGRESO' },
+      { id: 5, nombre: 'Grupo 5', descripcion: 'Instrucción intermedia - Fase media', programa: 'PDI', estado: 'EN_PROGRESO' },
+      { id: 6, nombre: 'Promoción 2026-A', descripcion: 'Entrenamiento especializado - Nivel 2', programa: 'PDI', estado: 'EN_INSCRIPCION' },
     ],
     fases: [
       { id: 1, nombre: 'Adaptación', descripcion: 'Control básico del helicóptero, circuitos y precisión' },
