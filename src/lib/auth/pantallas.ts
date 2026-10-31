@@ -351,6 +351,16 @@ export const PANTALLAS = {
     permiso: 'Manage Groups',
     enMenu: true,
   },
+  fichaLicencia: {
+    ruta: '/fichas-licencia/$cod',
+    titulo: 'Ficha de licencia',
+    descripcion: 'Expediente de obtención de la licencia del alumno (PP-H).',
+    grupo: 'Matrícula',
+    icono: FileText,
+    permiso: 'Manage Licensing',
+    padre: '/grupos',
+    enMenu: false,
+  },
   registrarGrupo: {
     ruta: '/grupos/nuevo',
     titulo: 'Registrar grupo',

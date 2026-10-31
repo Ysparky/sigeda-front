@@ -34,6 +34,7 @@ import { Route as AppEscenariosIndexRouteImport } from './routes/_app/escenarios
 import { Route as AppEscenariosNuevaRouteImport } from './routes/_app/escenarios/nueva'
 import { Route as AppEvaluacionesIndexRouteImport } from './routes/_app/evaluaciones/index'
 import { Route as AppExamenesIndexRouteImport } from './routes/_app/examenes/index'
+import { Route as AppFichasLicenciaCodRouteImport } from './routes/_app/fichas-licencia/$cod'
 import { Route as AppGruposIndexRouteImport } from './routes/_app/grupos/index'
 import { Route as AppGruposNuevoRouteImport } from './routes/_app/grupos/nuevo'
 import { Route as AppMatriculasIndexRouteImport } from './routes/_app/matriculas/index'
@@ -211,6 +212,11 @@ const AppEvaluacionesIndexRoute = AppEvaluacionesIndexRouteImport.update({
 const AppExamenesIndexRoute = AppExamenesIndexRouteImport.update({
   id: '/examenes/',
   path: '/examenes/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFichasLicenciaCodRoute = AppFichasLicenciaCodRouteImport.update({
+  id: '/fichas-licencia/$cod',
+  path: '/fichas-licencia/$cod',
   getParentRoute: () => AppRoute,
 } as any)
 const AppGruposIndexRoute = AppGruposIndexRouteImport.update({
@@ -513,6 +519,7 @@ export interface FileRoutesByFullPath {
   '/banco/importar': typeof AppBancoImportarRoute
   '/convocatorias/nueva': typeof AppConvocatoriasNuevaRoute
   '/escenarios/nueva': typeof AppEscenariosNuevaRoute
+  '/fichas-licencia/$cod': typeof AppFichasLicenciaCodRoute
   '/grupos/nuevo': typeof AppGruposNuevoRoute
   '/personas/$cod': typeof AppPersonasCodRoute
   '/personas/nueva': typeof AppPersonasNuevaRoute
@@ -592,6 +599,7 @@ export interface FileRoutesByTo {
   '/banco/importar': typeof AppBancoImportarRoute
   '/convocatorias/nueva': typeof AppConvocatoriasNuevaRoute
   '/escenarios/nueva': typeof AppEscenariosNuevaRoute
+  '/fichas-licencia/$cod': typeof AppFichasLicenciaCodRoute
   '/grupos/nuevo': typeof AppGruposNuevoRoute
   '/personas/$cod': typeof AppPersonasCodRoute
   '/personas/nueva': typeof AppPersonasNuevaRoute
@@ -673,6 +681,7 @@ export interface FileRoutesById {
   '/_app/banco/importar': typeof AppBancoImportarRoute
   '/_app/convocatorias/nueva': typeof AppConvocatoriasNuevaRoute
   '/_app/escenarios/nueva': typeof AppEscenariosNuevaRoute
+  '/_app/fichas-licencia/$cod': typeof AppFichasLicenciaCodRoute
   '/_app/grupos/nuevo': typeof AppGruposNuevoRoute
   '/_app/personas/$cod': typeof AppPersonasCodRoute
   '/_app/personas/nueva': typeof AppPersonasNuevaRoute
@@ -754,6 +763,7 @@ export interface FileRouteTypes {
     | '/banco/importar'
     | '/convocatorias/nueva'
     | '/escenarios/nueva'
+    | '/fichas-licencia/$cod'
     | '/grupos/nuevo'
     | '/personas/$cod'
     | '/personas/nueva'
@@ -833,6 +843,7 @@ export interface FileRouteTypes {
     | '/banco/importar'
     | '/convocatorias/nueva'
     | '/escenarios/nueva'
+    | '/fichas-licencia/$cod'
     | '/grupos/nuevo'
     | '/personas/$cod'
     | '/personas/nueva'
@@ -913,6 +924,7 @@ export interface FileRouteTypes {
     | '/_app/banco/importar'
     | '/_app/convocatorias/nueva'
     | '/_app/escenarios/nueva'
+    | '/_app/fichas-licencia/$cod'
     | '/_app/grupos/nuevo'
     | '/_app/personas/$cod'
     | '/_app/personas/nueva'
@@ -1158,6 +1170,13 @@ declare module '@tanstack/react-router' {
       path: '/examenes'
       fullPath: '/examenes/'
       preLoaderRoute: typeof AppExamenesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/fichas-licencia/$cod': {
+      id: '/_app/fichas-licencia/$cod'
+      path: '/fichas-licencia/$cod'
+      fullPath: '/fichas-licencia/$cod'
+      preLoaderRoute: typeof AppFichasLicenciaCodRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/grupos/': {
@@ -1548,6 +1567,7 @@ interface AppRouteChildren {
   AppBancoImportarRoute: typeof AppBancoImportarRoute
   AppConvocatoriasNuevaRoute: typeof AppConvocatoriasNuevaRoute
   AppEscenariosNuevaRoute: typeof AppEscenariosNuevaRoute
+  AppFichasLicenciaCodRoute: typeof AppFichasLicenciaCodRoute
   AppGruposNuevoRoute: typeof AppGruposNuevoRoute
   AppPersonasCodRoute: typeof AppPersonasCodRoute
   AppPersonasNuevaRoute: typeof AppPersonasNuevaRoute
@@ -1624,6 +1644,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppBancoImportarRoute: AppBancoImportarRoute,
   AppConvocatoriasNuevaRoute: AppConvocatoriasNuevaRoute,
   AppEscenariosNuevaRoute: AppEscenariosNuevaRoute,
+  AppFichasLicenciaCodRoute: AppFichasLicenciaCodRoute,
   AppGruposNuevoRoute: AppGruposNuevoRoute,
   AppPersonasCodRoute: AppPersonasCodRoute,
   AppPersonasNuevaRoute: AppPersonasNuevaRoute,
