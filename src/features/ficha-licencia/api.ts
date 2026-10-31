@@ -22,6 +22,7 @@ export type CuerpoFicha = {
   secundariaCompleta: boolean | null
   inglesVigencia: string | null
   medicoVigencia: string | null
+  licenciaAlumnoEmision: string | null
   horasTotal: number | null
   horasDobleMando: number | null
   horasSolo: number | null
@@ -56,6 +57,7 @@ const esquemaFicha = z.object({
   secundariaCompleta: b(),
   inglesVigencia: f(),
   medicoVigencia: f(),
+  licenciaAlumnoEmision: f(),
   horasTotal: n(),
   horasDobleMando: n(),
   horasSolo: n(),

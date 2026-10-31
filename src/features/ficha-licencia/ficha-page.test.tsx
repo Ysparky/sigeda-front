@@ -27,4 +27,13 @@ describe('Ficha de licencia (/fichas-licencia/$cod)', () => {
     expect(await screen.findByText('Observada')).toBeInTheDocument()
     expect(screen.getByText(/40 h en total/)).toHaveTextContent('falta')
   })
+
+  it('captura la emisión de la licencia de alumno y dispara la alerta de 24 meses', async () => {
+    await iniciarComo('coordinador.rivas')
+    const { usuario } = renderApp('/fichas-licencia/A002')
+    await screen.findByRole('heading', { level: 1, name: /Ficha de licencia · A002/ })
+    await usuario.type(screen.getByLabelText('Licencia de alumno (emisión)'), '2023-01-01')
+    await usuario.click(screen.getByRole('button', { name: 'Guardar ficha' }))
+    expect(await screen.findByText(/licencia de alumno tiene más de 24 meses/i)).toBeInTheDocument()
+  })
 })

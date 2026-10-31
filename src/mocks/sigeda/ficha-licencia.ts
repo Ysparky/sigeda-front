@@ -6,6 +6,7 @@ type FichaMock = {
   secundariaCompleta: boolean | null
   inglesVigencia: string | null
   medicoVigencia: string | null
+  licenciaAlumnoEmision: string | null
   horasTotal: number | null
   horasDobleMando: number | null
   horasSolo: number | null
@@ -28,6 +29,7 @@ function fichaVacia(cod: string): FichaMock {
     secundariaCompleta: null,
     inglesVigencia: null,
     medicoVigencia: null,
+    licenciaAlumnoEmision: null,
     horasTotal: null,
     horasDobleMando: null,
     horasSolo: null,
@@ -92,10 +94,15 @@ function calcularResumen(f: FichaMock, hoy: Date) {
   ]
   const alertas: string[] = []
   if (f.medicoVigencia && dia(f.medicoVigencia)!.getTime() < hoy.getTime()) alertas.push('El certificado médico está vencido.')
+  else if (f.medicoVigencia && dia(f.medicoVigencia)!.getTime() < sumarDias(hoy, 30).getTime())
+    alertas.push('El certificado médico vence en menos de 30 días.')
+  if (f.inglesVigencia && dia(f.inglesVigencia)!.getTime() < hoy.getTime()) alertas.push('El nivel de inglés está vencido.')
   if (f.examenTeoricoFecha && sumarMeses(dia(f.examenTeoricoFecha)!, 12).getTime() < hoy.getTime())
     alertas.push('El examen teórico tiene más de 1 año (vencido).')
   if (f.declaracionFecha && sumarDias(dia(f.declaracionFecha)!, 30).getTime() < hoy.getTime())
     alertas.push('La declaración del instructor tiene más de 30 días (vencida).')
+  if (f.licenciaAlumnoEmision && sumarMeses(dia(f.licenciaAlumnoEmision)!, 24).getTime() < hoy.getTime())
+    alertas.push('La licencia de alumno tiene más de 24 meses (vencida).')
   const bloqueos: string[] = []
   if (f.examenTeoricoNota !== null && f.examenTeoricoNota < 75) bloqueos.push('El examen teórico está reprobado (nota menor a 75%).')
   if (f.periciaFecha !== null && !teoricoVigente)
@@ -104,8 +111,8 @@ function calcularResumen(f: FichaMock, hoy: Date) {
   const vacia =
     f.horasTotal === null && f.medicoVigencia === null && f.inglesVigencia === null && f.examenTeoricoFecha === null &&
     f.examenTeoricoNota === null && f.declaracionFecha === null && f.periciaFecha === null && f.horasDobleMando === null &&
-    f.horasSolo === null && f.horasSoloTravesia === null && f.horasNocturnas === null && f.secundariaCompleta !== true &&
-    f.travesia100nm !== true && f.nocturno10x10 !== true
+    f.horasSolo === null && f.horasSoloTravesia === null && f.horasNocturnas === null && f.licenciaAlumnoEmision === null &&
+    f.secundariaCompleta !== true && f.travesia100nm !== true && f.nocturno10x10 !== true
   let estado: string
   if (f.licenciaEmitida === true) estado = 'LICENCIA_EMITIDA'
   else if (f.periciaResultado === 'APROBADA') estado = 'PERICIA_APROBADA'
@@ -121,7 +128,9 @@ export const handlersFichaLicencia = [
     if (permitido instanceof Response) return permitido
     const cod = String(params.cod)
     const ficha = fichasMock.find((x) => x.codAlumno === cod) ?? fichaVacia(cod)
-    return HttpResponse.json({ ...ficha, resumen: calcularResumen(ficha, new Date()) })
+    const hoy = new Date()
+    hoy.setHours(0, 0, 0, 0) // granularidad de día, como LocalDate en el backend
+    return HttpResponse.json({ ...ficha, resumen: calcularResumen(ficha, hoy) })
   }),
   http.put(`${API}/api/fichas-licencia/:cod`, async ({ request, params }) => {
     const permitido = autorizar(request, 'Manage Licensing')

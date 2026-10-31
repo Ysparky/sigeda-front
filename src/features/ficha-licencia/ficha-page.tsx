@@ -19,6 +19,7 @@ type Valores = {
   horasSimulador: string
   medicoVigencia: string
   inglesVigencia: string
+  licenciaAlumnoEmision: string
   examenTeoricoFecha: string
   examenTeoricoNota: string
   declaracionFecha: string
@@ -44,6 +45,7 @@ function aValores(f: Ficha): Valores {
     horasSimulador: s(f.horasSimulador),
     medicoVigencia: f.medicoVigencia ?? '',
     inglesVigencia: f.inglesVigencia ?? '',
+    licenciaAlumnoEmision: f.licenciaAlumnoEmision ?? '',
     examenTeoricoFecha: f.examenTeoricoFecha ?? '',
     examenTeoricoNota: s(f.examenTeoricoNota),
     declaracionFecha: f.declaracionFecha ?? '',
@@ -61,6 +63,7 @@ function aCuerpo(v: Valores): CuerpoFicha {
     secundariaCompleta: v.secundariaCompleta,
     inglesVigencia: fecha(v.inglesVigencia),
     medicoVigencia: fecha(v.medicoVigencia),
+    licenciaAlumnoEmision: fecha(v.licenciaAlumnoEmision),
     horasTotal: num(v.horasTotal),
     horasDobleMando: num(v.horasDobleMando),
     horasSolo: num(v.horasSolo),
@@ -164,6 +167,7 @@ export function FichaPage({ cod }: { cod: string }) {
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <CampoFecha label="Médico vigente hasta" reg={formulario.register('medicoVigencia')} />
             <CampoFecha label="Inglés vigente hasta" reg={formulario.register('inglesVigencia')} />
+            <CampoFecha label="Licencia de alumno (emisión)" reg={formulario.register('licenciaAlumnoEmision')} />
             <CampoCheck label="Secundaria completa" reg={formulario.register('secundariaCompleta')} />
             <CampoFecha label="Examen teórico (fecha)" reg={formulario.register('examenTeoricoFecha')} />
             <CampoNumero label="Examen teórico (nota)" reg={formulario.register('examenTeoricoNota')} />
