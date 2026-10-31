@@ -32,11 +32,15 @@ export const PERMISOS_INSCRIPCION = [
 // Módulo simulador (standalone): Jefe de Operaciones e Instructor.
 export const PERMISOS_SIMULADOR = ['Manage Simulator'] as const
 
+// Ficha de licencia (parte final del curso): Coordinador Académico.
+export const PERMISOS_FICHA = ['Manage Licensing'] as const
+
 export const PERMISOS = [
   ...PERMISOS_BACKEND,
   ...PERMISOS_CONTRATO,
   ...PERMISOS_INSCRIPCION,
   ...PERMISOS_SIMULADOR,
+  ...PERMISOS_FICHA,
 ] as const
 
 export type Permiso = (typeof PERMISOS)[number]
@@ -97,6 +101,7 @@ const PERMISOS_POR_ROL: Record<string, readonly Permiso[]> = {
     'Manage Enrollments',
     'Manage Groups',
     'Manage Attendance',
+    'Manage Licensing',
   ],
   Postulante: ['View My Enrollment'],
   // Sin `Manage Groups`: la dependencia 4 lo dejó solo en el Administrador Web, porque gestionar

@@ -58,10 +58,10 @@ describe('permisosDeRol replica Role.java', () => {
     expect(permisosDeRol('Administrador Web').has('Take Exams')).toBe(false)
   })
 
-  it('Coordinador Académico gestiona cursos, matrículas, grupos y asistencia', () => {
+  it('Coordinador Académico gestiona cursos, matrículas, grupos, asistencia y la ficha de licencia', () => {
     const p = permisosDeRol('Coordinador Académico')
     expect([...p].sort()).toEqual(
-      ['Read', 'Update', 'Manage Courses', 'Manage Enrollments', 'Manage Groups', 'Manage Attendance'].sort(),
+      ['Read', 'Update', 'Manage Courses', 'Manage Enrollments', 'Manage Groups', 'Manage Attendance', 'Manage Licensing'].sort(),
     )
   })
 
