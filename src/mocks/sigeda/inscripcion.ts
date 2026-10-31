@@ -46,6 +46,9 @@ type ConvocatoriaMock = {
   vacantes: number
   documentosRequeridos: string | null
   estado: EstadoConvocatoriaMock
+  idGrupo?: number | null
+  grupoNombre?: string | null
+  grupoEstado?: string | null
 }
 
 const CONVOCATORIA_SEMILLA: ConvocatoriaMock[] = [
@@ -59,6 +62,9 @@ const CONVOCATORIA_SEMILLA: ConvocatoriaMock[] = [
     vacantes: 20,
     documentosRequeridos: 'DNI vigente, certificado médico aeronáutico y comprobante de pago.',
     estado: 'PUBLICADA',
+    idGrupo: 7,
+    grupoNombre: 'Promoción 2026-I',
+    grupoEstado: 'EN_INSCRIPCION',
   },
 ]
 

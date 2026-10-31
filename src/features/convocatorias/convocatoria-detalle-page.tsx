@@ -17,6 +17,12 @@ const SIGUIENTE: Partial<Record<EstadoConvocatoria, { estado: EstadoConvocatoria
   CERRADA: { estado: 'FINALIZADA', accion: 'Finalizar' },
 }
 
+const ETIQUETA_ESTADO_COHORTE: Record<string, string> = {
+  EN_INSCRIPCION: 'En inscripción',
+  EN_PROGRESO: 'En progreso',
+  CERRADA: 'Cerrada',
+}
+
 export function ConvocatoriaDetallePage({ id }: { id: number }) {
   const { data: convocatoria } = useSuspenseQuery(convocatoriaQuery(id))
   const queryClient = useQueryClient()
@@ -58,6 +64,13 @@ export function ConvocatoriaDetallePage({ id }: { id: number }) {
             <Badge variant={ETIQUETA_ESTADO_CONVOCATORIA[convocatoria.estado].variante}>
               {ETIQUETA_ESTADO_CONVOCATORIA[convocatoria.estado].texto}
             </Badge>
+          </Dato>
+          <Dato etiqueta="Cohorte destino">
+            {convocatoria.grupoNombre
+              ? `${convocatoria.grupoNombre}${
+                  convocatoria.grupoEstado ? ` · ${ETIQUETA_ESTADO_COHORTE[convocatoria.grupoEstado] ?? convocatoria.grupoEstado}` : ''
+                }`
+              : '—'}
           </Dato>
           <Dato etiqueta="Vacantes">{convocatoria.vacantes}</Dato>
           <Dato etiqueta="Inicio">{convocatoria.fechaInicio}</Dato>

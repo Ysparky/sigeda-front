@@ -18,6 +18,9 @@ describe('Convocatorias (/convocatorias)', () => {
 
     expect(await screen.findByRole('heading', { name: 'Admisión 2026-I' })).toBeInTheDocument()
     expect(screen.getByText('Publicada')).toBeInTheDocument()
+    // La cohorte destino de la convocatoria, con su estado.
+    expect(screen.getByText('Cohorte destino')).toBeInTheDocument()
+    expect(screen.getByText('Promoción 2026-I · En inscripción')).toBeInTheDocument()
 
     await usuario.click(screen.getByRole('button', { name: 'Cerrar' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Finalizar' })).toBeInTheDocument())

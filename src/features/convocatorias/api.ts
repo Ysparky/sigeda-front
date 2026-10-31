@@ -14,6 +14,9 @@ export type Convocatoria = {
   vacantes: number
   documentosRequeridos: string | null
   estado: EstadoConvocatoria
+  idGrupo: number | null
+  grupoNombre: string | null
+  grupoEstado: string | null
 }
 
 export type CuerpoConvocatoria = {
@@ -36,6 +39,9 @@ const esquemaConvocatoria = z.object({
   vacantes: z.number(),
   documentosRequeridos: z.string().nullish().transform((v) => v ?? null),
   estado: z.enum(['BORRADOR', 'PUBLICADA', 'CERRADA', 'FINALIZADA']),
+  idGrupo: z.number().nullish().transform((v) => v ?? null),
+  grupoNombre: z.string().nullish().transform((v) => v ?? null),
+  grupoEstado: z.string().nullish().transform((v) => v ?? null),
 })
 
 export const clavesConvocatorias = {
