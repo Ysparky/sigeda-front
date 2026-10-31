@@ -49,6 +49,14 @@ describe('Detalle de grupo', () => {
     expect(await screen.findByText('Cerrada')).toBeInTheDocument()
   })
 
+  it('un rol sin Manage Enrollments no ve el botón de cerrar la cohorte', async () => {
+    await iniciarComo('admin.sistema') // tiene Manage Groups (ve el grupo) pero no Manage Enrollments
+    renderApp('/grupos/1')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Grupo 1' })).toBeInTheDocument()
+    expect(screen.getByText('En progreso')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Cerrar cohorte' })).not.toBeInTheDocument()
+  })
+
   it('CA-GRU-08 un grupo inexistente muestra la página no encontrada', async () => {
     await iniciarComo('admin.sistema')
     renderApp('/grupos/99')

@@ -8,6 +8,7 @@ import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { usePuede } from '@/lib/auth/use-sesion'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { cambiarEstadoGrupo, clavesGrupos, consultasGrupos, eliminarGrupo } from './api'
 
@@ -21,6 +22,7 @@ export function GrupoPage({ id }: { id: number }) {
   const { data: grupo } = useSuspenseQuery(consultasGrupos.detalle(id))
   const queryClient = useQueryClient()
   const navegar = useNavigate()
+  const puedeCerrar = usePuede('Manage Enrollments')
   const cerrar = useMutation({
     mutationFn: () => cambiarEstadoGrupo(grupo.id, 'CERRADA'),
     onSuccess: async (mensaje) => {
@@ -46,7 +48,7 @@ export function GrupoPage({ id }: { id: number }) {
         descripcion={grupo.descripcion || grupo.programa}
         acciones={
           <>
-            {grupo.estado === 'EN_PROGRESO' && (
+            {grupo.estado === 'EN_PROGRESO' && puedeCerrar && (
               <Button variant="outline" disabled={cerrar.isPending} onClick={() => cerrar.mutate()}>
                 {cerrar.isPending ? 'Cerrando…' : 'Cerrar cohorte'}
               </Button>
