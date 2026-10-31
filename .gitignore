@@ -1,11 +1,12 @@
-node_modules
-dist
-*.local
-.env
-coverage
-test-results
-playwright-report
-.DS_Store
 
 # worktrees que crean los agentes: son repos git aparte, no parte del proyecto
+*.local
+.DS_Store
 .claude/worktrees/
+.env
+coverage
+dist
+node_modules
+playwright-report
+test-results
+test-results/
