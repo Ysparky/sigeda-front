@@ -21,7 +21,16 @@ import {
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Textarea } from '@/components/ui/textarea'
 import { errorDePrimeraCarga } from '@/lib/query'
-import { abrirComprobante, clavesMatriculas, matriculaQuery, rechazarMatricula, validarMatricula } from './api'
+import {
+  abrirComprobante,
+  clavesMatriculas,
+  matriculaQuery,
+  observarMatricula,
+  rechazarMatricula,
+  registrarResultado,
+  validarMatricula,
+  type ResultadoAdmision,
+} from './api'
 import { ETIQUETA_ESTADO } from './estado'
 
 export function MatriculaDetallePage({ id }: { id: number }) {
@@ -49,11 +58,21 @@ export function MatriculaDetallePage({ id }: { id: number }) {
     onError: () => toast.error('No se pudo abrir el comprobante.'),
   })
 
+  const resultado = useMutation({
+    mutationFn: (decision: ResultadoAdmision) => registrarResultado(id, decision, ''),
+    onSuccess: async (respuesta) => {
+      toast.success(respuesta.mensaje)
+      await volverALaBandeja()
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : 'No se pudo registrar el resultado.'),
+  })
+
   if (error !== null) return <AvisoDeError error={error} alReintentar={() => void matricula.refetch()} />
   if (!matricula.data) return <p className="text-sm text-muted-foreground">Cargando la matrícula…</p>
 
   const m = matricula.data
-  const procesada = m.estado !== 'PENDIENTE'
+  const enRevision = m.estado === 'PENDIENTE' || m.estado === 'OBSERVADA'
+  const esperandoResultado = m.estado === 'VALIDADA' && m.resultado === null
 
   return (
     <>
@@ -90,12 +109,41 @@ export function MatriculaDetallePage({ id }: { id: number }) {
             </p>
           )}
 
-          {!procesada && (
+          {m.estado === 'OBSERVADA' && m.observaciones && (
+            <p className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+              <strong>Observaciones:</strong> {m.observaciones}
+            </p>
+          )}
+
+          {m.resultado !== null && (
+            <p className="rounded-lg border bg-muted/40 p-3">
+              <strong>Resultado de admisión:</strong>{' '}
+              {m.resultado === 'ADMITIDO' ? 'Admitido' : 'No admitido'}
+            </p>
+          )}
+
+          {enRevision && (
             <div className="flex flex-wrap gap-2 border-t pt-4">
               <Button disabled={validar.isPending} onClick={() => validar.mutate()}>
-                {validar.isPending ? 'Validando…' : 'Validar matrícula'}
+                {validar.isPending ? 'Validando…' : 'Validar documentación'}
               </Button>
+              {m.estado === 'PENDIENTE' && <DialogoObservar id={id} alObservar={volverALaBandeja} />}
               <DialogoRechazo id={id} alRechazar={volverALaBandeja} />
+            </div>
+          )}
+
+          {esperandoResultado && (
+            <div className="flex flex-wrap gap-2 border-t pt-4">
+              <Button disabled={resultado.isPending} onClick={() => resultado.mutate('ADMITIDO')}>
+                {resultado.isPending ? 'Registrando…' : 'Admitir'}
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={resultado.isPending}
+                onClick={() => resultado.mutate('NO_ADMITIDO')}
+              >
+                No admitir
+              </Button>
             </div>
           )}
         </CardContent>
@@ -110,6 +158,70 @@ function Dato({ termino, valor }: { termino: string; valor: string }) {
       <dt className="text-muted-foreground">{termino}</dt>
       <dd>{valor}</dd>
     </div>
+  )
+}
+
+function DialogoObservar({ id, alObservar }: { id: number; alObservar: () => Promise<void> }) {
+  const [abierto, setAbierto] = useState(false)
+  const [texto, setTexto] = useState('')
+  const [problema, setProblema] = useState<string | null>(null)
+
+  const observar = useMutation({
+    mutationFn: () => observarMatricula(id, texto.trim()),
+    onSuccess: async (respuesta) => {
+      toast.success(respuesta.mensaje)
+      setAbierto(false)
+      await alObservar()
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : 'No se pudo observar la matrícula.'),
+  })
+
+  return (
+    <Dialog open={abierto} onOpenChange={setAbierto}>
+      <DialogTrigger asChild>
+        <Button variant="outline">Observar</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Observar postulación</DialogTitle>
+          <DialogDescription>
+            El postulante verá las observaciones y podrá volver a enviar su comprobante.
+          </DialogDescription>
+        </DialogHeader>
+        <Field data-invalid={Boolean(problema)}>
+          <FieldLabel htmlFor="observaciones">Observaciones</FieldLabel>
+          <Textarea
+            id="observaciones"
+            value={texto}
+            aria-invalid={Boolean(problema)}
+            onChange={(evento) => {
+              setTexto(evento.target.value)
+              if (problema) setProblema(null)
+            }}
+          />
+          {problema && <FieldError>{problema}</FieldError>}
+        </Field>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              Cancelar
+            </Button>
+          </DialogClose>
+          <Button
+            disabled={observar.isPending}
+            onClick={() => {
+              if (texto.trim().length < 3) {
+                setProblema('Indica qué debe subsanar (mínimo 3 caracteres).')
+                return
+              }
+              observar.mutate()
+            }}
+          >
+            {observar.isPending ? 'Enviando…' : 'Enviar observaciones'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

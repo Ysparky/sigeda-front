@@ -34,9 +34,43 @@ function sinActivo(curso: CursoMock) {
   return resto
 }
 
+type EstadoConvocatoriaMock = 'BORRADOR' | 'PUBLICADA' | 'CERRADA' | 'FINALIZADA'
+
+type ConvocatoriaMock = {
+  id: number
+  idCurso: number | null
+  nombre: string
+  descripcion: string | null
+  fechaInicio: string
+  fechaFin: string
+  vacantes: number
+  documentosRequeridos: string | null
+  estado: EstadoConvocatoriaMock
+}
+
+const CONVOCATORIA_SEMILLA: ConvocatoriaMock[] = [
+  {
+    id: 1,
+    idCurso: 1,
+    nombre: 'Admisión 2026-I',
+    descripcion: 'Proceso de admisión al programa PDI EA-510.',
+    fechaInicio: '2026-01-08',
+    fechaFin: '2026-12-31',
+    vacantes: 20,
+    documentosRequeridos: 'DNI vigente, certificado médico aeronáutico y comprobante de pago.',
+    estado: 'PUBLICADA',
+  },
+]
+
+let convocatoriasMock: ConvocatoriaMock[] = CONVOCATORIA_SEMILLA.map((c) => ({ ...c }))
+let secuenciaConvocatoria = 50
+
+type EstadoMatriculaMock = 'PENDIENTE' | 'OBSERVADA' | 'VALIDADA' | 'RECHAZADA' | 'NO_ADMITIDO'
+
 type MatriculaMock = {
   id: number
   idCurso: number | null
+  idConvocatoria: number | null
   dni: string
   nombres: string
   aPaterno: string
@@ -45,11 +79,15 @@ type MatriculaMock = {
   contacto: string | null
   idHorario: number | null
   fecha: string
-  estado: 'PENDIENTE' | 'VALIDADA' | 'RECHAZADA'
+  estado: EstadoMatriculaMock
   comprobanteTipo: string
   motivoRechazo: string | null
+  observaciones: string | null
+  resultado: 'ADMITIDO' | 'NO_ADMITIDO' | null
   codPersona: string | null
 }
+
+const VIVAS: EstadoMatriculaMock[] = ['PENDIENTE', 'OBSERVADA', 'VALIDADA']
 
 let secuenciaMatricula = 100
 const matriculasMock: MatriculaMock[] = []
@@ -57,6 +95,26 @@ const matriculasMock: MatriculaMock[] = []
 export function reiniciarInscripcion() {
   matriculasMock.length = 0
   secuenciaMatricula = 100
+  convocatoriasMock = CONVOCATORIA_SEMILLA.map((c) => ({ ...c }))
+  secuenciaConvocatoria = 50
+}
+
+/** Siembra una convocatoria para las pruebas de admisión. */
+export function sembrarConvocatoriaMock(convocatoria: Partial<ConvocatoriaMock> = {}) {
+  const fila: ConvocatoriaMock = {
+    id: (secuenciaConvocatoria += 1),
+    idCurso: 1,
+    nombre: 'Convocatoria de prueba',
+    descripcion: null,
+    fechaInicio: '2026-01-08',
+    fechaFin: '2026-12-31',
+    vacantes: 20,
+    documentosRequeridos: null,
+    estado: 'PUBLICADA',
+    ...convocatoria,
+  }
+  convocatoriasMock.push(fila)
+  return fila
 }
 
 /** Siembra una matrícula vinculada a una cuenta, para las pruebas de "mi matrícula". */
@@ -64,6 +122,7 @@ export function sembrarMatriculaMock(matricula: Partial<MatriculaMock> & { codPe
   const fila: MatriculaMock = {
     id: (secuenciaMatricula += 1),
     idCurso: 1,
+    idConvocatoria: 1,
     dni: '71111111',
     nombres: 'Rosa',
     aPaterno: 'Quispe',
@@ -75,10 +134,17 @@ export function sembrarMatriculaMock(matricula: Partial<MatriculaMock> & { codPe
     estado: 'PENDIENTE',
     comprobanteTipo: 'application/pdf',
     motivoRechazo: null,
+    observaciones: null,
+    resultado: null,
     ...matricula,
   }
   matriculasMock.push(fila)
   return fila
+}
+
+function convocatoriaPublica(c: ConvocatoriaMock) {
+  const { estado: _estado, ...resto } = c
+  return resto
 }
 
 export const handlersInscripcion = [
@@ -88,9 +154,16 @@ export const handlersInscripcion = [
     if (!(comprobante instanceof File) || comprobante.size === 0)
       return HttpResponse.text('El comprobante de pago es obligatorio.', { status: 400 })
     const datos = JSON.parse(await (formulario.get('datos') as Blob).text())
-    if (matriculasMock.some((m) => m.dni === datos.dni && m.idCurso === datos.idCurso && m.estado !== 'RECHAZADA'))
-      return HttpResponse.text('Ya existe una matrícula para este DNI en el curso.', { status: 409 })
-    const fila = sembrarMatriculaMock({ ...datos, codPersona: `P${secuenciaMatricula + 1}` })
+    const convocatoria = convocatoriasMock.find((c) => c.id === datos.idConvocatoria)
+    if (!convocatoria || convocatoria.estado !== 'PUBLICADA')
+      return HttpResponse.text('La convocatoria no está abierta.', { status: 409 })
+    if (matriculasMock.some((m) => m.dni === datos.dni && m.idConvocatoria === datos.idConvocatoria && VIVAS.includes(m.estado)))
+      return HttpResponse.text('Ya existe una postulación para este DNI en la convocatoria.', { status: 409 })
+    const fila = sembrarMatriculaMock({
+      ...datos,
+      idCurso: convocatoria.idCurso,
+      codPersona: `P${secuenciaMatricula + 1}`,
+    })
     return HttpResponse.json({ mensaje: 'Matrícula registrada con éxito.', matriculaId: fila.id }, { status: 201 })
   }),
 
@@ -107,10 +180,11 @@ export const handlersInscripcion = [
     if (!usuario) return errorResponse(401, 'Unauthorized', 'Token is not valid')
     const fila = matriculasMock.find((m) => m.codPersona === usuario.codPersona)
     if (!fila) return textoNoEncontrado('Matrícula especificada no existe.')
-    if (fila.estado === 'VALIDADA')
-      return HttpResponse.text('Una matrícula validada no se puede modificar.', { status: 409 })
+    if (fila.estado === 'VALIDADA' || fila.estado === 'NO_ADMITIDO')
+      return HttpResponse.text('Esta postulación ya no se puede modificar.', { status: 409 })
     fila.estado = 'PENDIENTE'
     fila.motivoRechazo = null
+    fila.observaciones = null
     return HttpResponse.json({ mensaje: 'Comprobante reenviado; tu matrícula volvió a estar pendiente.' })
   }),
 
@@ -153,17 +227,57 @@ export const handlersInscripcion = [
     if (!usuarioAutenticado(request)) return errorResponse(401, 'Unauthorized', 'Token is not valid')
     const fila = matriculasMock.find((m) => String(m.id) === params.id)
     if (!fila) return textoNoEncontrado('Matrícula especificada no existe.')
-    if (fila.estado !== 'PENDIENTE') return HttpResponse.text('La matrícula ya fue procesada.', { status: 409 })
+    if (fila.estado !== 'PENDIENTE' && fila.estado !== 'OBSERVADA')
+      return HttpResponse.text('La matrícula ya fue procesada.', { status: 409 })
     fila.estado = 'VALIDADA'
     fila.motivoRechazo = null
-    return HttpResponse.json({ mensaje: 'Matrícula validada con éxito.' })
+    fila.observaciones = null
+    return HttpResponse.json({ mensaje: 'Documentación validada con éxito.' })
+  }),
+
+  http.put(`${API}/api/matriculas/:id/observar`, async ({ request, params }) => {
+    if (!usuarioAutenticado(request)) return errorResponse(401, 'Unauthorized', 'Token is not valid')
+    const fila = matriculasMock.find((m) => String(m.id) === params.id)
+    if (!fila) return textoNoEncontrado('Matrícula especificada no existe.')
+    if (fila.estado !== 'PENDIENTE')
+      return HttpResponse.text('Solo una matrícula en revisión se puede observar.', { status: 409 })
+    const { observaciones } = (await request.json()) as { observaciones?: string }
+    fila.estado = 'OBSERVADA'
+    fila.observaciones = observaciones ?? null
+    return HttpResponse.json({ mensaje: 'Postulación observada.' })
+  }),
+
+  http.post(`${API}/api/matriculas/:id/resultado`, async ({ request, params }) => {
+    if (!usuarioAutenticado(request)) return errorResponse(401, 'Unauthorized', 'Token is not valid')
+    const fila = matriculasMock.find((m) => String(m.id) === params.id)
+    if (!fila) return textoNoEncontrado('Matrícula especificada no existe.')
+    if (fila.estado !== 'VALIDADA')
+      return HttpResponse.text('Solo una postulación validada puede recibir resultado.', { status: 409 })
+    const { resultado, observaciones } = (await request.json()) as {
+      resultado?: 'ADMITIDO' | 'NO_ADMITIDO'
+      observaciones?: string
+    }
+    if (resultado === 'ADMITIDO') {
+      const convocatoria = convocatoriasMock.find((c) => c.id === fila.idConvocatoria)
+      const admitidos = matriculasMock.filter((m) => m.idConvocatoria === fila.idConvocatoria && m.resultado === 'ADMITIDO').length
+      if (convocatoria && admitidos >= convocatoria.vacantes)
+        return HttpResponse.text('No quedan vacantes en la convocatoria.', { status: 409 })
+      fila.resultado = 'ADMITIDO'
+      fila.observaciones = observaciones ?? null
+      return HttpResponse.json({ mensaje: 'Postulante admitido; ahora es alumno.' })
+    }
+    fila.resultado = 'NO_ADMITIDO'
+    fila.estado = 'NO_ADMITIDO'
+    fila.observaciones = observaciones ?? null
+    return HttpResponse.json({ mensaje: 'Resultado registrado: no admitido.' })
   }),
 
   http.put(`${API}/api/matriculas/:id/rechazar`, async ({ request, params }) => {
     if (!usuarioAutenticado(request)) return errorResponse(401, 'Unauthorized', 'Token is not valid')
     const fila = matriculasMock.find((m) => String(m.id) === params.id)
     if (!fila) return textoNoEncontrado('Matrícula especificada no existe.')
-    if (fila.estado !== 'PENDIENTE') return HttpResponse.text('La matrícula ya fue procesada.', { status: 409 })
+    if (fila.estado !== 'PENDIENTE' && fila.estado !== 'OBSERVADA')
+      return HttpResponse.text('La matrícula ya fue procesada.', { status: 409 })
     const { motivo } = (await request.json()) as { motivo?: string }
     fila.estado = 'RECHAZADA'
     fila.motivoRechazo = motivo ?? null
@@ -185,5 +299,52 @@ export const handlersInscripcion = [
       detalle,
     }))
     return HttpResponse.json({ ...sinActivo(curso), horarios })
+  }),
+
+  http.get(`${API}/api/public/convocatorias`, () => {
+    return HttpResponse.json(convocatoriasMock.filter((c) => c.estado === 'PUBLICADA').map(convocatoriaPublica))
+  }),
+
+  http.get(`${API}/api/public/convocatorias/:id`, ({ params }) => {
+    const fila = convocatoriasMock.find((c) => String(c.id) === params.id && c.estado === 'PUBLICADA')
+    if (!fila) return textoNoEncontrado('Convocatoria especificada no existe.')
+    return HttpResponse.json(convocatoriaPublica(fila))
+  }),
+
+  http.get(`${API}/api/convocatorias`, ({ request }) => {
+    if (!usuarioAutenticado(request)) return errorResponse(401, 'Unauthorized', 'Token is not valid')
+    return HttpResponse.json(convocatoriasMock)
+  }),
+
+  http.post(`${API}/api/convocatorias`, async ({ request }) => {
+    if (!usuarioAutenticado(request)) return errorResponse(401, 'Unauthorized', 'Token is not valid')
+    const cuerpo = (await request.json()) as Partial<ConvocatoriaMock>
+    const fila = sembrarConvocatoriaMock({ ...cuerpo, estado: 'BORRADOR' })
+    return HttpResponse.json(fila, { status: 201 })
+  }),
+
+  http.get(`${API}/api/convocatorias/:id`, ({ request, params }) => {
+    if (!usuarioAutenticado(request)) return errorResponse(401, 'Unauthorized', 'Token is not valid')
+    const fila = convocatoriasMock.find((c) => String(c.id) === params.id)
+    if (!fila) return textoNoEncontrado('Convocatoria especificada no existe.')
+    return HttpResponse.json(fila)
+  }),
+
+  http.put(`${API}/api/convocatorias/:id`, async ({ request, params }) => {
+    if (!usuarioAutenticado(request)) return errorResponse(401, 'Unauthorized', 'Token is not valid')
+    const fila = convocatoriasMock.find((c) => String(c.id) === params.id)
+    if (!fila) return textoNoEncontrado('Convocatoria especificada no existe.')
+    const cuerpo = (await request.json()) as Partial<ConvocatoriaMock>
+    Object.assign(fila, cuerpo)
+    return HttpResponse.json(fila)
+  }),
+
+  http.put(`${API}/api/convocatorias/:id/estado`, async ({ request, params }) => {
+    if (!usuarioAutenticado(request)) return errorResponse(401, 'Unauthorized', 'Token is not valid')
+    const fila = convocatoriasMock.find((c) => String(c.id) === params.id)
+    if (!fila) return textoNoEncontrado('Convocatoria especificada no existe.')
+    const { estado } = (await request.json()) as { estado: EstadoConvocatoriaMock }
+    fila.estado = estado
+    return HttpResponse.json(fila)
   }),
 ]

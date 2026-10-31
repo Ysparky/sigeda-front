@@ -16,8 +16,10 @@ import { errorDeComprobante } from './schemas'
 
 const ETIQUETA: Record<EstadoMatricula, { texto: string; variante: 'secondary' | 'default' | 'destructive' }> = {
   PENDIENTE: { texto: 'Pendiente de validación', variante: 'secondary' },
+  OBSERVADA: { texto: 'Observada', variante: 'secondary' },
   VALIDADA: { texto: 'Validada', variante: 'default' },
   RECHAZADA: { texto: 'Rechazada', variante: 'destructive' },
+  NO_ADMITIDO: { texto: 'No admitido', variante: 'destructive' },
 }
 
 export function MiMatriculaPage() {
@@ -77,11 +79,31 @@ export function MiMatriculaPage() {
 
             {data.estado === 'PENDIENTE' && (
               <p className="text-muted-foreground">
-                El coordinador académico revisará tu comprobante. Te avisaremos cuando quede validada.
+                El coordinador académico revisará tu comprobante y tus datos. Te avisaremos cuando quede validada.
               </p>
             )}
-            {data.estado === 'VALIDADA' && (
-              <p className="text-muted-foreground">¡Tu matrícula fue validada! Ya eres alumno del curso.</p>
+            {data.estado === 'OBSERVADA' && (
+              <ReenvioComprobante
+                titulo="Observaciones"
+                motivo={data.observaciones}
+                etiquetaBoton="Enviar subsanación"
+              />
+            )}
+            {data.estado === 'VALIDADA' && data.resultado === null && (
+              <p className="text-muted-foreground">
+                Tu documentación fue validada. Tu postulación está en espera del resultado de admisión.
+              </p>
+            )}
+            {data.resultado === 'ADMITIDO' && (
+              <p className="text-muted-foreground">
+                ¡Felicitaciones! Tu postulación fue <strong className="text-foreground">admitida</strong> y ya eres
+                alumno del curso.
+              </p>
+            )}
+            {data.estado === 'NO_ADMITIDO' && (
+              <p className="text-muted-foreground">
+                Tu postulación no fue admitida{data.observaciones ? `: ${data.observaciones}` : '.'}
+              </p>
             )}
             {data.estado === 'RECHAZADA' && <ReenvioComprobante motivo={data.motivoRechazo} />}
           </CardContent>
@@ -92,7 +114,15 @@ export function MiMatriculaPage() {
   )
 }
 
-function ReenvioComprobante({ motivo }: { motivo: string | null }) {
+function ReenvioComprobante({
+  motivo,
+  titulo = 'Motivo del rechazo',
+  etiquetaBoton = 'Reenviar comprobante',
+}: {
+  motivo: string | null
+  titulo?: string
+  etiquetaBoton?: string
+}) {
   const queryClient = useQueryClient()
   const [archivo, setArchivo] = useState<File | null>(null)
   const [errorArchivo, setErrorArchivo] = useState<string | null>(null)
@@ -108,7 +138,7 @@ function ReenvioComprobante({ motivo }: { motivo: string | null }) {
   return (
     <div className="grid gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
       <p className="text-sm">
-        <strong>Motivo del rechazo:</strong> {motivo ?? 'No especificado.'}
+        <strong>{titulo}:</strong> {motivo ?? 'No especificado.'}
       </p>
       <Field data-invalid={Boolean(errorArchivo)}>
         <FieldLabel htmlFor="reenvio">Vuelve a subir tu comprobante (PDF, JPG o PNG, máx. 5 MB)</FieldLabel>
@@ -134,7 +164,7 @@ function ReenvioComprobante({ motivo }: { motivo: string | null }) {
           if (!problema) reenviar.mutate()
         }}
       >
-        {reenviar.isPending ? 'Enviando…' : 'Reenviar comprobante'}
+        {reenviar.isPending ? 'Enviando…' : etiquetaBoton}
       </Button>
     </div>
   )

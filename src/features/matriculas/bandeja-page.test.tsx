@@ -24,7 +24,7 @@ describe('Bandeja de matrículas (/matriculas)', () => {
     expect(await screen.findByRole('heading', { name: /Rosa Quispe/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Ver comprobante/ })).toBeInTheDocument()
 
-    await usuario.click(screen.getByRole('button', { name: 'Validar matrícula' }))
+    await usuario.click(screen.getByRole('button', { name: 'Validar documentación' }))
     await waitFor(() => expect(screen.queryByText('Quispe Huaman, Rosa')).not.toBeInTheDocument())
     expect(screen.getByText('Vega Luna, Mario')).toBeInTheDocument()
 

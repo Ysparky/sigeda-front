@@ -18,7 +18,7 @@ import {
 import { useEffect, useState, type ReactNode } from 'react'
 import { AvisoDeError } from '@/components/aviso-de-error'
 import { Skeleton } from '@/components/ui/skeleton'
-import { catalogoQuery, type CursoCatalogo } from './api'
+import { catalogoQuery, convocatoriasPublicasQuery, type CursoCatalogo } from './api'
 
 // Paleta del template Pilotin (muestreada del Figma), con el contenido y el logo de ASA.
 const NAVY = '#101A3C'
@@ -124,6 +124,10 @@ function Foto({ ratio, className = '', src, alt = '' }: { ratio: number; classNa
 
 export function LandingPage() {
   const { data: cursos, isPending, isError, error, refetch } = useQuery(catalogoQuery())
+  const { data: convocatorias } = useQuery(convocatoriasPublicasQuery())
+  // Primera convocatoria abierta por curso: habilita el botón de postular de su tarjeta.
+  const convocatoriaPorCurso = new Map<number, number>()
+  for (const c of convocatorias ?? []) if (c.idCurso !== null && !convocatoriaPorCurso.has(c.idCurso)) convocatoriaPorCurso.set(c.idCurso, c.id)
   const activo = useSeccionActiva()
   return (
     <div className="font-body flex min-h-dvh flex-col bg-white" style={{ color: BODY }}>
@@ -150,7 +154,14 @@ export function LandingPage() {
           alt="Instructores de la escuela"
         />
         <SeccionMetodo />
-        <SeccionCursos cursos={cursos} isPending={isPending} isError={isError} error={error} alReintentar={refetch} />
+        <SeccionCursos
+          cursos={cursos}
+          convocatoriaPorCurso={convocatoriaPorCurso}
+          isPending={isPending}
+          isError={isError}
+          error={error}
+          alReintentar={refetch}
+        />
         <LlamadaFinal />
         <SeccionPasos />
       </main>
@@ -437,13 +448,14 @@ function SeccionMetodo() {
 
 type EstadoCursos = {
   cursos: CursoCatalogo[] | undefined
+  convocatoriaPorCurso: Map<number, number>
   isPending: boolean
   isError: boolean
   error: unknown
   alReintentar: () => void
 }
 
-function SeccionCursos({ cursos, isPending, isError, error, alReintentar }: EstadoCursos) {
+function SeccionCursos({ cursos, convocatoriaPorCurso, isPending, isError, error, alReintentar }: EstadoCursos) {
   return (
     <section id="cursos" className="relative scroll-mt-24 overflow-hidden" style={{ backgroundColor: NAVY }}>
       <div className="mx-auto max-w-[1170px] px-4 py-20 sm:px-6">
@@ -466,7 +478,7 @@ function SeccionCursos({ cursos, isPending, isError, error, alReintentar }: Esta
           ) : (
             <div className={(cursos?.length ?? 0) <= 1 ? 'mx-auto max-w-md' : 'grid gap-8 md:grid-cols-2 lg:grid-cols-3'}>
               {(cursos ?? []).map((curso) => (
-                <TarjetaCurso key={curso.id} curso={curso} />
+                <TarjetaCurso key={curso.id} curso={curso} convocatoria={convocatoriaPorCurso.get(curso.id)} />
               ))}
             </div>
           )}
@@ -476,7 +488,7 @@ function SeccionCursos({ cursos, isPending, isError, error, alReintentar }: Esta
   )
 }
 
-function TarjetaCurso({ curso }: { curso: CursoCatalogo }) {
+function TarjetaCurso({ curso, convocatoria }: { curso: CursoCatalogo; convocatoria?: number }) {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl bg-white shadow-[0_10px_50px_rgba(149,155,177,0.15)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(149,155,177,0.3)] motion-reduce:transform-none motion-reduce:transition-none">
       <Foto ratio={1.48} className="rounded-none" src={FOTO_INSTRUMENTOS} alt="Panel de instrumentos" />
@@ -501,15 +513,25 @@ function TarjetaCurso({ curso }: { curso: CursoCatalogo }) {
         <p className="text-xs" style={{ color: MUTED }}>
           Requisitos: {curso.requisitos}
         </p>
-        <Link
-          to="/matricula"
-          search={{ curso: curso.id }}
-          className={`${BTN_ORO} mt-auto w-full`}
-          style={{ backgroundColor: GOLD, color: NAVY }}
-        >
-          Inscribirme
-          <ChevronRight className="size-4" aria-hidden />
-        </Link>
+        {convocatoria !== undefined ? (
+          <Link
+            to="/matricula"
+            search={{ convocatoria }}
+            className={`${BTN_ORO} mt-auto w-full`}
+            style={{ backgroundColor: GOLD, color: NAVY }}
+          >
+            Postular
+            <ChevronRight className="size-4" aria-hidden />
+          </Link>
+        ) : (
+          <span
+            className={`${BTN_ORO} mt-auto w-full cursor-not-allowed opacity-60`}
+            style={{ backgroundColor: GOLD, color: NAVY }}
+            aria-disabled
+          >
+            Sin convocatoria abierta
+          </span>
+        )}
       </div>
     </div>
   )
