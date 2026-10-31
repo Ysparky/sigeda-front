@@ -3,7 +3,9 @@ import { API, autorizar } from './comun'
 
 type FichaMock = {
   codAlumno: string
+  fechaNacimiento: string | null
   secundariaCompleta: boolean | null
+  inglesNivel: string | null
   inglesVigencia: string | null
   medicoVigencia: string | null
   licenciaAlumnoEmision: string | null
@@ -12,6 +14,7 @@ type FichaMock = {
   horasSolo: number | null
   horasSoloTravesia: number | null
   horasNocturnas: number | null
+  horasInstrumentos: number | null
   horasSimulador: number | null
   travesia100nm: boolean | null
   nocturno10x10: boolean | null
@@ -20,13 +23,18 @@ type FichaMock = {
   declaracionFecha: string | null
   periciaFecha: string | null
   periciaResultado: 'APROBADA' | 'DESAPROBADA' | null
+  pagoTeorico: boolean | null
+  pagoPractica: boolean | null
+  solicitudPresentada: boolean | null
   licenciaEmitida: boolean | null
 }
 
 function fichaVacia(cod: string): FichaMock {
   return {
     codAlumno: cod,
+    fechaNacimiento: null,
     secundariaCompleta: null,
+    inglesNivel: null,
     inglesVigencia: null,
     medicoVigencia: null,
     licenciaAlumnoEmision: null,
@@ -35,6 +43,7 @@ function fichaVacia(cod: string): FichaMock {
     horasSolo: null,
     horasSoloTravesia: null,
     horasNocturnas: null,
+    horasInstrumentos: null,
     horasSimulador: null,
     travesia100nm: null,
     nocturno10x10: null,
@@ -43,6 +52,9 @@ function fichaVacia(cod: string): FichaMock {
     declaracionFecha: null,
     periciaFecha: null,
     periciaResultado: null,
+    pagoTeorico: null,
+    pagoPractica: null,
+    solicitudPresentada: null,
     licenciaEmitida: null,
   }
 }
@@ -58,7 +70,9 @@ const dia = (s: string | null) => (s ? new Date(`${s}T00:00:00`) : null)
 const sumarDias = (d: Date, n: number) => new Date(d.getTime() + n * 86_400_000)
 const sumarMeses = (d: Date, n: number) => {
   const r = new Date(d)
+  const dia = r.getDate()
   r.setMonth(r.getMonth() + n)
+  if (r.getDate() < dia) r.setDate(0) // clamp a fin de mes, como plusMonths de Java (evita el desborde de setMonth)
   return r
 }
 const vigente = (venc: string | null, hoy: Date) => {
@@ -105,6 +119,7 @@ function calcularResumen(f: FichaMock, hoy: Date) {
     alertas.push('La licencia de alumno tiene más de 24 meses (vencida).')
   const bloqueos: string[] = []
   if (f.examenTeoricoNota !== null && f.examenTeoricoNota < 75) bloqueos.push('El examen teórico está reprobado (nota menor a 75%).')
+  if (f.periciaResultado === 'DESAPROBADA') bloqueos.push('La prueba de pericia está desaprobada.')
   if (f.periciaFecha !== null && !teoricoVigente)
     bloqueos.push('Hay pericia registrada sin examen teórico aprobado y vigente (12 meses).')
 
@@ -112,6 +127,7 @@ function calcularResumen(f: FichaMock, hoy: Date) {
     f.horasTotal === null && f.medicoVigencia === null && f.inglesVigencia === null && f.examenTeoricoFecha === null &&
     f.examenTeoricoNota === null && f.declaracionFecha === null && f.periciaFecha === null && f.horasDobleMando === null &&
     f.horasSolo === null && f.horasSoloTravesia === null && f.horasNocturnas === null && f.licenciaAlumnoEmision === null &&
+    f.horasSimulador === null && f.horasInstrumentos === null &&
     f.secundariaCompleta !== true && f.travesia100nm !== true && f.nocturno10x10 !== true
   let estado: string
   if (f.licenciaEmitida === true) estado = 'LICENCIA_EMITIDA'

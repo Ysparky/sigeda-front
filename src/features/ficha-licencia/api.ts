@@ -19,7 +19,9 @@ export type ResumenFicha = {
 
 /** Lo que captura el formulario (todo opcional; la ficha se llena por partes). */
 export type CuerpoFicha = {
+  fechaNacimiento: string | null
   secundariaCompleta: boolean | null
+  inglesNivel: string | null
   inglesVigencia: string | null
   medicoVigencia: string | null
   licenciaAlumnoEmision: string | null
@@ -28,6 +30,7 @@ export type CuerpoFicha = {
   horasSolo: number | null
   horasSoloTravesia: number | null
   horasNocturnas: number | null
+  horasInstrumentos: number | null
   horasSimulador: number | null
   travesia100nm: boolean | null
   nocturno10x10: boolean | null
@@ -36,6 +39,9 @@ export type CuerpoFicha = {
   declaracionFecha: string | null
   periciaFecha: string | null
   periciaResultado: 'APROBADA' | 'DESAPROBADA' | null
+  pagoTeorico: boolean | null
+  pagoPractica: boolean | null
+  solicitudPresentada: boolean | null
   licenciaEmitida: boolean | null
 }
 
@@ -54,7 +60,9 @@ const f = () => z.string().nullish().transform((v) => v ?? null)
 
 const esquemaFicha = z.object({
   codAlumno: z.string(),
+  fechaNacimiento: f(),
   secundariaCompleta: b(),
+  inglesNivel: f(),
   inglesVigencia: f(),
   medicoVigencia: f(),
   licenciaAlumnoEmision: f(),
@@ -63,6 +71,7 @@ const esquemaFicha = z.object({
   horasSolo: n(),
   horasSoloTravesia: n(),
   horasNocturnas: n(),
+  horasInstrumentos: n(),
   horasSimulador: n(),
   travesia100nm: b(),
   nocturno10x10: b(),
@@ -71,6 +80,9 @@ const esquemaFicha = z.object({
   declaracionFecha: f(),
   periciaFecha: f(),
   periciaResultado: z.enum(['APROBADA', 'DESAPROBADA']).nullish().transform((v) => v ?? null),
+  pagoTeorico: b(),
+  pagoPractica: b(),
+  solicitudPresentada: b(),
   licenciaEmitida: b(),
   resumen: esquemaResumen,
 })

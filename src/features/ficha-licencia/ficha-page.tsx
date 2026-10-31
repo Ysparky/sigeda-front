@@ -11,11 +11,14 @@ import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { clavesFicha, ETIQUETA_ESTADO_FICHA, fichaQuery, guardarFicha, type CuerpoFicha, type Ficha } from './api'
 
 type Valores = {
+  fechaNacimiento: string
+  inglesNivel: string
   horasTotal: string
   horasDobleMando: string
   horasSolo: string
   horasSoloTravesia: string
   horasNocturnas: string
+  horasInstrumentos: string
   horasSimulador: string
   medicoVigencia: string
   inglesVigencia: string
@@ -28,6 +31,9 @@ type Valores = {
   secundariaCompleta: boolean
   travesia100nm: boolean
   nocturno10x10: boolean
+  pagoTeorico: boolean
+  pagoPractica: boolean
+  solicitudPresentada: boolean
   licenciaEmitida: boolean
 }
 
@@ -37,11 +43,14 @@ const fecha = (v: string) => (v.trim() === '' ? null : v)
 function aValores(f: Ficha): Valores {
   const s = (v: number | null) => (v === null ? '' : String(v))
   return {
+    fechaNacimiento: f.fechaNacimiento ?? '',
+    inglesNivel: f.inglesNivel ?? '',
     horasTotal: s(f.horasTotal),
     horasDobleMando: s(f.horasDobleMando),
     horasSolo: s(f.horasSolo),
     horasSoloTravesia: s(f.horasSoloTravesia),
     horasNocturnas: s(f.horasNocturnas),
+    horasInstrumentos: s(f.horasInstrumentos),
     horasSimulador: s(f.horasSimulador),
     medicoVigencia: f.medicoVigencia ?? '',
     inglesVigencia: f.inglesVigencia ?? '',
@@ -54,13 +63,18 @@ function aValores(f: Ficha): Valores {
     secundariaCompleta: f.secundariaCompleta === true,
     travesia100nm: f.travesia100nm === true,
     nocturno10x10: f.nocturno10x10 === true,
+    pagoTeorico: f.pagoTeorico === true,
+    pagoPractica: f.pagoPractica === true,
+    solicitudPresentada: f.solicitudPresentada === true,
     licenciaEmitida: f.licenciaEmitida === true,
   }
 }
 
 function aCuerpo(v: Valores): CuerpoFicha {
   return {
+    fechaNacimiento: fecha(v.fechaNacimiento),
     secundariaCompleta: v.secundariaCompleta,
+    inglesNivel: v.inglesNivel.trim() === '' ? null : v.inglesNivel,
     inglesVigencia: fecha(v.inglesVigencia),
     medicoVigencia: fecha(v.medicoVigencia),
     licenciaAlumnoEmision: fecha(v.licenciaAlumnoEmision),
@@ -69,6 +83,7 @@ function aCuerpo(v: Valores): CuerpoFicha {
     horasSolo: num(v.horasSolo),
     horasSoloTravesia: num(v.horasSoloTravesia),
     horasNocturnas: num(v.horasNocturnas),
+    horasInstrumentos: num(v.horasInstrumentos),
     horasSimulador: num(v.horasSimulador),
     travesia100nm: v.travesia100nm,
     nocturno10x10: v.nocturno10x10,
@@ -77,6 +92,9 @@ function aCuerpo(v: Valores): CuerpoFicha {
     declaracionFecha: fecha(v.declaracionFecha),
     periciaFecha: fecha(v.periciaFecha),
     periciaResultado: v.periciaResultado === 'APROBADA' || v.periciaResultado === 'DESAPROBADA' ? v.periciaResultado : null,
+    pagoTeorico: v.pagoTeorico,
+    pagoPractica: v.pagoPractica,
+    solicitudPresentada: v.solicitudPresentada,
     licenciaEmitida: v.licenciaEmitida,
   }
 }
@@ -152,6 +170,7 @@ export function FichaPage({ cod }: { cod: string }) {
             <CampoNumero label="Solo" reg={formulario.register('horasSolo')} />
             <CampoNumero label="Solo travesía" reg={formulario.register('horasSoloTravesia')} />
             <CampoNumero label="Nocturnas" reg={formulario.register('horasNocturnas')} />
+            <CampoNumero label="Instrumentos" reg={formulario.register('horasInstrumentos')} />
             <CampoNumero label="Simulador" reg={formulario.register('horasSimulador')} />
             <CampoCheck label="Travesía de 100 NM" reg={formulario.register('travesia100nm')} />
             <CampoCheck label="Nocturno 10 × 10" reg={formulario.register('nocturno10x10')} />
@@ -165,6 +184,11 @@ export function FichaPage({ cod }: { cod: string }) {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
+            <CampoFecha label="Fecha de nacimiento" reg={formulario.register('fechaNacimiento')} />
+            <Field>
+              <FieldLabel htmlFor="inglesNivel">Nivel de inglés</FieldLabel>
+              <Input id="inglesNivel" type="text" {...formulario.register('inglesNivel')} />
+            </Field>
             <CampoFecha label="Médico vigente hasta" reg={formulario.register('medicoVigencia')} />
             <CampoFecha label="Inglés vigente hasta" reg={formulario.register('inglesVigencia')} />
             <CampoFecha label="Licencia de alumno (emisión)" reg={formulario.register('licenciaAlumnoEmision')} />
@@ -181,6 +205,9 @@ export function FichaPage({ cod }: { cod: string }) {
                 <NativeSelectOption value="DESAPROBADA">Desaprobada</NativeSelectOption>
               </NativeSelect>
             </Field>
+            <CampoCheck label="Pago del examen teórico" reg={formulario.register('pagoTeorico')} />
+            <CampoCheck label="Pago de la evaluación práctica" reg={formulario.register('pagoPractica')} />
+            <CampoCheck label="Solicitud presentada" reg={formulario.register('solicitudPresentada')} />
             <CampoCheck label="Licencia emitida" reg={formulario.register('licenciaEmitida')} />
           </CardContent>
         </Card>
