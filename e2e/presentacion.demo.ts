@@ -97,14 +97,23 @@ test('Presentación: el ciclo de un curso en SIGEDA', async ({ page }) => {
   )
 
   // ════════ ACTO 1 · INGRESO A LA COHORTE ════════
-  // Un aspirante postula en la landing pública (sin sesión).
+  // Un aspirante llega a la web pública (sin sesión): el catálogo solo deja postular al curso
+  // cuando tiene una convocatoria de admisión abierta. Ahí es donde elige la convocatoria.
   const sufijo = String(Date.now()).slice(-7)
   const dni = `9${sufijo}`
   const correo = `aspirante.${sufijo}@correo.com`
 
-  await page.goto('/matricula?convocatoria=1')
+  await page.goto('/')
   await asentar(page)
-  await rotulo(page, 'ACTO 1 · INGRESO', 'Postulación pública', 'Un aspirante se matricula a la convocatoria abierta Admisión 2026-I.')
+  await page.evaluate(() => document.getElementById('cursos')?.scrollIntoView({ block: 'start' }))
+  await page.waitForTimeout(900)
+  await rotulo(page, 'ACTO 1 · INGRESO', 'La admisión está abierta', 'El curso solo admite postulantes cuando tiene una convocatoria abierta: aquí, Admisión 2026-I.')
+  await page.getByRole('link', { name: 'Postular' }).first().click()
+
+  // Al postular por esa convocatoria, el formulario abre con su nombre: no es un alta genérica.
+  await asentar(page)
+  await expect(page.getByRole('heading', { level: 1, name: /Admisión 2026-I/ })).toBeVisible({ timeout: 15_000 })
+  await rotulo(page, 'ACTO 1 · INGRESO', 'Postula a la convocatoria', 'El aspirante se matricula a “Admisión 2026-I”, la convocatoria que enruta a la cohorte.')
   await page.getByLabel('DNI').fill(dni)
   await page.getByLabel('Nombres').fill('Mateo')
   await page.getByLabel('Apellido paterno').fill('Quispe')
@@ -120,11 +129,14 @@ test('Presentación: el ciclo de un curso en SIGEDA', async ({ page }) => {
   await expect(page.getByText('Matrícula enviada')).toBeVisible({ timeout: 15_000 })
   await rotulo(page, 'ACTO 1 · INGRESO', 'Matrícula enviada', 'Queda pendiente de que el Coordinador valide la documentación.')
 
-  // El Coordinador valida y admite; con la admisión, el aspirante pasa a alumno de la cohorte.
+  // El Coordinador gestiona la admisión. Primero la convocatoria: el proceso que la gobierna.
   await entrar(page, CUENTAS.coordinador, 'Coordinador Académico', 'Gestiona la admisión y la cohorte.')
+  await page.goto('/convocatorias')
+  await asentar(page)
+  await rotulo(page, 'ACTO 1 · INGRESO', 'La convocatoria de admisión', '“Admisión 2026-I” fija vacantes y fechas, y enruta a los admitidos a la Promoción 2026-I.')
   await page.goto('/matriculas')
   await asentar(page)
-  await rotulo(page, 'ACTO 1 · INGRESO', 'Bandeja de matrículas', 'El Coordinador revisa las postulaciones recibidas.')
+  await rotulo(page, 'ACTO 1 · INGRESO', 'Bandeja de matrículas', 'Llegan las postulaciones de esa convocatoria; el Coordinador las revisa una por una.')
   await page.getByRole('link', { name: dni }).click()
   await expect(page.getByRole('heading', { level: 1, name: /Mateo Quispe/ })).toBeVisible({ timeout: 15_000 })
   await page.getByRole('button', { name: 'Validar documentación' }).click()
