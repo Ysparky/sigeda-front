@@ -230,6 +230,9 @@ export const handlersEvaluaciones = [
     const idTurno = Number(params.id)
     const codAlumno = String(params.cod)
     const turno = datos().turnos.find((candidato) => candidato.id === idTurno)
+    if (turno?.estado === 'SUSPENDIDO') {
+      return HttpResponse.text('El turno está suspendido; reprográmelo antes de evaluar.', { status: 409 })
+    }
     const programada = esProgramada(categoria)
     if (programada && turno?.codInstructor !== usuario.codPersona) {
       return mensaje(403, 'Solo el instructor asignado al turno puede registrar esta evaluación.')

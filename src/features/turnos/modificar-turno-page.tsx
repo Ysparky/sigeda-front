@@ -44,7 +44,7 @@ export function ModificarTurnoPage({ id }: { id: number }) {
     }
   }
 
-  if (!permiteCambios(turno.fechaEval)) {
+  if (turno.estado !== 'SUSPENDIDO' && !permiteCambios(turno.fechaEval)) {
     return (
       <>
         <PageHeader titulo="Modificar turno" descripcion={turno.nombre} acciones={volver} />

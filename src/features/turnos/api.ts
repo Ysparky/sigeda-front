@@ -1,10 +1,17 @@
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { PROGRAMAS, type Programa } from '@/features/catalogos/api'
+import { soloMensaje } from '@/features/cuentas/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import type { Pagina, ParametrosPagina } from '@/lib/api/pagina'
 import { sigeda } from '@/lib/api/sigeda'
 import { esFechaIso } from '@/lib/dominio/calendario'
 import { esNotaDirbe, type NotaDirbe } from '@/lib/dominio/dirbe'
+
+export const ESTADOS_TURNO = ['PROGRAMADO', 'SUSPENDIDO', 'REPROGRAMADO'] as const
+export type EstadoTurno = (typeof ESTADOS_TURNO)[number]
+
+export const MOTIVOS_SUSPENSION = ['AERONAVE', 'CLIMA', 'SEGURIDAD', 'PERSONAL'] as const
+export type MotivoSuspension = (typeof MOTIVOS_SUSPENSION)[number]
 
 export type TurnoResumen = {
   id: number
@@ -14,6 +21,7 @@ export type TurnoResumen = {
   programa: string
   cantAlumno: number
   cantManiobra: number
+  estado: EstadoTurno
 }
 
 export type AlumnoDelTurno = { codAlumno: string; alumno: string; horaInicio: string; horaFin: string }
@@ -35,6 +43,9 @@ export type TurnoDetalle = {
   aeronave: AeronaveDelTurno | null
   alumnos: AlumnoDelTurno[]
   maniobras: ManiobraDelTurno[]
+  estado: EstadoTurno
+  motivoSuspension: MotivoSuspension | null
+  observacionSuspension: string | null
 }
 
 export type OcupacionAeronave = { idTurno: number; nombre: string; horaInicio: string; horaFin: string }
@@ -58,7 +69,11 @@ export type CuerpoTurno = {
 
 export type TurnoGuardado = { mensaje: string; id: number }
 
-type TurnoRealizadoApi = Omit<TurnoResumen, 'cantAlumno'> & { cantAlumno?: number; cantGrupo?: number }
+type TurnoRealizadoApi = Omit<TurnoResumen, 'cantAlumno' | 'estado'> & {
+  cantAlumno?: number
+  cantGrupo?: number
+  estado?: string | null
+}
 
 type DetalleTurnoApi = {
   id: number
@@ -73,12 +88,25 @@ type DetalleTurnoApi = {
   aeronave?: { id: number; nombre: string; estado?: string | null } | null
   alumnosTurno?: { codAlumno: string; alumno?: string | null; horaInicio: string; horaFin: string }[] | null
   maniobrasTurno?: { nota_min: string; maniobra: { id: number; nombre: string; descripcion?: string | null } }[] | null
+  estado?: string | null
+  motivoSuspension?: string | null
+  observacionSuspension?: string | null
 }
+
+export type CuerpoSuspension = { motivo: MotivoSuspension; observacion: string | null }
 
 type OcupacionApi = { id: number; nombre: string; horaInicio: string | null; horaFin: string | null }
 
 export const MENSAJE_TURNO_GUARDADO = 'Turno guardado con éxito.'
 export const MENSAJE_TURNO_ELIMINADO = 'Turno eliminado con éxito.'
+
+function aEstado(valor: string | null | undefined): EstadoTurno {
+  return ESTADOS_TURNO.find((estado) => estado === valor) ?? 'PROGRAMADO'
+}
+
+function aMotivo(valor: string | null | undefined): MotivoSuspension | null {
+  return MOTIVOS_SUSPENSION.find((motivo) => motivo === valor) ?? null
+}
 
 function esRegistro(valor: unknown): valor is Record<string, unknown> {
   return typeof valor === 'object' && valor !== null && !Array.isArray(valor)
@@ -93,6 +121,7 @@ export function aTurnoResumen(turno: TurnoRealizadoApi): TurnoResumen {
     programa: turno.programa,
     cantAlumno: turno.cantAlumno ?? turno.cantGrupo ?? 0,
     cantManiobra: turno.cantManiobra,
+    estado: aEstado(turno.estado),
   }
 }
 
@@ -107,6 +136,9 @@ export function aTurnoDetalle(turno: DetalleTurnoApi): TurnoDetalle {
     programa: turno.programa,
     codInstructor: turno.codInstructor ?? null,
     instructor: turno.instructor ?? null,
+    estado: aEstado(turno.estado),
+    motivoSuspension: aMotivo(turno.motivoSuspension),
+    observacionSuspension: turno.observacionSuspension ?? null,
     aeronave: turno.aeronave
       ? { id: turno.aeronave.id, nombre: turno.aeronave.nombre, estado: turno.aeronave.estado ?? 'Desconocido' }
       : null,
@@ -225,6 +257,20 @@ export async function modificarTurno(id: number, cuerpo: CuerpoTurno): Promise<T
 export async function eliminarTurno(id: number): Promise<string> {
   const respuesta = await sigeda.eliminar<unknown>(`/api/turnos/${encodeURIComponent(id)}`)
   return typeof respuesta === 'string' && respuesta.trim() !== '' ? respuesta : MENSAJE_TURNO_ELIMINADO
+}
+
+export const MENSAJE_TURNO_SUSPENDIDO = 'Turno suspendido.'
+
+export async function suspenderTurno(id: number, cuerpo: CuerpoSuspension): Promise<string> {
+  return soloMensaje(await sigeda.put<unknown>(`/api/turnos/${encodeURIComponent(id)}/suspension`, cuerpo))
+}
+
+export function useSuspenderTurno() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, cuerpo }: { id: number; cuerpo: CuerpoSuspension }) => suspenderTurno(id, cuerpo),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: clavesTurnos.todo }),
+  })
 }
 
 export const consultasTurnos = {

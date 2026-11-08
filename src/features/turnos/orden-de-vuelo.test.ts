@@ -15,6 +15,9 @@ function turno(id: number, aeronave: string, alumnos: [string, string, string][]
     aeronave: { id, nombre: aeronave, estado: 'Disponible' },
     alumnos: alumnos.map(([codAlumno, horaInicio, horaFin]) => ({ codAlumno, alumno: `Alumno ${codAlumno}`, horaInicio, horaFin })),
     maniobras: [],
+    estado: 'PROGRAMADO',
+    motivoSuspension: null,
+    observacionSuspension: null,
   }
 }
 

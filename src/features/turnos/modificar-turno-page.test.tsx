@@ -5,6 +5,7 @@ import { config } from '@/lib/config'
 import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
 import { server } from '@/mocks/server'
 import { textoBloqueadoPorSubsanacion } from '@/lib/dominio/teoria'
+import { datos } from '@/mocks/sigeda/datos'
 import { iniciarComo, renderApp } from '@/test/render'
 import type { UserEvent } from '@testing-library/user-event'
 
@@ -165,5 +166,15 @@ describe('Modificar turno', () => {
     await screen.findByText('No se pudieron cargar los datos del formulario')
     await usuario.click(screen.getByRole('button', { name: 'Reintentar' }))
     expect(await screen.findByLabelText('Nombre')).toHaveValue('Navegación Nocturna')
+  })
+
+  it('un turno suspendido de hoy se puede reprogramar', async () => {
+    const turno = datos().turnos.find((candidato) => candidato.id === 8)!
+    turno.estado = 'SUSPENDIDO'
+    turno.motivoSuspension = 'CLIMA'
+    turno.fechaEval = hoyIso()
+    await abrirEdicion()
+    expect(await screen.findByLabelText('Nombre')).toHaveValue('Navegación Nocturna')
+    expect(screen.queryByText('No disponible')).not.toBeInTheDocument()
   })
 })

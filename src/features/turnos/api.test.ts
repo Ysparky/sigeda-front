@@ -49,6 +49,7 @@ describe('api de turnos', () => {
         programa: 'PDI',
         cantAlumno: 1,
         cantManiobra: 2,
+        estado: 'PROGRAMADO',
       },
     ])
     const porFechas = await listarTurnos({ ...PAGINA, programa: 'PDI', desde: '2024-03-01', hasta: '2024-03-15' })

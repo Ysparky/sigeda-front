@@ -45,6 +45,19 @@ export const ESTADOS_TURNO_TEORICO = {
   FINALIZADO: { etiqueta: 'Finalizado', tono: 'neutro' },
 } as const satisfies Record<string, Termino>
 
+export const ESTADOS_TURNO_PRACTICO = {
+  PROGRAMADO: { etiqueta: 'Programado', tono: 'info' },
+  SUSPENDIDO: { etiqueta: 'Suspendido', tono: 'alerta' },
+  REPROGRAMADO: { etiqueta: 'Reprogramado', tono: 'aviso' },
+} as const satisfies Record<string, Termino>
+
+export const MOTIVOS_DE_SUSPENSION = {
+  AERONAVE: { etiqueta: 'Aeronave', tono: 'neutro', descripcion: 'Falla técnica o mantenimiento de la aeronave' },
+  CLIMA: { etiqueta: 'Clima', tono: 'neutro', descripcion: 'Condiciones meteorológicas adversas' },
+  SEGURIDAD: { etiqueta: 'Seguridad', tono: 'neutro', descripcion: 'Seguridad operacional' },
+  PERSONAL: { etiqueta: 'Personal', tono: 'neutro', descripcion: 'Falta de instructor o del alumno' },
+} as const satisfies Record<string, Termino>
+
 export const ESTADOS_RENDICION = {
   NO_RINDIO: { etiqueta: 'No rindió', tono: 'neutro' },
   EN_CURSO: { etiqueta: 'En curso', tono: 'aviso' },
@@ -118,6 +131,8 @@ const VOCABULARIOS = {
   documento: ESTADOS_DOCUMENTO,
   respuesta: RESULTADOS_RESPUESTA,
   turnoTeorico: ESTADOS_TURNO_TEORICO,
+  turnoPractico: ESTADOS_TURNO_PRACTICO,
+  motivoSuspension: MOTIVOS_DE_SUSPENSION,
   rendicion: ESTADOS_RENDICION,
   examen: RESULTADOS_EXAMEN,
   notaDelPromedio: NOTAS_DEL_PROMEDIO,

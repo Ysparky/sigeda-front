@@ -2,7 +2,9 @@ import { screen, waitFor, within } from '@testing-library/react'
 import { delay, http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { config } from '@/lib/config'
+import { hoyIso } from '@/lib/dominio/calendario'
 import { server } from '@/mocks/server'
+import { datos } from '@/mocks/sigeda/datos'
 import { iniciarComo, renderApp } from '@/test/render'
 
 async function abrirTurno(username: string, id: number) {
@@ -193,5 +195,37 @@ describe('Detalle de turno', () => {
     await iniciarComo('jefe.operaciones')
     renderApp('/turnos/999')
     expect(await screen.findByText('Página no encontrada')).toBeInTheDocument()
+  })
+
+  it('el Jefe de Operaciones suspende un turno por clima y queda suspendido con su motivo', async () => {
+    const { usuario } = await abrirTurno('jefe.operaciones', 8)
+    await usuario.click(screen.getByRole('button', { name: 'Suspender' }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Suspender el turno' })
+    await usuario.selectOptions(within(dialogo).getByLabelText('Motivo'), 'Clima')
+    await usuario.type(within(dialogo).getByLabelText('Observación'), 'Techo de nubes bajo')
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Suspender turno' }))
+    expect(await screen.findByText('Turno suspendido.')).toBeInTheDocument()
+    expect(await screen.findByText('Suspendido')).toBeInTheDocument()
+    expect(screen.getByText('Turno suspendido: Clima · Techo de nubes bajo')).toBeInTheDocument()
+  })
+
+  it('un turno suspendido no se evalúa y ofrece reprogramarlo', async () => {
+    const turno = datos().turnos.find((candidato) => candidato.id === 8)!
+    turno.estado = 'SUSPENDIDO'
+    turno.motivoSuspension = 'AERONAVE'
+    await abrirTurno('instructor.perez', 8)
+    expect(screen.getByText('Suspendido')).toBeInTheDocument()
+    expect(screen.getByText(/reprográmelo para poder evaluarlo/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Registrar evaluación/ })).not.toBeInTheDocument()
+  })
+
+  it('el Jefe de Operaciones ve «Reprogramar» en un turno suspendido de hoy', async () => {
+    const turno = datos().turnos.find((candidato) => candidato.id === 8)!
+    turno.estado = 'SUSPENDIDO'
+    turno.motivoSuspension = 'CLIMA'
+    turno.fechaEval = hoyIso()
+    await abrirTurno('jefe.operaciones', 8)
+    expect(screen.getByRole('link', { name: 'Reprogramar' })).toHaveAttribute('href', '/turnos/8/editar')
+    expect(screen.queryByRole('button', { name: 'Suspender' })).not.toBeInTheDocument()
   })
 })

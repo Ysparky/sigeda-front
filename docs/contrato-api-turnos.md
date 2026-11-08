@@ -351,6 +351,22 @@ Mismo chequeo `permiteCambios()` → 410 igual que §1.6 paso 2. Éxito → 200 
 
 (La explicación de UI "El turno ya no se puede modificar porque su fecha pasó." de CA-TUR-11 es responsabilidad del frontend al interpretar el 410; no cambia el backend.)
 
+### 1.7b `PUT /api/turnos/{id}/suspension` — **Nuevo (nov 2026)**
+
+```
+PUT /api/turnos/{id}/suspension   Manage Shifts
+```
+Body `{"motivo":"AERONAVE|CLIMA|SEGURIDAD|PERSONAL","observacion":"texto opcional (≤255)"}`. Un turno se suspende cuando falta un recurso; vale **también el mismo día**.
+
+Reglas, en orden: turno inexistente → 404 §B; motivo ausente o inválido → 400 §A `["'motivo': Indique el motivo de la suspensión."]`; ya suspendido → 409 §B `"El turno ya está suspendido."`; fecha anterior a hoy → 410 §B `"No se puede suspender. El turno ya pasó."`. Éxito → 200 `{"mensaje":"Turno suspendido."}`.
+
+**Efectos del estado.** `estado` es `PROGRAMADO` (al crear), `SUSPENDIDO` o `REPROGRAMADO`; §1.1 y §1.4 lo publican junto con `motivoSuspension` (y §1.4 también `observacionSuspension`). Un turno suspendido:
+- **no ocupa** a sus alumnos (cruce de §1.5 paso 4), a su instructor (abajo) ni a su aeronave (§1.3 lo omite);
+- **no se evalúa**: §2.6 responde 409 texto plano `"El turno está suspendido; reprográmelo antes de evaluar."`;
+- **se reprograma con §1.6** aunque su fecha sea hoy: el `PUT` lo deja `REPROGRAMADO` y conserva el motivo.
+
+**Carga del instructor (§1.5 y §1.6, nuevo).** Contra los vuelos del mismo instructor ese día en otros turnos no suspendidos: un horario que se superpone → 400 §A `["'codInstructor': El instructor ya tiene un vuelo en ese horario en otro turno del día."]`; más de 8 h sumadas (RAP 61) → `["'codInstructor': El instructor superaría las 8 horas de instrucción de vuelo en el día (RAP 61)."]`. El choque de **aeronave** sigue siendo solo aviso (M1-10).
+
 ### 1.8 `GET /api/aeronaves` — **Nuevo**
 
 ```

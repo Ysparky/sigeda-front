@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import { esFechaIso, esHora, esPosteriorAHoy } from '@/lib/dominio/calendario'
+import { esFechaIso, esHora, esPosteriorAHoy, hoyIso } from '@/lib/dominio/calendario'
 import { permiteCambios, seSuperponen } from '@/lib/dominio/turno'
 import { API, autorizar, errorResponse, paginar, texto, textoNoEncontrado } from './comun'
 import {
@@ -44,7 +44,13 @@ function resumen(turno: TurnoMock) {
     programa: turno.programa,
     cantAlumno: turno.alumnos.length,
     cantManiobra: turno.maniobras.length,
+    estado: turno.estado ?? 'PROGRAMADO',
+    motivoSuspension: turno.motivoSuspension ?? null,
   }
+}
+
+function activo(turno: TurnoMock): boolean {
+  return turno.estado !== 'SUSPENDIDO'
 }
 
 export function detalleTurno(turno: TurnoMock) {
@@ -60,6 +66,9 @@ export function detalleTurno(turno: TurnoMock) {
     fase: turno.fase,
     codInstructor: turno.codInstructor,
     instructor: instructor ? nombreCorto(instructor) : null,
+    estado: turno.estado ?? 'PROGRAMADO',
+    motivoSuspension: turno.motivoSuspension ?? null,
+    observacionSuspension: turno.observacionSuspension ?? null,
     aeronave: aeronave ? { id: aeronave.id, nombre: aeronave.nombre, estado: aeronave.estado } : null,
     alumnosTurno: turno.alumnos.map((alumno) => {
       const persona = buscarPersona(alumno.codAlumno)
@@ -133,7 +142,7 @@ function validarCampos(cuerpo: CuerpoTurno, conProgramaYSubfase: boolean): strin
 // servidor no lo rechaza.
 function erroresDeSolape(alumnos: AlumnoTurnoMock[], fechaEval: string, idPropio: number | null) {
   const ocupados = datos()
-    .turnos.filter((turno) => turno.id !== idPropio && turno.fechaEval === fechaEval)
+    .turnos.filter((turno) => turno.id !== idPropio && turno.fechaEval === fechaEval && activo(turno))
     .flatMap((turno) => turno.alumnos)
   return alumnos
     .map((alumno, indice) => {
@@ -145,6 +154,29 @@ function erroresDeSolape(alumnos: AlumnoTurnoMock[], fechaEval: string, idPropio
         : null
     })
     .filter((mensaje): mensaje is string => mensaje !== null)
+}
+
+function minutos(alumno: AlumnoTurnoMock): number {
+  const [hi, mi] = alumno.horaInicio.split(':').map(Number)
+  const [hf, mf] = alumno.horaFin.split(':').map(Number)
+  return hf * 60 + mf - (hi * 60 + mi)
+}
+
+// El instructor vuela con un alumno a la vez y no pasa de 8 h de instrucción de vuelo en el día (RAP 61).
+function errorDeInstructor(alumnos: AlumnoTurnoMock[], fechaEval: string, codInstructor: string, idPropio: number | null) {
+  const pedidos = alumnos.filter((alumno) => esHora(alumno.horaInicio) && esHora(alumno.horaFin))
+  const ocupados = datos()
+    .turnos.filter(
+      (turno) => turno.id !== idPropio && turno.fechaEval === fechaEval && turno.codInstructor === codInstructor && activo(turno),
+    )
+    .flatMap((turno) => turno.alumnos)
+  if (pedidos.some((pedido) => ocupados.some((ocupado) => seSuperponen(pedido, ocupado)))) {
+    return "'codInstructor': El instructor ya tiene un vuelo en ese horario en otro turno del día."
+  }
+  const total = [...ocupados, ...pedidos].reduce((suma, alumno) => suma + minutos(alumno), 0)
+  return total > 8 * 60
+    ? "'codInstructor': El instructor superaría las 8 horas de instrucción de vuelo en el día (RAP 61)."
+    : null
 }
 
 // La regla no se reimplementa acá: se pregunta al mismo `bloqueadoPorSubsanacion` que usan el
@@ -207,6 +239,10 @@ function validarGuardado(
     // El bloqueo se comprueba DESPUÉS del cruce y solo si el cruce pasó, como en el servidor: el
     // cruce ya exige que los alumnos existan, y un código inexistente tiene que salir por su 404.
     errores.push(...(solape.length > 0 ? solape : erroresDeBloqueo(aAlumnos(cuerpo))))
+    if (solape.length === 0) {
+      const instructor = errorDeInstructor(aAlumnos(cuerpo), texto(cuerpo.fechaEval), texto(cuerpo.codInstructor), idPropio)
+      if (instructor) errores.push(instructor)
+    }
   }
   return errores.length > 0 ? HttpResponse.json(errores, { status: 400 }) : null
 }
@@ -226,6 +262,8 @@ function aplicar(turno: TurnoMock, cuerpo: CuerpoTurno) {
     notaMin: texto(maniobra.nota_min).toUpperCase(),
   }))
 }
+
+const MOTIVOS = ['AERONAVE', 'CLIMA', 'SEGURIDAD', 'PERSONAL']
 
 function turnoVencido() {
   return errorResponse(410, 'Fecha de modificación expiró', 'No se puede modificar. El turno ya ha sido evaluado.')
@@ -257,7 +295,10 @@ export const handlersTurnos = [
     const ocupaciones = datos()
       .turnos.filter(
         (turno) =>
-          turno.fechaEval === String(params.fecha) && turno.idAeronave === Number(params.id) && turno.alumnos.length > 0,
+          turno.fechaEval === String(params.fecha) &&
+          turno.idAeronave === Number(params.id) &&
+          turno.alumnos.length > 0 &&
+          activo(turno),
       )
       .map((turno) => ({
         id: turno.id,
@@ -297,6 +338,7 @@ export const handlersTurnos = [
       idMision: null,
       alumnos: [],
       maniobras: [],
+      estado: 'PROGRAMADO',
     }
     aplicar(turno, cuerpo)
     datos().turnos.push(turno)
@@ -307,12 +349,33 @@ export const handlersTurnos = [
     if (permitido instanceof Response) return permitido
     const turno = datos().turnos.find((candidato) => candidato.id === Number(params.id))
     if (!turno) return errorResponse(404, 'Recurso no encontrado', 'No existe información de turno.')
-    if (!permiteCambios(turno.fechaEval)) return turnoVencido()
+    const seReprograma = turno.estado === 'SUSPENDIDO'
+    if (!seReprograma && !permiteCambios(turno.fechaEval)) return turnoVencido()
     const cuerpo = (await request.json()) as CuerpoTurno
     const rechazo = validarGuardado(cuerpo, null, turno.id, turno.idSubfase)
     if (rechazo) return rechazo
     aplicar(turno, cuerpo)
+    if (seReprograma) turno.estado = 'REPROGRAMADO'
     return guardado(turno)
+  }),
+  http.put(`${API}/api/turnos/:id/suspension`, async ({ request, params }) => {
+    const permitido = autorizar(request, 'Manage Shifts')
+    if (permitido instanceof Response) return permitido
+    const turno = datos().turnos.find((candidato) => candidato.id === Number(params.id))
+    if (!turno) return errorResponse(404, 'Recurso no encontrado', 'No existe información de turno.')
+    const cuerpo = (await request.json()) as { motivo?: unknown; observacion?: unknown }
+    const motivo = texto(cuerpo.motivo)
+    if (!MOTIVOS.includes(motivo)) return HttpResponse.json(["'motivo': Indique el motivo de la suspensión."], { status: 400 })
+    if (turno.estado === 'SUSPENDIDO') {
+      return errorResponse(409, 'Conflicto con el estado del recurso', 'El turno ya está suspendido.')
+    }
+    if (turno.fechaEval < hoyIso()) {
+      return errorResponse(410, 'Fecha de modificación expiró', 'No se puede suspender. El turno ya pasó.')
+    }
+    turno.estado = 'SUSPENDIDO'
+    turno.motivoSuspension = motivo
+    turno.observacionSuspension = typeof cuerpo.observacion === 'string' ? cuerpo.observacion : null
+    return HttpResponse.json({ mensaje: 'Turno suspendido.' })
   }),
   http.delete(`${API}/api/turnos/:id`, ({ request, params }) => {
     const permitido = autorizar(request, 'Manage Shifts')

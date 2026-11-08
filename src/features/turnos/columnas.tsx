@@ -1,5 +1,6 @@
 import { ayudanteDeColumnas } from '@/components/columnas-tabla'
 import { Enlace } from '@/components/enlace'
+import { StatusBadge } from '@/components/status-badge'
 import { formatearFecha } from '@/lib/formato'
 import type { TurnoResumen } from './api'
 
@@ -31,11 +32,17 @@ const maniobras = ayudante.accessor('cantManiobra', {
   cell: (contexto) => <span className="tabular-nums">{contexto.getValue()}</span>,
 })
 
+const estado = ayudante.accessor('estado', {
+  header: 'Estado',
+  cell: (contexto) => <StatusBadge vocabulario="turnoPractico" valor={contexto.getValue()} />,
+})
+
 export const COLUMNAS_TURNOS = ayudante.columns([
   nombre,
   ayudante.accessor('subfase', { header: 'Sub fase' }),
   ayudante.accessor('programa', { header: 'Programa' }),
   fecha,
+  estado,
   alumnos,
   maniobras,
 ])

@@ -78,6 +78,9 @@ export type TurnoMock = {
   idMision: number | null
   alumnos: AlumnoTurnoMock[]
   maniobras: ManiobraTurnoMock[]
+  estado?: 'PROGRAMADO' | 'SUSPENDIDO' | 'REPROGRAMADO'
+  motivoSuspension?: string | null
+  observacionSuspension?: string | null
 }
 
 export type CalificacionMock = {

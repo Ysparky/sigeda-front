@@ -1,12 +1,13 @@
 import { useQueries, useSuspenseQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { ClipboardPen, FileText, Pencil, Trash2 } from 'lucide-react'
+import { CalendarClock, CircleAlert, ClipboardPen, FileText, Pencil, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { toast } from 'sonner'
 import { AvisoDeError } from '@/components/aviso-de-error'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { PageHeader } from '@/components/page-header'
 import { StatusBadge } from '@/components/status-badge'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -16,10 +17,12 @@ import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { veSoloLoPropio } from '@/lib/auth/pantallas'
 import { usePuede, useSesion } from '@/lib/auth/use-sesion'
 import { etapasDeMision } from '@/lib/dominio/briefing'
-import { MOTIVO_TURNO_VENCIDO, permiteCambios } from '@/lib/dominio/turno'
+import { MOTIVO_TURNO_VENCIDO, permiteCambios, permiteSuspender, TEXTO_TURNO_SUSPENDIDO } from '@/lib/dominio/turno'
+import { termino } from '@/lib/dominio/vocabulario'
 import { formatearFecha } from '@/lib/formato'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasTurnos, useEliminarTurno, type AlumnoDelTurno, type TurnoDetalle } from './api'
+import { DialogoSuspension } from './components/dialogo-suspension'
 import { LineaDeTiempo } from './components/linea-de-tiempo'
 
 function Dato({ etiqueta, children }: { etiqueta: string; children: ReactNode }) {
@@ -111,8 +114,11 @@ export function TurnoPage({ id }: { id: number }) {
   const evaluaciones = useQueries({
     queries: alumnos.map((alumno) => consultasEvaluaciones.delTurno(alumno.codAlumno, turno.id)),
   })
+  const suspendido = turno.estado === 'SUSPENDIDO'
   const modificable = permiteCambios(turno.fechaEval)
   const esSuInstructor = puedeEscribir && actual?.codPersona != null && actual.codPersona === turno.codInstructor
+  const motivo = turno.motivoSuspension ? termino('motivoSuspension', turno.motivoSuspension).etiqueta : null
+  const detalleSuspension = [motivo, turno.observacionSuspension].filter(Boolean).join(' · ')
 
   function confirmarEliminacion() {
     eliminar.mutate(turno.id, {
@@ -132,7 +138,15 @@ export function TurnoPage({ id }: { id: number }) {
         acciones={
           puedeGestionar && (
             <>
-              {modificable ? (
+              {!suspendido && permiteSuspender(turno.fechaEval) && <DialogoSuspension idTurno={turno.id} />}
+              {suspendido ? (
+                <Button asChild>
+                  <Link to="/turnos/$id/editar" params={{ id: String(turno.id) }}>
+                    <CalendarClock aria-hidden />
+                    Reprogramar
+                  </Link>
+                </Button>
+              ) : modificable ? (
                 <Button variant="outline" asChild>
                   <Link to="/turnos/$id/editar" params={{ id: String(turno.id) }}>
                     <Pencil aria-hidden />
@@ -162,7 +176,16 @@ export function TurnoPage({ id }: { id: number }) {
           )
         }
       />
-      {puedeGestionar && !modificable && <p className="text-sm text-muted-foreground">{MOTIVO_TURNO_VENCIDO}</p>}
+      {suspendido && (
+        <Alert>
+          <CircleAlert />
+          <AlertTitle>Turno suspendido{detalleSuspension === '' ? '' : `: ${detalleSuspension}`}</AlertTitle>
+          <AlertDescription>{TEXTO_TURNO_SUSPENDIDO}</AlertDescription>
+        </Alert>
+      )}
+      {puedeGestionar && !modificable && !suspendido && (
+        <p className="text-sm text-muted-foreground">{MOTIVO_TURNO_VENCIDO}</p>
+      )}
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -174,6 +197,14 @@ export function TurnoPage({ id }: { id: number }) {
             <dl className="grid gap-4 sm:grid-cols-3">
               <Dato etiqueta="Fecha de evaluación">
                 <span className="tabular-nums">{formatearFecha(turno.fechaEval)}</span>
+              </Dato>
+              <Dato etiqueta="Estado">
+                <span className="flex flex-wrap items-center gap-2">
+                  <StatusBadge vocabulario="turnoPractico" valor={turno.estado} />
+                  {turno.estado !== 'PROGRAMADO' && detalleSuspension !== '' && (
+                    <span className="text-sm text-muted-foreground">{detalleSuspension}</span>
+                  )}
+                </span>
               </Dato>
               <Dato etiqueta="Programa">{turno.programa}</Dato>
               <Dato etiqueta="Fase">{turno.fase || '—'}</Dato>
@@ -234,7 +265,7 @@ export function TurnoPage({ id }: { id: number }) {
               evaluaciones={consulta?.data}
               error={consulta ? errorDePrimeraCarga(consulta) : null}
               alReintentar={() => void consulta?.refetch()}
-              puedeEvaluar={esSuInstructor}
+              puedeEvaluar={esSuInstructor && !suspendido}
             />
           )
         })}

@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { config } from '@/lib/config'
 import { hoyIso, sumarDias } from '@/lib/dominio/calendario'
 import { server } from '@/mocks/server'
+import { datos } from '@/mocks/sigeda/datos'
 import { iniciarComo, renderApp } from '@/test/render'
 
 const EN_UNA_SEMANA = sumarDias(hoyIso(), 7)
@@ -204,8 +205,12 @@ describe('Registrar turno', () => {
   })
 
   it('CA-TUR-07 advierte el cruce con otro turno de la aeronave antes de guardar', async () => {
+    // El choque de INSTRUCTOR sí se rechaza: el turno que se cruza en la aeronave pasa a otro
+    // instructor para que la prueba mida solo el aviso de aeronave.
+    datos().turnos.find((turno) => turno.nombre === 'Instrumentos Básicos')!.codInstructor = '000001'
     const { usuario } = await abrirFormulario()
     await llenarDatos(usuario, EN_UNA_SEMANA)
+    await usuario.selectOptions(screen.getByLabelText('Instructor'), 'Maria Flores Mendoza')
     await agregarAlumno(usuario, 1, 'Juan Falconi Fernandez', '08:00', '09:30')
     await agregarManiobra(usuario, 1, 'Ingreso al circuito de tránsito', 'B')
     const aviso = await screen.findByText('Horario superpuesto en la aeronave')

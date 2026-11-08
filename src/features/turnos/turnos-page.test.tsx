@@ -27,6 +27,7 @@ describe('Programación de turnos', () => {
       'Sub fase',
       'Programa',
       'Fecha de evaluación',
+      'Estado',
       'Alumnos',
       'Maniobras',
     ])
@@ -37,6 +38,7 @@ describe('Programación de turnos', () => {
       'Circuitos y Maniobras',
       'PDI',
       expect.stringMatching(/^\d{2}\/\d{2}\/\d{4}$/),
+      'Programado',
       '2',
       '4',
     ])

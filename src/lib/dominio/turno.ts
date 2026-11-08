@@ -1,4 +1,4 @@
-import { esHora, esPosteriorAHoy } from './calendario'
+import { esHora, esPosteriorAHoy, hoyIso } from './calendario'
 
 export const MOTIVO_TURNO_VENCIDO = 'El turno ya no se puede modificar porque su fecha pasó.'
 
@@ -21,6 +21,12 @@ export type Conflicto = { indice: number; ocupacion: Ocupacion }
 
 export function permiteCambios(fechaEval: string, ahora: Date = new Date()): boolean {
   return esPosteriorAHoy(fechaEval, ahora)
+}
+
+export const TEXTO_TURNO_SUSPENDIDO = 'El turno está suspendido: reprográmelo para poder evaluarlo.'
+
+export function permiteSuspender(fechaEval: string, ahora: Date = new Date()): boolean {
+  return fechaEval >= hoyIso(ahora)
 }
 
 export function seSuperponen(a: Intervalo, b: Intervalo): boolean {
