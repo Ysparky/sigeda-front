@@ -52,7 +52,7 @@ describe('Consulta de la postulación (/postulacion)', () => {
     const { usuario } = renderApp('/postulacion')
     await consultar(usuario, '72000003', fila.codigo)
 
-    const tarjeta = (await screen.findByRole('heading', { name: 'Activa tu cuenta' })).closest('[data-slot="card"]') as HTMLElement
+    const tarjeta = (await screen.findByRole('heading', { name: 'Activa tu cuenta' })).closest('section') as HTMLElement
     await usuario.type(within(tarjeta).getByLabelText('Contraseña nueva'), 'Cambio2026')
     await usuario.type(within(tarjeta).getByLabelText('Repite la contraseña'), 'Cambio2026')
     await usuario.click(within(tarjeta).getByRole('button', { name: 'Activar cuenta' }))

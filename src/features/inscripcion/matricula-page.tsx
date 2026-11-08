@@ -21,7 +21,8 @@ import {
   type DocumentoVista,
   type TipoDocumentoPostulacion,
 } from './api'
-import { BODY, BTN_ORO, FOCO, FOTO_COCKPIT, GOLD, NAVY, PASOS, SURFACE } from './marca'
+import { BODY, BTN_ORO, CONTROL, ERROR, EXITO, FOCO, FOTO_COCKPIT, GOLD, LINEA, NAVY, PANEL, PASOS, TINTA, TITULO_PANEL } from './marca'
+import { PaginaPublica as Pagina } from './pagina-publica'
 import {
   DECLARACION_JURADA,
   errorDeArchivo,
@@ -32,55 +33,6 @@ import {
   type ValoresMatricula,
 } from './schemas'
 
-// El mundo de la landing, con controles propios: la página es pública y clara aunque la app esté en modo oscuro.
-const TINTA = NAVY
-const LINEA = '#D9DCE5'
-const ERROR = '#B42318'
-const EXITO = '#1E7A4C'
-const CONTROL = `h-11 w-full rounded-lg border bg-white px-3.5 text-[15px] outline-none transition-[border-color,box-shadow] placeholder:text-[#6B7185] focus-visible:border-[#2540A1] focus-visible:shadow-[0_0_0_3px_rgba(216,184,88,0.45)] aria-[invalid=true]:border-[#B42318]`
-const PANEL = 'rounded-2xl bg-white p-6 shadow-[0_10px_40px_rgba(16,26,60,0.07)] sm:p-8'
-const TITULO_PANEL = 'font-display text-xl font-bold uppercase tracking-wide'
-
-function Cabecera() {
-  return (
-    <header className="border-b border-white/10" style={{ backgroundColor: NAVY }}>
-      <div className="mx-auto flex h-20 max-w-[1170px] items-center justify-between gap-4 px-4 sm:px-6">
-        <Link to="/" aria-label="Aeroclub Sudamericano de los Andes — inicio" className={`flex items-center rounded ${FOCO}`}>
-          <span className="inline-flex rounded-md bg-white px-2.5 py-1.5">
-            <img src="/asa-logo.png" alt="Aeroclub Sudamericano de los Andes" className="h-9 w-auto" />
-          </span>
-        </Link>
-        <nav aria-label="Accesos" className="flex items-center gap-5">
-          <Link
-            to="/postulacion"
-            className={`font-display rounded text-sm font-bold uppercase tracking-wide text-white/90 hover:text-white ${FOCO}`}
-          >
-            Mi postulación
-          </Link>
-          <Link
-            to="/login"
-            search={{}}
-            className={`font-display hidden rounded text-sm font-bold uppercase tracking-wide text-white/90 hover:text-white sm:inline ${FOCO}`}
-          >
-            Iniciar sesión
-          </Link>
-        </nav>
-      </div>
-    </header>
-  )
-}
-
-function Pagina({ children }: { children: ReactNode }) {
-  return (
-    <div
-      className="font-body flex min-h-dvh flex-col selection:bg-[#D8B858]/40"
-      style={{ backgroundColor: SURFACE, color: BODY, colorScheme: 'light' }}
-    >
-      <Cabecera />
-      {children}
-    </div>
-  )
-}
 
 export function MatriculaPage() {
   const { convocatoria } = Route.useSearch()
