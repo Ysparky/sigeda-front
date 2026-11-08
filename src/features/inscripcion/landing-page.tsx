@@ -27,18 +27,24 @@ import {
   type CursoCatalogo,
   type Requisitos,
 } from './api'
+import {
+  BLUE,
+  BODY,
+  BTN_LINEA,
+  BTN_ORO,
+  FOCO,
+  FOTO_COCKPIT,
+  FOTO_INSTRUMENTOS,
+  FOTO_PILOTOS,
+  GOLD,
+  MUTED,
+  NAVY,
+  PASOS,
+  SURFACE,
+} from './marca'
 
 // Paleta del template Pilotin (muestreada del Figma), con el contenido y el logo de ASA.
-const NAVY = '#101A3C'
-const BLUE = '#2540A1'
-const GOLD = '#D8B858'
-const BODY = '#5B6072'
-const MUTED = '#A6ACBE'
-const SURFACE = '#F8F8F8'
 
-const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D8B858] focus-visible:ring-offset-2'
-const BTN_ORO = `font-display inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-bold uppercase tracking-wider transition hover:brightness-95 ${FOCO}`
-const BTN_LINEA = `font-display inline-flex items-center justify-center gap-2 rounded-full border px-7 py-3.5 text-sm font-bold uppercase tracking-wider transition hover:bg-white/10 ${FOCO}`
 
 const NAV = [
   { href: '#inicio', texto: 'Inicio' },
@@ -88,25 +94,6 @@ const VALORES = [
   { icono: ShieldCheck, titulo: 'Bajo norma RAP 141', texto: 'Programa PDI EA-510 reconocido por la autoridad.' },
 ]
 
-const PASOS = [
-  {
-    titulo: 'Postula en línea',
-    texto: 'Llena tus datos, sube tus documentos y la declaración jurada firmada. Recibes un código de postulación.',
-  },
-  {
-    titulo: 'Revisión documental',
-    texto: 'El coordinador académico revisa tus documentos. Con tu código consultas el avance y subsanas lo observado.',
-  },
-  {
-    titulo: 'Evaluación de admisión',
-    texto: 'Te citamos a una evaluación presencial: examen de conocimientos, entrevista y evaluación psicológica.',
-  },
-  {
-    titulo: 'Resultado y matrícula',
-    texto: 'Si eres admitido, pagas tu matrícula y quedas asignado a tu grupo e instructor.',
-  },
-  { titulo: 'Activa tu cuenta', texto: 'Con tu código creas tu contraseña y entras a SIGEDA para seguir tu formación.' },
-]
 
 function Eyebrow({ children, centrado = false }: { children: ReactNode; centrado?: boolean }) {
   return (
@@ -123,9 +110,6 @@ function Eyebrow({ children, centrado = false }: { children: ReactNode; centrado
 
 // Fotos propias de ASA (asa.edu.pe). Son de avión —la escuela no tiene aún fotos de helicóptero—,
 // así que sirven como imagen de aviación genérica y se pueden reemplazar por fotos de helicóptero.
-const FOTO_COCKPIT = '/asa/cockpit.webp'
-const FOTO_PILOTOS = '/asa/pilotos.webp'
-const FOTO_INSTRUMENTOS = '/asa/instrumentos.webp'
 
 /** Imagen de la sección. Con `src` muestra la foto; sin ella, un marcador gris. */
 function Foto({ ratio, className = '', src, alt = '' }: { ratio: number; className?: string; src?: string; alt?: string }) {
