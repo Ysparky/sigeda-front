@@ -45,7 +45,15 @@ export type CuerpoFicha = {
   licenciaEmitida: boolean | null
 }
 
-export type HorasRegistradas = { vuelo: number; simulador: number }
+export type HorasRegistradas = {
+  vuelo: number
+  simulador: number
+  solo: number
+  soloTravesia: number
+  nocturno: number
+  aterrizajesNocturnos: number
+  travesia100nm: boolean
+}
 
 export type Ficha = CuerpoFicha & {
   codAlumno: string
@@ -93,9 +101,19 @@ const esquemaFicha = z.object({
   licenciaEmitida: b(),
   cursoAprobado: z.boolean().nullish().transform((v) => v === true),
   horasRegistradas: z
-    .object({ vuelo: z.number(), simulador: z.number() })
+    .object({
+      vuelo: z.number(),
+      simulador: z.number(),
+      solo: z.number().default(0),
+      soloTravesia: z.number().default(0),
+      nocturno: z.number().default(0),
+      aterrizajesNocturnos: z.number().default(0),
+      travesia100nm: z.boolean().default(false),
+    })
     .nullish()
-    .transform((v) => v ?? { vuelo: 0, simulador: 0 }),
+    .transform(
+      (v) => v ?? { vuelo: 0, simulador: 0, solo: 0, soloTravesia: 0, nocturno: 0, aterrizajesNocturnos: 0, travesia100nm: false },
+    ),
   resumen: esquemaResumen,
 })
 

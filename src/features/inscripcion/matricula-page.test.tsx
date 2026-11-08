@@ -38,6 +38,15 @@ describe('MatriculaPage (/matricula)', () => {
     expect(screen.queryByLabelText(/horario/i)).not.toBeInTheDocument()
   })
 
+  it('en desarrollo, un aspirante de ejemplo llena el formulario y sus documentos para enviarla de una vez', async () => {
+    const { usuario } = renderApp('/matricula?convocatoria=1')
+    await usuario.click(await screen.findByRole('button', { name: 'Llenar con un aspirante de ejemplo' }))
+    expect(screen.getByLabelText('Nombres')).toHaveValue('Mateo')
+    expect((screen.getByLabelText('Número de documento') as HTMLInputElement).value).toMatch(/^9\d{7}$/)
+    await usuario.click(screen.getByRole('button', { name: 'Enviar postulación' }))
+    await waitFor(() => expect(screen.getByText('Postulación enviada')).toBeInTheDocument())
+  })
+
   it('envía la postulación y muestra el código para consultarla', async () => {
     const { usuario } = renderApp('/matricula?convocatoria=1')
     await llenarDatos(usuario)

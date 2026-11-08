@@ -32,13 +32,14 @@ describe('Ficha de licencia (/fichas-licencia/$cod)', () => {
     expect(await screen.findByText('Acceso restringido')).toBeInTheDocument()
   })
 
-  it('un alumno sin ficha abre en preparación y se puede capturar', async () => {
+  it('un egresado sin ficha la abre con la declaración del instructor y se puede capturar', async () => {
     egresado('A001')
     await iniciarComo('coordinador.rivas')
     const { usuario } = renderApp('/fichas-licencia/A001')
 
     expect(await screen.findByRole('heading', { level: 1, name: /Ficha de licencia · A001/ })).toBeInTheDocument()
-    expect(estadoDeLaFicha()).toHaveTextContent('En preparación')
+    expect(estadoDeLaFicha()).toHaveTextContent('Observada')
+    expect(screen.getByText(/Declaración del instructor vigente/)).toHaveTextContent('cumple')
     // Todos los requisitos arrancan en "falta".
     const requisitos = within(screen.getByRole('list', { name: 'Requisitos de la licencia' }))
     expect(requisitos.getAllByText(/falta/).length).toBeGreaterThan(0)

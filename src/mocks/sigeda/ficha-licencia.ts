@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { API, autorizar } from './comun'
 import { datos } from './datos'
+import { documentoAceptadoDe } from './inscripcion'
 import { resultadoDe } from './resultados'
 import { minutosDeSimuladorCompletados } from './simulador'
 
@@ -9,18 +10,74 @@ function minutos(hora: string): number {
   return h * 60 + m
 }
 
-function horasRegistradas(cod: string) {
+/** La regla fija de la migración 041: qué misiones son solo, de travesía o nocturnas. */
+const SOLO = new Set(['CM-7', 'CP-4', 'CP-5', 'NL-5', 'NL-6', 'NR-6', 'NR-7', 'NC-3', 'NC-4'])
+
+function modalidad(idMision: number | null | undefined) {
+  const mision = datos().misiones.find((m) => m.id === idMision)
+  const subfase = datos().subfases.find((s) => s.id === mision?.idSubfase)
+  return {
+    solo: mision ? SOLO.has(mision.codigo) : false,
+    travesia: subfase ? ['Navegación en Ruta', 'Navegación Compleja'].includes(subfase.nombre) : false,
+    nocturna: subfase ? subfase.idFase === 4 : false,
+    travesia100nm: mision?.codigo === 'NC-4',
+  }
+}
+
+type Registradas = {
+  vuelo: number
+  simulador: number
+  solo: number
+  soloTravesia: number
+  nocturno: number
+  aterrizajesNocturnos: number
+  travesia100nm: boolean
+}
+
+function horasRegistradas(cod: string): Registradas {
   const turnosEvaluados = new Set(
     datos()
       .evaluaciones.filter((e) => e.codPersona === cod)
       .map((e) => Number(e.codigo.split('-')[1]))
       .filter((id) => Number.isInteger(id)),
   )
-  const vuelo = datos()
-    .turnos.filter((t) => turnosEvaluados.has(t.id))
-    .flatMap((t) => t.alumnos.filter((a) => a.codAlumno === cod))
-    .reduce((total, a) => total + minutos(a.horaFin) - minutos(a.horaInicio), 0)
-  return { vuelo: vuelo / 60, simulador: minutosDeSimuladorCompletados(cod) / 60 }
+  const r: Registradas = { vuelo: 0, simulador: minutosDeSimuladorCompletados(cod) / 60, solo: 0, soloTravesia: 0, nocturno: 0, aterrizajesNocturnos: 0, travesia100nm: false }
+  for (const t of datos().turnos.filter((x) => turnosEvaluados.has(x.id)))
+    for (const a of t.alumnos.filter((x) => x.codAlumno === cod)) {
+      const h = (minutos(a.horaFin) - minutos(a.horaInicio)) / 60
+      const m = modalidad(t.idMision)
+      r.vuelo += h
+      if (m.solo) r.solo += h
+      if (m.solo && m.travesia) r.soloTravesia += h
+      if (m.nocturna) {
+        r.nocturno += h
+        r.aterrizajesNocturnos += 1
+      }
+      if (m.solo && m.travesia100nm) r.travesia100nm = true
+    }
+  return r
+}
+
+const dos = (v: number) => Math.round(v * 100) / 100
+
+/** Lo que la admisión y el curso ya saben completa lo que no se cargó a mano (como el backend). */
+function completar(cod: string, manual: FichaMock, r: Registradas, fechaEgreso: string | null): FichaMock {
+  const f = { ...manual }
+  if (documentoAceptadoDe(cod, 'CERTIFICADO_SECUNDARIA')) f.secundariaCompleta = true
+  const medico = documentoAceptadoDe(cod, 'CERTIFICADO_MEDICO')
+  if (f.medicoVigencia === null && medico?.vigenciaHasta) f.medicoVigencia = medico.vigenciaHasta
+  const ingles = documentoAceptadoDe(cod, 'CONSTANCIA_INGLES')
+  if (f.inglesVigencia === null && ingles?.vigenciaHasta) f.inglesVigencia = ingles.vigenciaHasta
+  if (f.inglesNivel === null && ingles?.nivel) f.inglesNivel = ingles.nivel
+  const doble = Math.max(0, r.vuelo - r.solo)
+  if (f.horasDobleMando === null && doble > 0) f.horasDobleMando = dos(doble)
+  if (f.horasSolo === null && r.solo > 0) f.horasSolo = dos(r.solo)
+  if (f.horasSoloTravesia === null && r.soloTravesia > 0) f.horasSoloTravesia = dos(r.soloTravesia)
+  if (f.horasNocturnas === null && r.nocturno > 0) f.horasNocturnas = dos(r.nocturno)
+  if (r.travesia100nm) f.travesia100nm = true
+  if (r.aterrizajesNocturnos >= 10) f.nocturno10x10 = true
+  if (f.declaracionFecha === null && fechaEgreso) f.declaracionFecha = fechaEgreso
+  return f
 }
 
 type FichaMock = {
@@ -103,10 +160,16 @@ const vigente = (venc: string | null, hoy: Date) => {
 }
 const hora = (v: number | null, min: number) => v !== null && v >= min
 
-function calcularResumen(manual: FichaMock, hoy: Date, registradas = { vuelo: 0, simulador: 0 }, cursoAprobado = false) {
+function calcularResumen(
+  manual: FichaMock,
+  hoy: Date,
+  registradas: { vuelo: number; simulador: number; solo?: number } = { vuelo: 0, simulador: 0 },
+  cursoAprobado = false,
+) {
   const f = {
     ...manual,
-    horasDobleMando: manual.horasDobleMando ?? (registradas.vuelo > 0 ? registradas.vuelo : null),
+    horasDobleMando:
+      manual.horasDobleMando ?? (registradas.vuelo - (registradas.solo ?? 0) > 0 ? registradas.vuelo - (registradas.solo ?? 0) : null),
     horasSimulador: manual.horasSimulador ?? (registradas.simulador > 0 ? registradas.simulador : null),
     horasTotal:
       manual.horasTotal ?? (registradas.vuelo + registradas.simulador > 0 ? registradas.vuelo + registradas.simulador : null),
@@ -170,12 +233,14 @@ function calcularResumen(manual: FichaMock, hoy: Date, registradas = { vuelo: 0,
 
 function fichaConResumen(cod: string, ficha: FichaMock, hoy: Date) {
   const resultado = resultadoDe(cod)
-  const registradas =
-    resultado?.horasVuelo != null
-      ? { vuelo: resultado.horasVuelo, simulador: resultado.horasSimulador ?? 0 }
-      : horasRegistradas(cod)
+  const registradas = horasRegistradas(cod)
+  if (resultado?.horasVuelo != null) {
+    registradas.vuelo = resultado.horasVuelo
+    registradas.simulador = resultado.horasSimulador ?? 0
+  }
   const cursoAprobado = resultado?.situacion === 'EGRESADO'
-  return { ...ficha, cursoAprobado, horasRegistradas: registradas, resumen: calcularResumen(ficha, hoy, registradas, cursoAprobado) }
+  const completa = completar(cod, ficha, registradas, cursoAprobado ? resultado!.fecha : null)
+  return { ...completa, cursoAprobado, horasRegistradas: registradas, resumen: calcularResumen(completa, hoy, registradas, cursoAprobado) }
 }
 
 /** El resumen de la ficha del alumno, como lo ve el aula. */

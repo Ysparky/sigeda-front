@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router'
 import { ArrowLeft, ArrowRight, Check, Circle, CircleAlert, FileDown, FileText, Paperclip, ShieldCheck } from 'lucide-react'
 import { useState, type ComponentProps, type ReactNode } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
+import { archivosDeEjemplo, aspiranteDeEjemplo } from './ejemplo-de-postulacion'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { hoyIso } from '@/lib/dominio/calendario'
@@ -429,6 +430,20 @@ function FormularioMatricula({ idConvocatoria }: { idConvocatoria: number }) {
               </div>
             )}
 
+            {import.meta.env.DEV && (
+              <button
+                type="button"
+                onClick={() => {
+                  formulario.reset(aspiranteDeEjemplo())
+                  setArchivos(archivosDeEjemplo())
+                  setErroresArchivo({})
+                }}
+                className="justify-self-start rounded-full border border-dashed px-4 py-2 text-sm font-semibold"
+                style={{ borderColor: LINEA, color: TINTA }}
+              >
+                Llenar con un aspirante de ejemplo
+              </button>
+            )}
             <section className={PANEL} aria-labelledby="titulo-datos">
               <h2 id="titulo-datos" className={`${TITULO_PANEL} mb-1.5`} style={{ color: TINTA }}>
                 Tus datos

@@ -29,6 +29,7 @@ import { errorDePrimeraCarga } from '@/lib/query'
 import {
   abrirDocumento,
   aceptarDocumento,
+  pideVigencia,
   citarPostulante,
   clavesMatriculas,
   MEDIOS_PAGO,
@@ -194,6 +195,11 @@ function Documentos({ matricula, revisa, alCambiar }: { matricula: MatriculaDeta
                     <span className="block text-xs text-muted-foreground">Exigido antes del resultado de admisión</span>
                   )}
                   {documento.observacion && <span className="block text-xs text-destructive">{documento.observacion}</span>}
+                  {documento.vigenciaHasta && (
+                    <span className="block text-xs text-muted-foreground">
+                      {documento.nivel ? `Nivel ${documento.nivel} · ` : ''}Vigente hasta {formatearFecha(documento.vigenciaHasta)}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell>{ETIQUETA_DOCUMENTO[documento.estado]}</TableCell>
                 <TableCell>
@@ -203,7 +209,10 @@ function Documentos({ matricula, revisa, alCambiar }: { matricula: MatriculaDeta
                         <FileText aria-hidden />
                         Ver <span className="sr-only">{documento.nombre}</span>
                       </Button>
-                      {revisa && documento.estado !== 'ACEPTADO' && (
+                      {revisa && documento.estado !== 'ACEPTADO' && pideVigencia(documento.tipo) && (
+                        <DialogoAceptarConVigencia id={matricula.id} documento={documento} alAceptar={alCambiar} />
+                      )}
+                      {revisa && documento.estado !== 'ACEPTADO' && !pideVigencia(documento.tipo) && (
                         <Button size="sm" variant="outline" onClick={() => aceptar.mutate(documento.tipo)}>
                           Aceptar <span className="sr-only">{documento.nombre}</span>
                         </Button>
@@ -220,6 +229,90 @@ function Documentos({ matricula, revisa, alCambiar }: { matricula: MatriculaDeta
         </Table>
       </CardContent>
     </Card>
+  )
+}
+
+function DialogoAceptarConVigencia({
+  id,
+  documento,
+  alAceptar,
+}: {
+  id: number
+  documento: DocumentoDeMatricula
+  alAceptar: () => Promise<void>
+}) {
+  const ingles = documento.tipo === 'CONSTANCIA_INGLES'
+  const [abierto, setAbierto] = useState(false)
+  const [vigencia, setVigencia] = useState('')
+  const [nivel, setNivel] = useState('')
+  const aceptar = useMutation({
+    mutationFn: () => aceptarDocumento(id, documento.tipo, { vigenciaHasta: vigencia, nivel: ingles ? nivel.trim() : null }),
+    onSuccess: async (respuesta) => {
+      toast.success(respuesta.mensaje)
+      setAbierto(false)
+      await alAceptar()
+    },
+    onError: (e) => toast.error(mensajeDe(e, 'No se pudo aceptar el documento.')),
+  })
+  return (
+    <Dialog open={abierto} onOpenChange={setAbierto}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          Aceptar <span className="sr-only">{documento.nombre}</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Aceptar «{documento.nombre}»</DialogTitle>
+          <DialogDescription>
+            La ficha de licencia del alumno usa esta vigencia{ingles ? ' y este nivel' : ''}; si vence durante el curso, el
+            instructor recibe una alerta.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          className="grid gap-4"
+          onSubmit={(e: FormEvent) => {
+            e.preventDefault()
+            aceptar.mutate()
+          }}
+        >
+          {ingles && (
+            <Field>
+              <FieldLabel htmlFor={`nivel-${documento.tipo}`}>Nivel de inglés</FieldLabel>
+              <Input
+                id={`nivel-${documento.tipo}`}
+                required
+                maxLength={60}
+                placeholder="Por ejemplo, Operacional (4)"
+                value={nivel}
+                onChange={(e) => setNivel(e.target.value)}
+              />
+            </Field>
+          )}
+          <Field>
+            <FieldLabel htmlFor={`vigencia-${documento.tipo}`}>Vigente hasta</FieldLabel>
+            <Input
+              id={`vigencia-${documento.tipo}`}
+              type="date"
+              required
+              min={hoyIso()}
+              value={vigencia}
+              onChange={(e) => setVigencia(e.target.value)}
+            />
+          </Field>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Cancelar
+              </Button>
+            </DialogClose>
+            <Button type="submit" disabled={aceptar.isPending}>
+              {aceptar.isPending ? 'Aceptando…' : 'Aceptar documento'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 

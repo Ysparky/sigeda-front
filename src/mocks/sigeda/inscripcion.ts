@@ -81,6 +81,7 @@ const DOCUMENTOS = [
   { tipo: 'ANTECEDENTES_POLICIALES', nombre: 'Certificado de antecedentes policiales', obligatorio: true, momento: 'POSTULACION', soloImagen: false },
   { tipo: 'DECLARACION_JURADA', nombre: 'Declaración jurada firmada', obligatorio: true, momento: 'POSTULACION', soloImagen: false },
   { tipo: 'ESTUDIOS_SUPERIORES', nombre: 'Constancia de estudios superiores', obligatorio: false, momento: 'POSTULACION', soloImagen: false },
+  { tipo: 'CONSTANCIA_INGLES', nombre: 'Constancia de inglés', obligatorio: false, momento: 'POSTULACION', soloImagen: false },
   { tipo: 'CERTIFICADO_MEDICO', nombre: 'Certificado médico aeronáutico clase 2', obligatorio: true, momento: 'ANTES_DEL_RESULTADO', soloImagen: false },
 ] as const
 
@@ -108,7 +109,12 @@ type MatriculaMock = {
   observaciones: string | null
   codPersona: string | null
   cuentaActiva: boolean
-  documentos: Partial<Record<TipoDocumentoMock, { estado: EstadoDocumentoMock; observacion: string | null; tipoArchivo: string }>>
+  documentos: Partial<
+    Record<
+      TipoDocumentoMock,
+      { estado: EstadoDocumentoMock; observacion: string | null; tipoArchivo: string; vigenciaHasta?: string | null; nivel?: string | null }
+    >
+  >
   citacion: { fecha: string; hora: string; lugar: string } | null
   evaluacion: {
     resultado: 'ADMITIDO' | 'NO_ADMITIDO'
@@ -126,6 +132,12 @@ const NOTA_MINIMA = 14
 
 let secuenciaMatricula = 100
 const matriculasMock: MatriculaMock[] = []
+
+/** Un documento aceptado en la postulación de la persona (la ficha de licencia lo usa). */
+export function documentoAceptadoDe(codPersona: string, tipo: TipoDocumentoMock) {
+  const doc = matriculasMock.find((m) => m.codPersona === codPersona)?.documentos[tipo]
+  return doc?.estado === 'ACEPTADO' ? doc : undefined
+}
 
 export function tienePagoPendiente(codPersona: string): boolean {
   const fila = matriculasMock.find((m) => m.codPersona === codPersona)
@@ -204,7 +216,13 @@ export function sembrarMatriculaMock(matricula: Partial<MatriculaMock> = {}) {
 function vistas(fila: MatriculaMock) {
   return DOCUMENTOS.map((doc) => {
     const cargado = fila.documentos[doc.tipo]
-    return { ...doc, estado: cargado?.estado ?? 'FALTANTE', observacion: cargado?.observacion ?? null }
+    return {
+      ...doc,
+      estado: cargado?.estado ?? 'FALTANTE',
+      observacion: cargado?.observacion ?? null,
+      vigenciaHasta: cargado?.vigenciaHasta ?? null,
+      nivel: cargado?.nivel ?? null,
+    }
   })
 }
 
@@ -356,6 +374,18 @@ export const handlersInscripcion = [
     const doc = fila.documentos[params.tipo as TipoDocumentoMock]
     if (!doc) return conflicto('El postulante no cargó ese documento.')
     if (params.accion === 'aceptar') {
+      const tipo = params.tipo as TipoDocumentoMock
+      if (tipo === 'CERTIFICADO_MEDICO' || tipo === 'CONSTANCIA_INGLES') {
+        const cuerpo = ((await request.json().catch(() => null)) ?? {}) as { vigenciaHasta?: string | null; nivel?: string | null }
+        const nombre = DOCUMENTOS.find((d) => d.tipo === tipo)!.nombre
+        const minuscula = nombre.charAt(0).toLowerCase() + nombre.slice(1)
+        if (tipo === 'CONSTANCIA_INGLES' && !cuerpo.nivel?.trim()) return conflicto('Indique el nivel de inglés de la constancia.')
+        if (!cuerpo.vigenciaHasta) return conflicto(`Indique hasta cuándo está vigente el ${minuscula}.`)
+        const hoy = new Date().toISOString().slice(0, 10)
+        if (cuerpo.vigenciaHasta < hoy) return conflicto(`El ${minuscula} está vencido.`)
+        doc.vigenciaHasta = cuerpo.vigenciaHasta
+        doc.nivel = tipo === 'CONSTANCIA_INGLES' ? cuerpo.nivel!.trim() : null
+      }
       doc.estado = 'ACEPTADO'
       doc.observacion = null
       return HttpResponse.json({ mensaje: 'Documento aceptado.' })
@@ -377,7 +407,7 @@ export const handlersInscripcion = [
     if (Object.values(fila.documentos).some((d) => d?.estado === 'OBSERVADO')) return conflicto('Hay documentos observados sin subsanar.')
     for (const doc of DOCUMENTOS) {
       const cargado = fila.documentos[doc.tipo]
-      if (cargado && doc.momento === 'POSTULACION') cargado.estado = 'ACEPTADO'
+      if (cargado && doc.momento === 'POSTULACION' && doc.tipo !== 'CONSTANCIA_INGLES') cargado.estado = 'ACEPTADO'
     }
     fila.estado = 'VALIDADA'
     return HttpResponse.json({ mensaje: 'Documentación validada.' })

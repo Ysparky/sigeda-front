@@ -62,6 +62,8 @@ export async function admitir(page: Page, numero: string, nombre: RegExp) {
   await page.getByRole('link', { name: numero }).click()
   await expect(page.getByRole('heading', { level: 1, name: nombre })).toBeVisible({ timeout: 15_000 })
   await page.getByRole('button', { name: 'Aceptar Certificado médico aeronáutico clase 2' }).click()
+  await page.getByLabel('Vigente hasta').fill(new Date(Date.now() + 300 * 86_400_000).toISOString().slice(0, 10))
+  await page.getByRole('button', { name: 'Aceptar documento' }).click()
   await page.getByLabel('Fecha', { exact: true }).fill(new Date().toISOString().slice(0, 10))
   await page.getByLabel('Hora').fill('09:00')
   await page.getByLabel('Lugar').fill('Hangar 2')

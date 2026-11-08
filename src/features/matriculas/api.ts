@@ -34,7 +34,12 @@ const esquemaDocumento = z.object({
   soloImagen: z.boolean(),
   estado: z.enum(['FALTANTE', 'PENDIENTE', 'OBSERVADO', 'ACEPTADO']),
   observacion: z.string().nullish().transform((v) => v ?? null),
+  vigenciaHasta: z.string().nullish().transform((v) => v ?? null),
+  nivel: z.string().nullish().transform((v) => v ?? null),
 })
+
+/** El médico y la constancia de inglés se aceptan con su vigencia; el inglés, además, con su nivel. */
+export const pideVigencia = (tipo: TipoDocumentoPostulacion) => tipo === 'CERTIFICADO_MEDICO' || tipo === 'CONSTANCIA_INGLES'
 
 const esquemaDetalle = esquemaBandeja.extend({
   fechaNacimiento: z.string().nullish().transform((v) => v ?? null),
@@ -89,8 +94,11 @@ export const observarMatricula = (id: number, observaciones: string) =>
   sigeda.put<Mensaje>(`/api/matriculas/${id}/observar`, { observaciones })
 export const observarDocumento = (id: number, tipo: TipoDocumentoPostulacion, observaciones: string) =>
   sigeda.put<Mensaje>(`/api/matriculas/${id}/documentos/${tipo}/observar`, { observaciones })
-export const aceptarDocumento = (id: number, tipo: TipoDocumentoPostulacion) =>
-  sigeda.put<Mensaje>(`/api/matriculas/${id}/documentos/${tipo}/aceptar`)
+export const aceptarDocumento = (
+  id: number,
+  tipo: TipoDocumentoPostulacion,
+  datos?: { vigenciaHasta: string; nivel?: string | null },
+) => sigeda.put<Mensaje>(`/api/matriculas/${id}/documentos/${tipo}/aceptar`, datos)
 export const citarPostulante = (id: number, cuerpo: { fecha: string; hora: string; lugar: string }) =>
   sigeda.put<Mensaje>(`/api/matriculas/${id}/citacion`, cuerpo)
 export const registrarEvaluacion = (id: number, cuerpo: CuerpoEvaluacion) =>

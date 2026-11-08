@@ -203,18 +203,25 @@ export function FichaPage({ cod }: { cod: string }) {
               <h3 id="registrado-sistema" className="font-medium">
                 Registrado por el sistema
               </h3>
-              <dl className="grid gap-x-8 gap-y-1 sm:grid-cols-[auto_auto_1fr]">
-                <div className="flex gap-2">
-                  <dt className="text-muted-foreground">Vuelo con instructor (turnos evaluados)</dt>
-                  <dd className="font-medium tabular-nums">{formatearNota(ficha.horasRegistradas.vuelo)} h</dd>
-                </div>
-                <div className="flex gap-2">
-                  <dt className="text-muted-foreground">Simulador (sesiones completadas)</dt>
-                  <dd className="font-medium tabular-nums">{formatearNota(ficha.horasRegistradas.simulador)} h</dd>
-                </div>
+              <dl className="grid gap-x-8 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  ['Vuelo (turnos evaluados)', `${formatearNota(ficha.horasRegistradas.vuelo)} h`],
+                  ['Solo', `${formatearNota(ficha.horasRegistradas.solo)} h`],
+                  ['Solo de travesía', `${formatearNota(ficha.horasRegistradas.soloTravesia)} h`],
+                  ['Nocturno', `${formatearNota(ficha.horasRegistradas.nocturno)} h`],
+                  ['Despegues y aterrizajes nocturnos', String(ficha.horasRegistradas.aterrizajesNocturnos)],
+                  ['Travesía de 100 NM', ficha.horasRegistradas.travesia100nm ? 'Volada' : 'Pendiente'],
+                  ['Simulador (sesiones completadas)', `${formatearNota(ficha.horasRegistradas.simulador)} h`],
+                ].map(([termino, valor]) => (
+                  <div key={termino} className="flex gap-2">
+                    <dt className="text-muted-foreground">{termino}</dt>
+                    <dd className="font-medium tabular-nums">{valor}</dd>
+                  </div>
+                ))}
               </dl>
               <p className="text-muted-foreground">
-                Si deja vacíos Total, Doble mando o Simulador, la ficha usa estas horas.
+                Salen de las misiones evaluadas según su modalidad (solo, travesía, nocturna). Si deja un campo vacío, la
+                ficha usa estas horas; lo que cargue a mano prevalece.
               </p>
             </section>
             <CampoNumero label="Total" reg={formulario.register('horasTotal')} />
