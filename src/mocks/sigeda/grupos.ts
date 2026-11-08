@@ -8,8 +8,11 @@ type CuerpoGrupo = {
   nombre?: unknown
   descripcion?: unknown
   programa?: unknown
+  codInstructor?: unknown
   personas?: PersonaDeGrupo[] | null
 }
+
+const TOPE_ALUMNOS = 20
 
 function entidadPersona(persona: PersonaMock) {
   return {
@@ -40,6 +43,7 @@ function detalleGrupo(grupo: GrupoMock) {
     descripcion: grupo.descripcion,
     programa: grupo.programa,
     estado: grupo.estado,
+    codInstructor: grupo.codInstructor ?? null,
     personas: datos()
       .personas.filter((persona) => persona.idGrupo === grupo.id)
       .map(entidadPersona),
@@ -70,6 +74,31 @@ function faltaAlguna(personas: PersonaDeGrupo[]): boolean {
   return personas.some((persona) => !buscarPersona(texto(persona.codigo)))
 }
 
+function codInstructorDe(cuerpo: CuerpoGrupo): string | null {
+  return typeof cuerpo.codInstructor === 'string' && cuerpo.codInstructor !== '' ? cuerpo.codInstructor : null
+}
+
+function errorDeInstructor(codInstructor: string | null): Response | null {
+  if (codInstructor === null) return null
+  const instructor = buscarPersona(codInstructor)
+  if (!instructor) return textoNoEncontrado('Persona especificada no existe.')
+  if (!instructor.tipo?.startsWith('Instructor')) {
+    return erroresDeCampo(["'codInstructor': El responsable del grupo debe ser un instructor."])
+  }
+  return null
+}
+
+function miembrosFinales(actuales: string[], personas: PersonaDeGrupo[], todasEntran: boolean): number {
+  const miembros = new Set(actuales)
+  for (const persona of personas) {
+    if (todasEntran || persona.checked === true) miembros.add(texto(persona.codigo))
+    else miembros.delete(texto(persona.codigo))
+  }
+  return miembros.size
+}
+
+const errorDeTope = () => erroresDeCampo([`'personas': Un grupo admite como máximo ${TOPE_ALUMNOS} alumnos.`])
+
 export const handlersGrupos = [
   http.get(`${API}/api/grupos`, ({ request }) => {
     const permitido = autorizar(request, 'Manage Groups')
@@ -84,12 +113,17 @@ export const handlersGrupos = [
     if (errores.length > 0) return erroresDeCampo(errores)
     const personas = personasDelCuerpo(cuerpo)
     if (faltaAlguna(personas)) return textoNoEncontrado('Persona especificada no existe.')
+    const codInstructor = codInstructorDe(cuerpo)
+    const instructorInvalido = errorDeInstructor(codInstructor)
+    if (instructorInvalido) return instructorInvalido
+    if (miembrosFinales([], personas, true) > TOPE_ALUMNOS) return errorDeTope()
     const grupo: GrupoMock = {
       id: siguienteId('grupo'),
       nombre: texto(cuerpo.nombre),
       descripcion: texto(cuerpo.descripcion),
       programa: cuerpo.programa === 'PDE' ? 'PDE' : ('PDI' as ProgramaMock),
       estado: 'EN_INSCRIPCION',
+      codInstructor,
     }
     datos().grupos.push(grupo)
     for (const elegida of personas) {
@@ -128,7 +162,15 @@ export const handlersGrupos = [
     if (errores.length > 0) return erroresDeCampo(errores)
     const personas = personasDelCuerpo(cuerpo)
     if (faltaAlguna(personas)) return textoNoEncontrado('Persona especificada no existe.')
+    const codInstructor = codInstructorDe(cuerpo)
+    const instructorInvalido = errorDeInstructor(codInstructor)
+    if (instructorInvalido) return instructorInvalido
+    const actuales = datos()
+      .personas.filter((persona) => persona.idGrupo === grupo.id)
+      .map((persona) => persona.codigo)
+    if (miembrosFinales(actuales, personas, false) > TOPE_ALUMNOS) return errorDeTope()
     grupo.nombre = texto(cuerpo.nombre)
+    grupo.codInstructor = codInstructor
     grupo.descripcion = texto(cuerpo.descripcion)
     for (const elegida of personas) {
       const persona = buscarPersona(texto(elegida.codigo))

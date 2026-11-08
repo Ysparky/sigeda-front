@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { AvisoDeError } from '@/components/aviso-de-error'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Textarea } from '@/components/ui/textarea'
-import { PROGRAMAS } from '@/features/catalogos/api'
+import { consultasCatalogos, PROGRAMAS } from '@/features/catalogos/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { aplicarErroresDeCampo } from '@/lib/formularios'
 import { errorDePrimeraCarga } from '@/lib/query'
@@ -45,20 +45,25 @@ function FormularioConAlumnos({ grupo, disponibles }: Props & { disponibles: Alu
         nombre: grupo.nombre,
         descripcion: grupo.descripcion ?? '',
         programa: grupo.programa === 'PDE' ? 'PDE' : 'PDI',
+        codInstructor: grupo.codInstructor ?? '',
         alumnos: miembros.map((alumno) => alumno.codigo),
       }
     : GRUPO_VACIO
   const formulario = useForm<ValoresGrupo>({ resolver: zodResolver(esquemaGrupo), defaultValues: iniciales })
   const { errors } = formulario.formState
+  const programa = useWatch({ control: formulario.control, name: 'programa' })
+  const instructores = useQuery(consultasCatalogos.instructores(programa))
 
   const guardar = useMutation({
     mutationFn: (valores: ValoresGrupo) => {
       const elegidos = new Set(valores.alumnos)
       const descripcion = valores.descripcion.trim() === '' ? null : valores.descripcion.trim()
+      const codInstructor = valores.codInstructor === '' ? null : valores.codInstructor
       if (grupo) {
         return modificarGrupo(grupo.id, {
           nombre: valores.nombre.trim(),
           descripcion,
+          codInstructor,
           personas: opciones
             .filter((alumno) => codigosMiembros.has(alumno.codigo) || elegidos.has(alumno.codigo))
             .map((alumno) => ({ codigo: alumno.codigo, checked: elegidos.has(alumno.codigo) })),
@@ -68,6 +73,7 @@ function FormularioConAlumnos({ grupo, disponibles }: Props & { disponibles: Alu
         nombre: valores.nombre.trim(),
         descripcion,
         programa: valores.programa,
+        codInstructor,
         personas: [...elegidos].map((codigo) => ({ codigo })),
       })
     },
@@ -124,6 +130,34 @@ function FormularioConAlumnos({ grupo, disponibles }: Props & { disponibles: Alu
               {modificando && <FieldDescription>{TEXTO_PROGRAMA_FIJO}</FieldDescription>}
               <FieldError errors={[errors.programa]} />
             </Field>
+            <Field data-invalid={Boolean(errors.codInstructor)}>
+              <FieldLabel htmlFor="grupo-instructor">Instructor responsable</FieldLabel>
+              <Controller
+                control={formulario.control}
+                name="codInstructor"
+                render={({ field }) => (
+                  <NativeSelect
+                    id="grupo-instructor"
+                    className="w-full"
+                    aria-invalid={Boolean(errors.codInstructor)}
+                    name={field.name}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                  >
+                    <NativeSelectOption value="">Sin instructor</NativeSelectOption>
+                    {(instructores.data ?? []).map((instructor) => (
+                      <NativeSelectOption key={instructor.codigo} value={instructor.codigo}>
+                        {instructor.nombreCompleto}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                )}
+              />
+              <FieldDescription>Cada instructor tiene hasta 20 alumnos en su grupo.</FieldDescription>
+              {errorDePrimeraCarga(instructores) !== null && <FieldError>No se pudieron cargar los instructores.</FieldError>}
+              <FieldError errors={[errors.codInstructor]} />
+            </Field>
             <Field data-invalid={Boolean(errors.descripcion)} className="md:col-span-2">
               <FieldLabel htmlFor="grupo-descripcion">Descripción</FieldLabel>
               <Textarea
@@ -173,6 +207,7 @@ function FormularioConAlumnos({ grupo, disponibles }: Props & { disponibles: Alu
               )}
             />
           )}
+          <FieldError errors={[errors.alumnos]} />
         </CardContent>
       </Card>
       <div className="flex flex-wrap justify-end gap-2">

@@ -15,6 +15,7 @@ export type GrupoDetalle = {
   descripcion: string | null
   programa: string
   estado: string | null
+  codInstructor: string | null
   alumnos: AlumnoDeGrupo[]
 }
 
@@ -22,12 +23,14 @@ export type CuerpoGrupoNuevo = {
   nombre: string
   descripcion: string | null
   programa: string
+  codInstructor: string | null
   personas: { codigo: string }[]
 }
 
 export type CuerpoGrupoModificado = {
   nombre: string
   descripcion: string | null
+  codInstructor: string | null
   personas: { codigo: string; checked: boolean }[]
 }
 
@@ -44,6 +47,7 @@ const esquemaFila = z.object({
 
 const esquemaDetalle = esquemaFila.extend({
   estado: z.string().nullish(),
+  codInstructor: z.string().nullish(),
   personas: z
     .array(
       z.object({
@@ -87,6 +91,7 @@ export async function obtenerGrupo(id: number): Promise<GrupoDetalle> {
     descripcion: grupo.descripcion ?? null,
     programa: grupo.programa ?? '',
     estado: grupo.estado ?? null,
+    codInstructor: grupo.codInstructor ?? null,
     alumnos: (grupo.personas ?? []).map((persona) => ({
       codigo: persona.codigo,
       nombreCompleto: [persona.nombre, persona.aPaterno, persona.aMaterno].filter(Boolean).join(' '),

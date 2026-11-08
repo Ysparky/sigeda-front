@@ -14,12 +14,14 @@ export function errorResponse(status: number, error: string, message: string | n
   )
 }
 
-export function autorizar(request: Request, permiso: Permiso): UsuarioMock | Response {
+export function autorizar(request: Request, permiso: Permiso | readonly Permiso[]): UsuarioMock | Response {
   const usuario = usuarioAutenticado(request)
   if (!usuario) {
     return HttpResponse.json({ status: 401, error: 'Unauthorized', message: 'Token is not valid' }, { status: 401 })
   }
-  if (!permisosDeRol(rolPorId(usuario.idRol)?.nombre ?? '').has(permiso)) {
+  const permisos = permisosDeRol(rolPorId(usuario.idRol)?.nombre ?? '')
+  const pedidos: readonly Permiso[] = typeof permiso === 'string' ? [permiso] : permiso
+  if (!pedidos.some((pedido) => permisos.has(pedido))) {
     return errorResponse(403, 'Acceso denegado', 'No tienes permisos para realizar esta acción')
   }
   return usuario

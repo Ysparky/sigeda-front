@@ -440,6 +440,7 @@ Request:
   "nombre": "Grupo 7",
   "descripcion": "Promoción 2027",
   "programa": "PDE",
+  "codInstructor": "444444",
   "personas": [ { "codigo": "123ABC" } ]
 }
 ```
@@ -457,7 +458,8 @@ Reglas, en orden:
 
    Hoy no se valida nada, y un programa inválido se guarda `null`. Los mensajes de nombre y descripción son los de `NombreDescripcionDto`, para que todo el sistema diga lo mismo.
 2. **[Corrección — dependencia 31]** Un `codigo` inexistente → 404 §A `"Persona especificada no existe."`, **sin guardar nada**. Hoy da un NPE (500) con el grupo ya creado y parte de las personas asignadas. Todo en una transacción.
-3. Éxito → **201** `{"mensaje":"Grupo guardada con éxito.","grupo":{"id":7,"nombre":"Grupo 7","descripcion":"Promoción 2027","programa":"PDE","personas":[…]}}`. El frontend usa `mensaje` y `grupo.id`. Hoy `personas` repite los objetos del request tal como llegaron.
+3. **[Nuevo — reglas de capacidad, nov 2026]** `codInstructor` es opcional (`null` = sin instructor). Si viene: inexistente → 404 §A `"Persona especificada no existe."`; persona cuyo `tipo` no empieza con `Instructor` → 400 §A `["'codInstructor': El responsable del grupo debe ser un instructor."]`. Un grupo admite **como máximo 20 alumnos**: más → 400 §A `["'personas': Un grupo admite como máximo 20 alumnos."]`. Nada se guarda en ninguno de los dos casos.
+4. Éxito → **201** `{"mensaje":"Grupo guardada con éxito.","grupo":{"id":7,"nombre":"Grupo 7","descripcion":"Promoción 2027","programa":"PDE","personas":[…]}}`. El frontend usa `mensaje` y `grupo.id`. Hoy `personas` repite los objetos del request tal como llegaron.
 
 ### 3.4 `PUT /api/grupos/{id}` — **Corrección**
 
@@ -470,6 +472,7 @@ Request:
 {
   "nombre": "Grupo 3",
   "descripcion": "Entrenamiento especializado - Nivel 1",
+  "codInstructor": "444444",
   "personas": [
     { "codigo": "555555", "checked": true },
     { "codigo": "666666", "checked": false },
@@ -481,6 +484,7 @@ Request:
 - `programa` se **ignora** (sin cambios): el programa de un grupo no cambia.
 - `checked: true` asigna la persona a este grupo; `checked: false` la deja **sin grupo**, esté donde esté (sin cambios). El frontend envía todos los miembros actuales (marcados o no) y los alumnos nuevos marcados.
 - Sin `personas`, los miembros no cambian.
+- `codInstructor` **se escribe tal cual llega** (omitirlo o `null` quita el instructor), con las reglas de §3.3 punto 3. El tope de 20 se mide sobre los miembros **finales**: los actuales, menos los `checked: false`, más los `checked: true`.
 
 Reglas, en orden: grupo inexistente → 404 §A `"Grupo especificada no existe."`; **[Nuevo — dependencia 31]** la validación de §3.3 salvo `programa`; **[Corrección — dependencia 31]** un código inexistente → 404 §A `"Persona especificada no existe."` sin guardar nada, en una transacción. Éxito → **201** `{"mensaje":"Grupo guardada con éxito.","grupo":{…forma de §3.2…}}`.
 

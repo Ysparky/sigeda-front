@@ -4,7 +4,7 @@ import { config } from '@/lib/config'
 import { server } from '@/mocks/server'
 import { crearGrupo, modificarGrupo } from './api'
 
-const CUERPO = { nombre: 'Grupo A', descripcion: null, programa: 'PDI', personas: [] }
+const CUERPO = { nombre: 'Grupo A', descripcion: null, programa: 'PDI', codInstructor: null, personas: [] }
 
 describe('crearGrupo', () => {
   it('devuelve el id del grupo creado', async () => {
@@ -29,7 +29,7 @@ describe('modificarGrupo', () => {
     server.use(
       http.put(`${config.sigedaApiUrl}/api/grupos/4`, () => HttpResponse.json({ mensaje: 'Guardado.' }, { status: 201 })),
     )
-    await expect(modificarGrupo(4, { nombre: 'Grupo A', descripcion: null, personas: [] })).resolves.toEqual({
+    await expect(modificarGrupo(4, { nombre: 'Grupo A', descripcion: null, codInstructor: null, personas: [] })).resolves.toEqual({
       mensaje: 'Guardado.',
       id: 4,
     })

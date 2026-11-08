@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { config } from '@/lib/config'
+import { datos } from '@/mocks/sigeda/datos'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
 import { TEXTO_PROGRAMA_FIJO } from './components/formulario-grupo'
@@ -31,6 +32,21 @@ describe('Formulario de grupo', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/grupos/7'))
     expect(await screen.findByRole('heading', { level: 1, name: 'Grupo 7' })).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Alumnos del grupo' })).toHaveTextContent('Lucía Mendoza Ríos')
+  })
+
+  it('registra el grupo con su instructor responsable', async () => {
+    const { usuario, router } = await abrir('/grupos/nuevo')
+    await usuario.type(screen.getByLabelText('Nombre'), 'Grupo 7')
+    await screen.findByRole('option', { name: 'Maria Flores Mendoza' })
+    await usuario.selectOptions(screen.getByLabelText('Instructor responsable'), 'Maria Flores Mendoza')
+    await usuario.click(screen.getByRole('button', { name: 'Guardar grupo' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/grupos/7'))
+    expect(datos().grupos.find((grupo) => grupo.id === 7)?.codInstructor).toBe('888888')
+  })
+
+  it('al modificar muestra elegido al instructor responsable del grupo', async () => {
+    await abrir('/grupos/3/editar')
+    await waitFor(() => expect(screen.getByLabelText('Instructor responsable')).toHaveValue('444444'))
   })
 
   it('CA-GRU-02 si la respuesta no trae el id del grupo se vuelve a la lista', async () => {
