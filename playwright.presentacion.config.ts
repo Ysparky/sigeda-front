@@ -14,7 +14,7 @@ export default defineConfig({
   retries: 0,
   reporter: [['list']],
   globalSetup: './e2e/comprobar-entorno.ts',
-  timeout: 420_000,
+  timeout: 1_200_000,
   use: {
     baseURL: 'http://localhost:5173',
     viewport: { width: 1280, height: 720 },

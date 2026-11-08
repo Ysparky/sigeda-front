@@ -17,6 +17,7 @@ test.describe('Módulo de teoría contra el backend real', () => {
     await entrarComo(page, CUENTAS.instructor)
     await page.goto('/teoria/turnos')
     await expect(page.getByRole('heading', { level: 1, name: 'Turnos teóricos' })).toBeVisible()
+    await page.getByLabel('Grupo').selectOption({ label: 'Grupo 3' })
     await expect(page.getByText('Mensual Adoctrinamiento de Vuelo').first()).toBeVisible({ timeout: 15_000 })
   })
 
