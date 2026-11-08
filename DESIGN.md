@@ -47,6 +47,11 @@ typography:
     fontSize: "15px"
     fontWeight: 400
     lineHeight: 1.5
+  caption:
+    fontFamily: "Source Sans 3 Variable, Inter Variable, sans-serif"
+    fontSize: "13px"
+    fontWeight: 400
+    lineHeight: 1.375
   label:
     fontFamily: "Barlow Semi Condensed, Source Sans 3 Variable, sans-serif"
     fontSize: "11px"
