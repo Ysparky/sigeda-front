@@ -55,6 +55,15 @@ describe('Registrar turno', () => {
     expect(screen.getByText('La subfase es requerida.')).toBeInTheDocument()
   })
 
+  it('no deja agregar un sexto alumno al turno', async () => {
+    const { usuario } = await abrirFormulario()
+    const agregar = screen.getByRole('button', { name: 'Agregar alumno' })
+    for (let veces = 0; veces < 5; veces++) await usuario.click(agregar)
+
+    expect(agregar).toBeDisabled()
+    expect(screen.getByText('Un turno admite como máximo 5 alumnos.')).toBeInTheDocument()
+  })
+
   it('CA-TUR-03 rechaza nombres de solo espacios o fuera de 10 a 30 caracteres', async () => {
     const { usuario } = await abrirFormulario()
     await usuario.type(screen.getByLabelText('Nombre'), '            ')

@@ -19,6 +19,8 @@ export const esquemaBusquedaPaginada = z.object(esquemaPaginacion)
 
 export const MENSAJE_NOMBRE_TURNO = 'Nombre debe tener de 10 a 30 caracteres.'
 export const MENSAJE_HORA = 'La hora debe estar en formato HH:mm (09:00, 14:00)'
+export const TOPE_ALUMNOS_TURNO = 5
+export const MENSAJE_TOPE_ALUMNOS = 'Un turno admite como máximo 5 alumnos.'
 
 function marcarRepetidos(
   valores: string[],
@@ -60,7 +62,8 @@ export function crearEsquemaTurno(hoy: string, aeronavesDisponibles: ReadonlySet
             horaFin: z.string().regex(PATRON_HORA, MENSAJE_HORA),
           }),
         )
-        .min(1, 'La asignación de alumnos es requerida'),
+        .min(1, 'La asignación de alumnos es requerida')
+        .max(TOPE_ALUMNOS_TURNO, MENSAJE_TOPE_ALUMNOS),
       maniobrasTurno: z
         .array(
           z.object({

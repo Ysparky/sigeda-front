@@ -37,7 +37,7 @@ import { aplicarErroresDeCampo } from '@/lib/formularios'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasTurnos, useGuardarTurno } from '../api'
 import { useEstadoTeoricoDeAlumnos } from '../use-estado-teorico'
-import { aCuerpoTurno, crearEsquemaTurno, type ValoresTurno } from '../schemas'
+import { aCuerpoTurno, crearEsquemaTurno, MENSAJE_TOPE_ALUMNOS, TOPE_ALUMNOS_TURNO, type ValoresTurno } from '../schemas'
 
 const RENOMBRAR = { aeronave: 'idAeronave', nota_min: 'notaMin' }
 
@@ -285,6 +285,7 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
             type="button"
             variant="outline"
             size="sm"
+            disabled={alumnos.fields.length >= TOPE_ALUMNOS_TURNO}
             onClick={() => alumnos.append({ codAlumno: '', horaInicio: '', horaFin: '' })}
           >
             <Plus aria-hidden />
@@ -294,6 +295,9 @@ export function FormularioTurno({ valoresIniciales, idTurno }: Props) {
         <CardContent className="grid gap-4">
           {alumnos.fields.length === 0 && (
             <p className="text-sm text-muted-foreground">Agregue a los alumnos que vuelan en este turno.</p>
+          )}
+          {alumnos.fields.length >= TOPE_ALUMNOS_TURNO && (
+            <p className="text-sm text-muted-foreground">{MENSAJE_TOPE_ALUMNOS}</p>
           )}
           {errorDePrimeraCarga(opcionesAlumnos) !== null && <FieldError>No se pudieron cargar los alumnos.</FieldError>}
           {alumnos.fields.map((fila, indice) => {

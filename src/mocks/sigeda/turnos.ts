@@ -106,6 +106,7 @@ function validarCampos(cuerpo: CuerpoTurno, conProgramaYSubfase: boolean): strin
   if (!cuerpo.aeronave) errores.push("'aeronave': La asignación de aeronave es requerida.")
   const alumnos = cuerpo.alumnosTurno ?? []
   if (alumnos.length === 0) errores.push("'alumnosTurno': La asignación de alumnos es requerida")
+  if (alumnos.length > 5) errores.push("'alumnosTurno': Un turno admite como máximo 5 alumnos.")
   alumnos.forEach((alumno, indice) => {
     if (texto(alumno.codAlumno).length !== 6) errores.push(`'alumnosTurno[${indice}].codAlumno': Código de alumno es requerido.`)
     if (!esHora(texto(alumno.horaInicio))) errores.push(`'alumnosTurno[${indice}].horaInicio': ${MENSAJE_HORA}`)

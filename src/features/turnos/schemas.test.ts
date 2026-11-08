@@ -37,6 +37,14 @@ describe('esquema del turno', () => {
     expect(mensajes(valido({ nombre: 'N'.repeat(31) }))).toEqual(['nombre: Nombre debe tener de 10 a 30 caracteres.'])
   })
 
+  it('admite como máximo 5 alumnos por turno', () => {
+    const alumno = (indice: number) => ({ codAlumno: `30000${indice}`, horaInicio: `${10 + indice}:00`, horaFin: `${10 + indice}:30` })
+    expect(mensajes(valido({ alumnosTurno: [1, 2, 3, 4, 5].map(alumno) }))).toEqual([])
+    expect(mensajes(valido({ alumnosTurno: [1, 2, 3, 4, 5, 6].map(alumno) }))).toEqual([
+      'alumnosTurno: Un turno admite como máximo 5 alumnos.',
+    ])
+  })
+
   it('CA-TUR-04 exige al menos un alumno y una maniobra, sin repetir', () => {
     expect(mensajes(valido({ alumnosTurno: [], maniobrasTurno: [] }))).toEqual([
       'alumnosTurno: La asignación de alumnos es requerida',

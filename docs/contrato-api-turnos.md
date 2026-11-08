@@ -257,6 +257,7 @@ POST /api/turnos   Manage Shifts
 | `codInstructor` | String | `@NotBlank` | `"Instructor debe ser asignado."` |
 | `aeronave` | objeto `{id}` | `@NotNull` | `"La asignación de aeronave es requerida."` |
 | `alumnosTurno` | `List<Alumno_TurnoSave>` | `@NotEmpty` | `"La asignación de alumnos es requerida"` |
+| | | `@Size(max = 5)` **[Nuevo — nov 2026]** | `"Un turno admite como máximo 5 alumnos."` (5 vuelos de 1,5 h = 7,5 h, bajo el límite de 8 h/24 h de la RAP 61) |
 | `maniobrasTurno` | `List<Maniobra_TurnoSave>` | `@NotEmpty` | `"La asignación de maniobras es requerida"` |
 
 **`Alumno_TurnoSave`** — **Corrección** (dependencia 16): agregar constructor por defecto (hoy solo existe uno con parámetros `inicio`/`fin` que no coinciden con los getters/setters `horaInicio`/`horaFin`, dejando indefinido si Jackson deserializa por esos nombres). Las claves JSON del body deben ser:
@@ -596,11 +597,12 @@ El catálogo de misiones del PDI de una sub fase, **ordenado**, y el insumo del 
 
 Ejemplos comprobados con `curl` contra el 8080 el 28 sep 2026: `id=1` → `C-1`…`C-7`, 1.0 h y `0.1429` las siete; `id=2` e `id=3` → `N/I-1`…`N/I-6` a 1.5 h y `0.15`, más `N/I-7` a 1.0 h y `0.1`; `id=4` → `CX-1`…`CX-8` a 1.5 h y `0.125`; `id=5` → `FT-1`…`FT-5` a 1.0 h y `0.2`. `id=99` → 404.
 
-### 4.3 `GET /api/personas/instructor/{tipo}` — **Sin cambios**
+### 4.3 `GET /api/personas/instructor/{tipo}` — **Corrección (nov 2026)**
 
 ```
-GET /api/personas/instructor/{tipo}   Manage Shifts
+GET /api/personas/instructor/{tipo}   Manage Shifts o Manage Groups
 ```
+`Manage Groups` se suma porque el Coordinador elige el instructor responsable del grupo (contrato de matrícula §3.3).
 `{tipo}` literal, ej. `Instructor%20PDI`. `List<NombreAlumno>` (`{"codigo","nombre","aPaterno","aMaterno"}`); 404 texto plano "No existen personas disponibles." si vacío. Ejemplo: `444444` Juan/Torres/Perez, `888888` Maria/Flores/Mendoza.
 
 ### 4.4 `GET /api/alumnos/programa/{nombre}` — **Sin cambios**
