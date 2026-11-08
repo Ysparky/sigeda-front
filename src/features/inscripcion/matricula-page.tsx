@@ -259,7 +259,7 @@ function FormularioMatricula({ idConvocatoria }: { idConvocatoria: number }) {
           <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <Clock className="size-4" style={{ color: '#b6831a' }} aria-hidden />
-              {detalle.data.duracion} horas
+              {detalle.data.duracion} horas de vuelo
             </span>
             <span className="flex items-center gap-1.5">
               <Layers className="size-4" style={{ color: '#b6831a' }} aria-hidden />

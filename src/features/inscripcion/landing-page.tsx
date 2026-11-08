@@ -17,8 +17,16 @@ import {
 } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { AvisoDeError } from '@/components/aviso-de-error'
+import { formatearFecha } from '@/lib/formato'
 import { Skeleton } from '@/components/ui/skeleton'
-import { catalogoQuery, convocatoriasPublicasQuery, type CursoCatalogo } from './api'
+import {
+  catalogoQuery,
+  convocatoriasPublicasQuery,
+  requisitosQuery,
+  type ConvocatoriaPublica,
+  type CursoCatalogo,
+  type Requisitos,
+} from './api'
 
 // Paleta del template Pilotin (muestreada del Figma), con el contenido y el logo de ASA.
 const NAVY = '#101A3C'
@@ -81,9 +89,23 @@ const VALORES = [
 ]
 
 const PASOS = [
-  { titulo: 'Elige tu curso', texto: 'Revisa el programa, la duración y los requisitos de ingreso.' },
-  { titulo: 'Completa tu matrícula', texto: 'Llena tus datos y adjunta el comprobante. Se crea tu cuenta al instante.' },
-  { titulo: 'Validación y despegue', texto: 'El coordinador valida tu comprobante y pasas a ser alumno.' },
+  {
+    titulo: 'Postula en línea',
+    texto: 'Llena tus datos, sube tus documentos y la declaración jurada firmada. Recibes un código de postulación.',
+  },
+  {
+    titulo: 'Revisión documental',
+    texto: 'El coordinador académico revisa tus documentos. Con tu código consultas el avance y subsanas lo observado.',
+  },
+  {
+    titulo: 'Evaluación de admisión',
+    texto: 'Te citamos a una evaluación presencial: examen de conocimientos, entrevista y evaluación psicológica.',
+  },
+  {
+    titulo: 'Resultado y matrícula',
+    texto: 'Si eres admitido, pagas tu matrícula y quedas asignado a tu grupo e instructor.',
+  },
+  { titulo: 'Activa tu cuenta', texto: 'Con tu código creas tu contraseña y entras a SIGEDA para seguir tu formación.' },
 ]
 
 function Eyebrow({ children, centrado = false }: { children: ReactNode; centrado?: boolean }) {
@@ -125,6 +147,7 @@ function Foto({ ratio, className = '', src, alt = '' }: { ratio: number; classNa
 export function LandingPage() {
   const { data: cursos, isPending, isError, error, refetch } = useQuery(catalogoQuery())
   const { data: convocatorias } = useQuery(convocatoriasPublicasQuery())
+  const { data: requisitos } = useQuery(requisitosQuery())
   // Primera convocatoria abierta por curso: habilita el botón de postular de su tarjeta.
   const convocatoriaPorCurso = new Map<number, number>()
   for (const c of convocatorias ?? []) if (c.idCurso !== null && !convocatoriaPorCurso.has(c.idCurso)) convocatoriaPorCurso.set(c.idCurso, c.id)
@@ -157,12 +180,13 @@ export function LandingPage() {
         <SeccionCursos
           cursos={cursos}
           convocatoriaPorCurso={convocatoriaPorCurso}
+          requisitos={requisitos}
           isPending={isPending}
           isError={isError}
           error={error}
           alReintentar={refetch}
         />
-        <LlamadaFinal />
+        <LlamadaFinal convocatoria={convocatorias?.[0]} />
         <SeccionPasos />
       </main>
       <PieDePagina />
@@ -238,7 +262,7 @@ function Nav({ activo }: { activo: string }) {
               Iniciar sesión
             </Link>
             <a href="#cursos" className={BTN_ORO} style={{ backgroundColor: GOLD, color: NAVY }}>
-              Inscríbete
+              Postula
             </a>
           </div>
           <button
@@ -283,7 +307,7 @@ function Nav({ activo }: { activo: string }) {
               className={BTN_ORO}
               style={{ backgroundColor: GOLD, color: NAVY }}
             >
-              Inscríbete
+              Postula
             </a>
           </div>
         </nav>
@@ -314,7 +338,7 @@ function Hero() {
         </p>
         <div className="mt-9 flex flex-wrap gap-4">
           <a href="#cursos" className={BTN_ORO} style={{ backgroundColor: GOLD, color: NAVY }}>
-            Inscríbete ahora
+            Postula ahora
             <ArrowRight className="size-4" aria-hidden />
           </a>
           <a href="#programa" className={BTN_LINEA} style={{ borderColor: GOLD, color: GOLD }}>
@@ -347,11 +371,11 @@ function SeccionCompromiso() {
             Somos una escuela aeronáutica dedicada a formar pilotos de helicóptero con disciplina, seguridad y método.
           </p>
           <p className="mt-4" style={{ color: BODY }}>
-            Cada etapa de tu instrucción está medida y acompañada. Al enviar tu matrícula creas tu cuenta y sigues su
-            estado hasta que el coordinador académico la valide.
+            Cada etapa de tu instrucción está medida y acompañada. Postulas en línea, sin crear una cuenta: con tu código
+            sigues tu postulación hasta la evaluación de admisión.
           </p>
           <a href="#cursos" className={`${BTN_ORO} mt-7`} style={{ backgroundColor: GOLD, color: NAVY }}>
-            Inscríbete ahora
+            Postula ahora
             <ArrowRight className="size-4" aria-hidden />
           </a>
         </div>
@@ -390,7 +414,7 @@ function SeccionImagenTexto({
         {cuerpo}
       </p>
       <a href="#cursos" className={`${BTN_ORO} mt-7`} style={{ backgroundColor: GOLD, color: NAVY }}>
-        Inscríbete ahora
+        Postula ahora
         <ArrowRight className="size-4" aria-hidden />
       </a>
     </div>
@@ -455,13 +479,14 @@ function SeccionMetodo() {
 type EstadoCursos = {
   cursos: CursoCatalogo[] | undefined
   convocatoriaPorCurso: Map<number, number>
+  requisitos?: Requisitos
   isPending: boolean
   isError: boolean
   error: unknown
   alReintentar: () => void
 }
 
-function SeccionCursos({ cursos, convocatoriaPorCurso, isPending, isError, error, alReintentar }: EstadoCursos) {
+function SeccionCursos({ cursos, convocatoriaPorCurso, requisitos, isPending, isError, error, alReintentar }: EstadoCursos) {
   return (
     <section id="cursos" className="relative scroll-mt-24 overflow-hidden" style={{ backgroundColor: NAVY }}>
       <div className="mx-auto max-w-[1170px] px-4 py-20 sm:px-6">
@@ -471,7 +496,7 @@ function SeccionCursos({ cursos, convocatoriaPorCurso, isPending, isError, error
           </div>
           <h2 className="font-display mt-3 text-4xl font-bold uppercase text-white sm:text-5xl">Nuestros cursos y programas</h2>
           <p className="mt-4" style={{ color: MUTED }}>
-            Elige tu curso e inscríbete en línea en minutos.
+            Revisa los requisitos y postula en línea a la convocatoria abierta.
           </p>
         </div>
         <div className="mt-14">
@@ -484,7 +509,12 @@ function SeccionCursos({ cursos, convocatoriaPorCurso, isPending, isError, error
           ) : (
             <div className={(cursos?.length ?? 0) <= 1 ? 'mx-auto max-w-md' : 'grid gap-8 md:grid-cols-2 lg:grid-cols-3'}>
               {(cursos ?? []).map((curso) => (
-                <TarjetaCurso key={curso.id} curso={curso} convocatoria={convocatoriaPorCurso.get(curso.id)} />
+                <TarjetaCurso
+                  key={curso.id}
+                  curso={curso}
+                  convocatoria={convocatoriaPorCurso.get(curso.id)}
+                  requisitos={requisitos}
+                />
               ))}
             </div>
           )}
@@ -494,7 +524,17 @@ function SeccionCursos({ cursos, convocatoriaPorCurso, isPending, isError, error
   )
 }
 
-function TarjetaCurso({ curso, convocatoria }: { curso: CursoCatalogo; convocatoria?: number }) {
+function TarjetaCurso({
+  curso,
+  convocatoria,
+  requisitos,
+}: {
+  curso: CursoCatalogo
+  convocatoria?: number
+  requisitos?: Requisitos
+}) {
+  const alPostular = requisitos?.documentos.filter((d) => d.obligatorio && d.momento === 'POSTULACION') ?? []
+  const antesDelResultado = requisitos?.documentos.filter((d) => d.momento === 'ANTES_DEL_RESULTADO') ?? []
   return (
     <div className="flex flex-col overflow-hidden rounded-xl bg-white shadow-[0_10px_50px_rgba(149,155,177,0.15)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(149,155,177,0.3)] motion-reduce:transform-none motion-reduce:transition-none">
       <Foto ratio={1.48} className="rounded-none" src={FOTO_INSTRUMENTOS} alt="Panel de instrumentos" />
@@ -510,15 +550,30 @@ function TarjetaCurso({ curso, convocatoria }: { curso: CursoCatalogo; convocato
         </p>
         <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm" style={{ color: BODY }}>
           <span>
-            <strong style={{ color: NAVY }}>{curso.duracion} horas</strong> de instrucción
+            <strong style={{ color: NAVY }}>{curso.duracion} horas</strong> de vuelo
           </span>
           <span>
             <strong style={{ color: NAVY }}>5 fases</strong> de formación
           </span>
         </div>
-        <p className="text-xs" style={{ color: MUTED }}>
-          Requisitos: {curso.requisitos}
-        </p>
+        {requisitos ? (
+          <div className="grid gap-1 text-xs" style={{ color: MUTED }}>
+            <p>
+              <strong style={{ color: NAVY }}>Requisitos:</strong> ser mayor de edad ({requisitos.edadMinima} años o más) y
+              aprobar la evaluación de admisión.
+            </p>
+            <p>
+              <strong style={{ color: NAVY }}>Documentos:</strong> {alPostular.map((d) => d.nombre).join(', ')}
+              {antesDelResultado.length > 0 &&
+                `; ${antesDelResultado.map((d) => d.nombre.charAt(0).toLowerCase() + d.nombre.slice(1)).join(', ')} antes del resultado`}
+              .
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs" style={{ color: MUTED }}>
+            Requisitos: {curso.requisitos}
+          </p>
+        )}
         {convocatoria !== undefined ? (
           <Link
             to="/matricula"
@@ -543,7 +598,7 @@ function TarjetaCurso({ curso, convocatoria }: { curso: CursoCatalogo; convocato
   )
 }
 
-function LlamadaFinal() {
+function LlamadaFinal({ convocatoria }: { convocatoria?: ConvocatoriaPublica }) {
   return (
     <section
       id="admision"
@@ -554,18 +609,31 @@ function LlamadaFinal() {
         <div>
           <Eyebrow>Admisión</Eyebrow>
           <h2 className="font-display mt-3 text-4xl font-bold uppercase leading-tight sm:text-5xl">
-            ¿Listo para el siguiente paso? Inscríbete hoy
+            {convocatoria ? `Postula a ${convocatoria.nombre}` : 'No hay convocatoria abierta'}
           </h2>
         </div>
         <div className="lg:pl-6">
           <p className="text-lg" style={{ color: '#d6dbea' }}>
-            La admisión está abierta. Completa tu matrícula hoy, sube tu comprobante y empieza tu camino como piloto de
-            helicóptero.
+            {convocatoria
+              ? `Recibimos postulaciones hasta el ${formatearFecha(convocatoria.fechaFin)}, con ${convocatoria.vacantes} vacantes. La admisión se decide en una evaluación presencial.`
+              : 'Las admisiones se abren dos veces al año, en enero y en julio. Vuelve pronto o consulta tu postulación si ya postulaste.'}
           </p>
-          <a href="#cursos" className={`${BTN_ORO} mt-7`} style={{ backgroundColor: GOLD, color: NAVY }}>
-            Inscríbete ahora
-            <ArrowRight className="size-4" aria-hidden />
-          </a>
+          {convocatoria ? (
+            <Link
+              to="/matricula"
+              search={{ convocatoria: convocatoria.id }}
+              className={`${BTN_ORO} mt-7`}
+              style={{ backgroundColor: GOLD, color: NAVY }}
+            >
+              Postula ahora
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          ) : (
+            <Link to="/postulacion" className={`${BTN_ORO} mt-7`} style={{ backgroundColor: GOLD, color: NAVY }}>
+              Consultar mi postulación
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          )}
         </div>
       </div>
     </section>
@@ -578,13 +646,13 @@ function SeccionPasos() {
       <div className="mx-auto max-w-[1170px] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <div className="flex justify-center">
-            <Eyebrow centrado>Cómo inscribirte</Eyebrow>
+            <Eyebrow centrado>Cómo postular</Eyebrow>
           </div>
           <h2 className="font-display mt-3 text-4xl font-bold uppercase sm:text-5xl" style={{ color: NAVY }}>
-            Tres pasos para despegar
+            Cinco pasos para despegar
           </h2>
         </div>
-        <ol className="mt-14 grid gap-8 md:grid-cols-3">
+        <ol aria-label="Pasos de la admisión" className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-5">
           {PASOS.map((paso, i) => (
             <li
               key={paso.titulo}

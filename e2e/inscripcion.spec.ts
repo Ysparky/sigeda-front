@@ -6,7 +6,7 @@ test.describe('Tramo de entrada contra el backend real', () => {
   test('el landing público muestra el catálogo sin sesión', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByText('Piloto de Helicóptero').first()).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByText(/220 horas/)).toBeVisible()
+    await expect(page.getByText(/94 horas/)).toBeVisible()
     // Desde el módulo de postulación cada curso enlaza a su convocatoria abierta.
     await page.getByRole('link', { name: 'Postular' }).first().click()
     await expect(page).toHaveURL(/\/matricula\?convocatoria=\d+/)

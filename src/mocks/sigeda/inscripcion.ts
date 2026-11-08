@@ -18,7 +18,7 @@ const CURSOS: CursoMock[] = [
     id: 1,
     nombre: 'Piloto de Helicóptero',
     descripcion: 'Instrucción de vuelo en helicóptero bajo el programa PDI EA-510: cinco fases.',
-    duracion: 220,
+    duracion: 94,
     requisitos: 'Ser mayor de edad, estudios secundarios completos y certificado médico aeronáutico vigente.',
     activo: true,
   },
