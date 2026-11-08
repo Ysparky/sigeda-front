@@ -14,28 +14,28 @@ describe('navegación protegida', () => {
   it('con sesión, /login lleva al destino solicitado', async () => {
     await iniciarComo('alumno.lopez')
     const { router } = renderApp('/login?redirect=%2Finicio')
-    expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Mi curso' })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/inicio')
   })
 
   it('ignora destinos externos después del login', async () => {
     await iniciarComo('alumno.lopez')
     const { router } = renderApp('/login?redirect=%2F%2Fevil.com')
-    expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Mi curso' })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/inicio')
   })
 
   it('ignora un redirect que no es texto y lleva a Inicio', async () => {
     await iniciarComo('alumno.lopez')
     const { router } = renderApp('/login?redirect=123')
-    expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Mi curso' })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/inicio')
   })
 
   it('al expirar la sesión vuelve al login', async () => {
     await iniciarComo('instructor.perez')
     renderApp('/')
-    expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Mi cohorte' })).toBeInTheDocument()
     act(() => sesion.expirar())
     expect(await screen.findByRole('heading', { name: 'Iniciar sesión' })).toBeInTheDocument()
   })

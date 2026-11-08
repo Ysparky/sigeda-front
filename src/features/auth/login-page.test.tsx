@@ -19,7 +19,7 @@ describe('Iniciar sesión', () => {
     await usuario.type(screen.getByLabelText('Usuario'), 'instructor.perez')
     await usuario.type(screen.getByLabelText('Contraseña'), '123')
     await usuario.click(screen.getByRole('button', { name: 'Ingresar' }))
-    expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Mi cohorte' })).toBeInTheDocument()
   })
 
   it('CA-SES-01 con credenciales inválidas muestra un mensaje que no revela cuál falló', async () => {

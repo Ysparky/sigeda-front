@@ -10,3 +10,8 @@ node_modules
 playwright-report
 test-results
 test-results/
+
+.impeccable/review/
+.impeccable/mocks/
+.impeccable/questions/
+.impeccable/hook.cache.json

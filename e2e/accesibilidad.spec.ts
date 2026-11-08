@@ -37,6 +37,8 @@ for (const tema of ['claro', 'oscuro'] as const) {
   test.describe(`tema ${tema}`, () => {
     test.use({ colorScheme: tema === 'oscuro' ? 'dark' : 'light' })
     test(`contraste del DIRBE elegido · tema ${tema}`, async ({ page }) => {
+    // El tema por defecto es el claro de marca: el oscuro hay que elegirlo, como lo haría el usuario.
+    if (tema === 'oscuro') await page.addInitScript(() => window.localStorage.setItem('theme', 'dark'))
     await entrarComo(page, CUENTAS.instructor)
     await page.goto('/turnos/4/evaluar/666666')
     const grupo = page.getByRole('radiogroup').first()

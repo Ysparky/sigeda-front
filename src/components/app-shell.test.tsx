@@ -8,7 +8,7 @@ describe('estructura de la aplicación', () => {
   it('CA-SES-06 muestra la marca, el menú principal y el nombre de la persona con su rol', async () => {
     await iniciarComo('instructor.perez')
     renderApp('/')
-    expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Mi cohorte' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /^SIGEDA/ })).toHaveAttribute('href', '/inicio')
     expect(screen.getByRole('link', { name: 'Inicio' })).toHaveAttribute('href', '/inicio')
     expect(screen.getByRole('button', { name: 'Cuenta de Juan Torres' })).toHaveTextContent('Instructor')

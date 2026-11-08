@@ -74,7 +74,7 @@ async function entrar(page: Page, cuenta: Cuenta, rol: string, detalle: string) 
   await page.getByLabel('Usuario').fill(cuenta.usuario)
   await page.getByLabel('Contraseña').fill(cuenta.clave)
   await page.getByRole('button', { name: 'Ingresar' }).click()
-  await expect(page.getByRole('heading', { name: 'Inicio', level: 1 })).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: /^(Inicio|Mi curso|Mi cohorte)$/, level: 1 })).toBeVisible({ timeout: 15_000 })
   await rotulo(page, 'ACCESO', `Entra el ${rol}`, detalle)
 }
 

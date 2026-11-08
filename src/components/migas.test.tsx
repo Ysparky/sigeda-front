@@ -28,7 +28,7 @@ describe('migas de pan', () => {
   it('no muestra migas en Inicio', async () => {
     await iniciarComo('alumno.lopez')
     renderApp('/')
-    await screen.findByRole('heading', { name: 'Inicio' })
+    await screen.findByRole('heading', { name: 'Mi curso' })
     expect(screen.queryByRole('navigation', { name: 'Migas de pan' })).not.toBeInTheDocument()
   })
 })
