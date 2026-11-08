@@ -1,6 +1,8 @@
 import { http, HttpResponse } from 'msw'
 import { API, autorizar, erroresDeCampo, guardado, paginar, texto, textoEliminado, textoNoEncontrado } from './comun'
+import { cerrarCohorte } from './egreso'
 import { nfpiDe } from './indices'
+import { resultadoDe } from './resultados'
 import { cerrarConvocatoriasDeCohorte, tienePagoPendiente } from './inscripcion'
 import { buscarPersona, datos, siguienteId, type GrupoMock, type PersonaMock, type ProgramaMock } from './datos'
 
@@ -178,12 +180,18 @@ export const handlersGrupos = [
     const grupo = datos().grupos.find((candidato) => candidato.id === Number(params.id))
     if (!grupo) return textoNoEncontrado('Grupo especificada no existe.')
     return HttpResponse.json(
-      alumnosDe(grupo).map((alumno) => ({
-        codigo: alumno.codigo,
-        nombre: [alumno.nombre, alumno.aPaterno, alumno.aMaterno].filter(Boolean).join(' '),
-        estadoAcademico: alumno.estado,
-        nfpi: nfpiDe(alumno.codigo),
-      })),
+      alumnosDe(grupo).map((alumno) => {
+        const r = resultadoDe(alumno.codigo)
+        return {
+          codigo: alumno.codigo,
+          nombre: [alumno.nombre, alumno.aPaterno, alumno.aMaterno].filter(Boolean).join(' '),
+          estadoAcademico: alumno.estado,
+          nfpi: r ? r.nfpi : nfpiDe(alumno.codigo),
+          situacion: r?.situacion ?? null,
+          puesto: r?.puesto ?? null,
+          constancia: r?.constancia ?? null,
+        }
+      }),
     )
   }),
   http.put(`${API}/api/grupos/:id/estado`, async ({ request, params }) => {
@@ -203,6 +211,10 @@ export const handlersGrupos = [
       grupo.fechaInicio = iso(hoy)
       grupo.fechaFin = iso(sumarDiasHabiles(hoy, PLAN_BASE_DIAS_HABILES))
       cerrarConvocatoriasDeCohorte(grupo.id)
+    }
+    if (estado === 'CERRADA') {
+      const motivos = cerrarCohorte(grupo)
+      if (motivos.length > 0) return HttpResponse.text(motivos.join(' '), { status: 409 })
     }
     grupo.estado = estado
     return HttpResponse.json({ mensaje: 'Estado de la cohorte actualizado.' })

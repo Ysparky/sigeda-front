@@ -155,27 +155,25 @@ test('Presentación: el ciclo de un curso en SIGEDA', async ({ page }) => {
 
   // ════════ ACTO 5 · PARTE FINAL: LICENCIA Y CIERRE ════════
   await entrar(page, CUENTAS.coordinador, 'Coordinador Académico', 'Tramita la licencia y cierra el curso.')
-  await visitar(page, '/fichas-licencia/555555', 'ACTO 5 · LICENCIA (PP-H)', 'Ficha de licencia', 'Al terminar, se consolidan los requisitos de la RAP 61 para la licencia PP-H.')
+  await visitar(page, '/fichas-licencia/121212', 'ACTO 5 · LICENCIA (PP-H)', 'Ficha de licencia', 'Al egresar, se consolidan los requisitos de la RAP 61 para la licencia PP-H.')
   try {
     await page.getByLabel('Total').fill('30')
     await page.getByLabel('Doble mando').fill('25')
     await page.getByRole('button', { name: 'Guardar ficha' }).click()
     await expect(page.getByText('Ficha guardada.')).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByText('Observada')).toBeVisible({ timeout: 15_000 })
+    await expect(page.locator('span[data-estado]')).toHaveText('Observada', { timeout: 15_000 })
     await rotulo(page, 'ACTO 5 · LICENCIA (PP-H)', 'El motor §16 evalúa en vivo', 'Faltan horas de vuelo → la ficha queda "Observada" con el requisito marcado.')
   } catch {
     await rotulo(page, 'ACTO 5 · LICENCIA (PP-H)', 'El motor §16', 'Requisitos, alertas y bloqueos de la RAP 61, evaluados en vivo.')
   }
 
   try {
-    await page.goto('/grupos/3')
+    await page.goto('/grupos/8')
     await asentar(page)
-    const cerrar = page.getByRole('button', { name: 'Cerrar cohorte' })
-    if (await cerrar.count()) await cerrar.click()
-    await expect(page.getByText('Cerrada')).toBeVisible({ timeout: 10_000 })
-    await rotulo(page, 'ACTO 5 · LICENCIA (PP-H)', 'Cierre de la cohorte', 'Terminado el curso, la cohorte se cierra y queda su consolidado.')
+    await expect(page.getByRole('table', { name: 'Acta de cierre' })).toBeVisible({ timeout: 10_000 })
+    await rotulo(page, 'ACTO 5 · LICENCIA (PP-H)', 'Acta de cierre', 'Cada alumno egresa o tiene baja; al cerrar se congelan NFPI, puesto y constancia.')
   } catch {
-    await rotulo(page, 'ACTO 5 · LICENCIA (PP-H)', 'Cierre de la cohorte', 'Terminado el curso, la cohorte se cierra y queda su consolidado.')
+    await rotulo(page, 'ACTO 5 · LICENCIA (PP-H)', 'Cierre de la cohorte', 'Cada alumno egresa o tiene baja; al cerrar se congelan NFPI, puesto y constancia.')
   }
 
   // ── Cierre ──

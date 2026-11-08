@@ -3,41 +3,50 @@ import { expect, test } from '@playwright/test'
 import { CUENTAS, entrarComo } from './ayudantes'
 
 /**
- * Parte final del curso contra el backend real: el cierre de la cohorte (F1) y la Ficha de Licencia
- * con su motor §16 (F2–F4). El Coordinador Académico tiene Manage Groups y Manage Licensing.
- * Requiere el backend de la rama `feat/ficha-licencia` en 8080 sobre `sigeda_demo` migrado (035 + 036).
+ * Finalización del curso contra el backend real. La semilla trae la Promoción 2025-II (grupo 8) cerrada:
+ * Rosa Quispe (121212, alumno.quispe) egresó y Mario Ccori se retiró. El Grupo 1 sigue en curso.
  */
-test.describe('Ficha de licencia y cierre de cohorte contra el backend real', () => {
-  test('el Coordinador captura una ficha y el motor §16 deriva el estado', async ({ page }) => {
+test.describe('Finalización del curso contra el backend real', () => {
+  test('una cohorte con alumnos en curso no cierra y el tablero dice por qué', async ({ page }) => {
     await entrarComo(page, CUENTAS.coordinador)
-    // Código libre por corrida: la ficha es autónoma (clave codAlumno, sin FK).
-    const cod = `E2E${String(Date.now()).slice(-7)}`
+    await page.goto('/grupos/1')
+    const tablero = page.getByRole('region', { name: 'Cierre de la cohorte' })
+    await expect(tablero).toBeVisible({ timeout: 15_000 })
+    await expect(tablero.getByRole('button', { name: 'Cerrar cohorte' })).toBeDisabled()
+    await expect(tablero.getByRole('alert')).toContainText('Sin concluir')
+  })
 
-    await page.goto(`/fichas-licencia/${cod}`)
-    await expect(page.getByRole('heading', { level: 1, name: new RegExp(`Ficha de licencia · ${cod}`) }))
-      .toBeVisible({ timeout: 15_000 })
-    await expect(page.getByText('En preparación')).toBeVisible()
+  test('el acta de la cohorte cerrada lleva a la constancia y a la ficha del egresado', async ({ page }) => {
+    await entrarComo(page, CUENTAS.coordinador)
+    await page.goto('/grupos/8')
+    const acta = page.getByRole('table', { name: 'Acta de cierre' })
+    await expect(acta).toBeVisible({ timeout: 15_000 })
+    await expect(acta.getByRole('row', { name: /Rosa Quispe/ })).toContainText('Egresado')
+    await expect(acta.getByRole('row', { name: /Mario Ccori/ })).toContainText('Retirado')
 
-    // Capturar horas insuficientes: la ficha pasa a Observada y el requisito de 40 h falta.
+    await acta.getByRole('link', { name: 'Ficha de licencia de Rosa Quispe' }).click()
+    await expect(page.getByRole('heading', { level: 1, name: /Ficha de licencia · 121212/ })).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText(/Curso del CIAC aprobado/)).toContainText('cumple')
     await page.getByLabel('Total').fill('30')
     await page.getByRole('button', { name: 'Guardar ficha' }).click()
     await expect(page.getByText('Ficha guardada.')).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByText('Observada')).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByText(/40 h en total/)).toContainText('falta')
+    await expect(page.locator('span[data-estado]')).toHaveText('Observada', { timeout: 15_000 })
   })
 
-  test('el Coordinador cierra una cohorte en progreso', async ({ page }) => {
+  test('la ficha de quien no egresó no se guarda', async ({ page }) => {
     await entrarComo(page, CUENTAS.coordinador)
-    await page.goto('/grupos/1')
-    await expect(page.getByRole('heading', { level: 1, name: 'Grupo 1' })).toBeVisible({ timeout: 15_000 })
+    await page.goto('/fichas-licencia/111111')
+    await expect(page.getByRole('alert')).toContainText('La ficha de licencia se abre al egresar del curso.', { timeout: 15_000 })
+    await expect(page.getByRole('button', { name: 'Guardar ficha' })).toBeDisabled()
+  })
 
-    // Re-ejecutable: si ya está cerrada (otra corrida), no hay botón y el estado ya es Cerrada.
-    const cerrar = page.getByRole('button', { name: 'Cerrar cohorte' })
-    if (await cerrar.count()) {
-      await cerrar.click()
-    }
-    await expect(page.getByText('Cerrada')).toBeVisible({ timeout: 15_000 })
-    // El consolidado de la cohorte: sus alumnos con su estado académico.
-    await expect(page.getByRole('table', { name: 'Alumnos del grupo' })).toContainText('Lopez')
+  test('la egresada ve su pase de egreso e imprime su constancia', async ({ page }) => {
+    await entrarComo(page, CUENTAS.egresada)
+    const pase = page.getByRole('region', { name: 'Egresaste' })
+    await expect(pase).toContainText('CE-2025-008-01')
+    await pase.getByRole('link', { name: 'Ver constancia' }).click()
+    const constancia = page.getByRole('article', { name: 'Constancia CE-2025-008-01' })
+    await expect(constancia).toContainText('Rosa Quispe Mamani', { timeout: 15_000 })
+    await expect(constancia).toContainText('16.76')
   })
 })

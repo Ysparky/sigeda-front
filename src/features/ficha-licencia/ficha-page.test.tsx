@@ -1,9 +1,29 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { config } from '@/lib/config'
+import { registrarResultado } from '@/mocks/sigeda/resultados'
 import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
+
+function egresado(cod: string) {
+  registrarResultado({
+    codAlumno: cod,
+    idGrupo: 1,
+    situacion: 'EGRESADO',
+    fecha: '2026-11-01',
+    observacion: null,
+    nit: null,
+    nia: null,
+    nfpi: 16,
+    puesto: 1,
+    horasVuelo: null,
+    horasSimulador: null,
+    constancia: 'CE-2026-001-01',
+  })
+}
+
+const estadoDeLaFicha = () => screen.getByText(/./, { selector: 'span[data-estado]' })
 
 describe('Ficha de licencia (/fichas-licencia/$cod)', () => {
   it('sin el permiso, la ruta queda restringida', async () => {
@@ -13,11 +33,12 @@ describe('Ficha de licencia (/fichas-licencia/$cod)', () => {
   })
 
   it('un alumno sin ficha abre en preparación y se puede capturar', async () => {
+    egresado('A001')
     await iniciarComo('coordinador.rivas')
     const { usuario } = renderApp('/fichas-licencia/A001')
 
     expect(await screen.findByRole('heading', { level: 1, name: /Ficha de licencia · A001/ })).toBeInTheDocument()
-    expect(screen.getByText('En preparación')).toBeInTheDocument()
+    expect(estadoDeLaFicha()).toHaveTextContent('En preparación')
     // Todos los requisitos arrancan en "falta".
     const requisitos = within(screen.getByRole('list', { name: 'Requisitos de la licencia' }))
     expect(requisitos.getAllByText(/falta/).length).toBeGreaterThan(0)
@@ -27,11 +48,12 @@ describe('Ficha de licencia (/fichas-licencia/$cod)', () => {
     await usuario.click(screen.getByRole('button', { name: 'Guardar ficha' }))
 
     expect(await screen.findByText('Ficha guardada.')).toBeInTheDocument()
-    expect(await screen.findByText('Observada')).toBeInTheDocument()
+    await waitFor(() => expect(estadoDeLaFicha()).toHaveTextContent('Observada'))
     expect(screen.getByText(/40 h en total/)).toHaveTextContent('falta')
   })
 
   it('captura la emisión de la licencia de alumno y dispara la alerta de 24 meses', async () => {
+    egresado('A002')
     await iniciarComo('coordinador.rivas')
     const { usuario } = renderApp('/fichas-licencia/A002')
     await screen.findByRole('heading', { level: 1, name: /Ficha de licencia · A002/ })
@@ -55,5 +77,12 @@ describe('Ficha de licencia (/fichas-licencia/$cod)', () => {
     const registro = within(await screen.findByRole('region', { name: 'Registrado por el sistema' }))
     expect(registro.getByText('3.00 h')).toBeInTheDocument()
     expect(registro.getByText('1.50 h')).toBeInTheDocument()
+  })
+  it('la ficha de quien no egresó se consulta pero no se guarda', async () => {
+    await iniciarComo('coordinador.rivas')
+    renderApp('/fichas-licencia/A009')
+    expect(await screen.findByRole('alert')).toHaveTextContent('La ficha de licencia se abre al egresar del curso.')
+    expect(screen.getByRole('button', { name: 'Guardar ficha' })).toBeDisabled()
+    expect(screen.getByText(/Curso del CIAC aprobado/)).toHaveTextContent('falta')
   })
 })

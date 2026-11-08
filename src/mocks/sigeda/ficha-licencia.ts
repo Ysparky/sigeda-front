@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { API, autorizar } from './comun'
 import { datos } from './datos'
+import { resultadoDe } from './resultados'
 import { minutosDeSimuladorCompletados } from './simulador'
 
 function minutos(hora: string): number {
@@ -102,7 +103,7 @@ const vigente = (venc: string | null, hoy: Date) => {
 }
 const hora = (v: number | null, min: number) => v !== null && v >= min
 
-function calcularResumen(manual: FichaMock, hoy: Date, registradas = { vuelo: 0, simulador: 0 }) {
+function calcularResumen(manual: FichaMock, hoy: Date, registradas = { vuelo: 0, simulador: 0 }, cursoAprobado = false) {
   const f = {
     ...manual,
     horasDobleMando: manual.horasDobleMando ?? (registradas.vuelo > 0 ? registradas.vuelo : null),
@@ -117,6 +118,7 @@ function calcularResumen(manual: FichaMock, hoy: Date, registradas = { vuelo: 0,
     f.examenTeoricoNota !== null &&
     f.examenTeoricoNota >= 75
   const requisitos = [
+    { clave: 'curso_ciac', cumple: cursoAprobado, detalle: 'Curso del CIAC aprobado (constancia de egreso)' },
     { clave: 'horas_total', cumple: acreditables !== null && acreditables >= 40, detalle: '40 h en total (el simulador acredita hasta 5 h)' },
     { clave: 'doble_mando', cumple: hora(f.horasDobleMando, 20), detalle: '20 h de doble mando' },
     { clave: 'solo', cumple: hora(f.horasSolo, 10), detalle: '10 h de vuelo solo diurno' },
@@ -166,6 +168,25 @@ function calcularResumen(manual: FichaMock, hoy: Date, registradas = { vuelo: 0,
   return { estado, requisitos, alertas, bloqueos }
 }
 
+function fichaConResumen(cod: string, ficha: FichaMock, hoy: Date) {
+  const resultado = resultadoDe(cod)
+  const registradas =
+    resultado?.horasVuelo != null
+      ? { vuelo: resultado.horasVuelo, simulador: resultado.horasSimulador ?? 0 }
+      : horasRegistradas(cod)
+  const cursoAprobado = resultado?.situacion === 'EGRESADO'
+  return { ...ficha, cursoAprobado, horasRegistradas: registradas, resumen: calcularResumen(ficha, hoy, registradas, cursoAprobado) }
+}
+
+/** El resumen de la ficha del alumno, como lo ve el aula. */
+export function resumenDeFicha(cod: string) {
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  return fichaConResumen(cod, fichasMock.find((x) => x.codAlumno === cod) ?? fichaVacia(cod), hoy).resumen
+}
+
+export { horasRegistradas }
+
 export const handlersFichaLicencia = [
   http.get(`${API}/api/fichas-licencia/:cod`, ({ request, params }) => {
     const permitido = autorizar(request, 'Manage Licensing')
@@ -174,13 +195,14 @@ export const handlersFichaLicencia = [
     const ficha = fichasMock.find((x) => x.codAlumno === cod) ?? fichaVacia(cod)
     const hoy = new Date()
     hoy.setHours(0, 0, 0, 0) // granularidad de día, como LocalDate en el backend
-    const registradas = horasRegistradas(cod)
-    return HttpResponse.json({ ...ficha, horasRegistradas: registradas, resumen: calcularResumen(ficha, hoy, registradas) })
+    return HttpResponse.json(fichaConResumen(cod, ficha, hoy))
   }),
   http.put(`${API}/api/fichas-licencia/:cod`, async ({ request, params }) => {
     const permitido = autorizar(request, 'Manage Licensing')
     if (permitido instanceof Response) return permitido
     const cod = String(params.cod)
+    if (resultadoDe(cod)?.situacion !== 'EGRESADO')
+      return HttpResponse.text('La ficha de licencia se abre al egresar del curso.', { status: 409 })
     const cuerpo = (await request.json()) as Partial<FichaMock>
     const existente = fichasMock.find((x) => x.codAlumno === cod)
     const actualizada: FichaMock = { ...fichaVacia(cod), ...cuerpo, codAlumno: cod }

@@ -4,6 +4,8 @@ import { Link } from '@tanstack/react-router'
 import { ArrowRight, CircleCheck, CircleDashed, CircleX } from 'lucide-react'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
+import { ETIQUETA_SITUACION } from '@/features/egreso/api'
+import { RutaDeLicencia } from '@/features/egreso/ruta-de-licencia'
 import { consultasAula, type MiCurso } from './api'
 import { ETIQUETA_ESTADO, fechaCorta, horas, nota } from './formato'
 import {
@@ -135,6 +137,65 @@ function MapaDelPrograma({ curso }: { curso: MiCurso }) {
   )
 }
 
+const ORO = `${ENLACE} text-[#d8b858] hover:text-white focus-visible:ring-2 focus-visible:ring-[#d8b858] focus-visible:ring-offset-2 focus-visible:ring-offset-[#101a3c] focus-visible:outline-none`
+
+function FinDelCurso({ final, codAlumno }: { final: NonNullable<MiCurso['final']>; codAlumno: string }) {
+  if (final.situacion !== 'EGRESADO')
+    return (
+      <PaseVacio
+        titulo="Curso"
+        mensaje={`Tu situación final es ${ETIQUETA_SITUACION[final.situacion].toLowerCase()}${final.fecha ? ` desde el ${fechaCorta(final.fecha)}` : ''}.${final.observacion ? ` ${final.observacion}` : ''}`}
+      />
+    )
+  const faltan = final.ficha?.faltan ?? []
+  return (
+    <>
+      <Pase
+        titulo="Egresaste"
+        fecha={final.fecha ? fechaCorta(final.fecha) : '—'}
+        segmentos={[
+          { etiqueta: 'Constancia', valor: final.constancia ?? '—' },
+          { etiqueta: 'NFPI', valor: nota(final.nfpi) },
+          { etiqueta: 'Orden de mérito', valor: final.puesto ? `${final.puesto}.º de ${final.egresados}` : '—' },
+        ]}
+        accion={
+          <Link to="/constancias/$cod" params={{ cod: codAlumno }} className={ORO}>
+            Ver constancia
+            <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        }
+      />
+      {final.ficha && (
+        <Panel titulo="Tu licencia PP-H">
+          <div className="grid gap-5 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] md:items-start">
+            <div className="grid gap-3">
+              <RutaDeLicencia estado={final.ficha.estado} />
+              <p className="text-[13px] text-muted-foreground">
+                El examen teórico y la pericia se rinden ante la DGAC después del curso. La Coordinación Académica lleva tu ficha.
+              </p>
+            </div>
+            {faltan.length === 0 ? (
+              <Vacio>Cumples todos los requisitos registrados.</Vacio>
+            ) : (
+              <div className="grid gap-2">
+                <h3 className="font-heading text-sm font-bold tracking-wide uppercase">Te falta</h3>
+                <ul className="grid gap-1.5 text-sm">
+                  {faltan.map((f) => (
+                    <li key={f} className="flex items-start gap-2">
+                      <CircleDashed className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </Panel>
+      )}
+    </>
+  )
+}
+
 export function MiCursoPage({ codAlumno }: { codAlumno: string }) {
   const { data: curso } = useSuspenseQuery(consultasAula.curso(codAlumno))
   const cohorte = curso.cohorte
@@ -149,13 +210,15 @@ export function MiCursoPage({ codAlumno }: { codAlumno: string }) {
             ? [`PDI EA-510`, cohorte.nombre, cohorte.instructor && `Instructor ${cohorte.instructor}`].filter(Boolean).join(' · ')
             : 'Aún no tienes cohorte asignada.'
         }
-        dia={cohorte?.diaDelCurso ?? null}
+        dia={curso.final ? null : (cohorte?.diaDelCurso ?? null)}
         diasDelPlan={cohorte?.diasDelPlan ?? 81}
         fin={cohorte?.fechaFin ?? null}
       />
 
       <div className="grid gap-6">
-          {turno ? (
+          {curso.final ? (
+            <FinDelCurso final={curso.final} codAlumno={curso.alumno.codigo} />
+          ) : turno ? (
             <Pase
               titulo="Próximo turno"
               fecha={fechaCorta(turno.fecha)}
@@ -172,7 +235,7 @@ export function MiCursoPage({ codAlumno }: { codAlumno: string }) {
                 <Link
                   to="/turnos/$id/briefing/$alumno"
                   params={{ id: String(turno.id), alumno: curso.alumno.codigo }}
-                  className={`${ENLACE} text-[#d8b858] hover:text-white focus-visible:ring-2 focus-visible:ring-[#d8b858] focus-visible:ring-offset-2 focus-visible:ring-offset-[#101a3c] focus-visible:outline-none`}
+                  className={ORO}
                 >
                   Ver briefing
                   <ArrowRight className="size-4" aria-hidden />
@@ -235,7 +298,7 @@ export function MiCursoPage({ codAlumno }: { codAlumno: string }) {
             <Filas>
               <Fila izquierda="Vuelo con instructor" derecha={horas(curso.horas.vuelo)} />
               <Fila izquierda="Simulador" derecha={horas(curso.horas.simulador)} />
-              <Fila izquierda="NFPI" derecha={nota(curso.nfpi)} />
+              <Fila izquierda="NFPI" derecha={nota(curso.final?.nfpi ?? curso.nfpi)} />
             </Filas>
           </Panel>
         </aside>

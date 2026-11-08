@@ -64,6 +64,22 @@ const esquemaMiCurso = z.object({
   porRendir: z.array(z.object({ idTurnoTeorico: z.number(), materia: z.string(), fecha: z.string(), horaInicio: txt })),
   horas: z.object({ vuelo: z.number(), simulador: z.number(), programa: z.number() }),
   nfpi: num,
+  final: z
+    .object({
+      situacion: z.enum(['EGRESADO', 'DESAPROBADO', 'RETIRADO', 'NO_CULMINO']),
+      fecha: txt,
+      constancia: txt,
+      puesto: num,
+      egresados: z.number(),
+      nfpi: num,
+      observacion: txt,
+      ficha: z
+        .object({ estado: z.string(), faltan: z.array(z.string()) })
+        .nullish()
+        .transform((v) => v ?? null),
+    })
+    .nullish()
+    .transform((v) => v ?? null),
 })
 
 const esquemaMiCohorte = z.object({

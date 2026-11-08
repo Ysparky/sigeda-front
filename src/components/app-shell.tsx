@@ -9,7 +9,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset className="selection:bg-[#d8b858]/40">
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur md:px-8">
+        <header className="sticky top-0 z-10 flex h-14 print:hidden items-center gap-3 border-b bg-background/90 px-4 backdrop-blur md:px-8">
           <SidebarTrigger aria-label="Mostrar u ocultar el menú" className="-ml-1" />
           <span className="font-heading text-base font-bold tracking-wider uppercase sm:hidden">SIGEDA</span>
           <Migas className="hidden min-w-0 sm:block" />

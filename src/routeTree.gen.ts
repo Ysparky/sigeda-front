@@ -28,6 +28,7 @@ import { Route as AppAprendizajeCuestionarioRouteImport } from './routes/_app/ap
 import { Route as AppAsistenciasIndexRouteImport } from './routes/_app/asistencias/index'
 import { Route as AppBancoIndexRouteImport } from './routes/_app/banco/index'
 import { Route as AppBancoImportarRouteImport } from './routes/_app/banco/importar'
+import { Route as AppConstanciasCodRouteImport } from './routes/_app/constancias/$cod'
 import { Route as AppConvocatoriasIndexRouteImport } from './routes/_app/convocatorias/index'
 import { Route as AppConvocatoriasNuevaRouteImport } from './routes/_app/convocatorias/nueva'
 import { Route as AppEscenariosIndexRouteImport } from './routes/_app/escenarios/index'
@@ -182,6 +183,11 @@ const AppBancoIndexRoute = AppBancoIndexRouteImport.update({
 const AppBancoImportarRoute = AppBancoImportarRouteImport.update({
   id: '/banco/importar',
   path: '/banco/importar',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConstanciasCodRoute = AppConstanciasCodRouteImport.update({
+  id: '/constancias/$cod',
+  path: '/constancias/$cod',
   getParentRoute: () => AppRoute,
 } as any)
 const AppConvocatoriasIndexRoute = AppConvocatoriasIndexRouteImport.update({
@@ -517,6 +523,7 @@ export interface FileRoutesByFullPath {
   '/aprendizaje/consultas': typeof AppAprendizajeConsultasRoute
   '/aprendizaje/cuestionario': typeof AppAprendizajeCuestionarioRoute
   '/banco/importar': typeof AppBancoImportarRoute
+  '/constancias/$cod': typeof AppConstanciasCodRoute
   '/convocatorias/nueva': typeof AppConvocatoriasNuevaRoute
   '/escenarios/nueva': typeof AppEscenariosNuevaRoute
   '/fichas-licencia/$cod': typeof AppFichasLicenciaCodRoute
@@ -597,6 +604,7 @@ export interface FileRoutesByTo {
   '/aprendizaje/consultas': typeof AppAprendizajeConsultasRoute
   '/aprendizaje/cuestionario': typeof AppAprendizajeCuestionarioRoute
   '/banco/importar': typeof AppBancoImportarRoute
+  '/constancias/$cod': typeof AppConstanciasCodRoute
   '/convocatorias/nueva': typeof AppConvocatoriasNuevaRoute
   '/escenarios/nueva': typeof AppEscenariosNuevaRoute
   '/fichas-licencia/$cod': typeof AppFichasLicenciaCodRoute
@@ -679,6 +687,7 @@ export interface FileRoutesById {
   '/_app/aprendizaje/consultas': typeof AppAprendizajeConsultasRoute
   '/_app/aprendizaje/cuestionario': typeof AppAprendizajeCuestionarioRoute
   '/_app/banco/importar': typeof AppBancoImportarRoute
+  '/_app/constancias/$cod': typeof AppConstanciasCodRoute
   '/_app/convocatorias/nueva': typeof AppConvocatoriasNuevaRoute
   '/_app/escenarios/nueva': typeof AppEscenariosNuevaRoute
   '/_app/fichas-licencia/$cod': typeof AppFichasLicenciaCodRoute
@@ -761,6 +770,7 @@ export interface FileRouteTypes {
     | '/aprendizaje/consultas'
     | '/aprendizaje/cuestionario'
     | '/banco/importar'
+    | '/constancias/$cod'
     | '/convocatorias/nueva'
     | '/escenarios/nueva'
     | '/fichas-licencia/$cod'
@@ -841,6 +851,7 @@ export interface FileRouteTypes {
     | '/aprendizaje/consultas'
     | '/aprendizaje/cuestionario'
     | '/banco/importar'
+    | '/constancias/$cod'
     | '/convocatorias/nueva'
     | '/escenarios/nueva'
     | '/fichas-licencia/$cod'
@@ -922,6 +933,7 @@ export interface FileRouteTypes {
     | '/_app/aprendizaje/consultas'
     | '/_app/aprendizaje/cuestionario'
     | '/_app/banco/importar'
+    | '/_app/constancias/$cod'
     | '/_app/convocatorias/nueva'
     | '/_app/escenarios/nueva'
     | '/_app/fichas-licencia/$cod'
@@ -1128,6 +1140,13 @@ declare module '@tanstack/react-router' {
       path: '/banco/importar'
       fullPath: '/banco/importar'
       preLoaderRoute: typeof AppBancoImportarRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/constancias/$cod': {
+      id: '/_app/constancias/$cod'
+      path: '/constancias/$cod'
+      fullPath: '/constancias/$cod'
+      preLoaderRoute: typeof AppConstanciasCodRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/convocatorias/': {
@@ -1565,6 +1584,7 @@ interface AppRouteChildren {
   AppAprendizajeConsultasRoute: typeof AppAprendizajeConsultasRoute
   AppAprendizajeCuestionarioRoute: typeof AppAprendizajeCuestionarioRoute
   AppBancoImportarRoute: typeof AppBancoImportarRoute
+  AppConstanciasCodRoute: typeof AppConstanciasCodRoute
   AppConvocatoriasNuevaRoute: typeof AppConvocatoriasNuevaRoute
   AppEscenariosNuevaRoute: typeof AppEscenariosNuevaRoute
   AppFichasLicenciaCodRoute: typeof AppFichasLicenciaCodRoute
@@ -1642,6 +1662,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAprendizajeConsultasRoute: AppAprendizajeConsultasRoute,
   AppAprendizajeCuestionarioRoute: AppAprendizajeCuestionarioRoute,
   AppBancoImportarRoute: AppBancoImportarRoute,
+  AppConstanciasCodRoute: AppConstanciasCodRoute,
   AppConvocatoriasNuevaRoute: AppConvocatoriasNuevaRoute,
   AppEscenariosNuevaRoute: AppEscenariosNuevaRoute,
   AppFichasLicenciaCodRoute: AppFichasLicenciaCodRoute,

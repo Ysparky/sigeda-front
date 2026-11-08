@@ -3,6 +3,8 @@ import { API, autorizar, pideLoDeOtro, textoNoEncontrado, textoProhibido } from 
 import { bloqueadoPorSubsanacion, buscarPersona, datos, nombreCorto, nombreDeFase, type PersonaMock } from './datos'
 import { D15_SOLO_LO_PROPIO } from './cuestionarios-teoria'
 import { nfpiDe } from './indices'
+import { resumenDeFicha } from './ficha-licencia'
+import { resultadoDe, resultadosFinales } from './resultados'
 import { minutosDeSimuladorCompletados } from './simulador'
 
 const DIAS_DEL_PLAN = 81
@@ -34,7 +36,7 @@ function idTurnoDe(codigoEvaluacion: string): number | null {
   return Number.isInteger(id) ? id : null
 }
 
-function subfasesDe(cod: string) {
+export function subfasesDe(cod: string) {
   const evaluaciones = datos().evaluaciones.filter((e) => e.codPersona === cod)
   const fases = [...new Set(datos().subfases.map((s) => s.idFase))].sort((a, b) => a - b)
   let enCursoAsignada = false
@@ -71,7 +73,7 @@ function subfasesDe(cod: string) {
   }))
 }
 
-function tierraDe(persona: PersonaMock, hoy: string) {
+export function tierraDe(persona: PersonaMock, hoy: string) {
   const entregados = datos().cuestionarios.filter((c) => c.codAlumno === persona.codigo && c.estado === 'ENTREGADO')
   const turnoTeorico = (id: number) => datos().turnosTeoricos.find((t) => t.id === id)
   const materias = [...datos().materias]
@@ -184,6 +186,25 @@ function miCurso(persona: PersonaMock) {
       programa: dos(datos().misiones.reduce((total, m) => total + m.horas, 0)),
     },
     nfpi: nfpiDe(cod),
+    final: finalDe(cod),
+  }
+}
+
+function finalDe(cod: string) {
+  const r = resultadoDe(cod)
+  if (!r) return null
+  const resumen = r.situacion === 'EGRESADO' ? resumenDeFicha(cod) : null
+  return {
+    situacion: r.situacion,
+    fecha: r.fecha,
+    constancia: r.constancia,
+    puesto: r.puesto,
+    egresados: resultadosFinales().filter((x) => x.idGrupo === r.idGrupo && x.situacion === 'EGRESADO').length,
+    nfpi: r.nfpi,
+    observacion: r.observacion,
+    ficha: resumen
+      ? { estado: resumen.estado, faltan: resumen.requisitos.filter((q) => !q.cumple).map((q) => q.detalle) }
+      : null,
   }
 }
 

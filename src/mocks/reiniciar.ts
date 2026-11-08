@@ -4,6 +4,7 @@ import { reiniciarAuthMock } from './sigeda/auth'
 import { reiniciarDatosMock } from './sigeda/datos'
 import { reiniciarInscripcion } from './sigeda/inscripcion'
 import { reiniciarFichaLicencia } from './sigeda/ficha-licencia'
+import { reiniciarResultadosFinales } from './sigeda/resultados'
 import { reiniciarSimulador } from './sigeda/simulador'
 
 export function reiniciarMocks() {
@@ -14,4 +15,5 @@ export function reiniciarMocks() {
   reiniciarAsistencias()
   reiniciarSimulador()
   reiniciarFichaLicencia()
+  reiniciarResultadosFinales()
 }

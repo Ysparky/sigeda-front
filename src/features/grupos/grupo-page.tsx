@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { CircleAlert, Pencil, Play, Trash2 } from 'lucide-react'
 import { useState } from 'react'
@@ -11,7 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { usePuede } from '@/lib/auth/use-sesion'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
-import { formatearFecha, formatearNota } from '@/lib/formato'
+import { formatearFecha } from '@/lib/formato'
+import { CierreDeCohorte } from '@/features/egreso/cierre-de-cohorte'
 import { cambiarEstadoGrupo, clavesGrupos, consultasGrupos, eliminarGrupo } from './api'
 
 const ETIQUETA_ESTADO_COHORTE: Record<string, string> = {
@@ -26,7 +27,6 @@ export function GrupoPage({ id }: { id: number }) {
   const navegar = useNavigate()
   const puedeCerrar = usePuede('Manage Enrollments')
   const [motivos, setMotivos] = useState<string | null>(null)
-  const consolidado = useQuery({ ...consultasGrupos.consolidado(grupo.id), enabled: grupo.estado === 'CERRADA' && puedeCerrar })
   const iniciar = useMutation({
     mutationFn: () => cambiarEstadoGrupo(grupo.id, 'EN_PROGRESO'),
     onMutate: () => setMotivos(null),
@@ -35,14 +35,6 @@ export function GrupoPage({ id }: { id: number }) {
       await queryClient.invalidateQueries({ queryKey: clavesGrupos.detalle(grupo.id) })
     },
     onError: (error) => setMotivos(error instanceof ApiError ? error.message : MENSAJE_GENERICO),
-  })
-  const cerrar = useMutation({
-    mutationFn: () => cambiarEstadoGrupo(grupo.id, 'CERRADA'),
-    onSuccess: async (mensaje) => {
-      toast.success(mensaje)
-      await queryClient.invalidateQueries({ queryKey: clavesGrupos.detalle(grupo.id) })
-    },
-    onError: (error) => toast.error(error instanceof ApiError ? error.message : MENSAJE_GENERICO),
   })
   const eliminar = useMutation({
     mutationFn: () => eliminarGrupo(grupo.id),
@@ -65,11 +57,6 @@ export function GrupoPage({ id }: { id: number }) {
               <Button disabled={iniciar.isPending} onClick={() => iniciar.mutate()}>
                 <Play aria-hidden />
                 {iniciar.isPending ? 'Iniciando…' : 'Iniciar cohorte'}
-              </Button>
-            )}
-            {grupo.estado === 'EN_PROGRESO' && puedeCerrar && (
-              <Button variant="outline" disabled={cerrar.isPending} onClick={() => cerrar.mutate()}>
-                {cerrar.isPending ? 'Cerrando…' : 'Cerrar cohorte'}
               </Button>
             )}
             <Button variant="outline" asChild>
@@ -171,43 +158,7 @@ export function GrupoPage({ id }: { id: number }) {
           )}
         </CardContent>
       </Card>
-      {consolidado.data && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <h2>Consolidado de la cohorte</h2>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {consolidado.data.length === 0 ? (
-              <p className="text-sm text-muted-foreground">La cohorte cerró sin alumnos.</p>
-            ) : (
-              <Table aria-label="Consolidado de la cohorte">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Alumno</TableHead>
-                    <TableHead>Estado académico</TableHead>
-                    <TableHead className="text-right">NFPI</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {consolidado.data.map((alumno) => (
-                    <TableRow key={alumno.codigo}>
-                      <TableCell className="tabular-nums">{alumno.codigo}</TableCell>
-                      <TableCell>{alumno.nombre}</TableCell>
-                      <TableCell>
-                        {alumno.estadoAcademico ? <StatusBadge vocabulario="estado" valor={alumno.estadoAcademico} /> : '—'}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">{formatearNota(alumno.nfpi)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {puedeCerrar && grupo.estado !== 'EN_INSCRIPCION' && grupo.estado !== null && <CierreDeCohorte idGrupo={grupo.id} />}
     </>
   )
 }

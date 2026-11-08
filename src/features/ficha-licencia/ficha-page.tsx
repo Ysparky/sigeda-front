@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { CircleAlert, CircleCheck, CircleX, TriangleAlert } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
@@ -9,6 +10,8 @@ import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { formatearNota } from '@/lib/formato'
+import { cn } from '@/lib/utils'
+import { RutaDeLicencia } from '@/features/egreso/ruta-de-licencia'
 import { clavesFicha, ETIQUETA_ESTADO_FICHA, fichaQuery, guardarFicha, type CuerpoFicha, type Ficha } from './api'
 
 type Valores = {
@@ -120,45 +123,72 @@ export function FichaPage({ cod }: { cod: string }) {
     <div className="grid gap-6">
       <PageHeader titulo={`Ficha de licencia · ${cod}`} descripcion="Obtención de la licencia de Piloto Privado de Helicóptero (PP-H)." />
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2">
-          <CardTitle>
-            <h2>Estado de la licencia</h2>
-          </CardTitle>
-          <span className="rounded-full border px-3 py-1 text-sm font-medium" data-estado={r.estado}>
+      {!ficha.cursoAprobado && (
+        <div role="alert" className="flex gap-2.5 rounded-xl border border-[#8a5a00]/35 bg-[#fdf3e1] p-4 text-sm text-[#5c3c00] dark:bg-[#8a5a00]/15 dark:text-[#f0c675]">
+          <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <div className="grid gap-1">
+            <p className="font-semibold">La ficha de licencia se abre al egresar del curso.</p>
+            <p>El alumno todavía no tiene constancia de egreso: la ficha se puede consultar, pero no guardar.</p>
+          </div>
+        </div>
+      )}
+
+      <section
+        aria-labelledby="estado-licencia"
+        className="grid gap-6 rounded-2xl bg-card p-5 shadow-[0_10px_40px_rgb(16_26_60/0.07)] ring-1 ring-foreground/5 md:p-6 dark:shadow-none dark:ring-foreground/10"
+      >
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 id="estado-licencia" className="font-heading text-xl font-bold tracking-wide uppercase">
+            Estado de la licencia
+          </h2>
+          <span data-estado={r.estado} className="font-heading text-sm font-bold tracking-wider uppercase">
             {ETIQUETA_ESTADO_FICHA[r.estado]}
           </span>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <div>
-            <h3 className="mb-2 text-sm font-medium">Requisitos</h3>
-            <ul className="grid gap-1" aria-label="Requisitos de la licencia">
+        </div>
+        <RutaDeLicencia estado={r.estado} className="max-w-3xl" />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+          <div className="grid content-start gap-2">
+            <h3 className="font-heading text-sm font-bold tracking-wide uppercase">Requisitos</h3>
+            <ul className="grid gap-x-6 sm:grid-cols-2" aria-label="Requisitos de la licencia">
               {r.requisitos.map((req) => (
-                <li key={req.clave} className="flex items-center gap-2 text-sm">
-                  <span aria-hidden>{req.cumple ? '✓' : '✗'}</span>
-                  <span className={req.cumple ? '' : 'text-destructive'}>
+                <li key={req.clave} className="flex items-start gap-2 border-b border-dashed border-border py-2 text-sm">
+                  {req.cumple ? (
+                    <CircleCheck className="mt-0.5 size-4 shrink-0 text-[#1e7a4c] dark:text-[#6fcf9a]" aria-hidden />
+                  ) : (
+                    <CircleX className="mt-0.5 size-4 shrink-0 text-[#b42318] dark:text-[#f7b4a8]" aria-hidden />
+                  )}
+                  <span className={cn(req.cumple ? 'text-foreground' : 'text-[#7a1a10] dark:text-[#f7b4a8]')}>
                     {req.detalle} — {req.cumple ? 'cumple' : 'falta'}
                   </span>
                 </li>
               ))}
             </ul>
           </div>
-          {r.alertas.length > 0 && (
-            <div>
-              <h3 className="mb-2 text-sm font-medium text-amber-600">Alertas</h3>
-              <ul className="grid gap-1 text-sm">{r.alertas.map((a) => <li key={a}>{a}</li>)}</ul>
-            </div>
-          )}
-          {r.bloqueos.length > 0 && (
-            <div>
-              <h3 className="mb-2 text-sm font-medium text-destructive">Bloqueos</h3>
-              <ul className="grid gap-1 text-sm">{r.bloqueos.map((b) => <li key={b}>{b}</li>)}</ul>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          <div className="grid content-start gap-4">
+            {r.bloqueos.length > 0 && (
+              <div className="grid gap-2 rounded-xl border border-[#b42318]/30 bg-[#fdecea] p-4 text-sm text-[#7a1a10] dark:bg-[#b42318]/15 dark:text-[#f7b4a8]">
+                <h3 className="font-heading text-sm font-bold tracking-wide uppercase">Bloqueos</h3>
+                <ul className="grid gap-1">{r.bloqueos.map((b) => <li key={b}>{b}</li>)}</ul>
+              </div>
+            )}
+            {r.alertas.length > 0 && (
+              <div className="grid gap-2 rounded-xl border border-[#8a5a00]/35 bg-[#fdf3e1] p-4 text-sm text-[#5c3c00] dark:bg-[#8a5a00]/15 dark:text-[#f0c675]">
+                <h3 className="font-heading flex items-center gap-1.5 text-sm font-bold tracking-wide uppercase">
+                  <TriangleAlert className="size-4" aria-hidden />
+                  Alertas
+                </h3>
+                <ul className="grid gap-1">{r.alertas.map((a) => <li key={a}>{a}</li>)}</ul>
+              </div>
+            )}
+            {r.bloqueos.length === 0 && r.alertas.length === 0 && (
+              <p className="text-sm text-muted-foreground">Sin alertas de vencimiento ni bloqueos.</p>
+            )}
+          </div>
+        </div>
+      </section>
 
       <form onSubmit={formulario.handleSubmit((v) => guardar.mutate(v))} className="grid gap-6">
+        <fieldset disabled={!ficha.cursoAprobado} className="grid min-w-0 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>
@@ -234,8 +264,9 @@ export function FichaPage({ cod }: { cod: string }) {
           </CardContent>
         </Card>
 
+        </fieldset>
         <div className="flex justify-end">
-          <Button type="submit" disabled={guardar.isPending}>
+          <Button type="submit" disabled={guardar.isPending || !ficha.cursoAprobado}>
             {guardar.isPending ? 'Guardando…' : 'Guardar ficha'}
           </Button>
         </div>

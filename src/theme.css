@@ -193,3 +193,13 @@
     }
   }
 }
+
+@media print {
+  [data-slot='sidebar-container'],
+  [data-slot='sidebar-gap'] {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}

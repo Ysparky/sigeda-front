@@ -361,6 +361,15 @@ export const PANTALLAS = {
     padre: '/grupos',
     enMenu: false,
   },
+  constancia: {
+    ruta: '/constancias/$cod',
+    titulo: 'Constancia de egreso',
+    descripcion: 'Constancia del curso del CIAC para el trámite de la licencia ante la DGAC.',
+    grupo: 'Matrícula',
+    icono: FileText,
+    permiso: 'Read',
+    enMenu: false,
+  },
   registrarGrupo: {
     ruta: '/grupos/nuevo',
     titulo: 'Registrar grupo',
