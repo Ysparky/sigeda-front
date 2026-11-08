@@ -1,0 +1,143 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "skipped-heading",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mapa-y-hoy.html"
+        ],
+        "createdAt": "2026-11-08T11:08:28.388Z",
+        "reason": "Claude: decision-round sketch, not shipped UI; kept only as the critique reference"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mapa-y-hoy.html"
+        ],
+        "createdAt": "2026-11-08T11:08:28.408Z",
+        "reason": "Claude: decision-round sketch, not shipped UI; kept only as the critique reference"
+      },
+      {
+        "rule": "hero-eyebrow-chip",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mapa-y-hoy.html"
+        ],
+        "createdAt": "2026-11-08T11:08:28.428Z",
+        "reason": "Claude: decision-round sketch, not shipped UI; kept only as the critique reference"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mapa-y-hoy.html"
+        ],
+        "createdAt": "2026-11-08T11:08:28.449Z",
+        "reason": "Claude: decision-round sketch, not shipped UI; kept only as the critique reference"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/mapa-y-hoy.html"
+        ],
+        "createdAt": "2026-11-08T11:08:28.469Z",
+        "reason": "Claude: decision-round sketch, not shipped UI; kept only as the critique reference"
+      },
+      {
+        "rule": "skipped-heading",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/aula-con-pestanas.html"
+        ],
+        "createdAt": "2026-11-08T11:08:28.490Z",
+        "reason": "Claude: decision-round sketch, not shipped UI; kept only as the critique reference"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/aula-con-pestanas.html"
+        ],
+        "createdAt": "2026-11-08T11:08:28.511Z",
+        "reason": "Claude: decision-round sketch, not shipped UI; kept only as the critique reference"
+      },
+      {
+        "rule": "hero-eyebrow-chip",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/aula-con-pestanas.html"
+        ],
+        "createdAt": "2026-11-08T11:08:28.531Z",
+        "reason": "Claude: decision-round sketch, not shipped UI; kept only as the critique reference"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/aula-con-pestanas.html"
+        ],
+        "createdAt": "2026-11-08T11:08:28.551Z",
+        "reason": "Claude: decision-round sketch, not shipped UI; kept only as the critique reference"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/aula-con-pestanas.html"
+        ],
+        "createdAt": "2026-11-08T11:08:28.571Z",
+        "reason": "Claude: decision-round sketch, not shipped UI; kept only as the critique reference"
+      },
+      {
+        "rule": "skipped-heading",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/ruta-a-la-licencia.html"
+        ],
+        "createdAt": "2026-11-08T11:08:28.590Z",
+        "reason": "Claude: decision-round sketch, not shipped UI; kept only as the critique reference"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/ruta-a-la-licencia.html"
+        ],
+        "createdAt": "2026-11-08T11:08:28.610Z",
+        "reason": "Claude: decision-round sketch, not shipped UI; kept only as the critique reference"
+      },
+      {
+        "rule": "hero-eyebrow-chip",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/ruta-a-la-licencia.html"
+        ],
+        "createdAt": "2026-11-08T11:08:28.629Z",
+        "reason": "Claude: decision-round sketch, not shipped UI; kept only as the critique reference"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/ruta-a-la-licencia.html"
+        ],
+        "createdAt": "2026-11-08T11:08:28.649Z",
+        "reason": "Claude: decision-round sketch, not shipped UI; kept only as the critique reference"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/ruta-a-la-licencia.html"
+        ],
+        "createdAt": "2026-11-08T11:08:28.669Z",
+        "reason": "Claude: decision-round sketch, not shipped UI; kept only as the critique reference"
+      }
+    ]
+  }
+}

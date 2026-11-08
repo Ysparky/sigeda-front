@@ -1,0 +1,520 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-08T11:19:05.846415+00:00",
+  "title": "Design System: SIGEDA",
+  "extensions": {
+    "colorMeta": {
+      "marino": {
+        "role": "primary",
+        "displayName": "Marino de Escuadrón",
+        "canonical": "#101A3C",
+        "tonalRamp": [
+          "oklch(15% 0.018 268)",
+          "oklch(26% 0.032 268)",
+          "oklch(38% 0.046 268)",
+          "oklch(49% 0.060 268)",
+          "oklch(61% 0.060 268)",
+          "oklch(72% 0.046 268)",
+          "oklch(84% 0.032 268)",
+          "oklch(95% 0.018 268)"
+        ]
+      },
+      "dorado": {
+        "role": "secondary",
+        "displayName": "Dorado de Ala",
+        "canonical": "#D8B858",
+        "tonalRamp": [
+          "oklch(15% 0.033 91)",
+          "oklch(26% 0.058 91)",
+          "oklch(38% 0.083 91)",
+          "oklch(49% 0.108 91)",
+          "oklch(61% 0.108 91)",
+          "oklch(72% 0.083 91)",
+          "oklch(84% 0.058 91)",
+          "oklch(95% 0.033 91)"
+        ]
+      },
+      "dorado-claro": {
+        "role": "secondary",
+        "displayName": "Dorado Claro",
+        "canonical": "#FBF3DA",
+        "tonalRamp": [
+          "oklch(15% 0.009 92)",
+          "oklch(26% 0.016 92)",
+          "oklch(38% 0.023 92)",
+          "oklch(49% 0.030 92)",
+          "oklch(61% 0.030 92)",
+          "oklch(72% 0.023 92)",
+          "oklch(84% 0.016 92)",
+          "oklch(95% 0.009 92)"
+        ]
+      },
+      "dorado-tinta": {
+        "role": "secondary",
+        "displayName": "Tinta Dorada",
+        "canonical": "#4D3F12",
+        "tonalRamp": [
+          "oklch(15% 0.018 91)",
+          "oklch(26% 0.031 91)",
+          "oklch(38% 0.044 91)",
+          "oklch(49% 0.058 91)",
+          "oklch(61% 0.058 91)",
+          "oklch(72% 0.044 91)",
+          "oklch(84% 0.031 91)",
+          "oklch(95% 0.018 91)"
+        ]
+      },
+      "azul-foco": {
+        "role": "tertiary",
+        "displayName": "Azul de Foco",
+        "canonical": "#2540A1",
+        "tonalRamp": [
+          "oklch(15% 0.044 267)",
+          "oklch(26% 0.077 267)",
+          "oklch(38% 0.110 267)",
+          "oklch(49% 0.144 267)",
+          "oklch(61% 0.144 267)",
+          "oklch(72% 0.110 267)",
+          "oklch(84% 0.077 267)",
+          "oklch(95% 0.044 267)"
+        ]
+      },
+      "lienzo": {
+        "role": "neutral",
+        "displayName": "Lienzo",
+        "canonical": "#F8F8F8",
+        "tonalRamp": [
+          "oklch(15% 0.000 90)",
+          "oklch(26% 0.000 90)",
+          "oklch(38% 0.000 90)",
+          "oklch(49% 0.000 90)",
+          "oklch(61% 0.000 90)",
+          "oklch(72% 0.000 90)",
+          "oklch(84% 0.000 90)",
+          "oklch(95% 0.000 90)"
+        ]
+      },
+      "papel": {
+        "role": "neutral",
+        "displayName": "Papel",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "oklch(15% 0.000 90)",
+          "oklch(26% 0.000 90)",
+          "oklch(38% 0.000 90)",
+          "oklch(49% 0.000 90)",
+          "oklch(61% 0.000 90)",
+          "oklch(72% 0.000 90)",
+          "oklch(84% 0.000 90)",
+          "oklch(95% 0.000 90)"
+        ]
+      },
+      "bruma": {
+        "role": "neutral",
+        "displayName": "Bruma",
+        "canonical": "#EEF0F6",
+        "tonalRamp": [
+          "oklch(15% 0.002 271)",
+          "oklch(26% 0.004 271)",
+          "oklch(38% 0.006 271)",
+          "oklch(49% 0.007 271)",
+          "oklch(61% 0.007 271)",
+          "oklch(72% 0.006 271)",
+          "oklch(84% 0.004 271)",
+          "oklch(95% 0.002 271)"
+        ]
+      },
+      "texto-cuerpo": {
+        "role": "neutral",
+        "displayName": "Pizarra",
+        "canonical": "#5B6072",
+        "tonalRamp": [
+          "oklch(15% 0.008 273)",
+          "oklch(26% 0.014 273)",
+          "oklch(38% 0.020 273)",
+          "oklch(49% 0.026 273)",
+          "oklch(61% 0.026 273)",
+          "oklch(72% 0.020 273)",
+          "oklch(84% 0.014 273)",
+          "oklch(95% 0.008 273)"
+        ]
+      },
+      "texto-tenue": {
+        "role": "neutral",
+        "displayName": "Gris Altímetro",
+        "canonical": "#A6ACBE",
+        "tonalRamp": [
+          "oklch(15% 0.007 271)",
+          "oklch(26% 0.013 271)",
+          "oklch(38% 0.018 271)",
+          "oklch(49% 0.024 271)",
+          "oklch(61% 0.024 271)",
+          "oklch(72% 0.018 271)",
+          "oklch(84% 0.013 271)",
+          "oklch(95% 0.007 271)"
+        ]
+      },
+      "linea": {
+        "role": "neutral",
+        "displayName": "Línea",
+        "canonical": "#D9DCE5",
+        "tonalRamp": [
+          "oklch(15% 0.003 271)",
+          "oklch(26% 0.006 271)",
+          "oklch(38% 0.009 271)",
+          "oklch(49% 0.011 271)",
+          "oklch(61% 0.011 271)",
+          "oklch(72% 0.009 271)",
+          "oklch(84% 0.006 271)",
+          "oklch(95% 0.003 271)"
+        ]
+      },
+      "linea-control": {
+        "role": "neutral",
+        "displayName": "Línea de Control",
+        "canonical": "#C9CEDB",
+        "tonalRamp": [
+          "oklch(15% 0.005 269)",
+          "oklch(26% 0.009 269)",
+          "oklch(38% 0.013 269)",
+          "oklch(49% 0.017 269)",
+          "oklch(61% 0.017 269)",
+          "oklch(72% 0.013 269)",
+          "oklch(84% 0.009 269)",
+          "oklch(95% 0.005 269)"
+        ]
+      },
+      "riel-activo": {
+        "role": "neutral",
+        "displayName": "Riel Activo",
+        "canonical": "#1E2A55",
+        "tonalRamp": [
+          "oklch(15% 0.022 269)",
+          "oklch(26% 0.038 269)",
+          "oklch(38% 0.055 269)",
+          "oklch(49% 0.071 269)",
+          "oklch(61% 0.071 269)",
+          "oklch(72% 0.055 269)",
+          "oklch(84% 0.038 269)",
+          "oklch(95% 0.022 269)"
+        ]
+      },
+      "riel-texto": {
+        "role": "neutral",
+        "displayName": "Texto de Riel",
+        "canonical": "#DDE1EC",
+        "tonalRamp": [
+          "oklch(15% 0.004 270)",
+          "oklch(26% 0.007 270)",
+          "oklch(38% 0.011 270)",
+          "oklch(49% 0.014 270)",
+          "oklch(61% 0.014 270)",
+          "oklch(72% 0.011 270)",
+          "oklch(84% 0.007 270)",
+          "oklch(95% 0.004 270)"
+        ]
+      },
+      "riel-grupo": {
+        "role": "neutral",
+        "displayName": "Etiqueta de Riel",
+        "canonical": "#9AA3C0",
+        "tonalRamp": [
+          "oklch(15% 0.012 272)",
+          "oklch(26% 0.021 272)",
+          "oklch(38% 0.030 272)",
+          "oklch(49% 0.039 272)",
+          "oklch(61% 0.039 272)",
+          "oklch(72% 0.030 272)",
+          "oklch(84% 0.021 272)",
+          "oklch(95% 0.012 272)"
+        ]
+      },
+      "exito": {
+        "role": "semantic",
+        "displayName": "Éxito",
+        "canonical": "#1E7A4C",
+        "tonalRamp": [
+          "oklch(15% 0.030 156)",
+          "oklch(26% 0.054 156)",
+          "oklch(38% 0.077 156)",
+          "oklch(49% 0.100 156)",
+          "oklch(61% 0.100 156)",
+          "oklch(72% 0.077 156)",
+          "oklch(84% 0.054 156)",
+          "oklch(95% 0.030 156)"
+        ]
+      },
+      "aviso": {
+        "role": "semantic",
+        "displayName": "Aviso",
+        "canonical": "#8A5A00",
+        "tonalRamp": [
+          "oklch(15% 0.029 73)",
+          "oklch(26% 0.052 73)",
+          "oklch(38% 0.074 73)",
+          "oklch(49% 0.097 73)",
+          "oklch(61% 0.097 73)",
+          "oklch(72% 0.074 73)",
+          "oklch(84% 0.052 73)",
+          "oklch(95% 0.029 73)"
+        ]
+      },
+      "error": {
+        "role": "semantic",
+        "displayName": "Error",
+        "canonical": "#B42318",
+        "tonalRamp": [
+          "oklch(15% 0.050 30)",
+          "oklch(26% 0.087 30)",
+          "oklch(38% 0.125 30)",
+          "oklch(49% 0.163 30)",
+          "oklch(61% 0.163 30)",
+          "oklch(72% 0.125 30)",
+          "oklch(84% 0.087 30)",
+          "oklch(95% 0.050 30)"
+        ]
+      },
+      "noche-lienzo": {
+        "role": "neutral",
+        "displayName": "Lienzo Nocturno",
+        "canonical": "#0B1230",
+        "tonalRamp": [
+          "oklch(15% 0.016 270)",
+          "oklch(26% 0.029 270)",
+          "oklch(38% 0.042 270)",
+          "oklch(49% 0.054 270)",
+          "oklch(61% 0.054 270)",
+          "oklch(72% 0.042 270)",
+          "oklch(84% 0.029 270)",
+          "oklch(95% 0.016 270)"
+        ]
+      },
+      "noche-panel": {
+        "role": "neutral",
+        "displayName": "Panel Nocturno",
+        "canonical": "#131C40",
+        "tonalRamp": [
+          "oklch(15% 0.019 270)",
+          "oklch(26% 0.033 270)",
+          "oklch(38% 0.048 270)",
+          "oklch(49% 0.062 270)",
+          "oklch(61% 0.062 270)",
+          "oklch(72% 0.048 270)",
+          "oklch(84% 0.033 270)",
+          "oklch(95% 0.019 270)"
+        ]
+      },
+      "noche-riel": {
+        "role": "neutral",
+        "displayName": "Riel Nocturno",
+        "canonical": "#070D24",
+        "tonalRamp": [
+          "oklch(15% 0.013 269)",
+          "oklch(26% 0.023 269)",
+          "oklch(38% 0.033 269)",
+          "oklch(49% 0.044 269)",
+          "oklch(61% 0.044 269)",
+          "oklch(72% 0.033 269)",
+          "oklch(84% 0.023 269)",
+          "oklch(95% 0.013 269)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Título del aula y de páginas (MI CURSO), 48px md / 36px móvil; landing hasta 72px."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Banda del programa y paneles públicos."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Títulos de Panel y Card."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Texto corrido y descripciones, 15px."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Rótulo de dato en el pase y grupos del riel."
+      }
+    },
+    "shadows": [
+      {
+        "name": "panel",
+        "value": "0 10px 40px rgb(16 26 60 / 0.07)",
+        "purpose": "Panel, Card, banda del programa, paneles públicos; con anillo 1px foreground/5%. Se omite en oscuro."
+      },
+      {
+        "name": "pase",
+        "value": "0 14px 40px rgb(16 26 60 / 0.18)",
+        "purpose": "Solo el pase del próximo turno."
+      },
+      {
+        "name": "filete-activo",
+        "value": "inset 3px 0 0 #D8B858",
+        "purpose": "Ítem activo del riel."
+      },
+      {
+        "name": "halo-control",
+        "value": "0 0 0 3px rgba(216,184,88,0.45)",
+        "purpose": "Foco de inputs públicos."
+      }
+    ],
+    "motion": [
+      {
+        "name": "estado",
+        "value": "150ms ease (transition por defecto de Tailwind)",
+        "purpose": "Hover y foco de botones, controles e ítems del riel; giro del chevron al desplegar una fase."
+      },
+      {
+        "name": "scroll",
+        "value": "scroll-behavior: smooth solo con prefers-reduced-motion: no-preference",
+        "purpose": "Desplazamiento de anclas."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal dentro de la app autenticada (tema claro).",
+      "html": "<button class=\"ds-btn-primary\">Guardar</button>",
+      "css": ".ds-btn-primary{font-family:\"Source Sans 3 Variable\",\"Inter Variable\",sans-serif;background:var(--primary,#101A3C);color:var(--primary-foreground,#fff);height:32px;padding:0 10px;border:1px solid transparent;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:background .15s,box-shadow .15s}.ds-btn-primary:hover{background:color-mix(in oklch,#101A3C 88%,transparent)}.ds-btn-primary:focus-visible{outline:none;border-color:#2540A1;box-shadow:0 0 0 3px rgb(37 64 161 / .5)}.ds-btn-primary:active{transform:translateY(1px)}"
+    },
+    {
+      "name": "Botón oro",
+      "kind": "button",
+      "refersTo": "button-oro",
+      "description": "Acción de marca en páginas públicas (postular, ingresar).",
+      "html": "<button class=\"ds-btn-oro\">Postula ahora <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></button>",
+      "css": ".ds-btn-oro{font-family:\"Barlow Semi Condensed\",\"Source Sans 3 Variable\",sans-serif;display:inline-flex;align-items:center;gap:8px;background:#D8B858;color:#101A3C;padding:14px 28px;border:none;border-radius:9999px;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;transition:filter .15s}.ds-btn-oro:hover{filter:brightness(.95)}.ds-btn-oro:focus-visible{outline:none;box-shadow:0 0 0 2px #fff,0 0 0 4px #D8B858}"
+    },
+    {
+      "name": "Enlace de acción",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Enlace de acción del aula: mayúsculas condensadas con subrayado dorado.",
+      "html": "<a href=\"#\" class=\"ds-enlace\">Mis exámenes <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></a>",
+      "css": ".ds-enlace{font-family:\"Barlow Semi Condensed\",\"Source Sans 3 Variable\",sans-serif;display:inline-flex;align-items:center;gap:6px;color:#101A3C;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;text-decoration:underline;text-decoration-color:#D8B858;text-decoration-thickness:2px;text-underline-offset:4px;border-radius:9999px}.ds-enlace:hover{text-decoration-color:#101A3C}.ds-enlace:focus-visible{outline:none;box-shadow:0 0 0 2px #2540A1}"
+    },
+    {
+      "name": "Control de formulario",
+      "kind": "input",
+      "refersTo": "control",
+      "description": "Input público con halo dorado al enfocar.",
+      "html": "<input class=\"ds-control\" placeholder=\"Usuario o correo\">",
+      "css": ".ds-control{font-family:\"Source Sans 3 Variable\",\"Inter Variable\",sans-serif;height:44px;width:100%;max-width:320px;background:#fff;color:#101A3C;border:1px solid #D9DCE5;border-radius:8px;padding:0 14px;font-size:15px;outline:none;transition:border-color .15s,box-shadow .15s}.ds-control::placeholder{color:#6B7185}.ds-control:focus-visible{border-color:#2540A1;box-shadow:0 0 0 3px rgba(216,184,88,.45)}.ds-control[aria-invalid=true]{border-color:#B42318}"
+    },
+    {
+      "name": "Riel lateral",
+      "kind": "nav",
+      "refersTo": "riel",
+      "description": "Navegación marina con filete dorado en el ítem activo.",
+      "html": "<nav class=\"ds-riel\"><p class=\"ds-riel-grupo\">Vuelo</p><a class=\"ds-riel-item\" aria-current=\"page\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M3 10.5 12 3l9 7.5V21H3z\"/></svg>Inicio</a><a class=\"ds-riel-item\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\"/><path d=\"M16 2v4M8 2v4M3 10h18\"/></svg>Mis turnos</a></nav>",
+      "css": ".ds-riel{font-family:\"Source Sans 3 Variable\",\"Inter Variable\",sans-serif;background:#101A3C;color:#DDE1EC;padding:12px;width:240px;display:grid;gap:2px}.ds-riel-grupo{font-family:\"Barlow Semi Condensed\",\"Source Sans 3 Variable\",sans-serif;margin:4px 8px 6px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#9AA3C0}.ds-riel-item{display:flex;align-items:center;gap:8px;height:36px;padding:0 8px;border-radius:8px;color:#DDE1EC;text-decoration:none;font-size:15px}.ds-riel-item:hover{background:rgb(255 255 255 / .08);color:#fff}.ds-riel-item[aria-current=page]{background:rgb(255 255 255 / .08);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 #D8B858}.ds-riel-item[aria-current=page] svg{color:#D8B858}.ds-riel-item:focus-visible{outline:none;box-shadow:0 0 0 2px #D8B858}"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Superficie blanca con sombra marina y título condensado.",
+      "html": "<section class=\"ds-panel\"><h2>Mis horas</h2><ul><li><span>Vuelo con instructor</span><b>13 h</b></li><li><span>Simulador</span><b>0 h</b></li></ul></section>",
+      "css": ".ds-panel{font-family:\"Source Sans 3 Variable\",\"Inter Variable\",sans-serif;background:#fff;color:#101A3C;border-radius:14.4px;padding:20px;box-shadow:0 10px 40px rgb(16 26 60 / .07),0 0 0 1px rgb(16 26 60 / .05);max-width:320px}.ds-panel h2{font-family:\"Barlow Semi Condensed\",\"Source Sans 3 Variable\",sans-serif;margin:0 0 12px;font-size:16px;font-weight:700;letter-spacing:.025em;text-transform:uppercase}.ds-panel ul{list-style:none;margin:0;padding:0;font-size:14px}.ds-panel li{display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #D9DCE5}.ds-panel li:first-child{border-top:none;padding-top:0}.ds-panel b{font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "Pase de abordar",
+      "kind": "custom",
+      "refersTo": "pase",
+      "description": "El próximo turno como boleto segmentado con talón dorado.",
+      "html": "<section class=\"ds-pase\"><div class=\"ds-pase-talon\"><span>Próximo turno</span><strong>Dom 15 nov</strong></div><div class=\"ds-pase-seg\"><span>Hora</span><strong>09:00-10:30</strong></div><div class=\"ds-pase-seg\"><span>Aeronave</span><strong>Robinson R22</strong></div><div class=\"ds-pase-seg\"><span>Misión</span><strong>Circuitos</strong></div></section>",
+      "css": ".ds-pase{font-family:\"Barlow Semi Condensed\",\"Source Sans 3 Variable\",sans-serif;display:flex;flex-wrap:wrap;overflow:hidden;border-radius:14.4px;background:#101A3C;color:#fff;box-shadow:0 14px 40px rgb(16 26 60 / .18)}.ds-pase span{display:block;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#B9C1DB}.ds-pase strong{display:block;margin-top:4px;font-size:20px;font-weight:700;letter-spacing:.025em;font-variant-numeric:tabular-nums}.ds-pase-talon{background:#D8B858;color:#101A3C;padding:16px 20px;border-right:2px dotted rgb(16 26 60 / .35)}.ds-pase-talon span{color:#4D3F12}.ds-pase-talon strong{font-size:24px;line-height:1;text-transform:uppercase}.ds-pase-seg{flex:1 1 auto;padding:16px 20px;border-right:1px dashed rgb(255 255 255 / .2)}"
+    },
+    {
+      "name": "Celdas de sub fase",
+      "kind": "custom",
+      "refersTo": "celda-en-curso",
+      "description": "Tres estados del programa: completa, en curso, pendiente, con puntos de misiones.",
+      "html": "<ul class=\"ds-celdas\"><li class=\"ds-celda ds-completa\"><b>Control Básico</b><span class=\"ds-puntos\"><i></i><i></i><i></i></span></li><li class=\"ds-celda ds-curso\"><b>Circuitos y Maniobras</b><span class=\"ds-puntos\"><i class=\"h\"></i><i class=\"s\"></i><i></i></span></li><li class=\"ds-celda ds-pend\"><b>Control Preciso</b><span class=\"ds-puntos\"><i></i><i></i><i></i></span></li></ul>",
+      "css": ".ds-celdas{font-family:\"Source Sans 3 Variable\",\"Inter Variable\",sans-serif;list-style:none;margin:0;padding:12px;display:grid;gap:8px;background:rgb(238 240 246 / .7);border-radius:11.2px;max-width:240px}.ds-celda{display:grid;gap:6px;border:1px solid #D9DCE5;border-radius:11.2px;padding:10px 12px;font-size:13px;background:#fff;color:#101A3C}.ds-completa{background:#101A3C;border-color:#101A3C;color:#fff}.ds-curso{background:#FBF3DA;border:2px solid #D8B858}.ds-puntos{display:flex;gap:4px}.ds-puntos i{width:8px;height:8px;border-radius:50%;background:rgb(16 26 60 / .2)}.ds-completa .ds-puntos i{background:rgb(255 255 255 / .8)}.ds-curso .ds-puntos i{background:rgb(16 26 60 / .25)}.ds-curso .ds-puntos i.h{background:#101A3C}.ds-curso .ds-puntos i.s{background:transparent;box-shadow:inset 0 0 0 2px #101A3C}"
+    },
+    {
+      "name": "Chip de materia",
+      "kind": "chip",
+      "refersTo": null,
+      "description": "Materia de instrucción en tierra; aprobada en marino con check dorado.",
+      "html": "<span class=\"ds-chip ds-chip-ok\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#D8B858\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/></svg>Adoctrinamiento de Vuelo <em>18</em></span>",
+      "css": ".ds-chip{font-family:\"Source Sans 3 Variable\",\"Inter Variable\",sans-serif;display:inline-flex;align-items:center;gap:6px;border:1px solid #D9DCE5;border-radius:9999px;padding:4px 12px 4px 8px;font-size:13px;background:#fff;color:#101A3C}.ds-chip em{font-style:normal;opacity:.75;font-variant-numeric:tabular-nums}.ds-chip-ok{background:#101A3C;border-color:#101A3C;color:#fff}"
+    }
+  ],
+  "narrative": {
+    "northStar": "La Sala de Embarque",
+    "overview": "**Creative North Star: \"La Sala de Embarque\"**\n\nSIGEDA se ve como la sala de operaciones de una escuela de vuelo: un riel marino con la señalética de un aeropuerto, un lienzo claro donde el programa PDI EA-510 se lee de una vez como un tablero de puertas, y el próximo turno impreso como un pase de abordar. El marino es la estructura; el dorado marca una sola cosa por zona: lo actual, lo activo, lo que toca ahora. Lo público (landing, postulación, Mi postulación, login) y lo autenticado comparten paleta, tipografía y titulares en mayúsculas: es la misma escuela de punta a punta.\n\nLa densidad es de herramienta diaria, no de folleto: paneles blancos de 14.4px de radio sobre lienzo gris muy claro, filas con cifras tabulares, celdas de estado compactas. La profundidad es una sola sombra marina difusa; no hay degradados ni vidrio. El tema claro de marca es el predeterminado; el oscuro se deriva de la misma paleta y cambia el acento primario a dorado.",
+    "keyCharacteristics": [
+      "Riel lateral marino con filete dorado en el ítem activo.",
+      "Titulares en Barlow Semi Condensed 700, siempre en mayúsculas con tracking amplio.",
+      "Texto en Source Sans 3 sobre gris pizarra; cifras siempre tabulares.",
+      "Tres estados de progreso legibles sin color de semáforo: marino lleno, dorado claro con borde dorado, contorno gris.",
+      "Una sola sombra marina suave para todo lo que flota."
+    ],
+    "rules": [
+      {
+        "name": "The Una Cosa Dorada Rule",
+        "body": "El dorado señala lo actual o lo activo: la sub fase en curso, el ítem del riel, el talón del próximo turno, el examen por rendir. Si dos cosas vecinas son doradas, una de ellas no es \"ahora\".",
+        "section": "colors"
+      },
+      {
+        "name": "The Dorado No Es Tinta Rule",
+        "body": "Sobre fondo claro el dorado es borde, relleno o subrayado, nunca color de texto; el texto dorado solo aparece sobre marino (acción \"Ver briefing\") o en tema oscuro (#E8C66A).",
+        "section": "colors"
+      },
+      {
+        "name": "The Mayúscula Condensada Rule",
+        "body": "Todo titular (h1–h3, títulos de panel y de columna) va en Barlow Semi Condensed 700, mayúsculas, con tracking amplio. Ningún titular en Source Sans.",
+        "section": "typography"
+      },
+      {
+        "name": "The Cifra Alineada Rule",
+        "body": "Todo número que se compara (notas, horas, días, conteos) es tabular y se alinea a la derecha en su fila.",
+        "section": "typography"
+      },
+      {
+        "name": "The Una Sombra Rule",
+        "body": "Hay una sombra de superficie, marina y difusa. No se inventan otras; nada de sombras grises neutras, desplazadas ni duras.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** usar marino (#101A3C) como estructura (riel, pase, lo completo) y dorado (#D8B858) solo para lo actual o activo.",
+      "**Do** escribir todo titular en Barlow Semi Condensed 700 mayúsculas con tracking amplio, y todo número con cifras tabulares.",
+      "**Do** expresar el progreso con los tres estados de celda (marino lleno / dorado claro con borde dorado / contorno) antes que con barras o porcentajes.",
+      "**Do** usar la sombra de panel `0 10px 40px rgb(16 26 60 / 0.07)` con anillo de 1px para toda superficie elevada, y quitarla en tema oscuro.",
+      "**Do** derivar el tema oscuro de la misma paleta: lienzo #0B1230, panel #131C40, primario dorado."
+    ],
+    "donts": [
+      "**Don't** poner texto dorado sobre fondo claro; usar subrayado, borde o relleno dorado.",
+      "**Don't** usar colores de semáforo (verde/ámbar) para el avance del programa; los semánticos son para mensajes y validación.",
+      "**Don't** armar el aula como grilla de accesos o tablero de tarjetas KPI; el programa es la columna.",
+      "**Don't** introducir sombras grises, duras o desplazadas, ni degradados o vidrio en superficies.",
+      "**Don't** usar el trazo discontinuo fuera del pase de abordar."
+    ]
+  }
+}
