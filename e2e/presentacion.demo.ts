@@ -144,13 +144,17 @@ test('Presentación: el ciclo de un curso en SIGEDA', async ({ page }) => {
   await asentar(page)
   await page.getByRole('link', { name: dni }).click()
   await expect(page.getByRole('heading', { level: 1, name: /Mateo Quispe/ })).toBeVisible({ timeout: 15_000 })
-  await rotulo(page, 'ACTO 1 · INGRESO', 'Admisión', 'Al admitir, el postulante pasa a ALUMNO y entra a la cohorte.')
+  await rotulo(page, 'ACTO 1 · INGRESO', 'Admisión', 'Al admitir, el postulante pasa a ALUMNO; el grupo se forma después.')
   await page.getByRole('button', { name: 'Admitir', exact: true }).click()
   await expect(page).toHaveURL(/\/matriculas/, { timeout: 15_000 })
 
-  await page.goto('/grupos/7')
+  await page.goto('/grupos/7/editar')
   await asentar(page)
-  await expect(page.getByRole('table', { name: 'Alumnos del grupo' })).toContainText('Mateo Quispe')
+  await rotulo(page, 'ACTO 1 · INGRESO', 'Formación del grupo', 'El Coordinador asigna al alumno y a su instructor responsable (hasta 20 por grupo).')
+  await page.getByRole('checkbox', { name: /Mateo Quispe/ }).check()
+  await page.getByLabel('Instructor responsable').selectOption({ label: 'Juan Torres Perez' })
+  await page.getByRole('button', { name: 'Guardar grupo' }).click()
+  await expect(page.getByRole('table', { name: 'Alumnos del grupo' })).toContainText('Mateo Quispe', { timeout: 15_000 })
   await rotulo(page, 'ACTO 1 · INGRESO', 'Ya es alumno de la cohorte', 'Mateo Quispe figura en la Promoción 2026-I: el curso empieza.')
 
   // ════════ ACTO 2 · INSTRUCCIÓN EN TIERRA ════════
