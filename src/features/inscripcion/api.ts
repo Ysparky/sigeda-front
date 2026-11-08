@@ -57,7 +57,6 @@ export type ConvocatoriaPublica = {
   fechaInicio: string
   fechaFin: string
   vacantes: number
-  documentosRequeridos: string | null
 }
 
 const esquemaConvocatoriaPublica = z.object({
@@ -68,7 +67,6 @@ const esquemaConvocatoriaPublica = z.object({
   fechaInicio: z.string(),
   fechaFin: z.string(),
   vacantes: z.number(),
-  documentosRequeridos: z.string().nullish().transform((v) => v ?? null),
 })
 
 export async function listarConvocatoriasPublicas(): Promise<ConvocatoriaPublica[]> {
@@ -86,72 +84,127 @@ export const convocatoriasPublicasQuery = () =>
 export const convocatoriaPublicaQuery = (id: number) =>
   queryOptions({ queryKey: [...clavesInscripcion.todo, 'convocatoria', id], queryFn: () => obtenerConvocatoriaPublica(id) })
 
-// --- Matrícula ---
+// --- Postulación (sin cuenta) ---
 
-export type EstadoMatricula = 'PENDIENTE' | 'OBSERVADA' | 'VALIDADA' | 'RECHAZADA' | 'NO_ADMITIDO'
+export const TIPOS_DOCUMENTO_IDENTIDAD = ['DNI', 'CE', 'PASAPORTE'] as const
+export type TipoDocumentoIdentidad = (typeof TIPOS_DOCUMENTO_IDENTIDAD)[number]
 
-export type DatosMatricula = {
-  idConvocatoria: number
-  dni: string
-  nombres: string
-  aPaterno: string
-  aMaterno: string
-  correo: string
-  contacto: string
-  idHorario: number | null
-  password: string
-}
+export const DOCUMENTOS_POSTULACION = [
+  'DOCUMENTO_IDENTIDAD',
+  'CERTIFICADO_SECUNDARIA',
+  'FOTOGRAFIA',
+  'ANTECEDENTES_POLICIALES',
+  'ESTUDIOS_SUPERIORES',
+  'CERTIFICADO_MEDICO',
+] as const
+export type TipoDocumentoPostulacion = (typeof DOCUMENTOS_POSTULACION)[number]
 
-export type MiMatricula = {
-  id: number
-  idCurso: number | null
-  dni: string
-  nombres: string
-  aPaterno: string
-  aMaterno: string
-  correo: string
-  contacto: string | null
-  idHorario: number | null
-  estado: EstadoMatricula
-  motivoRechazo: string | null
-  observaciones: string | null
-  resultado: 'ADMITIDO' | 'NO_ADMITIDO' | null
-}
+export type EstadoMatricula = 'PENDIENTE' | 'OBSERVADA' | 'VALIDADA' | 'CITADA' | 'ADMITIDA' | 'NO_ADMITIDO' | 'RECHAZADA'
+export type EstadoDocumento = 'FALTANTE' | 'PENDIENTE' | 'OBSERVADO' | 'ACEPTADO'
 
-const esquemaMia = z.object({
-  id: z.number(),
-  idCurso: z.number().nullable(),
-  dni: z.string(),
-  nombres: z.string(),
-  aPaterno: z.string(),
-  aMaterno: z.string(),
-  correo: z.string(),
-  contacto: z.string().nullable(),
-  idHorario: z.number().nullable(),
-  estado: z.enum(['PENDIENTE', 'OBSERVADA', 'VALIDADA', 'RECHAZADA', 'NO_ADMITIDO']),
-  motivoRechazo: z.string().nullable(),
-  observaciones: z.string().nullish().transform((v) => v ?? null),
-  resultado: z.enum(['ADMITIDO', 'NO_ADMITIDO']).nullish().transform((v) => v ?? null),
+const esquemaDocumento = z.object({
+  tipo: z.enum(DOCUMENTOS_POSTULACION),
+  nombre: z.string(),
+  obligatorio: z.boolean(),
+  momento: z.enum(['POSTULACION', 'ANTES_DEL_RESULTADO']),
+  soloImagen: z.boolean(),
+  estado: z.enum(['FALTANTE', 'PENDIENTE', 'OBSERVADO', 'ACEPTADO']),
+  observacion: z.string().nullish().transform((v) => v ?? null),
 })
 
-export const clavesMia = { mia: () => [...clavesInscripcion.todo, 'mia'] as const }
+export type DocumentoVista = z.infer<typeof esquemaDocumento>
 
-export async function crearMatricula(datos: DatosMatricula, comprobante: File): Promise<{ matriculaId: number }> {
+const esquemaRequisitos = z.object({
+  edadMinima: z.number(),
+  notaMinimaAdmision: z.number(),
+  documentos: z.array(esquemaDocumento),
+})
+
+export type Requisitos = z.infer<typeof esquemaRequisitos>
+
+export const esquemaCitacion = z
+  .object({ fecha: z.string(), hora: z.string(), lugar: z.string() })
+  .nullish()
+  .transform((v) => v ?? null)
+
+export const esquemaEvaluacion = z
+  .object({
+    resultado: z.enum(['ADMITIDO', 'NO_ADMITIDO']),
+    notaConocimientos: z.number().nullable(),
+    entrevista: z.enum(['APTO', 'NO_APTO']).nullable(),
+    evaluacionPsicologica: z.enum(['APTO', 'NO_APTO']).nullable(),
+    observaciones: z.string().nullish().transform((v) => v ?? null),
+  })
+  .nullish()
+  .transform((v) => v ?? null)
+
+const ESTADOS = ['PENDIENTE', 'OBSERVADA', 'VALIDADA', 'CITADA', 'ADMITIDA', 'NO_ADMITIDO', 'RECHAZADA'] as const
+
+const esquemaPostulacion = z.object({
+  convocatoria: z.string().nullish().transform((v) => v ?? null),
+  nombres: z.string(),
+  aPaterno: z.string(),
+  fecha: z.string(),
+  estado: z.enum(ESTADOS),
+  observaciones: z.string().nullish().transform((v) => v ?? null),
+  motivoRechazo: z.string().nullish().transform((v) => v ?? null),
+  documentos: z.array(esquemaDocumento),
+  citacion: esquemaCitacion,
+  evaluacion: esquemaEvaluacion,
+  cuentaActiva: z.boolean(),
+})
+
+export type Postulacion = z.infer<typeof esquemaPostulacion>
+
+export type DatosPostulacion = {
+  idConvocatoria: number
+  tipoDocumento: TipoDocumentoIdentidad
+  numeroDocumento: string
+  nombres: string
+  aPaterno: string
+  aMaterno: string
+  fechaNacimiento: string
+  sexo: 'MASCULINO' | 'FEMENINO'
+  nacionalidad: string
+  direccion: string
+  correo: string
+  contacto: string
+  aceptaDeclaracion: boolean
+}
+
+export type Credencial = { numeroDocumento: string; codigo: string }
+
+export const requisitosQuery = () =>
+  queryOptions({
+    queryKey: [...clavesInscripcion.todo, 'requisitos'],
+    queryFn: async () => esquemaRequisitos.parse(await sigeda.get<unknown>('/api/public/postulaciones/requisitos')),
+  })
+
+export async function crearMatricula(
+  datos: DatosPostulacion,
+  archivos: Partial<Record<TipoDocumentoPostulacion, File>>,
+): Promise<{ codigo: string; mensaje: string }> {
   const formulario = new FormData()
   formulario.append('datos', new Blob([JSON.stringify(datos)], { type: 'application/json' }))
-  formulario.append('comprobante', comprobante, comprobante.name)
+  for (const [tipo, archivo] of Object.entries(archivos)) if (archivo) formulario.append(tipo, archivo, archivo.name)
   return sigeda.multipart('POST', '/api/public/matriculas', formulario)
 }
 
-export async function obtenerMiMatricula(): Promise<MiMatricula> {
-  return esquemaMia.parse(await sigeda.get<unknown>('/api/matriculas/mia'))
+export async function consultarPostulacion(credencial: Credencial): Promise<Postulacion> {
+  return esquemaPostulacion.parse(await sigeda.post<unknown>('/api/public/postulaciones/consulta', credencial))
 }
 
-export async function reenviarComprobante(comprobante: File): Promise<{ mensaje: string }> {
+export async function subirDocumento(
+  credencial: Credencial,
+  tipo: TipoDocumentoPostulacion,
+  archivo: File,
+): Promise<{ mensaje: string }> {
   const formulario = new FormData()
-  formulario.append('comprobante', comprobante, comprobante.name)
-  return sigeda.multipart('PUT', '/api/matriculas/mia', formulario)
+  formulario.append('datos', new Blob([JSON.stringify({ ...credencial, tipo })], { type: 'application/json' }))
+  formulario.append('archivo', archivo, archivo.name)
+  return sigeda.multipart('POST', '/api/public/postulaciones/documentos', formulario)
 }
 
-export const miMatriculaQuery = () =>
-  queryOptions({ queryKey: clavesMia.mia(), queryFn: obtenerMiMatricula, retry: false })
+export async function activarCuenta(credencial: Credencial, password: string): Promise<{ mensaje: string; usuario: string }> {
+  return sigeda.post('/api/public/postulaciones/activacion', { ...credencial, password })
+}

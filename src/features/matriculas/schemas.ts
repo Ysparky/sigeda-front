@@ -1,7 +1,8 @@
 import { z } from 'zod'
+import { ESTADOS_MATRICULA } from './api'
 
 export const esquemaBusquedaMatriculas = z.object({
-  estado: z.enum(['PENDIENTE', 'OBSERVADA', 'VALIDADA', 'RECHAZADA', 'NO_ADMITIDO']).default('PENDIENTE'),
+  estado: z.enum(ESTADOS_MATRICULA).default('PENDIENTE'),
 })
 
 export type BusquedaMatriculas = z.infer<typeof esquemaBusquedaMatriculas>

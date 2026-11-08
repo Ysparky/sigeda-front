@@ -9,7 +9,6 @@ function valido(cambios: Partial<ValoresConvocatoria> = {}): ValoresConvocatoria
     fechaInicio: '2026-01-08',
     fechaFin: '2026-01-18',
     vacantes: '20',
-    documentosRequeridos: 'DNI, certificado médico',
     ...cambios,
   }
 }
@@ -44,7 +43,6 @@ describe('esquema de convocatoria', () => {
       fechaInicio: '2026-01-08',
       fechaFin: '2026-01-18',
       vacantes: 20,
-      documentosRequeridos: 'DNI, certificado médico',
-    })
+      })
   })
 })

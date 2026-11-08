@@ -13,7 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MatriculaRouteImport } from './routes/matricula'
-import { Route as MiMatriculaRouteImport } from './routes/mi-matricula'
+import { Route as PostulacionRouteImport } from './routes/postulacion'
 import { Route as AppCuentaRouteImport } from './routes/_app/cuenta'
 import { Route as AppGuiaRouteImport } from './routes/_app/guia'
 import { Route as AppInicioRouteImport } from './routes/_app/inicio'
@@ -108,9 +108,9 @@ const MatriculaRoute = MatriculaRouteImport.update({
   path: '/matricula',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MiMatriculaRoute = MiMatriculaRouteImport.update({
-  id: '/mi-matricula',
-  path: '/mi-matricula',
+const PostulacionRoute = PostulacionRouteImport.update({
+  id: '/postulacion',
+  path: '/postulacion',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppCuentaRoute = AppCuentaRouteImport.update({
@@ -505,7 +505,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/matricula': typeof MatriculaRoute
-  '/mi-matricula': typeof MiMatriculaRoute
+  '/postulacion': typeof PostulacionRoute
   '/cuenta': typeof AppCuentaRoute
   '/guia': typeof AppGuiaRoute
   '/inicio': typeof AppInicioRoute
@@ -585,7 +585,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/matricula': typeof MatriculaRoute
-  '/mi-matricula': typeof MiMatriculaRoute
+  '/postulacion': typeof PostulacionRoute
   '/cuenta': typeof AppCuentaRoute
   '/guia': typeof AppGuiaRoute
   '/inicio': typeof AppInicioRoute
@@ -667,7 +667,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/matricula': typeof MatriculaRoute
-  '/mi-matricula': typeof MiMatriculaRoute
+  '/postulacion': typeof PostulacionRoute
   '/_app/cuenta': typeof AppCuentaRoute
   '/_app/guia': typeof AppGuiaRoute
   '/_app/inicio': typeof AppInicioRoute
@@ -749,7 +749,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/matricula'
-    | '/mi-matricula'
+    | '/postulacion'
     | '/cuenta'
     | '/guia'
     | '/inicio'
@@ -829,7 +829,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/matricula'
-    | '/mi-matricula'
+    | '/postulacion'
     | '/cuenta'
     | '/guia'
     | '/inicio'
@@ -910,7 +910,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/matricula'
-    | '/mi-matricula'
+    | '/postulacion'
     | '/_app/cuenta'
     | '/_app/guia'
     | '/_app/inicio'
@@ -992,7 +992,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   MatriculaRoute: typeof MatriculaRoute
-  MiMatriculaRoute: typeof MiMatriculaRoute
+  PostulacionRoute: typeof PostulacionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1025,11 +1025,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MatriculaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/mi-matricula': {
-      id: '/mi-matricula'
-      path: '/mi-matricula'
-      fullPath: '/mi-matricula'
-      preLoaderRoute: typeof MiMatriculaRouteImport
+    '/postulacion': {
+      id: '/postulacion'
+      path: '/postulacion'
+      fullPath: '/postulacion'
+      preLoaderRoute: typeof PostulacionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/cuenta': {
@@ -1715,7 +1715,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   MatriculaRoute: MatriculaRoute,
-  MiMatriculaRoute: MiMatriculaRoute,
+  PostulacionRoute: PostulacionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

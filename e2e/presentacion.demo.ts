@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test'
 
-import { CUENTAS, type Cuenta } from './ayudantes'
+import { CUENTAS, type Cuenta, admitir, postular } from './ayudantes'
 
 /**
  * Presentación de SIGEDA grabada contra el stack real, como UNA SOLA HISTORIA que sigue el ciclo de
@@ -114,20 +114,8 @@ test('Presentación: el ciclo de un curso en SIGEDA', async ({ page }) => {
   await asentar(page)
   await expect(page.getByRole('heading', { level: 1, name: /Admisión 2026-I/ })).toBeVisible({ timeout: 15_000 })
   await rotulo(page, 'ACTO 1 · INGRESO', 'Postula a la convocatoria', 'El aspirante se matricula a “Admisión 2026-I”, la convocatoria que enruta a la cohorte.')
-  await page.getByLabel('DNI').fill(dni)
-  await page.getByLabel('Nombres').fill('Mateo')
-  await page.getByLabel('Apellido paterno').fill('Quispe')
-  await page.getByLabel('Apellido materno').fill('Rojas')
-  await page.getByLabel('Correo').fill(correo)
-  await page.getByLabel('Teléfono de contacto').fill('999000222')
-  await page.getByLabel('Contraseña').fill('Cambio2026')
-  await page
-    .getByLabel(/Archivo/)
-    .setInputFiles({ name: 'pago.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 demo') })
-  await page.waitForTimeout(900)
-  await page.getByRole('button', { name: 'Enviar matrícula' }).click()
-  await expect(page.getByText('Matrícula enviada')).toBeVisible({ timeout: 15_000 })
-  await rotulo(page, 'ACTO 1 · INGRESO', 'Matrícula enviada', 'Queda pendiente de que el Coordinador valide la documentación.')
+  const codigo = await postular(page, { numero: dni, nombres: 'Mateo', aPaterno: 'Quispe', aMaterno: 'Rojas', correo })
+  await rotulo(page, 'ACTO 1 · INGRESO', 'Postulación enviada', `Sin crear cuenta: con su documento y el código ${codigo} sigue el avance.`)
 
   // El Coordinador gestiona la admisión. Primero la convocatoria: el proceso que la gobierna.
   await entrar(page, CUENTAS.coordinador, 'Coordinador Académico', 'Gestiona la admisión y la cohorte.')
@@ -137,16 +125,8 @@ test('Presentación: el ciclo de un curso en SIGEDA', async ({ page }) => {
   await page.goto('/matriculas')
   await asentar(page)
   await rotulo(page, 'ACTO 1 · INGRESO', 'Bandeja de matrículas', 'Llegan las postulaciones de esa convocatoria; el Coordinador las revisa una por una.')
-  await page.getByRole('link', { name: dni }).click()
-  await expect(page.getByRole('heading', { level: 1, name: /Mateo Quispe/ })).toBeVisible({ timeout: 15_000 })
-  await page.getByRole('button', { name: 'Validar documentación' }).click()
-  await page.goto('/matriculas?estado=VALIDADA')
-  await asentar(page)
-  await page.getByRole('link', { name: dni }).click()
-  await expect(page.getByRole('heading', { level: 1, name: /Mateo Quispe/ })).toBeVisible({ timeout: 15_000 })
-  await rotulo(page, 'ACTO 1 · INGRESO', 'Admisión', 'Al admitir, el postulante pasa a ALUMNO; el grupo se forma después.')
-  await page.getByRole('button', { name: 'Admitir', exact: true }).click()
-  await expect(page).toHaveURL(/\/matriculas/, { timeout: 15_000 })
+  await rotulo(page, 'ACTO 1 · INGRESO', 'Admisión', 'Documentos, citación, evaluación (examen, entrevista y psicológica) y pago de matrícula.')
+  await admitir(page, dni, /Mateo Quispe/)
 
   await page.goto('/grupos/7/editar')
   await asentar(page)

@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test'
 
-import { CUENTAS, entrarComo } from './ayudantes'
+import { admitir, CUENTAS, entrarComo, postular } from './ayudantes'
 
 /**
  * Flujo continuo entrada→desarrollo contra el backend real: una persona se matricula a la convocatoria
- * abierta (Admisión 2026-I), el Coordinador valida y admite —la admisión la promueve a Alumno, sin
- * grupo— y después el Coordinador la asigna a la cohorte (Promoción 2026-I) con su instructor
+ * abierta (Admisión 2026-I) sin crear cuenta; el Coordinador valida, cita, evalúa (la admisión la
+ * promueve a Alumno, sin grupo) y registra el pago; después el Coordinador la asigna a la cohorte (Promoción 2026-I) con su instructor
  * responsable. Es la prueba de integración del seam que H2 y los mocks no cubren.
  *
  * REQUIERE el backend en 8080 sobre un `sigeda_demo` migrado hasta la 037 y re-sembrado (grupo 7
@@ -18,40 +18,18 @@ test.describe('Flujo integrado entrada→desarrollo contra el backend real', () 
     const dni = `9${sufijo}`
     const correo = `aspirante.${sufijo}@correo.com`
 
-    await page.goto('/matricula?convocatoria=1')
-    await page.getByLabel('DNI').fill(dni)
-    await page.getByLabel('Nombres').fill('Aspirante')
-    await page.getByLabel('Apellido paterno').fill('Integra')
-    await page.getByLabel('Apellido materno').fill('E2E')
-    await page.getByLabel('Correo').fill(correo)
-    await page.getByLabel('Teléfono de contacto').fill('999000222')
-    await page.getByLabel('Contraseña').fill('Cambio2026')
-    await page
-      .getByLabel(/Archivo/)
-      .setInputFiles({ name: 'pago.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 e2e') })
-    await page.getByRole('button', { name: 'Enviar matrícula' }).click()
-    await expect(page.getByText('Matrícula enviada')).toBeVisible({ timeout: 15_000 })
+    await postular(page, { numero: dni, nombres: 'Aspirante', aPaterno: 'Integra', aMaterno: `E${sufijo}`, correo })
 
-    // El Coordinador valida la documentación y luego admite.
+    // El Coordinador valida la documentación, cita, registra la evaluación y el pago.
     await entrarComo(page, CUENTAS.coordinador)
-    await page.goto('/matriculas')
-    await expect(page.getByRole('heading', { level: 1, name: 'Matrículas' })).toBeVisible({ timeout: 15_000 })
-    await page.getByRole('link', { name: dni }).click()
-    await expect(page.getByRole('heading', { level: 1, name: /Aspirante Integra/ })).toBeVisible({ timeout: 15_000 })
-    // Validar la documentación redirige a la bandeja; la matrícula, ya VALIDADA, se reabre para admitir.
-    await page.getByRole('button', { name: 'Validar documentación' }).click()
-    await page.goto('/matriculas?estado=VALIDADA')
-    await page.getByRole('link', { name: dni }).click()
-    await expect(page.getByRole('heading', { level: 1, name: /Aspirante Integra/ })).toBeVisible({ timeout: 15_000 })
-    await page.getByRole('button', { name: 'Admitir', exact: true }).click() // 'Admitir' sin casar 'No admitir'
-    await expect(page).toHaveURL(/\/matriculas/, { timeout: 15_000 }) // admisión registrada: vuelve a la bandeja
+    await admitir(page, dni, /Aspirante Integra/)
 
     // La admisión la vuelve Alumno pero sin grupo: el Coordinador forma el grupo después del ingreso.
     await page.goto('/grupos/7/editar')
-    await page.getByRole('checkbox', { name: /Aspirante Integra/ }).check()
+    await page.getByRole('checkbox', { name: `Aspirante Integra E${sufijo}` }).check()
     await page.getByLabel('Instructor responsable').selectOption({ label: 'Juan Torres Perez' })
     await page.getByRole('button', { name: 'Guardar grupo' }).click()
     await expect(page.getByRole('heading', { level: 1, name: 'Promoción 2026-I' })).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByRole('table', { name: 'Alumnos del grupo' })).toContainText('Aspirante Integra')
+    await expect(page.getByRole('table', { name: 'Alumnos del grupo' })).toContainText(`Aspirante Integra E${sufijo}`)
   })
 })

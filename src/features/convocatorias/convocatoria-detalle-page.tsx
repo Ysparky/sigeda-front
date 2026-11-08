@@ -75,9 +75,6 @@ export function ConvocatoriaDetallePage({ id }: { id: number }) {
           <Dato etiqueta="Vacantes">{convocatoria.vacantes}</Dato>
           <Dato etiqueta="Inicio">{convocatoria.fechaInicio}</Dato>
           <Dato etiqueta="Fin">{convocatoria.fechaFin}</Dato>
-          <Dato etiqueta="Documentos requeridos" ancho>
-            {convocatoria.documentosRequeridos ?? '—'}
-          </Dato>
         </CardContent>
       </Card>
     </>

@@ -225,6 +225,12 @@ function Nav({ activo }: { activo: string }) {
         <div className="flex items-center gap-3">
           <div className="hidden items-center gap-4 lg:flex">
             <Link
+              to="/postulacion"
+              className={`font-display rounded text-sm font-bold uppercase tracking-wide text-white/90 hover:text-white ${FOCO}`}
+            >
+              Mi postulación
+            </Link>
+            <Link
               to="/login"
               search={{}}
               className={`font-display rounded text-sm font-bold uppercase tracking-wide text-white/90 hover:text-white ${FOCO}`}

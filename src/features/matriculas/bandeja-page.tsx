@@ -22,7 +22,7 @@ export function BandejaPage() {
     <>
       <PageHeader
         titulo="Matrículas"
-        descripcion="Solicitudes de matrícula del tramo de entrada, con su comprobante de pago."
+        descripcion="Postulaciones: revisión documental, citación, evaluación de admisión y pago de matrícula."
         acciones={
           <label className="grid gap-1 text-sm">
             <span className="text-muted-foreground">Estado</span>
@@ -36,6 +36,8 @@ export function BandejaPage() {
               <NativeSelectOption value="PENDIENTE">Pendientes</NativeSelectOption>
               <NativeSelectOption value="OBSERVADA">Observadas</NativeSelectOption>
               <NativeSelectOption value="VALIDADA">Validadas</NativeSelectOption>
+              <NativeSelectOption value="CITADA">Citadas</NativeSelectOption>
+              <NativeSelectOption value="ADMITIDA">Admitidas</NativeSelectOption>
               <NativeSelectOption value="RECHAZADA">Rechazadas</NativeSelectOption>
               <NativeSelectOption value="NO_ADMITIDO">No admitidas</NativeSelectOption>
             </NativeSelect>
@@ -51,7 +53,7 @@ export function BandejaPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Postulante</TableHead>
-              <TableHead>DNI</TableHead>
+              <TableHead>Documento</TableHead>
               <TableHead>Correo</TableHead>
               <TableHead>Fecha</TableHead>
               <TableHead>Estado</TableHead>
@@ -65,7 +67,7 @@ export function BandejaPage() {
                 </TableCell>
                 <TableCell>
                   <Link to="/matriculas/$id" params={{ id: String(m.id) }} className="text-primary hover:underline">
-                    {m.dni}
+                    {m.numeroDocumento}
                   </Link>
                 </TableCell>
                 <TableCell className="text-muted-foreground">{m.correo}</TableCell>

@@ -3,22 +3,32 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { ArrowLeft, CheckCircle2, Clock, Layers } from 'lucide-react'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { AvisoDeError } from '@/components/aviso-de-error'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { aplicarErroresDeCampo } from '@/lib/formularios'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { Route } from '@/routes/matricula'
-import { convocatoriaPublicaQuery, crearMatricula, cursoQuery, type DatosMatricula } from './api'
+import {
+  convocatoriaPublicaQuery,
+  crearMatricula,
+  cursoQuery,
+  requisitosQuery,
+  type DatosPostulacion,
+  type DocumentoVista,
+  type TipoDocumentoPostulacion,
+} from './api'
 import { BarraPublica } from './barra-publica'
-import { errorDeComprobante, esquemaMatricula, matriculaVacia, type ValoresMatricula } from './schemas'
+import { DECLARACION_JURADA, errorDeArchivo, esquemaMatricula, matriculaVacia, type ValoresMatricula } from './schemas'
 
 function Pagina({ children }: { children: React.ReactNode }) {
   return (
@@ -50,54 +60,117 @@ export function MatriculaPage() {
   return <FormularioMatricula idConvocatoria={convocatoria} />
 }
 
+type Archivos = Partial<Record<TipoDocumentoPostulacion, File>>
+
+function CampoTexto({
+  id,
+  etiqueta,
+  error,
+  descripcion,
+  ...resto
+}: React.ComponentProps<typeof Input> & { etiqueta: string; error?: string; descripcion?: string }) {
+  return (
+    <Field data-invalid={Boolean(error)}>
+      <FieldLabel htmlFor={id}>{etiqueta}</FieldLabel>
+      <Input id={id} aria-invalid={Boolean(error)} {...resto} />
+      {descripcion && <FieldDescription>{descripcion}</FieldDescription>}
+      {error && <FieldError>{error}</FieldError>}
+    </Field>
+  )
+}
+
+function CampoArchivo({
+  documento,
+  error,
+  alElegir,
+}: {
+  documento: DocumentoVista
+  error: string | null
+  alElegir: (archivo: File | null) => void
+}) {
+  const id = `m-doc-${documento.tipo}`
+  const indicacion =
+    documento.momento === 'ANTES_DEL_RESULTADO'
+      ? 'Opcional ahora; obligatorio antes del resultado de admisión.'
+      : documento.obligatorio
+        ? 'Obligatorio.'
+        : 'Opcional, si aplica.'
+  return (
+    <Field data-invalid={Boolean(error)}>
+      <FieldLabel htmlFor={id}>{documento.nombre}</FieldLabel>
+      <Input
+        id={id}
+        type="file"
+        accept={documento.soloImagen ? '.jpg,.jpeg,.png' : '.pdf,.jpg,.jpeg,.png'}
+        aria-invalid={Boolean(error)}
+        onChange={(evento) => alElegir(evento.target.files?.[0] ?? null)}
+      />
+      <FieldDescription>
+        {indicacion} {documento.soloImagen ? 'JPG o PNG' : 'PDF, JPG o PNG'}, máx. 5 MB.
+      </FieldDescription>
+      {error && <FieldError>{error}</FieldError>}
+    </Field>
+  )
+}
+
 function FormularioMatricula({ idConvocatoria }: { idConvocatoria: number }) {
   const convocatoria = useQuery(convocatoriaPublicaQuery(idConvocatoria))
+  const requisitos = useQuery(requisitosQuery())
   const idCurso = convocatoria.data?.idCurso ?? null
   const detalle = useQuery({ ...cursoQuery(idCurso ?? 0), enabled: idCurso !== null })
-  const [archivo, setArchivo] = useState<File | null>(null)
-  const [errorArchivo, setErrorArchivo] = useState<string | null>(null)
-  const [enviado, setEnviado] = useState(false)
+  const [archivos, setArchivos] = useState<Archivos>({})
+  const [erroresArchivo, setErroresArchivo] = useState<Partial<Record<TipoDocumentoPostulacion, string>>>({})
+  const [codigo, setCodigo] = useState<string | null>(null)
 
   const formulario = useForm<ValoresMatricula>({ resolver: zodResolver(esquemaMatricula), defaultValues: matriculaVacia })
   const { errors } = formulario.formState
+  const documentos = requisitos.data?.documentos ?? []
 
   const guardar = useMutation({
     mutationFn: (valores: ValoresMatricula) => {
-      const datos: DatosMatricula = {
-        idConvocatoria,
-        dni: valores.dni,
-        nombres: valores.nombres,
-        aPaterno: valores.aPaterno,
-        aMaterno: valores.aMaterno,
-        correo: valores.correo,
-        contacto: valores.contacto,
-        idHorario: valores.idHorario === '' ? null : Number(valores.idHorario),
-        password: valores.password,
-      }
-      return crearMatricula(datos, archivo as File)
+      const datos: DatosPostulacion = { ...valores, idConvocatoria, aceptaDeclaracion: true }
+      return crearMatricula(datos, archivos)
     },
-    onSuccess: () => setEnviado(true),
+    onSuccess: (respuesta) => setCodigo(respuesta.codigo),
     onError: (error) => {
-      if (error instanceof ApiError) aplicarErroresDeCampo(error, formulario.setError)
+      if (!(error instanceof ApiError)) return
+      aplicarErroresDeCampo(error, formulario.setError)
+      const deArchivos: Partial<Record<TipoDocumentoPostulacion, string>> = {}
+      for (const documento of documentos) {
+        const mensaje = error.erroresDeCampo[documento.tipo]
+        if (mensaje) deArchivos[documento.tipo] = mensaje
+      }
+      setErroresArchivo(deArchivos)
     },
   })
 
+  function elegir(documento: DocumentoVista, archivo: File | null) {
+    setArchivos((previos) => ({ ...previos, [documento.tipo]: archivo ?? undefined }))
+    setErroresArchivo((previos) => ({ ...previos, [documento.tipo]: errorDeArchivo(archivo, documento.soloImagen) ?? undefined }))
+  }
+
   function enviar(valores: ValoresMatricula) {
-    const problema = errorDeComprobante(archivo)
-    setErrorArchivo(problema)
-    if (problema) return
+    const problemas: Partial<Record<TipoDocumentoPostulacion, string>> = {}
+    for (const documento of documentos) {
+      const archivo = archivos[documento.tipo] ?? null
+      const exigido = documento.obligatorio && documento.momento === 'POSTULACION'
+      const problema = archivo ? errorDeArchivo(archivo, documento.soloImagen) : exigido ? `Falta el documento «${documento.nombre}».` : null
+      if (problema) problemas[documento.tipo] = problema
+    }
+    setErroresArchivo(problemas)
+    if (Object.keys(problemas).length > 0) return
     guardar.mutate(valores)
   }
 
-  const errorDetalle = errorDePrimeraCarga(convocatoria) ?? errorDePrimeraCarga(detalle)
+  const errorDetalle = errorDePrimeraCarga(convocatoria) ?? errorDePrimeraCarga(requisitos) ?? errorDePrimeraCarga(detalle)
   if (errorDetalle !== null)
     return (
       <Pagina>
-        <AvisoDeError error={errorDetalle} alReintentar={() => void detalle.refetch()} />
+        <AvisoDeError error={errorDetalle} alReintentar={() => void requisitos.refetch()} />
       </Pagina>
     )
 
-  if (enviado) {
+  if (codigo) {
     return (
       <Pagina>
         <Card className="text-center">
@@ -108,16 +181,17 @@ function FormularioMatricula({ idConvocatoria }: { idConvocatoria: number }) {
             >
               <CheckCircle2 className="size-8" aria-hidden />
             </span>
-            <h1 className="text-2xl font-semibold tracking-tight">Matrícula enviada</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Postulación enviada</h1>
             <p className="max-w-md text-sm text-muted-foreground">
-              Tu matrícula quedó <strong className="text-foreground">pendiente de validación</strong>. Creamos tu
-              cuenta con el correo que indicaste; inicia sesión para seguir su estado y, si hiciera falta, volver a
-              subir tu comprobante.
+              Tu postulación quedó <strong className="text-foreground">en revisión documental</strong>. Guarda tu código:
+              con él y tu número de documento consultas el avance, subsanas lo que te observen y, si eres admitido,
+              activas tu cuenta.
+            </p>
+            <p className="rounded-md border bg-background px-6 py-3 font-mono text-2xl tracking-[0.3em]" aria-label="Código de postulación">
+              {codigo}
             </p>
             <Button asChild className="text-white hover:brightness-110" style={{ backgroundColor: '#101A3C' }}>
-              <Link to="/login" search={{}}>
-                Iniciar sesión
-              </Link>
+              <Link to="/postulacion">Consultar mi postulación</Link>
             </Button>
           </CardContent>
         </Card>
@@ -153,12 +227,16 @@ function FormularioMatricula({ idConvocatoria }: { idConvocatoria: number }) {
             </span>
           </div>
         )}
+        <p className="mt-3 text-sm text-muted-foreground">
+          No necesitas crear una cuenta: al enviar recibirás un código para seguir tu postulación. Requisitos: ser
+          mayor de edad y contar con secundaria completa.
+        </p>
       </div>
 
       <form noValidate onSubmit={formulario.handleSubmit(enviar)} className="grid gap-6">
         {guardar.error && (
           <Alert variant="destructive">
-            <AlertTitle>No se pudo enviar la matrícula</AlertTitle>
+            <AlertTitle>No se pudo enviar la postulación</AlertTitle>
             <AlertDescription>
               {guardar.error instanceof ApiError ? guardar.error.message : MENSAJE_GENERICO}
             </AlertDescription>
@@ -167,97 +245,88 @@ function FormularioMatricula({ idConvocatoria }: { idConvocatoria: number }) {
         <Card>
           <CardHeader>
             <CardTitle>
-              <h2>Tus datos</h2>
+              <h2>Datos personales</h2>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <FieldGroup className="grid gap-5 md:grid-cols-2">
-              <Field data-invalid={Boolean(errors.dni)}>
-                <FieldLabel htmlFor="m-dni">DNI</FieldLabel>
-                <Input id="m-dni" aria-invalid={Boolean(errors.dni)} {...formulario.register('dni')} />
-                {errors.dni && <FieldError>{errors.dni.message}</FieldError>}
-              </Field>
-              <Field data-invalid={Boolean(errors.nombres)}>
-                <FieldLabel htmlFor="m-nombres">Nombres</FieldLabel>
-                <Input id="m-nombres" aria-invalid={Boolean(errors.nombres)} {...formulario.register('nombres')} />
-                {errors.nombres && <FieldError>{errors.nombres.message}</FieldError>}
-              </Field>
-              <Field data-invalid={Boolean(errors.aPaterno)}>
-                <FieldLabel htmlFor="m-apaterno">Apellido paterno</FieldLabel>
-                <Input id="m-apaterno" aria-invalid={Boolean(errors.aPaterno)} {...formulario.register('aPaterno')} />
-                {errors.aPaterno && <FieldError>{errors.aPaterno.message}</FieldError>}
-              </Field>
-              <Field data-invalid={Boolean(errors.aMaterno)}>
-                <FieldLabel htmlFor="m-amaterno">Apellido materno</FieldLabel>
-                <Input id="m-amaterno" aria-invalid={Boolean(errors.aMaterno)} {...formulario.register('aMaterno')} />
-                {errors.aMaterno && <FieldError>{errors.aMaterno.message}</FieldError>}
-              </Field>
-              <Field data-invalid={Boolean(errors.correo)}>
-                <FieldLabel htmlFor="m-correo">Correo</FieldLabel>
-                <Input id="m-correo" type="email" aria-invalid={Boolean(errors.correo)} {...formulario.register('correo')} />
-                <FieldDescription>Con este correo iniciarás sesión.</FieldDescription>
-                {errors.correo && <FieldError>{errors.correo.message}</FieldError>}
-              </Field>
-              <Field data-invalid={Boolean(errors.contacto)}>
-                <FieldLabel htmlFor="m-contacto">Teléfono de contacto</FieldLabel>
-                <Input id="m-contacto" aria-invalid={Boolean(errors.contacto)} {...formulario.register('contacto')} />
-                {errors.contacto && <FieldError>{errors.contacto.message}</FieldError>}
-              </Field>
-              <Field data-invalid={Boolean(errors.password)}>
-                <FieldLabel htmlFor="m-password">Contraseña</FieldLabel>
-                <Input id="m-password" type="password" aria-invalid={Boolean(errors.password)} {...formulario.register('password')} />
-                {errors.password && <FieldError>{errors.password.message}</FieldError>}
-              </Field>
               <Field>
-                <FieldLabel htmlFor="m-horario">Preferencia de horario</FieldLabel>
-                <NativeSelect id="m-horario" {...formulario.register('idHorario')}>
-                  <NativeSelectOption value="">Sin preferencia</NativeSelectOption>
-                  {detalle.data?.horarios.map((horario) => (
-                    <NativeSelectOption key={horario.id} value={String(horario.id)}>
-                      {horario.nombre} — {horario.detalle}
-                    </NativeSelectOption>
-                  ))}
+                <FieldLabel htmlFor="m-tipo-documento">Tipo de documento</FieldLabel>
+                <NativeSelect id="m-tipo-documento" className="w-full" {...formulario.register('tipoDocumento')}>
+                  <NativeSelectOption value="DNI">DNI</NativeSelectOption>
+                  <NativeSelectOption value="CE">Carné de extranjería</NativeSelectOption>
+                  <NativeSelectOption value="PASAPORTE">Pasaporte</NativeSelectOption>
                 </NativeSelect>
               </Field>
+              <CampoTexto id="m-numero" etiqueta="Número de documento" error={errors.numeroDocumento?.message} {...formulario.register('numeroDocumento')} />
+              <CampoTexto id="m-nombres" etiqueta="Nombres" error={errors.nombres?.message} {...formulario.register('nombres')} />
+              <CampoTexto id="m-apaterno" etiqueta="Apellido paterno" error={errors.aPaterno?.message} {...formulario.register('aPaterno')} />
+              <CampoTexto id="m-amaterno" etiqueta="Apellido materno" error={errors.aMaterno?.message} {...formulario.register('aMaterno')} />
+              <CampoTexto id="m-nacimiento" type="date" etiqueta="Fecha de nacimiento" error={errors.fechaNacimiento?.message} {...formulario.register('fechaNacimiento')} />
+              <Field data-invalid={Boolean(errors.sexo)}>
+                <FieldLabel htmlFor="m-sexo">Sexo</FieldLabel>
+                <NativeSelect id="m-sexo" className="w-full" aria-invalid={Boolean(errors.sexo)} {...formulario.register('sexo')}>
+                  <NativeSelectOption value="">Elija una opción</NativeSelectOption>
+                  <NativeSelectOption value="FEMENINO">Femenino</NativeSelectOption>
+                  <NativeSelectOption value="MASCULINO">Masculino</NativeSelectOption>
+                </NativeSelect>
+                {errors.sexo && <FieldError>{errors.sexo.message}</FieldError>}
+              </Field>
+              <CampoTexto id="m-nacionalidad" etiqueta="Nacionalidad" error={errors.nacionalidad?.message} {...formulario.register('nacionalidad')} />
+              <CampoTexto id="m-direccion" etiqueta="Dirección" error={errors.direccion?.message} {...formulario.register('direccion')} />
+              <CampoTexto id="m-correo" type="email" etiqueta="Correo" error={errors.correo?.message} descripcion="Si eres admitido, será tu usuario." {...formulario.register('correo')} />
+              <CampoTexto id="m-contacto" etiqueta="Teléfono de contacto" error={errors.contacto?.message} {...formulario.register('contacto')} />
             </FieldGroup>
           </CardContent>
         </Card>
-        {convocatoria.data?.documentosRequeridos && (
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                <h2>Documentos requeridos</h2>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="whitespace-pre-line text-sm text-muted-foreground">
-                {convocatoria.data.documentosRequeridos}
-              </p>
-            </CardContent>
-          </Card>
-        )}
         <Card>
           <CardHeader>
             <CardTitle>
-              <h2>Comprobante de pago</h2>
+              <h2>Documentos</h2>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Field data-invalid={Boolean(errorArchivo)}>
-              <FieldLabel htmlFor="m-comprobante">Archivo (PDF, JPG o PNG, máx. 5 MB)</FieldLabel>
-              <Input
-                id="m-comprobante"
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                aria-invalid={Boolean(errorArchivo)}
-                onChange={(evento) => {
-                  const elegido = evento.target.files?.[0] ?? null
-                  setArchivo(elegido)
-                  setErrorArchivo(errorDeComprobante(elegido))
-                }}
-              />
-              {errorArchivo && <FieldError>{errorArchivo}</FieldError>}
-            </Field>
+            <FieldGroup className="grid gap-5 md:grid-cols-2">
+              {documentos.map((documento) => (
+                <CampoArchivo
+                  key={documento.tipo}
+                  documento={documento}
+                  error={erroresArchivo[documento.tipo] ?? null}
+                  alElegir={(archivo) => elegir(documento, archivo)}
+                />
+              ))}
+            </FieldGroup>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <h2>Declaración jurada</h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <ul className="grid list-disc gap-1.5 pl-5 text-sm text-muted-foreground">
+              {DECLARACION_JURADA.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <Controller
+              control={formulario.control}
+              name="aceptaDeclaracion"
+              render={({ field }) => (
+                <Field data-invalid={Boolean(errors.aceptaDeclaracion)} orientation="horizontal">
+                  <Checkbox
+                    id="m-declaracion"
+                    checked={field.value === true}
+                    onCheckedChange={(marcado) => field.onChange(marcado === true)}
+                  />
+                  <Label htmlFor="m-declaracion" className="font-normal">
+                    Declaro bajo juramento que todo lo anterior es cierto
+                  </Label>
+                </Field>
+              )}
+            />
+            {errors.aceptaDeclaracion && <FieldError>{errors.aceptaDeclaracion.message}</FieldError>}
           </CardContent>
         </Card>
         <Button
@@ -266,7 +335,7 @@ function FormularioMatricula({ idConvocatoria }: { idConvocatoria: number }) {
           className="w-fit text-white hover:brightness-110"
           style={{ backgroundColor: '#101A3C' }}
         >
-          {guardar.isPending ? 'Enviando…' : 'Enviar matrícula'}
+          {guardar.isPending ? 'Enviando…' : 'Enviar postulación'}
         </Button>
       </form>
     </Pagina>

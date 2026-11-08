@@ -1,5 +1,13 @@
 # Contrato API — Inscripción, matrícula y asistencia
 
+> **Rediseño del 8 nov 2026 — reemplaza las secciones de alta, «mi matrícula» y resultado.** La postulación
+> ya no crea cuenta ni pide contraseña, horario ni comprobante. Rutas nuevas: `GET /api/public/postulaciones/requisitos`,
+> `POST /api/public/matriculas` (multipart: `datos` + un archivo por tipo de documento), `POST /api/public/postulaciones/consulta`,
+> `POST /api/public/postulaciones/documentos`, `POST /api/public/postulaciones/activacion`; para el Coordinador
+> `GET /api/matriculas/{id}/documentos/{tipo}`, `PUT .../documentos/{tipo}/observar|aceptar`, `PUT .../citacion`,
+> `POST .../resultado` (evaluación con resultado derivado) y `PUT .../pago`. Se retiran `/api/matriculas/mia` y
+> `/api/matriculas/{id}/comprobante`. Reglas y estados: `docs/superpowers/specs/2026-11-08-postulacion-sin-cuenta-design.md`.
+
 **Versión:** 1 · 2026-10-23
 **Implementa:** `sigeda-back` (Spring Boot), branch `feat/inscripcion-matricula-asistencia`
 **Consume:** `sigeda-web` (tramo de entrada). Los mocks MSW implementan exactamente este documento.

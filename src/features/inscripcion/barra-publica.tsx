@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 
-/** La barra de marca de las páginas públicas del tramo de entrada (landing, matrícula, mi matrícula). */
+/** La barra de marca de las páginas públicas del tramo de entrada (landing, postulación y su consulta). */
 export function BarraPublica({ accion }: { accion?: ReactNode }) {
   return (
     <header className="sticky top-0 z-20 border-b bg-background/90 backdrop-blur">
@@ -14,11 +14,16 @@ export function BarraPublica({ accion }: { accion?: ReactNode }) {
           </span>
         </Link>
         {accion ?? (
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/login" search={{}}>
-              Iniciar sesión
-            </Link>
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/postulacion">Mi postulación</Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/login" search={{}}>
+                Iniciar sesión
+              </Link>
+            </Button>
+          </div>
         )}
       </div>
     </header>

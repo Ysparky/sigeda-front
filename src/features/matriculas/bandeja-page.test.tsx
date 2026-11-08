@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { sembrarMatriculaMock } from '@/mocks/sigeda/inscripcion'
 import { iniciarComo, renderApp } from '@/test/render'
@@ -10,28 +10,28 @@ describe('Bandeja de matrículas (/matriculas)', () => {
     expect(await screen.findByText('Acceso restringido')).toBeInTheDocument()
   })
 
-  it('lista pendientes, abre el detalle con el comprobante, valida y rechaza', async () => {
-    sembrarMatriculaMock({ id: 50, dni: '71234567', nombres: 'Rosa', aPaterno: 'Quispe', aMaterno: 'Huaman', codPersona: 'P50' })
-    sembrarMatriculaMock({ id: 51, dni: '70999888', nombres: 'Mario', aPaterno: 'Vega', aMaterno: 'Luna', codPersona: 'P51' })
+  it('lista pendientes, abre el detalle con sus documentos, valida y rechaza', async () => {
+    sembrarMatriculaMock({ id: 50, numeroDocumento: '71234567', nombres: 'Rosa', aPaterno: 'Quispe', aMaterno: 'Huaman' })
+    sembrarMatriculaMock({ id: 51, numeroDocumento: '70999888', nombres: 'Mario', aPaterno: 'Vega', aMaterno: 'Luna' })
     await iniciarComo('coordinador.rivas')
     const { usuario } = renderApp('/matriculas')
 
-    expect(await screen.findByRole('heading', { name: 'Matrículas' })).toBeInTheDocument()
     expect(await screen.findByText('Quispe Huaman, Rosa')).toBeInTheDocument()
     expect(screen.getByText('Vega Luna, Mario')).toBeInTheDocument()
 
     await usuario.click(screen.getByRole('link', { name: /71234567/ }))
-    expect(await screen.findByRole('heading', { name: /Rosa Quispe/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Ver comprobante/ })).toBeInTheDocument()
+    await screen.findByRole('heading', { name: /Rosa Quispe/ })
+    const documentos = within(screen.getByRole('table', { name: 'Documentos del postulante' }))
+    expect(documentos.getByText('Certificado médico aeronáutico clase 2')).toBeInTheDocument()
+    expect(documentos.getAllByText('Por revisar')).toHaveLength(4)
 
     await usuario.click(screen.getByRole('button', { name: 'Validar documentación' }))
     await waitFor(() => expect(screen.queryByText('Quispe Huaman, Rosa')).not.toBeInTheDocument())
-    expect(screen.getByText('Vega Luna, Mario')).toBeInTheDocument()
 
     await usuario.click(screen.getByRole('link', { name: /70999888/ }))
     await screen.findByRole('heading', { name: /Mario Vega/ })
     await usuario.click(screen.getByRole('button', { name: 'Rechazar' }))
-    await usuario.type(await screen.findByLabelText(/Motivo/), 'Comprobante ilegible')
+    await usuario.type(await screen.findByLabelText(/Motivo/), 'Documento adulterado')
     await usuario.click(screen.getByRole('button', { name: 'Confirmar rechazo' }))
     await waitFor(() => expect(screen.queryByText('Vega Luna, Mario')).not.toBeInTheDocument())
   })

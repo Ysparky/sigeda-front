@@ -50,6 +50,6 @@ export function destinoSeguro(destino: string | undefined, actual?: Sesion | nul
  * «View My Enrollment»—, así que su hogar es el seguimiento de su matrícula.
  */
 export function hogarDe(actual?: Sesion | null): string {
-  if (actual?.permisos.has('View My Enrollment')) return '/mi-matricula'
+  if (actual?.permisos.has('View My Enrollment')) return '/postulacion'
   return '/inicio'
 }

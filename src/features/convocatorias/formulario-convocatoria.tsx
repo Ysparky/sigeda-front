@@ -10,7 +10,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
-import { Textarea } from '@/components/ui/textarea'
 import { catalogoQuery } from '@/features/inscripcion/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { aplicarErroresDeCampo } from '@/lib/formularios'
@@ -25,7 +24,6 @@ function valoresDesde(convocatoria: Convocatoria): ValoresConvocatoria {
     fechaInicio: convocatoria.fechaInicio,
     fechaFin: convocatoria.fechaFin,
     vacantes: String(convocatoria.vacantes),
-    documentosRequeridos: convocatoria.documentosRequeridos ?? '',
   }
 }
 
@@ -113,11 +111,6 @@ export function FormularioConvocatoria({ convocatoria }: { convocatoria?: Convoc
               <FieldLabel htmlFor="conv-desc">Descripción</FieldLabel>
               <Input id="conv-desc" aria-invalid={Boolean(errors.descripcion)} {...formulario.register('descripcion')} />
               <FieldError errors={[errors.descripcion]} />
-            </Field>
-            <Field data-invalid={Boolean(errors.documentosRequeridos)} className="md:col-span-2">
-              <FieldLabel htmlFor="conv-docs">Documentos requeridos</FieldLabel>
-              <Textarea id="conv-docs" rows={3} aria-invalid={Boolean(errors.documentosRequeridos)} {...formulario.register('documentosRequeridos')} />
-              <FieldError errors={[errors.documentosRequeridos]} />
             </Field>
           </CardContent>
         </Card>

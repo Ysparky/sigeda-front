@@ -18,6 +18,6 @@ describe('LandingPage (/)', () => {
     const boton = await screen.findByRole('link', { name: 'Postular' })
     await usuario.click(boton)
 
-    await waitFor(() => expect(screen.getByLabelText('DNI')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByLabelText('Número de documento')).toBeInTheDocument())
   })
 })

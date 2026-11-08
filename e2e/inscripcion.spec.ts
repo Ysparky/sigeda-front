@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { CUENTAS, entrarComo } from './ayudantes'
+import { CUENTAS, entrarComo, postular } from './ayudantes'
 
 test.describe('Tramo de entrada contra el backend real', () => {
   test('el landing público muestra el catálogo sin sesión', async ({ page }) => {
@@ -10,37 +10,32 @@ test.describe('Tramo de entrada contra el backend real', () => {
     // Desde el módulo de postulación cada curso enlaza a su convocatoria abierta.
     await page.getByRole('link', { name: 'Postular' }).first().click()
     await expect(page).toHaveURL(/\/matricula\?convocatoria=\d+/)
-    await expect(page.getByLabel('DNI')).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByLabel('Número de documento')).toBeVisible({ timeout: 15_000 })
   })
 
-  test('una persona se matricula y el Coordinador la valida', async ({ page }) => {
-    // DNI y correo únicos por corrida: el alta crea Persona+Usuario reales y no debe chocar al repetir.
+  test('una persona postula sin cuenta, consulta con su código y el Coordinador valida', async ({ page }) => {
     const sufijo = String(Date.now()).slice(-7)
-    const dni = `8${sufijo}`
-    const correo = `postulante.${sufijo}@correo.com`
+    const numero = `8${sufijo}`
+    const codigo = await postular(page, {
+      numero,
+      nombres: 'Test',
+      aPaterno: 'Postulante',
+      aMaterno: 'E2E',
+      correo: `postulante.${sufijo}@correo.com`,
+    })
 
-    await page.goto('/matricula?convocatoria=1')
-    await page.getByLabel('DNI').fill(dni)
-    await page.getByLabel('Nombres').fill('Test')
-    await page.getByLabel('Apellido paterno').fill('Postulante')
-    await page.getByLabel('Apellido materno').fill('E2E')
-    await page.getByLabel('Correo').fill(correo)
-    await page.getByLabel('Teléfono de contacto').fill('999000111')
-    await page.getByLabel('Contraseña').fill('Cambio2026')
-    await page
-      .getByLabel(/Archivo/)
-      .setInputFiles({ name: 'pago.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 e2e') })
-    await page.getByRole('button', { name: 'Enviar matrícula' }).click()
-    await expect(page.getByText('Matrícula enviada')).toBeVisible({ timeout: 15_000 })
+    await page.goto('/postulacion')
+    await page.getByLabel('Número de documento').fill(numero)
+    await page.getByLabel('Código de postulación').fill(codigo)
+    await page.getByRole('button', { name: 'Consultar' }).click()
+    await expect(page.getByTestId('estado-postulacion')).toHaveText('En revisión documental', { timeout: 15_000 })
 
     await entrarComo(page, CUENTAS.coordinador)
     await page.goto('/matriculas')
-    await expect(page.getByRole('heading', { level: 1, name: 'Matrículas' })).toBeVisible({ timeout: 15_000 })
-    await page.getByRole('link', { name: dni }).click()
+    await page.getByRole('link', { name: numero }).click()
     await expect(page.getByRole('heading', { level: 1, name: /Test Postulante/ })).toBeVisible({ timeout: 15_000 })
     await page.getByRole('button', { name: 'Validar documentación' }).click()
-    // Al validar la documentación vuelve a la bandeja de pendientes y la matrícula ya no está ahí.
-    await expect(page.getByRole('link', { name: dni })).toHaveCount(0, { timeout: 15_000 })
+    await expect(page.getByRole('link', { name: numero })).toHaveCount(0, { timeout: 15_000 })
   })
 
   test('el instructor registra la asistencia de un turno práctico', async ({ page }) => {

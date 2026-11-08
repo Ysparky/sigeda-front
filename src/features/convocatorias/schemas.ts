@@ -12,7 +12,6 @@ export const esquemaConvocatoria = z
     fechaInicio: z.string().refine(esFechaIso, 'Ingrese una fecha de inicio válida.'),
     fechaFin: z.string().refine(esFechaIso, 'Ingrese una fecha de fin válida.'),
     vacantes: z.string().refine(esEntero, 'Ingrese un número de vacantes válido.'),
-    documentosRequeridos: z.string().max(1000),
   })
   .superRefine((valores, contexto) => {
     if (esFechaIso(valores.fechaInicio) && esFechaIso(valores.fechaFin) && valores.fechaFin < valores.fechaInicio) {
@@ -29,7 +28,6 @@ export const CONVOCATORIA_VACIA: ValoresConvocatoria = {
   fechaInicio: '',
   fechaFin: '',
   vacantes: '',
-  documentosRequeridos: '',
 }
 
 export function aCuerpoConvocatoria(valores: ValoresConvocatoria): CuerpoConvocatoria {
@@ -40,6 +38,5 @@ export function aCuerpoConvocatoria(valores: ValoresConvocatoria): CuerpoConvoca
     fechaInicio: valores.fechaInicio,
     fechaFin: valores.fechaFin,
     vacantes: Number(valores.vacantes),
-    documentosRequeridos: valores.documentosRequeridos.trim(),
   }
 }
