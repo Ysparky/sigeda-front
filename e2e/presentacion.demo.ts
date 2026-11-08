@@ -201,6 +201,8 @@ test('Presentación: el ciclo de un curso en SIGEDA', async ({ page }) => {
     await page.getByRole('button', { name: 'Planificar' }).click()
     await expect(page.getByText('Planificada', { exact: true })).toBeVisible({ timeout: 15_000 })
     await page.getByRole('button', { name: 'Iniciar' }).click()
+    await expect(page.getByRole('link', { name: 'Calificar' })).toBeVisible({ timeout: 15_000 })
+    await rotulo(page, 'ACTO 4 · SIMULADOR', 'En curso: el alumno vuela', 'La simulación corre en el simulador físico (FNPT II). SIGEDA no la ejecuta: la organiza y la evalúa.')
     await page.getByRole('link', { name: 'Calificar' }).click()
     await asentar(page)
     await rotulo(page, 'ACTO 4 · SIMULADOR', 'Evaluación por competencias', 'Cinco indicadores de competencia OACI/IATA, de 1 a 5.')

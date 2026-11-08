@@ -4,7 +4,7 @@ Una sola historia: **el ciclo de vida de una cohorte del curso de Piloto de Heli
 desde que un aspirante postula hasta la constancia de egreso y la licencia PP-H. Cada acto lo cuenta el rol
 que usa el sistema en ese momento. Duración de la demo en vivo: **12 a 15 minutos**.
 
-El video **`tesis-project/sustentacion/presentacion-sigeda.mp4`** (3 min 15 s) sigue exactamente este guion:
+El video **`tesis-project/sustentacion/presentacion-sigeda.mp4`** (3 min 20 s) sigue exactamente este guion:
 úselo para ensayar y como respaldo si algo falla en vivo. Para volver a grabarlo, con todos los servicios
 arriba y la base recién reiniciada:
 
@@ -153,9 +153,15 @@ Para cambiar de rol: menú del usuario (arriba a la derecha) → **Cerrar sesió
    > «Hasta 5 alumnos por turno y solo cohortes en curso; un turno se puede suspender o reprogramar.»
 2. Vaya a **Sesiones** (simulador) → **Planificar sesión**. Código del alumno `111111`, código del instructor
    `444444`, fecha de hoy → **Planificar**.
-3. Pulse **Iniciar** y luego **Calificar**.
+3. Pulse **Iniciar**. La sesión pasa a *En curso*.
+   > «En este momento el alumno está volando en el **simulador físico**, el FNPT II con su cabina y el software
+   > del fabricante. **SIGEDA no reemplaza al simulador ni ejecuta la simulación: organiza la sesión y la evalúa**
+   > con el criterio de competencias de la OACI, como lo hace una escuela de vuelo real (briefing → ejecución
+   > en el simulador → debrief). Ese límite es deliberado: el documento del cliente define el simulador como
+   > un módulo de gestión, y su calificación es formativa: no altera la nota DIRBE ni el NFPI.»
+4. Pulse **Calificar**.
    > «Cinco indicadores de competencia OACI/IATA, de 1 a 5.»
-4. Ponga el primer indicador en **1** y deje el resto. **Guardar calificación**.
+5. Ponga el primer indicador en **1** y deje el resto. **Guardar calificación**.
    > «Un solo indicador en 1 da **No competente**. Las horas de simulador acreditan a la licencia, con tope de 5 h.»
 
 ## Acto 5 · Aprendizaje asistido por IA (2 min)
@@ -204,6 +210,15 @@ Para cambiar de rol: menú del usuario (arriba a la derecha) → **Cerrar sesió
    > examen teórico ante la DGAC.»
 
 ---
+
+## Preguntas probables del jurado
+
+- **«¿El sistema corre la simulación?»** No. La simulación la ejecuta el simulador certificado (FNPT II). SIGEDA
+  gestiona su ciclo (planificar, iniciar, calificar, debrief) y lleva las horas a la licencia, con tope de 5 h.
+  Integrar la telemetría del simulador (por ejemplo, importar los datos de vuelo para el debrief) queda como
+  trabajo futuro; la calificación sigue siendo del instructor, como exige el enfoque CBTA.
+- **«¿Por qué la sesión de simulador no cambia la nota del alumno?»** Porque es una evaluación formativa por
+  competencias (escala CBTA 1–5), separada del cálculo DIRBE del PDI EA-510.
 
 ## Si algo falla en vivo
 
