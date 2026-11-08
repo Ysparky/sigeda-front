@@ -94,6 +94,7 @@ export const DOCUMENTOS_POSTULACION = [
   'CERTIFICADO_SECUNDARIA',
   'FOTOGRAFIA',
   'ANTECEDENTES_POLICIALES',
+  'DECLARACION_JURADA',
   'ESTUDIOS_SUPERIORES',
   'CERTIFICADO_MEDICO',
 ] as const
@@ -169,7 +170,7 @@ export type DatosPostulacion = {
   direccion: string
   correo: string
   contacto: string
-  aceptaDeclaracion: boolean
+  aceptaTratamientoDatos: boolean
 }
 
 export type Credencial = { numeroDocumento: string; codigo: string }

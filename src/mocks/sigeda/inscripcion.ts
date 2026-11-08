@@ -79,6 +79,7 @@ const DOCUMENTOS = [
   { tipo: 'CERTIFICADO_SECUNDARIA', nombre: 'Certificado de estudios secundarios', obligatorio: true, momento: 'POSTULACION', soloImagen: false },
   { tipo: 'FOTOGRAFIA', nombre: 'Fotografía', obligatorio: true, momento: 'POSTULACION', soloImagen: true },
   { tipo: 'ANTECEDENTES_POLICIALES', nombre: 'Certificado de antecedentes policiales', obligatorio: true, momento: 'POSTULACION', soloImagen: false },
+  { tipo: 'DECLARACION_JURADA', nombre: 'Declaración jurada firmada', obligatorio: true, momento: 'POSTULACION', soloImagen: false },
   { tipo: 'ESTUDIOS_SUPERIORES', nombre: 'Constancia de estudios superiores', obligatorio: false, momento: 'POSTULACION', soloImagen: false },
   { tipo: 'CERTIFICADO_MEDICO', nombre: 'Certificado médico aeronáutico clase 2', obligatorio: true, momento: 'ANTES_DEL_RESULTADO', soloImagen: false },
 ] as const
@@ -150,7 +151,7 @@ export function sembrarConvocatoriaMock(convocatoria: Partial<ConvocatoriaMock> 
   return fila
 }
 
-/** Siembra una postulación para las pruebas. Por defecto: PENDIENTE con los cuatro obligatorios cargados. */
+/** Siembra una postulación para las pruebas. Por defecto: PENDIENTE con los cinco obligatorios cargados. */
 export function sembrarMatriculaMock(matricula: Partial<MatriculaMock> = {}) {
   const fila: MatriculaMock = {
     id: (secuenciaMatricula += 1),
@@ -179,6 +180,7 @@ export function sembrarMatriculaMock(matricula: Partial<MatriculaMock> = {}) {
       CERTIFICADO_SECUNDARIA: { estado: 'PENDIENTE', observacion: null, tipoArchivo: 'application/pdf' },
       FOTOGRAFIA: { estado: 'PENDIENTE', observacion: null, tipoArchivo: 'image/png' },
       ANTECEDENTES_POLICIALES: { estado: 'PENDIENTE', observacion: null, tipoArchivo: 'application/pdf' },
+      DECLARACION_JURADA: { estado: 'PENDIENTE', observacion: null, tipoArchivo: 'application/pdf' },
     },
     citacion: null,
     evaluacion: null,
@@ -232,7 +234,8 @@ export const handlersInscripcion = [
     if (datos.tipoDocumento === 'DNI' && !/^\d{8}$/.test(datos.numeroDocumento ?? ''))
       errores.push("'numeroDocumento': El DNI debe tener 8 dígitos.")
     if (!datos.fechaNacimiento || edad(datos.fechaNacimiento) < 18) errores.push("'fechaNacimiento': Debe ser mayor de edad para postular.")
-    if (datos.aceptaDeclaracion !== true) errores.push("'aceptaDeclaracion': Debe aceptar la declaración jurada.")
+    if (datos.aceptaTratamientoDatos !== true)
+      errores.push("'aceptaTratamientoDatos': Debe autorizar el tratamiento de sus datos personales.")
     const documentos: MatriculaMock['documentos'] = {}
     for (const doc of DOCUMENTOS) {
       const archivo = formulario.get(doc.tipo)

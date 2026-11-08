@@ -23,7 +23,7 @@ describe('Bandeja de matrículas (/matriculas)', () => {
     await screen.findByRole('heading', { name: /Rosa Quispe/ })
     const documentos = within(screen.getByRole('table', { name: 'Documentos del postulante' }))
     expect(documentos.getByText('Certificado médico aeronáutico clase 2')).toBeInTheDocument()
-    expect(documentos.getAllByText('Por revisar')).toHaveLength(4)
+    expect(documentos.getAllByText('Por revisar')).toHaveLength(5)
 
     await usuario.click(screen.getByRole('button', { name: 'Validar documentación' }))
     await waitFor(() => expect(screen.queryByText('Quispe Huaman, Rosa')).not.toBeInTheDocument())

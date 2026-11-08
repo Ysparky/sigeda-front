@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { ArrowLeft, CheckCircle2, Clock, Layers } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock, FileDown, Layers } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { AvisoDeError } from '@/components/aviso-de-error'
@@ -15,6 +15,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
+import { hoyIso } from '@/lib/dominio/calendario'
+import { formatearFecha } from '@/lib/formato'
 import { aplicarErroresDeCampo } from '@/lib/formularios'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { Route } from '@/routes/matricula'
@@ -28,7 +30,15 @@ import {
   type TipoDocumentoPostulacion,
 } from './api'
 import { BarraPublica } from './barra-publica'
-import { DECLARACION_JURADA, errorDeArchivo, esquemaMatricula, matriculaVacia, type ValoresMatricula } from './schemas'
+import {
+  DECLARACION_JURADA,
+  errorDeArchivo,
+  esquemaMatricula,
+  matriculaVacia,
+  modeloDeclaracionJurada,
+  TEXTO_CONSENTIMIENTO,
+  type ValoresMatricula,
+} from './schemas'
 
 function Pagina({ children }: { children: React.ReactNode }) {
   return (
@@ -128,7 +138,7 @@ function FormularioMatricula({ idConvocatoria }: { idConvocatoria: number }) {
 
   const guardar = useMutation({
     mutationFn: (valores: ValoresMatricula) => {
-      const datos: DatosPostulacion = { ...valores, idConvocatoria, aceptaDeclaracion: true }
+      const datos: DatosPostulacion = { ...valores, idConvocatoria, aceptaTratamientoDatos: true }
       return crearMatricula(datos, archivos)
     },
     onSuccess: (respuesta) => setCodigo(respuesta.codigo),
@@ -143,6 +153,36 @@ function FormularioMatricula({ idConvocatoria }: { idConvocatoria: number }) {
       setErroresArchivo(deArchivos)
     },
   })
+
+  const [avisoModelo, setAvisoModelo] = useState<string | null>(null)
+
+  async function abrirModelo() {
+    const completos = await formulario.trigger(['tipoDocumento', 'numeroDocumento', 'nombres', 'aPaterno', 'direccion'])
+    if (!completos) {
+      setAvisoModelo('Completa primero tu documento, nombres, apellido y dirección: el modelo sale con esos datos.')
+      return
+    }
+    setAvisoModelo(null)
+    const v = formulario.getValues()
+    const ventana = window.open('', '_blank')
+    if (!ventana) {
+      setAvisoModelo('El navegador bloqueó la ventana del modelo; permite las ventanas emergentes e inténtalo de nuevo.')
+      return
+    }
+    ventana.document.write(
+      modeloDeclaracionJurada({
+        nombres: v.nombres,
+        aPaterno: v.aPaterno,
+        aMaterno: v.aMaterno,
+        tipoDocumento: v.tipoDocumento,
+        numeroDocumento: v.numeroDocumento,
+        direccion: v.direccion,
+        convocatoria: convocatoria.data?.nombre ?? 'Postulación',
+        fecha: formatearFecha(hoyIso()),
+      }),
+    )
+    ventana.document.close()
+  }
 
   function elegir(documento: DocumentoVista, archivo: File | null) {
     setArchivos((previos) => ({ ...previos, [documento.tipo]: archivo ?? undefined }))
@@ -282,6 +322,31 @@ function FormularioMatricula({ idConvocatoria }: { idConvocatoria: number }) {
         <Card>
           <CardHeader>
             <CardTitle>
+              <h2>Declaración jurada</h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 text-sm">
+            <p className="text-muted-foreground">
+              Descarga el modelo con tus datos, fírmalo a mano (o con firma digital) y súbelo abajo como «Declaración jurada
+              firmada». En él declaras bajo juramento que:
+            </p>
+            <ul className="grid list-disc gap-1.5 pl-5 text-muted-foreground">
+              {DECLARACION_JURADA.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <div className="grid gap-1">
+              <Button type="button" variant="outline" className="w-fit" onClick={() => void abrirModelo()}>
+                <FileDown aria-hidden />
+                Descargar modelo para firmar
+              </Button>
+              {avisoModelo && <FieldError>{avisoModelo}</FieldError>}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>
               <h2>Documentos</h2>
             </CardTitle>
           </CardHeader>
@@ -301,32 +366,27 @@ function FormularioMatricula({ idConvocatoria }: { idConvocatoria: number }) {
         <Card>
           <CardHeader>
             <CardTitle>
-              <h2>Declaración jurada</h2>
+              <h2>Tratamiento de datos personales</h2>
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4">
-            <ul className="grid list-disc gap-1.5 pl-5 text-sm text-muted-foreground">
-              {DECLARACION_JURADA.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
+          <CardContent className="grid gap-2">
             <Controller
               control={formulario.control}
-              name="aceptaDeclaracion"
+              name="aceptaTratamientoDatos"
               render={({ field }) => (
-                <Field data-invalid={Boolean(errors.aceptaDeclaracion)} orientation="horizontal">
+                <Field data-invalid={Boolean(errors.aceptaTratamientoDatos)} orientation="horizontal">
                   <Checkbox
-                    id="m-declaracion"
+                    id="m-consentimiento"
                     checked={field.value === true}
                     onCheckedChange={(marcado) => field.onChange(marcado === true)}
                   />
-                  <Label htmlFor="m-declaracion" className="font-normal">
-                    Declaro bajo juramento que todo lo anterior es cierto
+                  <Label htmlFor="m-consentimiento" className="font-normal">
+                    {TEXTO_CONSENTIMIENTO}
                   </Label>
                 </Field>
               )}
             />
-            {errors.aceptaDeclaracion && <FieldError>{errors.aceptaDeclaracion.message}</FieldError>}
+            {errors.aceptaTratamientoDatos && <FieldError>{errors.aceptaTratamientoDatos.message}</FieldError>}
           </CardContent>
         </Card>
         <Button

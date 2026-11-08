@@ -22,6 +22,7 @@ async function adjuntarObligatorios(usuario: UserEvent) {
   await usuario.upload(screen.getByLabelText('Certificado de estudios secundarios'), pdf('sec.pdf'))
   await usuario.upload(screen.getByLabelText('Fotografía'), new File([new Uint8Array([1])], 'foto.png', { type: 'image/png' }))
   await usuario.upload(screen.getByLabelText('Certificado de antecedentes policiales'), pdf('ant.pdf'))
+  await usuario.upload(screen.getByLabelText('Declaración jurada firmada'), pdf('declaracion.pdf'))
 }
 
 describe('MatriculaPage (/matricula)', () => {
@@ -41,7 +42,7 @@ describe('MatriculaPage (/matricula)', () => {
     const { usuario } = renderApp('/matricula?convocatoria=1')
     await llenarDatos(usuario)
     await adjuntarObligatorios(usuario)
-    await usuario.click(screen.getByRole('checkbox', { name: /Declaro bajo juramento/ }))
+    await usuario.click(screen.getByRole('checkbox', { name: /Autorizo al Aeroclub/ }))
     await usuario.click(screen.getByRole('button', { name: 'Enviar postulación' }))
 
     await waitFor(() => expect(screen.getByText('Postulación enviada')).toBeInTheDocument())
@@ -49,13 +50,13 @@ describe('MatriculaPage (/matricula)', () => {
     expect(screen.getByRole('link', { name: 'Consultar mi postulación' })).toHaveAttribute('href', '/postulacion')
   })
 
-  it('exige los documentos obligatorios, la mayoría de edad y la declaración jurada', async () => {
+  it('exige la mayoría de edad y el consentimiento de datos', async () => {
     const { usuario } = renderApp('/matricula?convocatoria=1')
     await llenarDatos(usuario, '2015-01-01')
     await usuario.click(screen.getByRole('button', { name: 'Enviar postulación' }))
 
     expect(await screen.findByText('Debe ser mayor de edad para postular.')).toBeInTheDocument()
-    expect(screen.getByText('Debe aceptar la declaración jurada.')).toBeInTheDocument()
+    expect(screen.getByText('Debe autorizar el tratamiento de sus datos personales.')).toBeInTheDocument()
     expect(screen.queryByText('Postulación enviada')).not.toBeInTheDocument()
   })
 
@@ -63,8 +64,15 @@ describe('MatriculaPage (/matricula)', () => {
     const { usuario } = renderApp('/matricula?convocatoria=1')
     await llenarDatos(usuario)
     await usuario.upload(await screen.findByLabelText('Documento de identidad'), pdf('dni.pdf'))
-    await usuario.click(screen.getByRole('checkbox', { name: /Declaro bajo juramento/ }))
+    await usuario.click(screen.getByRole('checkbox', { name: /Autorizo al Aeroclub/ }))
     await usuario.click(screen.getByRole('button', { name: 'Enviar postulación' }))
     expect(await screen.findByText('Falta el documento «Certificado de antecedentes policiales».')).toBeInTheDocument()
+    expect(screen.getByText('Falta el documento «Declaración jurada firmada».')).toBeInTheDocument()
+  })
+
+  it('el modelo de declaración jurada pide antes los datos con que se prellena', async () => {
+    const { usuario } = renderApp('/matricula?convocatoria=1')
+    await usuario.click(await screen.findByRole('button', { name: 'Descargar modelo para firmar' }))
+    expect(await screen.findByText(/Completa primero tu documento/)).toBeInTheDocument()
   })
 })
