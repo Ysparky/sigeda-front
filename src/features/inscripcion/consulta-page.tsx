@@ -263,8 +263,8 @@ function Contacto() {
   )
 }
 
-function Progreso({ estado }: { estado: EstadoMatricula }) {
-  const actual = PASO_ACTUAL[estado]
+function Progreso({ estado, cuentaActiva }: { estado: EstadoMatricula; cuentaActiva: boolean }) {
+  const actual = estado === 'ADMITIDA' && cuentaActiva ? PASOS.length : PASO_ACTUAL[estado]
   return (
     <ol aria-label="Avance de la admisión" className="grid gap-2 sm:grid-cols-5">
       {PASOS.map((paso, indice) => {
@@ -310,6 +310,7 @@ function Detalle({
 }) {
   const recibe = RECIBE_DOCUMENTOS.includes(postulacion.estado)
   const cerrada = PASO_ACTUAL[postulacion.estado] === null
+  const medicoPendiente = postulacion.documentos.some((d) => d.tipo === 'CERTIFICADO_MEDICO' && d.estado !== 'ACEPTADO')
   return (
     <div className="mt-8 grid grid-cols-[minmax(0,1fr)] items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
       <div className="grid min-w-0 gap-6">
@@ -321,10 +322,14 @@ function Detalle({
           <h2 id="titulo-estado" className="font-display mt-1 text-3xl font-bold uppercase" style={{ color: cerrada ? ERROR : TINTA }}>
             <span data-testid="estado-postulacion">{ETIQUETA_ESTADO[postulacion.estado]}</span>
           </h2>
-          <p className="mt-2 max-w-[62ch] text-[15px]">{EXPLICACION[postulacion.estado]}</p>
+          <p className="mt-2 max-w-[62ch] text-[15px]">
+            {postulacion.estado === 'ADMITIDA' && postulacion.cuentaActiva
+              ? 'Aprobaste la evaluación de admisión y tu cuenta ya está activa. Coordina el pago de tu matrícula para quedar asignado a tu grupo.'
+              : EXPLICACION[postulacion.estado]}
+          </p>
           {!cerrada && (
             <div className="mt-6">
-              <Progreso estado={postulacion.estado} />
+              <Progreso estado={postulacion.estado} cuentaActiva={postulacion.cuentaActiva} />
             </div>
           )}
           <div className="mt-6 grid gap-3 empty:hidden">
@@ -338,6 +343,12 @@ function Detalle({
                 {postulacion.motivoRechazo}
               </Aviso>
             )}
+            {postulacion.estado === 'ADMITIDA' && (
+              <Aviso tono={EXITO} icono={<Check className="size-5" />} titulo="Pago de matrícula">
+                El coordinador académico te indicará el monto y los medios de pago. Al confirmar tu pago quedas asignado a
+                tu grupo e instructor.
+              </Aviso>
+            )}
             {postulacion.citacion && postulacion.estado === 'CITADA' && (
               <Aviso tono={TINTA} icono={<CalendarClock className="size-5" />} titulo="Evaluación de admisión">
                 <p>
@@ -346,32 +357,12 @@ function Detalle({
                   </strong>
                 </p>
                 <p className="mt-1">
-                  Incluye examen de conocimientos, entrevista personal y evaluación psicológica. El certificado médico
-                  aeronáutico debe estar cargado y aceptado.
+                  Incluye examen de conocimientos, entrevista personal y evaluación psicológica.
+                  {medicoPendiente && ' Antes de esa fecha sube tu certificado médico aeronáutico: sin él aceptado no hay resultado.'}
                 </p>
               </Aviso>
             )}
           </div>
-        </section>
-
-        <section className={PANEL} aria-labelledby="titulo-documentos">
-          <h2 id="titulo-documentos" className={`${TITULO_PANEL} mb-1.5`} style={{ color: TINTA }}>
-            Documentos
-          </h2>
-          <p className="mb-2 max-w-[62ch] text-[15px]">
-            {recibe ? 'Reemplaza un documento observado o sube los que te falten.' : 'La revisión de documentos terminó.'}
-          </p>
-          <ul aria-label="Documentos de la postulación" className="divide-y" style={{ borderColor: LINEA }}>
-            {postulacion.documentos.map((documento) => (
-              <FilaDocumento
-                key={documento.tipo}
-                documento={documento}
-                credencial={credencial}
-                puedeSubir={recibe && documento.estado !== 'ACEPTADO'}
-                alSubir={alCambiar}
-              />
-            ))}
-          </ul>
         </section>
 
         {postulacion.evaluacion && (
@@ -403,6 +394,29 @@ function Detalle({
           ) : (
             <ActivarCuenta credencial={credencial} alActivar={alCambiar} />
           ))}
+        {postulacion.estado !== 'RECHAZADA' && postulacion.estado !== 'NO_ADMITIDO' && (
+        <section className={PANEL} aria-labelledby="titulo-documentos">
+            <h2 id="titulo-documentos" className={`${TITULO_PANEL} mb-1.5`} style={{ color: TINTA }}>
+              Documentos
+            </h2>
+            <p className="mb-2 max-w-[62ch] text-[15px]">
+              {recibe
+                ? 'Reemplaza un documento observado o sube los que te falten.'
+                : 'Todos tus documentos fueron revisados.'}
+            </p>
+            <ul aria-label="Documentos de la postulación" className="divide-y" style={{ borderColor: LINEA }}>
+              {postulacion.documentos.map((documento) => (
+                <FilaDocumento
+                  key={documento.tipo}
+                  documento={documento}
+                  credencial={credencial}
+                  puedeSubir={recibe && documento.estado !== 'ACEPTADO'}
+                  alSubir={alCambiar}
+                />
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
 
       <aside className="grid gap-6 lg:sticky lg:top-6">
