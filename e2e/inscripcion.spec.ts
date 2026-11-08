@@ -7,7 +7,9 @@ test.describe('Tramo de entrada contra el backend real', () => {
     await page.goto('/')
     await expect(page.getByText('Piloto de Helicóptero').first()).toBeVisible({ timeout: 15_000 })
     await expect(page.getByText(/220 horas/)).toBeVisible()
-    await page.getByRole('link', { name: 'Inscribirme' }).first().click()
+    // Desde el módulo de postulación cada curso enlaza a su convocatoria abierta.
+    await page.getByRole('link', { name: 'Postular' }).first().click()
+    await expect(page).toHaveURL(/\/matricula\?convocatoria=\d+/)
     await expect(page.getByLabel('DNI')).toBeVisible({ timeout: 15_000 })
   })
 
@@ -17,7 +19,7 @@ test.describe('Tramo de entrada contra el backend real', () => {
     const dni = `8${sufijo}`
     const correo = `postulante.${sufijo}@correo.com`
 
-    await page.goto('/matricula?curso=1')
+    await page.goto('/matricula?convocatoria=1')
     await page.getByLabel('DNI').fill(dni)
     await page.getByLabel('Nombres').fill('Test')
     await page.getByLabel('Apellido paterno').fill('Postulante')
@@ -36,8 +38,8 @@ test.describe('Tramo de entrada contra el backend real', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Matrículas' })).toBeVisible({ timeout: 15_000 })
     await page.getByRole('link', { name: dni }).click()
     await expect(page.getByRole('heading', { level: 1, name: /Test Postulante/ })).toBeVisible({ timeout: 15_000 })
-    await page.getByRole('button', { name: 'Validar matrícula' }).click()
-    // Al validar vuelve a la bandeja de pendientes y la matrícula ya no está ahí.
+    await page.getByRole('button', { name: 'Validar documentación' }).click()
+    // Al validar la documentación vuelve a la bandeja de pendientes y la matrícula ya no está ahí.
     await expect(page.getByRole('link', { name: dni })).toHaveCount(0, { timeout: 15_000 })
   })
 
