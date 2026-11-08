@@ -110,6 +110,12 @@ const clonarSesion = (s: SesionMock): SesionMock => ({ ...s, resultados: s.resul
 let sesionesMock: SesionMock[] = SESIONES_SEMILLA.map(clonarSesion)
 let secuenciaSesion = 1
 
+export function minutosDeSimuladorCompletados(codAlumno: string): number {
+  return sesionesMock
+    .filter((s) => s.codAlumno === codAlumno && s.estado === 'COMPLETADA')
+    .reduce((total, s) => total + (escenariosMock.find((e) => e.id === s.idEscenario)?.duracionMin ?? 0), 0)
+}
+
 export function reiniciarSimulador() {
   simuladoresMock = SIMULADORES_SEMILLA.map((s) => ({ ...s }))
   secuenciaSimulador = 1

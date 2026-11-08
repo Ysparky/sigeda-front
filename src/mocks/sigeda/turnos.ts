@@ -192,6 +192,16 @@ function erroresDeBloqueo(alumnos: AlumnoTurnoMock[]): string[] {
   )
 }
 
+function erroresDeCohorte(alumnos: AlumnoTurnoMock[]): string[] {
+  return alumnos.flatMap((alumno, indice) => {
+    const idGrupo = datos().personas.find((persona) => persona.codigo === alumno.codAlumno)?.idGrupo
+    const estado = datos().grupos.find((grupo) => grupo.id === idGrupo)?.estado
+    return estado === 'EN_INSCRIPCION' || estado === 'CERRADA'
+      ? [`'alumnosTurno[${indice}].codAlumno': El alumno ${alumno.codAlumno} pertenece a una cohorte que no está en curso.`]
+      : []
+  })
+}
+
 function aAlumnos(cuerpo: CuerpoTurno): AlumnoTurnoMock[] {
   return (cuerpo.alumnosTurno ?? []).map((alumno) => ({
     codAlumno: texto(alumno.codAlumno),
@@ -238,7 +248,11 @@ function validarGuardado(
     const solape = erroresDeSolape(aAlumnos(cuerpo), texto(cuerpo.fechaEval), idPropio)
     // El bloqueo se comprueba DESPUÉS del cruce y solo si el cruce pasó, como en el servidor: el
     // cruce ya exige que los alumnos existan, y un código inexistente tiene que salir por su 404.
-    errores.push(...(solape.length > 0 ? solape : erroresDeBloqueo(aAlumnos(cuerpo))))
+    if (solape.length > 0) errores.push(...solape)
+    else {
+      const bloqueo = erroresDeBloqueo(aAlumnos(cuerpo))
+      errores.push(...(bloqueo.length > 0 ? bloqueo : erroresDeCohorte(aAlumnos(cuerpo))))
+    }
     if (solape.length === 0) {
       const instructor = errorDeInstructor(aAlumnos(cuerpo), texto(cuerpo.fechaEval), texto(cuerpo.codInstructor), idPropio)
       if (instructor) errores.push(instructor)

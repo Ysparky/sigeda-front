@@ -35,7 +35,7 @@ test.describe('Turnos prácticos contra el backend real', () => {
     await page.goto('/turnos/nuevo')
     await expect(page.getByRole('heading', { level: 1, name: 'Registrar turno' })).toBeVisible()
     await page.getByRole('button', { name: 'Agregar alumno' }).click()
-    await expect(page.getByLabel('Alumno 1').getByRole('option', { name: /Lopez/ })).toBeAttached({ timeout: 15_000 })
+    await expect(page.getByLabel('Alumno 1').getByRole('option', { name: /Falconi/ })).toBeAttached({ timeout: 15_000 })
   })
 
   // El catálogo de misiones contra el servidor, porque es donde vale: lo sirve

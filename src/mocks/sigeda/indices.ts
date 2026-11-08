@@ -170,6 +170,10 @@ function bloqueNia(persona: PersonaMock, fijacion: Fijacion) {
   }
 }
 
+export function nfpiDe(codigo: string): number | null {
+  return dosDecimales((FIJACIONES[codigo] ?? SIN_DATOS).nfpi)
+}
+
 function indicesDe(persona: PersonaMock) {
   const fijacion = FIJACIONES[persona.codigo] ?? SIN_DATOS
   return {

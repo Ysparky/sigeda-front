@@ -57,6 +57,49 @@ describe('Detalle de grupo', () => {
     expect(screen.queryByRole('button', { name: 'Cerrar cohorte' })).not.toBeInTheDocument()
   })
 
+  it('el Coordinador no puede iniciar una cohorte incompleta y ve los motivos', async () => {
+    await iniciarComo('coordinador.rivas')
+    const { usuario } = renderApp('/grupos/6')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Promoción 2026-A' })).toBeInTheDocument()
+    await usuario.click(screen.getByRole('button', { name: 'Iniciar cohorte' }))
+    expect(await screen.findByText(/La cohorte no tiene instructor responsable\./)).toBeInTheDocument()
+    expect(screen.getByText('En inscripción')).toBeInTheDocument()
+  })
+
+  it('al iniciar la cohorte fija su inicio y el fin previsto del plan base', async () => {
+    server.use(
+      http.put(`${config.sigedaApiUrl}/api/grupos/:id/estado`, () =>
+        HttpResponse.json({ mensaje: 'Estado de la cohorte actualizado.' }),
+      ),
+      http.get(`${config.sigedaApiUrl}/api/grupos/6`, () =>
+        HttpResponse.json({
+          id: 6,
+          nombre: 'Promoción 2026-A',
+          descripcion: null,
+          programa: 'PDI',
+          estado: 'EN_PROGRESO',
+          codInstructor: '444444',
+          fechaInicio: '2026-11-09',
+          fechaFin: '2027-03-03',
+          personas: [],
+        }),
+      ),
+    )
+    await iniciarComo('coordinador.rivas')
+    renderApp('/grupos/6')
+    expect(await screen.findByText('09/11/2026')).toBeInTheDocument()
+    expect(screen.getByText('03/03/2027')).toBeInTheDocument()
+  })
+
+  it('una cohorte cerrada muestra el consolidado con el NFPI de cada alumno', async () => {
+    await iniciarComo('coordinador.rivas')
+    const { usuario } = renderApp('/grupos/1')
+    await usuario.click(await screen.findByRole('button', { name: 'Cerrar cohorte' }))
+    const tabla = within(await screen.findByRole('table', { name: 'Consolidado de la cohorte' }))
+    expect(tabla.getByRole('columnheader', { name: 'NFPI' })).toBeInTheDocument()
+    expect(tabla.getByText('15.28')).toBeInTheDocument()
+  })
+
   it('CA-GRU-08 un grupo inexistente muestra la página no encontrada', async () => {
     await iniciarComo('admin.sistema')
     renderApp('/grupos/99')

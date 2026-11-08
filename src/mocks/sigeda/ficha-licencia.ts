@@ -1,5 +1,26 @@
 import { http, HttpResponse } from 'msw'
 import { API, autorizar } from './comun'
+import { datos } from './datos'
+import { minutosDeSimuladorCompletados } from './simulador'
+
+function minutos(hora: string): number {
+  const [h, m] = hora.split(':').map(Number)
+  return h * 60 + m
+}
+
+function horasRegistradas(cod: string) {
+  const turnosEvaluados = new Set(
+    datos()
+      .evaluaciones.filter((e) => e.codPersona === cod)
+      .map((e) => Number(e.codigo.split('-')[1]))
+      .filter((id) => Number.isInteger(id)),
+  )
+  const vuelo = datos()
+    .turnos.filter((t) => turnosEvaluados.has(t.id))
+    .flatMap((t) => t.alumnos.filter((a) => a.codAlumno === cod))
+    .reduce((total, a) => total + minutos(a.horaFin) - minutos(a.horaInicio), 0)
+  return { vuelo: vuelo / 60, simulador: minutosDeSimuladorCompletados(cod) / 60 }
+}
 
 type FichaMock = {
   codAlumno: string
@@ -81,7 +102,14 @@ const vigente = (venc: string | null, hoy: Date) => {
 }
 const hora = (v: number | null, min: number) => v !== null && v >= min
 
-function calcularResumen(f: FichaMock, hoy: Date) {
+function calcularResumen(manual: FichaMock, hoy: Date, registradas = { vuelo: 0, simulador: 0 }) {
+  const f = {
+    ...manual,
+    horasDobleMando: manual.horasDobleMando ?? (registradas.vuelo > 0 ? registradas.vuelo : null),
+    horasSimulador: manual.horasSimulador ?? (registradas.simulador > 0 ? registradas.simulador : null),
+    horasTotal:
+      manual.horasTotal ?? (registradas.vuelo + registradas.simulador > 0 ? registradas.vuelo + registradas.simulador : null),
+  }
   const acreditables = f.horasTotal === null ? null : f.horasTotal - Math.max(0, (f.horasSimulador ?? 0) - 5)
   const teoricoVigente =
     f.examenTeoricoFecha !== null &&
@@ -146,7 +174,8 @@ export const handlersFichaLicencia = [
     const ficha = fichasMock.find((x) => x.codAlumno === cod) ?? fichaVacia(cod)
     const hoy = new Date()
     hoy.setHours(0, 0, 0, 0) // granularidad de día, como LocalDate en el backend
-    return HttpResponse.json({ ...ficha, resumen: calcularResumen(ficha, hoy) })
+    const registradas = horasRegistradas(cod)
+    return HttpResponse.json({ ...ficha, horasRegistradas: registradas, resumen: calcularResumen(ficha, hoy, registradas) })
   }),
   http.put(`${API}/api/fichas-licencia/:cod`, async ({ request, params }) => {
     const permitido = autorizar(request, 'Manage Licensing')

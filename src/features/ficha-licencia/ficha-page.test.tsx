@@ -1,5 +1,8 @@
 import { screen, within } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { config } from '@/lib/config'
+import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
 
 describe('Ficha de licencia (/fichas-licencia/$cod)', () => {
@@ -35,5 +38,22 @@ describe('Ficha de licencia (/fichas-licencia/$cod)', () => {
     await usuario.type(screen.getByLabelText('Licencia de alumno (emisión)'), '2023-01-01')
     await usuario.click(screen.getByRole('button', { name: 'Guardar ficha' }))
     expect(await screen.findByText(/licencia de alumno tiene más de 24 meses/i)).toBeInTheDocument()
+  })
+
+  it('muestra las horas que el sistema ya registró del curso', async () => {
+    server.use(
+      http.get(`${config.sigedaApiUrl}/api/fichas-licencia/:cod`, () =>
+        HttpResponse.json({
+          codAlumno: 'A003',
+          horasRegistradas: { vuelo: 3, simulador: 1.5 },
+          resumen: { estado: 'EN_PREPARACION', requisitos: [], alertas: [], bloqueos: [] },
+        }),
+      ),
+    )
+    await iniciarComo('coordinador.rivas')
+    renderApp('/fichas-licencia/A003')
+    const registro = within(await screen.findByRole('region', { name: 'Registrado por el sistema' }))
+    expect(registro.getByText('3.00 h')).toBeInTheDocument()
+    expect(registro.getByText('1.50 h')).toBeInTheDocument()
   })
 })

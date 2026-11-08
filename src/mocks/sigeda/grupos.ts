@@ -1,5 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { API, autorizar, erroresDeCampo, guardado, paginar, texto, textoEliminado, textoNoEncontrado } from './comun'
+import { nfpiDe } from './indices'
+import { cerrarConvocatoriasDeCohorte, tienePagoPendiente } from './inscripcion'
 import { buscarPersona, datos, siguienteId, type GrupoMock, type PersonaMock, type ProgramaMock } from './datos'
 
 type PersonaDeGrupo = { codigo?: unknown; checked?: unknown }
@@ -13,6 +15,35 @@ type CuerpoGrupo = {
 }
 
 const TOPE_ALUMNOS = 20
+const PLAN_BASE_DIAS_HABILES = 81
+
+function iso(fecha: Date): string {
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`
+}
+
+function sumarDiasHabiles(desde: Date, dias: number): Date {
+  const fecha = new Date(desde)
+  let restantes = dias
+  while (restantes > 0) {
+    fecha.setDate(fecha.getDate() + 1)
+    if (fecha.getDay() !== 0 && fecha.getDay() !== 6) restantes--
+  }
+  return fecha
+}
+
+function alumnosDe(grupo: GrupoMock) {
+  return datos().personas.filter((persona) => persona.idGrupo === grupo.id && persona.tipo === 'Alumno')
+}
+
+function motivosParaIniciar(grupo: GrupoMock): string[] {
+  const faltan: string[] = []
+  if (!grupo.codInstructor) faltan.push('La cohorte no tiene instructor responsable.')
+  const alumnos = alumnosDe(grupo)
+  if (alumnos.length === 0) faltan.push('La cohorte no tiene alumnos.')
+  const sinPago = alumnos.filter((alumno) => tienePagoPendiente(alumno.codigo)).map((a) => `${a.nombre} ${a.aPaterno}`)
+  if (sinPago.length > 0) faltan.push(`Falta confirmar el pago de matrícula de: ${sinPago.join(', ')}.`)
+  return faltan
+}
 
 function entidadPersona(persona: PersonaMock) {
   return {
@@ -44,6 +75,8 @@ function detalleGrupo(grupo: GrupoMock) {
     programa: grupo.programa,
     estado: grupo.estado,
     codInstructor: grupo.codInstructor ?? null,
+    fechaInicio: grupo.fechaInicio ?? null,
+    fechaFin: grupo.fechaFin ?? null,
     personas: datos()
       .personas.filter((persona) => persona.idGrupo === grupo.id)
       .map(entidadPersona),
@@ -139,6 +172,20 @@ export const handlersGrupos = [
     if (!grupo) return textoNoEncontrado('Grupo especificada no existe.')
     return HttpResponse.json(detalleGrupo(grupo))
   }),
+  http.get(`${API}/api/grupos/:id/consolidado`, ({ request, params }) => {
+    const permitido = autorizar(request, 'Manage Enrollments')
+    if (permitido instanceof Response) return permitido
+    const grupo = datos().grupos.find((candidato) => candidato.id === Number(params.id))
+    if (!grupo) return textoNoEncontrado('Grupo especificada no existe.')
+    return HttpResponse.json(
+      alumnosDe(grupo).map((alumno) => ({
+        codigo: alumno.codigo,
+        nombre: [alumno.nombre, alumno.aPaterno, alumno.aMaterno].filter(Boolean).join(' '),
+        estadoAcademico: alumno.estado,
+        nfpi: nfpiDe(alumno.codigo),
+      })),
+    )
+  }),
   http.put(`${API}/api/grupos/:id/estado`, async ({ request, params }) => {
     const permitido = autorizar(request, 'Manage Enrollments')
     if (permitido instanceof Response) return permitido
@@ -149,6 +196,14 @@ export const handlersGrupos = [
       (grupo.estado === 'EN_INSCRIPCION' && estado === 'EN_PROGRESO') ||
       (grupo.estado === 'EN_PROGRESO' && estado === 'CERRADA')
     if (!permitida) return HttpResponse.text('Transición de estado de la cohorte no permitida.', { status: 409 })
+    if (estado === 'EN_PROGRESO') {
+      const faltan = motivosParaIniciar(grupo)
+      if (faltan.length > 0) return HttpResponse.text(faltan.join(' '), { status: 409 })
+      const hoy = new Date()
+      grupo.fechaInicio = iso(hoy)
+      grupo.fechaFin = iso(sumarDiasHabiles(hoy, PLAN_BASE_DIAS_HABILES))
+      cerrarConvocatoriasDeCohorte(grupo.id)
+    }
     grupo.estado = estado
     return HttpResponse.json({ mensaje: 'Estado de la cohorte actualizado.' })
   }),

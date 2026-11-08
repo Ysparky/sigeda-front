@@ -45,7 +45,9 @@ export type CuerpoFicha = {
   licenciaEmitida: boolean | null
 }
 
-export type Ficha = CuerpoFicha & { codAlumno: string; resumen: ResumenFicha }
+export type HorasRegistradas = { vuelo: number; simulador: number }
+
+export type Ficha = CuerpoFicha & { codAlumno: string; horasRegistradas: HorasRegistradas; resumen: ResumenFicha }
 
 const esquemaResumen = z.object({
   estado: z.enum(['EN_PREPARACION', 'OBSERVADA', 'LISTA_PARA_PERICIA', 'PERICIA_APROBADA', 'LICENCIA_EMITIDA']),
@@ -84,6 +86,10 @@ const esquemaFicha = z.object({
   pagoPractica: b(),
   solicitudPresentada: b(),
   licenciaEmitida: b(),
+  horasRegistradas: z
+    .object({ vuelo: z.number(), simulador: z.number() })
+    .nullish()
+    .transform((v) => v ?? { vuelo: 0, simulador: 0 }),
   resumen: esquemaResumen,
 })
 

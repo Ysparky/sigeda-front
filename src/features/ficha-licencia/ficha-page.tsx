@@ -8,6 +8,7 @@ import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
+import { formatearNota } from '@/lib/formato'
 import { clavesFicha, ETIQUETA_ESTADO_FICHA, fichaQuery, guardarFicha, type CuerpoFicha, type Ficha } from './api'
 
 type Valores = {
@@ -165,6 +166,27 @@ export function FichaPage({ cod }: { cod: string }) {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-3">
+            <section
+              aria-labelledby="registrado-sistema"
+              className="grid gap-2 rounded-lg border bg-muted/40 p-4 text-sm sm:col-span-3"
+            >
+              <h3 id="registrado-sistema" className="font-medium">
+                Registrado por el sistema
+              </h3>
+              <dl className="grid gap-x-8 gap-y-1 sm:grid-cols-[auto_auto_1fr]">
+                <div className="flex gap-2">
+                  <dt className="text-muted-foreground">Vuelo con instructor (turnos evaluados)</dt>
+                  <dd className="font-medium tabular-nums">{formatearNota(ficha.horasRegistradas.vuelo)} h</dd>
+                </div>
+                <div className="flex gap-2">
+                  <dt className="text-muted-foreground">Simulador (sesiones completadas)</dt>
+                  <dd className="font-medium tabular-nums">{formatearNota(ficha.horasRegistradas.simulador)} h</dd>
+                </div>
+              </dl>
+              <p className="text-muted-foreground">
+                Si deja vacíos Total, Doble mando o Simulador, la ficha usa estas horas.
+              </p>
+            </section>
             <CampoNumero label="Total" reg={formulario.register('horasTotal')} />
             <CampoNumero label="Doble mando" reg={formulario.register('horasDobleMando')} />
             <CampoNumero label="Solo" reg={formulario.register('horasSolo')} />

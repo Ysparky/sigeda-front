@@ -127,6 +127,16 @@ const NOTA_MINIMA = 14
 let secuenciaMatricula = 100
 const matriculasMock: MatriculaMock[] = []
 
+export function tienePagoPendiente(codPersona: string): boolean {
+  const fila = matriculasMock.find((m) => m.codPersona === codPersona)
+  return fila !== undefined && fila.estado === 'ADMITIDA' && fila.pago === null
+}
+
+export function cerrarConvocatoriasDeCohorte(idGrupo: number) {
+  for (const convocatoria of convocatoriasMock)
+    if (convocatoria.idGrupo === idGrupo && convocatoria.estado === 'PUBLICADA') convocatoria.estado = 'CERRADA'
+}
+
 export function reiniciarInscripcion() {
   matriculasMock.length = 0
   secuenciaMatricula = 100

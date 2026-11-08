@@ -16,8 +16,12 @@ export type GrupoDetalle = {
   programa: string
   estado: string | null
   codInstructor: string | null
+  fechaInicio: string | null
+  fechaFin: string | null
   alumnos: AlumnoDeGrupo[]
 }
+
+export type AlumnoConsolidado = { codigo: string; nombre: string; estadoAcademico: string | null; nfpi: number | null }
 
 export type CuerpoGrupoNuevo = {
   nombre: string
@@ -48,6 +52,8 @@ const esquemaFila = z.object({
 const esquemaDetalle = esquemaFila.extend({
   estado: z.string().nullish(),
   codInstructor: z.string().nullish(),
+  fechaInicio: z.string().nullish(),
+  fechaFin: z.string().nullish(),
   personas: z
     .array(
       z.object({
@@ -68,6 +74,7 @@ export const clavesGrupos = {
   lista: (parametros: ParametrosPagina) => [...clavesGrupos.todo, 'lista', parametros] as const,
   detalle: (id: number) => [...clavesGrupos.todo, 'detalle', id] as const,
   alumnosSinGrupo: () => [...clavesGrupos.todo, 'alumnos-sin-grupo'] as const,
+  consolidado: (id: number) => [...clavesGrupos.todo, 'consolidado', id] as const,
 }
 
 export async function listarGrupos(parametros: ParametrosPagina): Promise<Pagina<GrupoFila>> {
@@ -92,6 +99,8 @@ export async function obtenerGrupo(id: number): Promise<GrupoDetalle> {
     programa: grupo.programa ?? '',
     estado: grupo.estado ?? null,
     codInstructor: grupo.codInstructor ?? null,
+    fechaInicio: grupo.fechaInicio ?? null,
+    fechaFin: grupo.fechaFin ?? null,
     alumnos: (grupo.personas ?? []).map((persona) => ({
       codigo: persona.codigo,
       nombreCompleto: [persona.nombre, persona.aPaterno, persona.aMaterno].filter(Boolean).join(' '),
@@ -137,6 +146,25 @@ export async function cambiarEstadoGrupo(id: number, estado: string): Promise<st
   return soloMensaje(await sigeda.put<unknown>(`/api/grupos/${encodeURIComponent(id)}/estado`, { estado }))
 }
 
+const esquemaConsolidado = z.array(
+  z.object({
+    codigo: z.string(),
+    nombre: z.string(),
+    estadoAcademico: z.string().nullish(),
+    nfpi: z.number().nullish(),
+  }),
+)
+
+export async function obtenerConsolidado(id: number): Promise<AlumnoConsolidado[]> {
+  const filas = esquemaConsolidado.parse((await sigeda.get<unknown>(`/api/grupos/${encodeURIComponent(id)}/consolidado`)) ?? [])
+  return filas.map((fila) => ({
+    codigo: fila.codigo,
+    nombre: fila.nombre,
+    estadoAcademico: fila.estadoAcademico ?? null,
+    nfpi: fila.nfpi ?? null,
+  }))
+}
+
 export const consultasGrupos = {
   lista: (parametros: ParametrosPagina) =>
     queryOptions({
@@ -145,6 +173,8 @@ export const consultasGrupos = {
       placeholderData: keepPreviousData,
     }),
   detalle: (id: number) => queryOptions({ queryKey: clavesGrupos.detalle(id), queryFn: () => obtenerGrupo(id) }),
+  consolidado: (id: number) =>
+    queryOptions({ queryKey: clavesGrupos.consolidado(id), queryFn: () => obtenerConsolidado(id) }),
   alumnosSinGrupo: () =>
     queryOptions({ queryKey: clavesGrupos.alumnosSinGrupo(), queryFn: listarAlumnosSinGrupo, staleTime: 300_000 }),
 }

@@ -38,7 +38,7 @@ for (const tema of ['claro', 'oscuro'] as const) {
     test.use({ colorScheme: tema === 'oscuro' ? 'dark' : 'light' })
     test(`contraste del DIRBE elegido · tema ${tema}`, async ({ page }) => {
     await entrarComo(page, CUENTAS.instructor)
-    await page.goto('/turnos/2/evaluar/222222')
+    await page.goto('/turnos/4/evaluar/666666')
     const grupo = page.getByRole('radiogroup').first()
     await grupo.waitFor({ timeout: 15_000 })
     if (tema === 'oscuro') {

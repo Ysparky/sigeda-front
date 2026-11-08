@@ -35,6 +35,8 @@ export type GrupoMock = {
   programa: ProgramaMock
   estado: string
   codInstructor?: string | null
+  fechaInicio?: string | null
+  fechaFin?: string | null
 }
 
 export type FaseMock = { id: number; nombre: string; descripcion: string | null }
