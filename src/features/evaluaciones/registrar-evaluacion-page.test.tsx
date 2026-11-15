@@ -27,6 +27,11 @@ async function calificar(usuario: UserEvent, nombre: string, nota: string) {
   await usuario.click(maniobra(nombre).getByRole('radio', { name: new RegExp(`^${nota} \\(`) }))
 }
 
+async function escribirNombre(usuario: UserEvent, texto: string) {
+  await usuario.clear(screen.getByLabelText('Nombre'))
+  await usuario.type(screen.getByLabelText('Nombre'), texto)
+}
+
 async function calificarTodasConB(usuario: UserEvent) {
   for (const nombre of ['Ingreso al circuito de tránsito', 'Circuito de tránsito completo', 'Virajes a nivel', 'Ascensos y descensos', 'Parada rápida', 'Aproximación y aterrizaje normal']) await calificar(usuario, nombre, 'B')
 }
@@ -91,7 +96,7 @@ describe('Registrar evaluación', () => {
 
   it('conserva el formulario si falla una recarga en segundo plano', async () => {
     const { usuario, queryClient } = await abrirFormulario()
-    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Control Básico Medio')
+    await escribirNombre(usuario, 'Ponderada Control Básico Medio')
     server.use(
       http.get(`${config.sigedaApiUrl}/api/evaluaciones/persona/:cod`, () =>
         HttpResponse.text('No se pudo recargar la evaluación.', { status: 400 }),
@@ -116,23 +121,20 @@ describe('Registrar evaluación', () => {
     expect(maniobra('Circuito de tránsito completo').getByRole('radio', { name: 'D (Demostrativo)' })).toBeDisabled()
   })
 
-  it('CA-EVA-06 no guarda con maniobras sin calificar', async () => {
-    const { usuario } = await abrirFormulario()
-    await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
-    expect(await screen.findAllByText('Califique la maniobra.')).toHaveLength(6)
+  it('propone el nombre, la categoría sugerida y deja cada maniobra en su estándar', async () => {
+    await abrirFormulario()
+    expect((screen.getByLabelText('Nombre') as HTMLInputElement).value.length).toBeGreaterThanOrEqual(10)
+    expect(screen.getByLabelText('Categoría')).not.toHaveValue('')
+    expect(screen.getByText('Sin calificar: 0')).toBeInTheDocument()
+    expect(screen.getByText('Bajo el estándar: 0')).toBeInTheDocument()
+    const grupo = screen.getByRole('radiogroup', { name: 'Calificación de Ingreso al circuito de tránsito' })
+    expect(within(grupo).getAllByRole('radio').filter((r) => r.getAttribute('aria-checked') === 'true')).toHaveLength(1)
   })
 
-  it('CA-EVA-06 al guardar enfoca la primera maniobra sin calificar y la marca como inválida', async () => {
+  it('guardar sin cambios registra todas las maniobras en el estándar', async () => {
     const { usuario } = await abrirFormulario()
-    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Control Básico Medio')
-    await usuario.selectOptions(screen.getByLabelText('Categoría'), 'Ponderada')
-    await calificar(usuario, 'Ingreso al circuito de tránsito', 'B')
     await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
-    const grupo = screen.getByRole('radiogroup', { name: 'Calificación de Circuito de tránsito completo' })
-    await waitFor(() => expect(grupo).toContainElement(document.activeElement as HTMLElement))
-    expect(grupo).toHaveAttribute('aria-invalid', 'true')
-    expect(grupo).toHaveAccessibleDescription('Califique la maniobra.')
-    expect(screen.getByRole('radiogroup', { name: 'Calificación de Ingreso al circuito de tránsito' })).toHaveAttribute('aria-invalid', 'false')
+    expect(await screen.findByText('Evaluación guardada con éxito.')).toBeInTheDocument()
   })
 
   /**
@@ -185,12 +187,12 @@ describe('Registrar evaluación', () => {
     await calificar(usuario, 'Circuito de tránsito completo', 'E')
     expect(screen.getByText('Bajo el estándar: 1')).toBeInTheDocument()
     expect(screen.getByText('Sobre el estándar: 1')).toBeInTheDocument()
-    expect(screen.getByText('Sin calificar: 4')).toBeInTheDocument()
+    expect(screen.getByText('Sin calificar: 0')).toBeInTheDocument()
   })
 
   it('CA-EVA-07 al guardar muestra el promedio y la clasificación del backend', async () => {
     const { usuario, router } = await abrirFormulario()
-    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Control Básico Medio')
+    await escribirNombre(usuario, 'Ponderada Control Básico Medio')
     await usuario.selectOptions(screen.getByLabelText('Categoría'), 'Ponderada')
     await calificarTodasConB(usuario)
     await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
@@ -209,7 +211,7 @@ describe('Registrar evaluación', () => {
       ),
     )
     const { usuario } = await abrirFormulario()
-    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Control Básico Medio')
+    await escribirNombre(usuario, 'Ponderada Control Básico Medio')
     await usuario.selectOptions(screen.getByLabelText('Categoría'), 'Ponderada')
     await calificarTodasConB(usuario)
     await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
@@ -223,7 +225,7 @@ describe('Registrar evaluación', () => {
       ),
     )
     const { usuario } = await abrirFormulario()
-    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Control Básico Medio')
+    await escribirNombre(usuario, 'Ponderada Control Básico Medio')
     await usuario.selectOptions(screen.getByLabelText('Categoría'), 'Ponderada')
     await calificarTodasConB(usuario)
     await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
@@ -237,7 +239,7 @@ describe('Registrar evaluación', () => {
       ),
     )
     const { usuario } = await abrirFormulario()
-    await usuario.type(screen.getByLabelText('Nombre'), 'Ponderada Control Básico Medio')
+    await escribirNombre(usuario, 'Ponderada Control Básico Medio')
     await usuario.selectOptions(screen.getByLabelText('Categoría'), 'Ponderada')
     await calificarTodasConB(usuario)
     await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))

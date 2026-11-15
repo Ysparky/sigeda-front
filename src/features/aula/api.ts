@@ -24,6 +24,10 @@ const esquemaSubfaseDelAlumno = z.object({
   promedio: num,
   ultimaClasificacion: txt,
   estado: z.enum(['COMPLETA', 'EN_CURSO', 'PENDIENTE']),
+  simulador: z
+    .object({ escenario: z.string(), aprobado: z.boolean() })
+    .nullish()
+    .transform((v) => v ?? null),
 })
 
 const esquemaMiCurso = z.object({

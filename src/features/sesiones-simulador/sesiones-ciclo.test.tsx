@@ -7,9 +7,9 @@ describe('Sesiones de simulador — ciclo de vida', () => {
     await iniciarComo('jefe.operaciones')
     const { usuario } = renderApp('/sesiones-simulador/nueva')
 
-    await usuario.type(await screen.findByLabelText('Código del alumno'), '111111')
-    await usuario.type(screen.getByLabelText('Código del instructor'), 'I00001')
-    await usuario.type(screen.getByLabelText('Fecha planificada'), '2026-11-10')
+    await usuario.selectOptions(await screen.findByLabelText('Alumno'), '111111')
+    await usuario.selectOptions(screen.getByLabelText('Instructor'), '444444')
+    expect(screen.getByLabelText('Fecha planificada')).not.toHaveValue('')
     await usuario.click(screen.getByRole('button', { name: 'Planificar' }))
 
     expect(await screen.findByText('Planificada')).toBeInTheDocument()

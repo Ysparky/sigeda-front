@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { escenarioQuery } from '@/features/escenarios/api'
 import { ApiError } from '@/lib/api/errors'
 import { errorDePrimeraCarga } from '@/lib/query'
-import { calificarSesion, clavesSesiones, sesionQuery } from './api'
+import { calificarSesion, clavesSesiones, sesionQuery, telemetriaQuery } from './api'
 
 const GRADOS = ['1', '2', '3', '4', '5']
 
@@ -22,6 +22,8 @@ type FilaCalificacion = { calificacion: string; comentario: string }
 export function CalificarSesionPage({ id }: { id: number }) {
   const { data: sesion } = useSuspenseQuery(sesionQuery(id))
   const escenario = useQuery({ ...escenarioQuery(sesion.idEscenario ?? 0), enabled: sesion.idEscenario !== null })
+  const telemetria = useQuery(telemetriaQuery(id))
+  const propuesta = new Map((telemetria.data?.propuesta ?? []).map((p) => [p.idIndicador, p]))
   const error = errorDePrimeraCarga(escenario)
 
   const navegar = useNavigate()
@@ -39,8 +41,8 @@ export function CalificarSesionPage({ id }: { id: number }) {
         autoevaluacionAlumno: autoevaluacion,
         resultados: (escenario.data?.indicadores ?? []).map((indicador) => ({
           idIndicador: indicador.id,
-          calificacion: Number(filas[indicador.id]?.calificacion ?? '3'),
-          comentario: filas[indicador.id]?.comentario ?? '',
+          calificacion: Number(filas[indicador.id]?.calificacion ?? String(propuesta.get(indicador.id)?.calificacion ?? 3)),
+          comentario: filas[indicador.id]?.comentario ?? propuesta.get(indicador.id)?.motivo ?? '',
         })),
       }),
     onSuccess: async (respuesta) => {
@@ -56,7 +58,11 @@ export function CalificarSesionPage({ id }: { id: number }) {
 
   function fijar(idIndicador: number, cambio: Partial<FilaCalificacion>) {
     setFilas((previas) => {
-      const previa = previas[idIndicador] ?? { calificacion: '3', comentario: '' }
+      const sugerida = propuesta.get(idIndicador)
+      const previa = previas[idIndicador] ?? {
+        calificacion: String(sugerida?.calificacion ?? 3),
+        comentario: sugerida?.motivo ?? '',
+      }
       return { ...previas, [idIndicador]: { ...previa, ...cambio } }
     })
   }
@@ -80,7 +86,7 @@ export function CalificarSesionPage({ id }: { id: number }) {
                 <FieldLabel htmlFor={`calif-${indicador.id}`}>{indicador.nombre}</FieldLabel>
                 <NativeSelect
                   id={`calif-${indicador.id}`}
-                  value={filas[indicador.id]?.calificacion ?? '3'}
+                  value={filas[indicador.id]?.calificacion ?? String(propuesta.get(indicador.id)?.calificacion ?? 3)}
                   onChange={(evento) => fijar(indicador.id, { calificacion: evento.target.value })}
                 >
                   {GRADOS.map((g) => (
@@ -90,12 +96,14 @@ export function CalificarSesionPage({ id }: { id: number }) {
                   ))}
                 </NativeSelect>
               </Field>
-              <span className="hidden text-sm text-muted-foreground sm:block sm:pb-2">{indicador.competencia ?? ''}</span>
+              <span className="hidden text-sm text-muted-foreground sm:block sm:pb-2">
+                {propuesta.has(indicador.id) ? `Propuesto por la cabina: ${propuesta.get(indicador.id)!.calificacion}` : (indicador.competencia ?? '')}
+              </span>
               <Field>
                 <FieldLabel htmlFor={`comentario-${indicador.id}`}>Comentario</FieldLabel>
                 <Input
                   id={`comentario-${indicador.id}`}
-                  value={filas[indicador.id]?.comentario ?? ''}
+                  value={filas[indicador.id]?.comentario ?? propuesta.get(indicador.id)?.motivo ?? ''}
                   onChange={(evento) => fijar(indicador.id, { comentario: evento.target.value })}
                 />
               </Field>

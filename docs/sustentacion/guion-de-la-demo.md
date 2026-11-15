@@ -146,28 +146,41 @@ Para cambiar de rol: menú del usuario (arriba a la derecha) → **Cerrar sesió
    > «Clases y exámenes en línea por asignatura, calificados automáticamente. La primera parte de tierra se
    > aprueba antes de volar solo; un desaprobado va a subsanación.»
 2. Vuelva a **Inicio** (Mi cohorte). En el turno de hoy pulse **Evaluar** junto a Oscar Lopez.
-3. Nombre `Ponderada Control Básico CB-3`, categoría **Ponderada**, marque **B** en cada maniobra y escriba
-   la recomendación general. Pulse **Guardar evaluación**.
-   > «Escala DIRBE contra el estándar requerido de cada maniobra (aquí, 7 maniobras con estándar Bueno). El
-   > servidor calcula la nota de misión y la clasifica: con todo en el estándar sale **17.00 · Bueno**. Tres
-   > vuelos MALOS en la fase disparan el chequeo de operaciones.»
+3. El formulario ya viene prellenado: nombre propuesto («Ponderada Control Básico»), categoría sugerida y
+   **cada maniobra en su estándar requerido (B)**. Marque **E** en una maniobra que estuvo sobre el estándar
+   y pulse **Guardar evaluación**.
+   > «Calificación por excepción, como se hace en la práctica: el instructor solo cambia las maniobras que
+   > estuvieron bajo o sobre el estándar. Escala DIRBE contra el estándar de cada maniobra; el servidor calcula
+   > la nota de misión y la clasifica (Bueno, Regular o Malo). Tres vuelos MALOS en la fase disparan el chequeo
+   > de operaciones.»
 
-## Acto 4 · Simulador: evaluación práctica (2 min)
+## Acto 4 · Simulador: evaluación práctica (3 min)
+
+**Mensaje:** hay evaluaciones prácticas que se hacen en el simulador antes de volar, y SIGEDA recibe los datos de
+la cabina para proponer la calificación.
 
 1. Entre como **`jefe.operaciones`**. Vaya a **Programación de turnos**.
-   > «Hasta 5 alumnos por turno y solo cohortes en curso; un turno se puede suspender o reprogramar.»
-2. Vaya a **Sesiones** (simulador) → **Planificar sesión**. Código del alumno `111111`, código del instructor
-   `444444`, fecha de hoy → **Planificar**.
-3. Pulse **Iniciar**. La sesión pasa a *En curso*.
-   > «En este momento el alumno está volando en el **simulador físico**, el FNPT II con su cabina y el software
-   > del fabricante. **SIGEDA no reemplaza al simulador ni ejecuta la simulación: organiza la sesión y la evalúa**
-   > con el criterio de competencias de la OACI, como lo hace una escuela de vuelo real (briefing → ejecución
-   > en el simulador → debrief). Ese límite es deliberado: el documento del cliente define el simulador como
-   > un módulo de gestión, y su calificación es formativa: no altera la nota DIRBE ni el NFPI.»
-4. Pulse **Calificar**.
-   > «Cinco indicadores de competencia OACI/IATA, de 1 a 5.»
-5. Ponga el primer indicador en **1** y deje el resto. **Guardar calificación**.
-   > «Un solo indicador en 1 da **No competente**. Las horas de simulador acreditan a la licencia, con tope de 5 h.»
+   > «Hasta 5 alumnos por turno y solo cohortes en curso. Y una regla nueva: **Autorrotación** no se programa
+   > sin aprobar antes en simulador «Emergencia en vuelo – falla de motor», y **Emergencias IFR y
+   > Recuperación** sin aprobar «Pérdida de referencias visuales (IMC)». Si falta, el sistema lo dice al
+   > programar el turno.» (En **Mi curso** el alumno ve esas sub fases con «Simulador · pendiente/aprobado».)
+2. Vaya a **Sesiones** (simulador) → **Planificar sesión**. Elija el alumno **Oscar Lopez** y el instructor
+   **Juan Torres** de las listas (la fecha ya es hoy) → **Planificar**.
+3. Pulse **Iniciar**. La sesión pasa a *En curso* y aparece el panel **Cabina FNPT II**.
+   > «En este momento el alumno vuela en el simulador físico. SIGEDA no ejecuta la simulación: la cabina le
+   > envía sus datos y SIGEDA los evalúa.»
+4. Pulse **Conectar cabina (simulación)** y deje correr el ejercicio (unos 25 s).
+   > «Altitud, velocidad, RPM del rotor y velocidad vertical en vivo, con los eventos: falla de motor, entrada
+   > en autorrotación, listas de chequeo, MAYDAY y la toma. Aquí la cabina es simulada; en producción estos
+   > datos los envía el adaptador del simulador real.»
+5. Al terminar aparece la **Propuesta del sistema**: un grado por competencia con su motivo.
+   > «Reglas fijas sobre la telemetría: tiempo de reacción a la falla, RPM del rotor en rango, cuándo declaró
+   > la emergencia, cuántas listas ejecutó y a qué velocidad vertical terminó.»
+6. Pulse **Calificar con esta propuesta**: los grados y comentarios llegan precargados. Ajuste uno si quiere y
+   pulse **Guardar calificación**.
+   > «El instructor decide: la propuesta no califica sola. Un indicador en 1 da **No competente**; aprobar el
+   > escenario habilita volar la sub fase que lo exige. Las horas de simulador acreditan a la licencia, con
+   > tope de 5 h, y la sesión no altera la nota DIRBE ni el NFPI.»
 
 ## Acto 5 · Aprendizaje asistido por IA (2 min)
 
@@ -219,6 +232,13 @@ Para cambiar de rol: menú del usuario (arriba a la derecha) → **Cerrar sesió
 ---
 
 ## Preguntas probables del jurado
+
+- **«¿La cabina está realmente conectada?»** En la demo, no: un generador reproduce lo que enviaría la cabina, y
+  el botón solo existe en modo desarrollo. Lo real es todo lo demás: el endpoint de ingesta que recibe los datos,
+  las reglas que proponen los grados y el registro de la sesión. Conectar un simulador real es escribir su
+  adaptador hacia ese endpoint.
+- **«¿Por qué la evaluación de vuelo viene prellenada?»** Para pedir menos datos: el instructor confirma el
+  estándar y marca solo las excepciones, que es como se califica en la práctica.
 
 - **«¿De dónde salen las horas solo y nocturnas si la Tabla 4 no las indica?»** De una regla fija documentada
   (migración 041): son solo CM-7, CP-4/5, NL-5/6, NR-6/7 y NC-3/4 (11.3 h, 5.5 h de travesía); NC-4 es la

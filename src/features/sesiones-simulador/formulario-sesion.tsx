@@ -10,7 +10,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { NativeSelect, NativeSelectOptGroup, NativeSelectOption } from '@/components/ui/native-select'
+import { agruparPorGrupo, consultasCatalogos, fuenteDeAlumnos, type OpcionAlumno, type PersonaResumida } from '@/features/catalogos/api'
+import { hoyIso } from '@/lib/dominio/calendario'
+import { useSesion } from '@/lib/auth/use-sesion'
 import { escenariosQuery, type Escenario } from '@/features/escenarios/api'
 import { simuladoresQuery, type Simulador } from '@/features/simuladores/api'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
@@ -19,8 +22,12 @@ import { clavesSesiones, planificarSesion } from './api'
 import { aCuerpoSesion, esquemaSesion, type ValoresSesion } from './schemas'
 
 export function FormularioSesion() {
+  const sesion = useSesion()
+  const fuente = sesion ? fuenteDeAlumnos(sesion.permisos) : null
   const simuladores = useQuery(simuladoresQuery())
   const escenarios = useQuery(escenariosQuery())
+  const instructores = useQuery(consultasCatalogos.instructores('PDI'))
+  const alumnos = useQuery({ ...consultasCatalogos.alumnos(fuente ?? 'programacion', 'PDI', sesion?.codPersona ?? null), enabled: fuente !== null })
   const error = errorDePrimeraCarga(simuladores, escenarios)
 
   if (error !== null)
@@ -33,13 +40,33 @@ export function FormularioSesion() {
         }}
       />
     )
-  if (!simuladores.data || !escenarios.data)
+  if (!simuladores.data || !escenarios.data || instructores.isPending || (fuente !== null && alumnos.isPending))
     return <p className="text-sm text-muted-foreground">Cargando…</p>
 
-  return <FormularioInterno simuladores={simuladores.data} escenarios={escenarios.data} />
+  return (
+    <FormularioInterno
+      simuladores={simuladores.data}
+      escenarios={escenarios.data}
+      alumnos={alumnos.data ?? null}
+      instructores={instructores.data ?? null}
+      codUsuario={sesion?.codPersona ?? null}
+    />
+  )
 }
 
-function FormularioInterno({ simuladores, escenarios }: { simuladores: Simulador[]; escenarios: Escenario[] }) {
+function FormularioInterno({
+  simuladores,
+  escenarios,
+  alumnos,
+  instructores,
+  codUsuario,
+}: {
+  simuladores: Simulador[]
+  escenarios: Escenario[]
+  alumnos: OpcionAlumno[] | null
+  instructores: PersonaResumida[] | null
+  codUsuario: string | null
+}) {
   const navegar = useNavigate()
   const queryClient = useQueryClient()
   const formulario = useForm<ValoresSesion>({
@@ -48,8 +75,8 @@ function FormularioInterno({ simuladores, escenarios }: { simuladores: Simulador
       idSimulador: String(simuladores[0]?.id ?? ''),
       idEscenario: String(escenarios[0]?.id ?? ''),
       codAlumno: '',
-      codInstructor: '',
-      fechaPlanificada: '',
+      codInstructor: instructores?.some((i) => i.codigo === codUsuario) ? (codUsuario ?? '') : '',
+      fechaPlanificada: hoyIso(),
     },
   })
   const { errors } = formulario.formState
@@ -101,17 +128,39 @@ function FormularioInterno({ simuladores, escenarios }: { simuladores: Simulador
               <FieldError errors={[errors.idEscenario]} />
             </Field>
             <Field data-invalid={Boolean(errors.codAlumno)}>
-              <FieldLabel htmlFor="ses-alumno">Código del alumno</FieldLabel>
-              <Input id="ses-alumno" aria-invalid={Boolean(errors.codAlumno)} {...formulario.register('codAlumno')} />
+              <FieldLabel htmlFor="ses-alumno">Alumno</FieldLabel>
+              {alumnos ? (
+                <NativeSelect id="ses-alumno" aria-invalid={Boolean(errors.codAlumno)} {...formulario.register('codAlumno')}>
+                  <NativeSelectOption value="">Elija un alumno</NativeSelectOption>
+                  {agruparPorGrupo(alumnos).map(([grupo, lista]) => (
+                    <NativeSelectOptGroup key={grupo} label={grupo}>
+                      {lista.map((a) => (
+                        <NativeSelectOption key={a.codigo} value={a.codigo}>
+                          {a.nombreCompleto} ({a.codigo})
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelectOptGroup>
+                  ))}
+                </NativeSelect>
+              ) : (
+                <Input id="ses-alumno" placeholder="Código del alumno" aria-invalid={Boolean(errors.codAlumno)} {...formulario.register('codAlumno')} />
+              )}
               <FieldError errors={[errors.codAlumno]} />
             </Field>
             <Field data-invalid={Boolean(errors.codInstructor)}>
-              <FieldLabel htmlFor="ses-instructor">Código del instructor</FieldLabel>
-              <Input
-                id="ses-instructor"
-                aria-invalid={Boolean(errors.codInstructor)}
-                {...formulario.register('codInstructor')}
-              />
+              <FieldLabel htmlFor="ses-instructor">Instructor</FieldLabel>
+              {instructores ? (
+                <NativeSelect id="ses-instructor" aria-invalid={Boolean(errors.codInstructor)} {...formulario.register('codInstructor')}>
+                  <NativeSelectOption value="">Elija un instructor</NativeSelectOption>
+                  {instructores.map((i) => (
+                    <NativeSelectOption key={i.codigo} value={i.codigo}>
+                      {i.nombreCompleto}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+              ) : (
+                <Input id="ses-instructor" placeholder="Código del instructor" aria-invalid={Boolean(errors.codInstructor)} {...formulario.register('codInstructor')} />
+              )}
               <FieldError errors={[errors.codInstructor]} />
             </Field>
             <Field data-invalid={Boolean(errors.fechaPlanificada)}>

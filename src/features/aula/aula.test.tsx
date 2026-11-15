@@ -23,6 +23,40 @@ describe('Mi curso (inicio del alumno)', () => {
     expect(mapa.getByText('En curso')).toBeInTheDocument()
   })
 
+  it('una sub fase que exige simulador muestra si el requisito está aprobado o pendiente', async () => {
+    server.use(
+      http.get(`${API}/api/aula/alumnos/:cod`, () =>
+        HttpResponse.json({
+          alumno: { codigo: '111111', nombre: 'Oscar Lopez Chaparro', rango: 'Cadete' },
+          cohorte: null,
+          proximoTurno: null,
+          tierra: { aprobadas: 0, total: 0, materias: [] },
+          fases: [
+            {
+              id: 3,
+              nombre: 'Emergencias y Maniobras Avanzadas',
+              subfases: [
+                { id: 7, nombre: 'Autorrotación', misiones: 5, evaluadas: 0, promedio: null, ultimaClasificacion: null, estado: 'EN_CURSO', simulador: { escenario: 'Emergencia en vuelo - falla de motor', aprobado: false } },
+                { id: 8, nombre: 'Falla Sistemas y Maniobras', misiones: 7, evaluadas: 0, promedio: null, ultimaClasificacion: null, estado: 'PENDIENTE', simulador: null },
+              ],
+            },
+          ],
+          notasRecientes: [],
+          porRendir: [],
+          horas: { vuelo: 0, simulador: 0, programa: 94 },
+          nfpi: null,
+        }),
+      ),
+    )
+    await iniciarComo('alumno.lopez')
+    renderApp('/inicio')
+    expect(await screen.findByText('Simulador · pendiente')).toHaveAttribute(
+      'title',
+      'Antes de volar esta sub fase: aprobar en simulador «Emergencia en vuelo - falla de motor»',
+    )
+    expect(screen.getAllByText(/Simulador ·/)).toHaveLength(1)
+  })
+
   it('sin turnos ni cohorte lo dice en lugar de dejar huecos', async () => {
     server.use(
       http.get(`${API}/api/aula/alumnos/:cod`, () =>

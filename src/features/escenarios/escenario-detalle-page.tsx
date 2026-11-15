@@ -30,6 +30,10 @@ export function EscenarioDetallePage({ id }: { id: number }) {
       <Card>
         <CardContent className="grid gap-3 text-sm">
           <dl className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-0.5 sm:col-span-2">
+              <dt className="text-muted-foreground">Requisito antes de volar</dt>
+              <dd>{escenario.subfase ? `Sub fase ${escenario.subfase}: el alumno debe aprobarlo antes de volarla.` : 'Ninguno (práctica libre)'}</dd>
+            </div>
             <div className="grid gap-0.5">
               <dt className="text-muted-foreground">Duración</dt>
               <dd>{escenario.duracionMin ? `${escenario.duracionMin} min` : '—'}</dd>

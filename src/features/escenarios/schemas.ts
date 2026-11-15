@@ -14,6 +14,7 @@ export const esquemaEscenario = z.object({
   objetivo: z.string().max(2000),
   duracionMin: z.string().refine(esEnteroPositivo, 'Ingrese una duración válida en minutos.'),
   activo: z.boolean(),
+  idSubfase: z.string(),
   indicadores: z.array(esquemaIndicadorForm),
 })
 
@@ -25,6 +26,7 @@ export const ESCENARIO_VACIO: ValoresEscenario = {
   objetivo: '',
   duracionMin: '',
   activo: true,
+  idSubfase: '',
   indicadores: [],
 }
 
@@ -35,6 +37,7 @@ export function aCuerpoEscenario(valores: ValoresEscenario): CuerpoEscenario {
     objetivo: valores.objetivo.trim(),
     duracionMin: valores.duracionMin.trim() === '' ? null : Number(valores.duracionMin),
     activo: valores.activo,
+    idSubfase: valores.idSubfase === '' ? null : Number(valores.idSubfase),
     indicadores: valores.indicadores.map((indicador, posicion) => ({
       nombre: indicador.nombre.trim(),
       descripcion: '',

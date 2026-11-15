@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import type React from 'react'
 import { Link } from '@tanstack/react-router'
-import { ArrowRight, CircleCheck, CircleDashed, CircleX } from 'lucide-react'
+import { ArrowRight, CircleCheck, CircleDashed, CircleX, MonitorPlay } from 'lucide-react'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
 import { ETIQUETA_SITUACION } from '@/features/egreso/api'
@@ -121,6 +121,18 @@ function MapaDelPrograma({ curso }: { curso: MiCurso }) {
                       </span>
                     )}
                   </span>
+                  {subfase.simulador && (
+                    <span
+                      title={`Antes de volar esta sub fase: aprobar en simulador «${subfase.simulador.escenario}»`}
+                      className={cn(
+                        'flex items-center gap-1 text-xs',
+                        subfase.estado === 'COMPLETA' ? 'text-[#c3c9db]' : 'text-foreground',
+                      )}
+                    >
+                      <MonitorPlay className="size-3.5 shrink-0" aria-hidden />
+                      Simulador · {subfase.simulador.aprobado ? 'aprobado' : 'pendiente'}
+                    </span>
+                  )}
                   <span className="flex items-center justify-between gap-2">
                     <Puntos total={subfase.misiones} hechos={subfase.evaluadas} estado={subfase.estado} />
                     {subfase.promedio !== null && (

@@ -147,5 +147,43 @@ export const sesionesQuery = (estadoFiltro?: EstadoSesion) =>
 
 export const misSesionesQuery = () => queryOptions({ queryKey: clavesSesiones.mias(), queryFn: misSesiones })
 
+export type Muestra = { t: number; altitud: number; velocidad: number; rpmRotor: number; velocidadVertical: number }
+export type EventoCabina = { t: number; tipo: 'FALLA' | 'RESPUESTA' | 'DECLARA_EMERGENCIA' | 'CHECKLIST' | 'FINAL'; detalle: string; valor?: number | null }
+export type TelemetriaCabina = { muestras: Muestra[]; eventos: EventoCabina[] }
+export type PropuestaIndicador = { idIndicador: number; calificacion: number; motivo: string }
+export type TelemetriaVista = TelemetriaCabina & { propuesta: PropuestaIndicador[] }
+
+const esquemaTelemetria = z.object({
+  muestras: z.array(
+    z.object({
+      t: z.number(),
+      altitud: z.number().nullish().transform((v) => v ?? 0),
+      velocidad: z.number().nullish().transform((v) => v ?? 0),
+      rpmRotor: z.number().nullish().transform((v) => v ?? 0),
+      velocidadVertical: z.number().nullish().transform((v) => v ?? 0),
+    }),
+  ),
+  eventos: z.array(
+    z.object({
+      t: z.number(),
+      tipo: z.enum(['FALLA', 'RESPUESTA', 'DECLARA_EMERGENCIA', 'CHECKLIST', 'FINAL']),
+      detalle: z.string(),
+      valor: z.number().nullish(),
+    }),
+  ),
+  propuesta: z.array(z.object({ idIndicador: z.number(), calificacion: z.number(), motivo: z.string() })),
+})
+
+export async function obtenerTelemetria(id: number): Promise<TelemetriaVista> {
+  return esquemaTelemetria.parse(await sigeda.get<unknown>(`/api/sesiones-simulador/${id}/telemetria`))
+}
+
+export async function enviarTelemetria(id: number, datos: TelemetriaCabina): Promise<TelemetriaVista> {
+  return esquemaTelemetria.parse(await sigeda.post<unknown>(`/api/sesiones-simulador/${id}/telemetria`, datos))
+}
+
+export const telemetriaQuery = (id: number) =>
+  queryOptions({ queryKey: [...clavesSesiones.detalle(id), 'telemetria'] as const, queryFn: () => obtenerTelemetria(id) })
+
 export const sesionQuery = (id: number) =>
   queryOptions({ queryKey: clavesSesiones.detalle(id), queryFn: () => obtenerSesion(id) })

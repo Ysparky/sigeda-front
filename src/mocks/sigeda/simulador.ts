@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw'
+import { datos } from './datos'
 import { usuarioAutenticado } from './auth'
 import { API, autorizar, erroresDeCampo, textoNoEncontrado } from './comun'
 
@@ -43,6 +44,7 @@ type EscenarioMock = {
   duracionMin: number | null
   activo: boolean
   indicadores: IndicadorMock[]
+  idSubfase?: number | null
 }
 
 const ESCENARIOS_SEMILLA: EscenarioMock[] = [
@@ -108,6 +110,61 @@ const SESIONES_SEMILLA: SesionMock[] = [
 const clonarSesion = (s: SesionMock): SesionMock => ({ ...s, resultados: s.resultados.map((r) => ({ ...r })) })
 
 let sesionesMock: SesionMock[] = SESIONES_SEMILLA.map(clonarSesion)
+
+type MuestraMock = { t: number; altitud: number; velocidad: number; rpmRotor: number; velocidadVertical: number }
+type EventoMock = { t: number; tipo: string; detalle: string; valor?: number | null }
+type TelemetriaMock = { muestras: MuestraMock[]; eventos: EventoMock[] }
+let telemetriasMock = new Map<number, TelemetriaMock>()
+
+/** Las mismas reglas fijas que el backend (EvaluadorDeCabina). */
+function proponer(datos: TelemetriaMock, indicadores: IndicadorMock[]) {
+  if (datos.muestras.length === 0 && datos.eventos.length === 0) return []
+  const primero = (tipo: string) => datos.eventos.find((e) => e.tipo === tipo)
+  const seg = (v: number) => `${Number.isInteger(v) ? v : v.toFixed(1)} s`
+  const falla = primero('FALLA')
+  return indicadores.flatMap((ind) => {
+    const c = (ind.competencia ?? ind.nombre).toLowerCase()
+    if (c.includes('procedimiento')) {
+      const r = primero('RESPUESTA')
+      if (!falla || !r) return [{ idIndicador: ind.id, calificacion: 1, motivo: 'No hubo respuesta a la falla.' }]
+      const d = r.t - falla.t
+      return [{ idIndicador: ind.id, calificacion: d <= 2 ? 5 : d <= 3 ? 4 : d <= 4 ? 3 : d <= 6 ? 2 : 1, motivo: `Respondió a la falla en ${seg(d)}.` }]
+    }
+    if (c.includes('comunicaci')) {
+      const dec = primero('DECLARA_EMERGENCIA')
+      if (!dec) return [{ idIndicador: ind.id, calificacion: 1, motivo: 'No declaró la emergencia.' }]
+      const d = dec.t - (falla?.t ?? 0)
+      return [{ idIndicador: ind.id, calificacion: d <= 5 ? 5 : d <= 10 ? 4 : d <= 20 ? 3 : 2, motivo: `Declaró la emergencia a los ${seg(d)} de la falla.` }]
+    }
+    if (c.includes('conciencia')) {
+      const tras = datos.muestras.filter((m) => m.t >= (falla?.t ?? 0))
+      if (tras.length === 0) return []
+      const pct = Math.round((tras.filter((m) => m.rpmRotor >= 90 && m.rpmRotor <= 110).length * 100) / tras.length)
+      return [{ idIndicador: ind.id, calificacion: pct >= 95 ? 5 : pct >= 85 ? 4 : pct >= 70 ? 3 : pct >= 50 ? 2 : 1, motivo: `Mantuvo las RPM del rotor en rango el ${pct} % del tiempo.` }]
+    }
+    if (c.includes('liderazgo')) {
+      const n = datos.eventos.filter((e) => e.tipo === 'CHECKLIST').length
+      return [{ idIndicador: ind.id, calificacion: n >= 4 ? 5 : n === 3 ? 4 : n === 2 ? 3 : n === 1 ? 2 : 1, motivo: `Ejecutó ${n} ${n === 1 ? 'lista' : 'listas'} de chequeo.` }]
+    }
+    if (c.includes('carga')) {
+      const fin = primero('FINAL')
+      if (!fin || fin.valor == null) return [{ idIndicador: ind.id, calificacion: 1, motivo: 'El ejercicio no terminó.' }]
+      const vs = Math.abs(fin.valor)
+      return [{ idIndicador: ind.id, calificacion: vs <= 300 ? 5 : vs <= 500 ? 4 : vs <= 700 ? 3 : vs <= 900 ? 2 : 1, motivo: `Terminó a ${Math.round(vs)} ft/min.` }]
+    }
+    return []
+  })
+}
+
+export function sembrarTelemetriaMock(idSesion: number, datos: TelemetriaMock) {
+  telemetriasMock.set(idSesion, datos)
+}
+
+function vistaTelemetria(sesion: SesionMock) {
+  const datos = telemetriasMock.get(sesion.id) ?? { muestras: [], eventos: [] }
+  const escenario = escenariosMock.find((e) => e.id === sesion.idEscenario)
+  return { ...datos, propuesta: proponer(datos, escenario?.indicadores ?? []) }
+}
 let secuenciaSesion = 1
 
 export function minutosDeSimuladorCompletados(codAlumno: string): number {
@@ -124,6 +181,7 @@ export function reiniciarSimulador() {
   secuenciaIndicador = 100
   sesionesMock = SESIONES_SEMILLA.map(clonarSesion)
   secuenciaSesion = 1
+  telemetriasMock = new Map()
 }
 
 export function sembrarSimuladorMock(parcial: Partial<SimuladorMock> = {}): SimuladorMock {
@@ -207,6 +265,7 @@ export const handlersSimulador = [
       duracionMin: cuerpo.duracionMin ?? null,
       activo: cuerpo.activo ?? true,
       indicadores: indicadoresDesde(cuerpo.indicadores),
+      idSubfase: cuerpo.idSubfase ?? null,
     }
     escenariosMock.push(escenario)
     return HttpResponse.json({ mensaje: 'Escenario guardado con éxito.', escenario }, { status: 201 })
@@ -217,7 +276,7 @@ export const handlersSimulador = [
     if (permitido instanceof Response) return permitido
     const fila = escenariosMock.find((e) => String(e.id) === params.id)
     if (!fila) return textoNoEncontrado('Escenario')
-    return HttpResponse.json(fila)
+    return HttpResponse.json(conSubfase(fila))
   }),
 
   http.put(`${API}/api/escenarios/:id`, async ({ request, params }) => {
@@ -235,10 +294,15 @@ export const handlersSimulador = [
       duracionMin: cuerpo.duracionMin ?? null,
       activo: cuerpo.activo ?? fila.activo,
       indicadores: indicadoresDesde(cuerpo.indicadores),
+      idSubfase: cuerpo.idSubfase ?? null,
     })
-    return HttpResponse.json(fila)
+    return HttpResponse.json(conSubfase(fila))
   }),
 ]
+
+function conSubfase(e: EscenarioMock) {
+  return { ...e, idSubfase: e.idSubfase ?? null, subfase: datos().subfases.find((s) => s.id === e.idSubfase)?.nombre ?? null }
+}
 
 function indicadoresDesde(entrantes: EscenarioMock['indicadores'] | undefined): IndicadorMock[] {
   return (entrantes ?? []).map((i, posicion) => ({
@@ -304,6 +368,25 @@ function aDetalle(s: SesionMock) {
 }
 
 export const handlersSesionSimulador = [
+  http.get(`${API}/api/sesiones-simulador/:id/telemetria`, ({ request, params }) => {
+    const permitido = autorizar(request, 'Manage Simulator')
+    if (permitido instanceof Response) return permitido
+    const fila = sesionesMock.find((s) => String(s.id) === params.id)
+    if (!fila) return textoNoEncontrado('Sesión')
+    return HttpResponse.json(vistaTelemetria(fila))
+  }),
+
+  http.post(`${API}/api/sesiones-simulador/:id/telemetria`, async ({ request, params }) => {
+    const permitido = autorizar(request, 'Manage Simulator')
+    if (permitido instanceof Response) return permitido
+    const fila = sesionesMock.find((s) => String(s.id) === params.id)
+    if (!fila) return textoNoEncontrado('Sesión')
+    if (fila.estado !== 'EN_CURSO') return HttpResponse.text('La cabina solo envía datos durante una sesión en curso.', { status: 409 })
+    const datos = (await request.json()) as TelemetriaMock
+    telemetriasMock.set(fila.id, { muestras: datos.muestras ?? [], eventos: datos.eventos ?? [] })
+    return HttpResponse.json(vistaTelemetria(fila))
+  }),
+
   http.get(`${API}/api/sesiones-simulador/mias`, ({ request }) => {
     const usuario = usuarioAutenticado(request)
     if (!usuario) return HttpResponse.json({ status: 401, error: 'Unauthorized', message: 'Token is not valid' }, { status: 401 })

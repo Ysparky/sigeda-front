@@ -1,5 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { consultasCatalogos } from '@/features/catalogos/api'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Plus, X } from 'lucide-react'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
@@ -8,7 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Field, FieldError, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
@@ -27,6 +29,7 @@ export function FormularioEscenario({ escenario }: { escenario?: Escenario }) {
         objetivo: escenario.objetivo ?? '',
         duracionMin: escenario.duracionMin === null ? '' : String(escenario.duracionMin),
         activo: escenario.activo,
+        idSubfase: escenario.idSubfase === null ? '' : String(escenario.idSubfase),
         indicadores: escenario.indicadores.map((indicador) => ({
           nombre: indicador.nombre,
           competencia: indicador.competencia ?? '',
@@ -36,6 +39,7 @@ export function FormularioEscenario({ escenario }: { escenario?: Escenario }) {
   const formulario = useForm<ValoresEscenario>({ resolver: zodResolver(esquemaEscenario), defaultValues: iniciales })
   const { errors } = formulario.formState
   const indicadores = useFieldArray({ control: formulario.control, name: 'indicadores' })
+  const subfases = useQuery(consultasCatalogos.subfases())
 
   const guardar = useMutation({
     mutationFn: (valores: ValoresEscenario) =>
@@ -85,6 +89,18 @@ export function FormularioEscenario({ escenario }: { escenario?: Escenario }) {
               {...formulario.register('descripcion')}
             />
             <FieldError errors={[errors.descripcion]} />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="esc-subfase">Requisito antes de volar la sub fase</FieldLabel>
+            <NativeSelect id="esc-subfase" {...formulario.register('idSubfase')}>
+              <NativeSelectOption value="">Ninguna (práctica libre)</NativeSelectOption>
+              {(subfases.data ?? []).map((s) => (
+                <NativeSelectOption key={s.id} value={String(s.id)}>
+                  {s.nombre}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+            <FieldDescription>El alumno debe aprobar este escenario en simulador antes de que se le programe esa sub fase.</FieldDescription>
           </Field>
           <Field data-invalid={Boolean(errors.duracionMin)}>
             <FieldLabel htmlFor="esc-duracion">Duración (min)</FieldLabel>

@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { UseMutationResult } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -25,6 +25,8 @@ type Props = {
   categoriaFija?: boolean
   guardar: UseMutationResult<EvaluacionGuardada, Error, CuerpoEvaluacion>
   cancelar: ReactNode
+  /** Si se da, el nombre se propone a partir de la categoría y sigue a la categoría mientras nadie lo edite. */
+  nombreSugerido?: (categoria: string) => string
 }
 
 function resumenDelResultado(resultado: EvaluacionGuardada) {
@@ -35,7 +37,7 @@ function resumenDelResultado(resultado: EvaluacionGuardada) {
   return partes.length > 0 ? partes.join(' · ') : undefined
 }
 
-export function FormularioEvaluacion({ valoresIniciales, categorias, categoriaFija = false, guardar, cancelar }: Props) {
+export function FormularioEvaluacion({ valoresIniciales, categorias, categoriaFija = false, guardar, cancelar, nombreSugerido }: Props) {
   const navegar = useNavigate()
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null)
   const formulario = useForm<ValoresEvaluacion>({
@@ -45,6 +47,15 @@ export function FormularioEvaluacion({ valoresIniciales, categorias, categoriaFi
   const { errors } = formulario.formState
   const categoria = useWatch({ control: formulario.control, name: 'categoria' })
   const conEvaluador = esCategoria(categoria) && requiereEvaluador(categoria)
+  const nombrePropuesto = useRef(valoresIniciales.nombre)
+  useEffect(() => {
+    if (!nombreSugerido) return
+    const actual = formulario.getValues('nombre')
+    if (actual !== nombrePropuesto.current) return
+    const nuevo = nombreSugerido(categoria)
+    nombrePropuesto.current = nuevo
+    formulario.setValue('nombre', nuevo)
+  }, [categoria, formulario, nombreSugerido])
 
   function enviar(valores: ValoresEvaluacion) {
     setErrorGeneral(null)
@@ -84,6 +95,7 @@ export function FormularioEvaluacion({ valoresIniciales, categorias, categoriaFi
               <FieldLabel htmlFor="evaluacion-nombre">Nombre</FieldLabel>
               <Input id="evaluacion-nombre" aria-invalid={Boolean(errors.nombre)} {...formulario.register('nombre')} />
               <FieldDescription>De 10 a 30 caracteres.</FieldDescription>
+              {nombreSugerido && <FieldDescription>Se propone a partir de la categoría y el turno; puede cambiarlo.</FieldDescription>}
               <FieldError errors={[errors.nombre]} />
             </Field>
             <Field data-invalid={Boolean(errors.categoria)}>

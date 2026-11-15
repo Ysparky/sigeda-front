@@ -18,6 +18,8 @@ export type Escenario = {
   duracionMin: number | null
   activo: boolean
   indicadores: Indicador[]
+  idSubfase: number | null
+  subfase: string | null
 }
 
 export type CuerpoIndicador = { nombre: string; descripcion: string; competencia: string; orden: number }
@@ -29,6 +31,7 @@ export type CuerpoEscenario = {
   duracionMin: number | null
   activo: boolean
   indicadores: CuerpoIndicador[]
+  idSubfase: number | null
 }
 
 const nulable = z
@@ -55,6 +58,8 @@ const esquemaEscenario = z.object({
     .transform((v) => v ?? null),
   activo: z.boolean(),
   indicadores: z.array(esquemaIndicador).default([]),
+  idSubfase: z.number().nullish().transform((v) => v ?? null),
+  subfase: nulable,
 })
 
 export const clavesEscenarios = {

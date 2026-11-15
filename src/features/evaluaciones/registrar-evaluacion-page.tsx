@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { consultasTurnos } from '@/features/turnos/api'
 import { useSesion } from '@/lib/auth/use-sesion'
+import { esCategoria, etiquetaCategoria, type Categoria } from '@/lib/dominio/categorias'
 import { errorDePrimeraCarga } from '@/lib/query'
 import { consultasEvaluaciones, useRegistrarEvaluacion } from './api'
 import { FormularioEvaluacion } from './components/formulario-evaluacion'
@@ -87,9 +88,15 @@ export function RegistrarEvaluacionPage({ id, codAlumno }: { id: number; codAlum
             idManiobra: item.maniobra.id,
             maniobra: item.maniobra.nombre,
             notaMin: item.notaMin,
+            nota: item.notaMin,
           })),
-          { categoria: sugeridas.length === 1 ? sugeridas[0] : '', codEvaluador: actual?.codPersona ?? '' },
+          {
+            categoria: sugeridas[0] ?? '',
+            nombre: sugeridas[0] ? nombreDeEvaluacion(sugeridas[0], turno.nombre, turno.subfase) : '',
+            codEvaluador: actual?.codPersona ?? '',
+          },
         )}
+        nombreSugerido={(categoria) => (esCategoria(categoria) ? nombreDeEvaluacion(categoria, turno.nombre, turno.subfase) : '')}
         categorias={sugeridas}
         guardar={guardar}
         cancelar={
@@ -115,4 +122,11 @@ export function RegistrarEvaluacionPage({ id, codAlumno }: { id: number; codAlum
       {contenido()}
     </>
   )
+}
+
+/** «Ponderada Control Básico CB-3»: la categoría y el turno, dentro de los 10 a 30 caracteres que exige el nombre. */
+function nombreDeEvaluacion(categoria: Categoria, turno: string, subfase: string): string {
+  const etiqueta = etiquetaCategoria(categoria)
+  const opciones = [`${etiqueta} ${turno}`, `${etiqueta} ${subfase}`, turno, `${etiqueta} de vuelo`]
+  return (opciones.find((o) => o.length >= 10 && o.length <= 30) ?? `${etiqueta} ${turno}`.slice(0, 30)).trim()
 }

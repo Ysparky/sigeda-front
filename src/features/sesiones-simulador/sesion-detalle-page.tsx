@@ -9,8 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ApiError } from '@/lib/api/errors'
 import { cambiarEstadoSesion, clavesSesiones, sesionQuery, type EstadoSesion } from './api'
 import { ETIQUETA_ESTADO_SESION, ETIQUETA_RESUMEN } from './estado'
+import { PanelCabina } from './panel-cabina'
+import { usePuede } from '@/lib/auth/use-sesion'
 
 export function SesionDetallePage({ id }: { id: number }) {
+  const gestiona = usePuede('Manage Simulator')
   const { data: sesion } = useSuspenseQuery(sesionQuery(id))
   const queryClient = useQueryClient()
 
@@ -63,6 +66,15 @@ export function SesionDetallePage({ id }: { id: number }) {
           </div>
         </CardContent>
       </Card>
+
+      {gestiona && (
+        <PanelCabina
+          idSesion={sesion.id}
+          idEscenario={sesion.idEscenario}
+          codAlumno={sesion.codAlumno}
+          enCurso={sesion.estado === 'EN_CURSO'}
+        />
+      )}
 
       {sesion.estado === 'COMPLETADA' && (
         <Card>
