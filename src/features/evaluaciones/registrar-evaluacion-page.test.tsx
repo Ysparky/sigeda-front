@@ -68,9 +68,9 @@ describe('Registrar evaluación', () => {
       'Chequeo Sub Fase',
       'Complementación',
     ])
-    expect(screen.queryByLabelText('Código del evaluador')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Evaluador')).not.toBeInTheDocument()
     await usuario.selectOptions(screen.getByLabelText('Categoría'), 'Complementación')
-    expect(await screen.findByLabelText('Código del evaluador')).toHaveValue('444444')
+    expect(await screen.findByRole('combobox', { name: 'Evaluador' })).toHaveValue('444444')
   })
 
   it('CA-EVA-11 un alumno en chequeo solo admite Chequeo y exige el código del evaluador', async () => {
@@ -80,9 +80,21 @@ describe('Registrar evaluación', () => {
       'Chequeo',
     ])
     expect(screen.getByLabelText('Categoría')).toHaveValue('Chequeo')
-    await usuario.clear(screen.getByLabelText('Código del evaluador'))
+    await usuario.selectOptions(await screen.findByRole('combobox', { name: 'Evaluador' }), '')
     await usuario.click(screen.getByRole('button', { name: 'Guardar evaluación' }))
     expect(await screen.findByText('Ingrese el código de 6 caracteres del evaluador.')).toBeInTheDocument()
+  })
+
+  it('el evaluador se elige de la lista de instructores, u «Otro» para escribir el código', async () => {
+    const { usuario } = await abrirFormulario('instructor.mendoza', '/turnos/9/evaluar/777777')
+    const lista = await screen.findByRole('combobox', { name: 'Evaluador' })
+    expect(within(lista).getByRole('option', { name: 'Otro (escribir código)' })).toBeInTheDocument()
+    await usuario.selectOptions(lista, '444444')
+    expect(lista).toHaveValue('444444')
+    await usuario.selectOptions(lista, 'Otro (escribir código)')
+    const codigo = await screen.findByRole('textbox', { name: 'Evaluador' })
+    await usuario.type(codigo, '222444')
+    expect(codigo).toHaveValue('222444')
   })
 
   it('CA-EVA-11 si no cargan las categorías lo indica', async () => {

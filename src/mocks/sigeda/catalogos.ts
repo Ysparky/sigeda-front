@@ -61,7 +61,7 @@ export const handlersCatalogos = [
     return HttpResponse.json(aeronaves)
   }),
   http.get(`${API}/api/personas/instructor/:tipo`, ({ request, params }) => {
-    const permitido = autorizar(request, ['Manage Shifts', 'Manage Groups'])
+    const permitido = autorizar(request, ['Manage Shifts', 'Manage Groups', 'View My Group', 'Manage Simulator'])
     if (permitido instanceof Response) return permitido
     const instructores = datos().personas.filter((persona) => persona.tipo === String(params.tipo))
     if (instructores.length === 0) return textoNoEncontrado('No existen personas disponibles.')

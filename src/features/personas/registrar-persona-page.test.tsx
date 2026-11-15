@@ -23,7 +23,7 @@ async function completar(usuario: ReturnType<typeof renderApp>['usuario']) {
   await usuario.type(screen.getByLabelText('Nombre'), 'Rosa')
   await usuario.type(screen.getByLabelText('Apellido paterno'), 'Quispe')
   await usuario.type(screen.getByLabelText('Apellido materno'), 'Huamán')
-  await usuario.type(screen.getByLabelText('Rango'), 'Cadete')
+  await usuario.selectOptions(screen.getByLabelText('Rango'), 'Cadete')
   await usuario.type(screen.getByLabelText('Usuario'), 'rosa.quispe')
   await usuario.type(screen.getByLabelText('Correo'), 'rosa.quispe@sigeda.com')
   await usuario.type(screen.getByLabelText('Contraseña'), 'Cambio2026')

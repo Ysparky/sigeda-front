@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { SelectorDeRango } from './selector-de-rango'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Controller, useForm, useWatch } from 'react-hook-form'
@@ -112,7 +113,7 @@ function FormularioConRoles({ roles }: { roles: Rol[] }) {
             </Field>
             <Field data-invalid={Boolean(errors.rango)}>
               <FieldLabel htmlFor="persona-rango">Rango</FieldLabel>
-              <Input id="persona-rango" aria-invalid={Boolean(errors.rango)} {...formulario.register('rango')} />
+              <SelectorDeRango id="persona-rango" actual={iniciales.rango} aria-invalid={Boolean(errors.rango)} {...formulario.register('rango')} />
               <FieldError errors={[errors.rango]} />
             </Field>
             <Field data-invalid={Boolean(errors.tipo)}>

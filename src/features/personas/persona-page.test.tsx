@@ -86,10 +86,9 @@ describe('Detalle de persona', () => {
     expect(dialogo.queryByLabelText('DNI')).not.toBeInTheDocument()
     expect(dialogo.getByLabelText('Tipo')).toHaveValue('Alumno')
     expect(
-      dialogo.getAllByRole('option').map((opcion) => (opcion as HTMLOptionElement).textContent),
+      within(dialogo.getByLabelText('Tipo')).getAllByRole('option').map((opcion) => (opcion as HTMLOptionElement).textContent),
     ).toEqual(['Alumno'])
-    await usuario.clear(dialogo.getByLabelText('Rango'))
-    await usuario.type(dialogo.getByLabelText('Rango'), 'Teniente')
+    await usuario.selectOptions(dialogo.getByLabelText('Rango'), 'Teniente')
     await usuario.click(dialogo.getByRole('button', { name: 'Guardar persona' }))
     expect(await screen.findByText('Persona guardada con éxito.')).toBeInTheDocument()
     await waitFor(() => expect(screen.getByText('Teniente')).toBeInTheDocument())
@@ -99,7 +98,7 @@ describe('Detalle de persona', () => {
     const { usuario } = await abrirPersona('654321')
     await usuario.click(screen.getByRole('button', { name: 'Modificar' }))
     const dialogo = within(await screen.findByRole('dialog'))
-    expect(dialogo.getAllByRole('option').map((opcion) => opcion.textContent)).toEqual([
+    expect(within(dialogo.getByLabelText('Tipo')).getAllByRole('option').map((opcion) => opcion.textContent)).toEqual([
       'Alumno',
       'Instructor PDI',
       'Instructor PDE',
@@ -124,7 +123,7 @@ describe('Detalle de persona', () => {
     const { usuario } = await abrirPersona('765432')
     await usuario.click(screen.getByRole('button', { name: 'Modificar' }))
     const dialogo = within(await screen.findByRole('dialog'))
-    expect(dialogo.getAllByRole('option').map((opcion) => opcion.textContent)).toEqual([
+    expect(within(dialogo.getByLabelText('Tipo')).getAllByRole('option').map((opcion) => opcion.textContent)).toEqual([
       'Alumno',
       'Instructor PDI',
       'Instructor PDE',

@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import type { UseMutationResult } from '@tanstack/react-query'
+import { useQuery, type UseMutationResult } from '@tanstack/react-query'
+import { consultasCatalogos } from '@/features/catalogos/api'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
@@ -10,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+
+const OTRO = '__otro__'
 import { Textarea } from '@/components/ui/textarea'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { esCategoria, etiquetaCategoria, requiereEvaluador, type Categoria } from '@/lib/dominio/categorias'
@@ -47,6 +50,11 @@ export function FormularioEvaluacion({ valoresIniciales, categorias, categoriaFi
   const { errors } = formulario.formState
   const categoria = useWatch({ control: formulario.control, name: 'categoria' })
   const conEvaluador = esCategoria(categoria) && requiereEvaluador(categoria)
+  const instructores = useQuery({ ...consultasCatalogos.instructores('PDI'), enabled: conEvaluador })
+  const codEvaluador = useWatch({ control: formulario.control, name: 'codEvaluador' })
+  const enLista = (instructores.data ?? []).some((i) => i.codigo === codEvaluador)
+  const [otroEvaluador, setOtroEvaluador] = useState(false)
+  const escribeCodigo = !instructores.data || otroEvaluador || (codEvaluador !== '' && !enLista)
   const nombrePropuesto = useRef(valoresIniciales.nombre)
   useEffect(() => {
     if (!nombreSugerido) return
@@ -123,15 +131,40 @@ export function FormularioEvaluacion({ valoresIniciales, categorias, categoriaFi
             </Field>
             {conEvaluador && (
               <Field data-invalid={Boolean(errors.codEvaluador)}>
-                <FieldLabel htmlFor="evaluacion-evaluador">Código del evaluador</FieldLabel>
-                <Input
-                  id="evaluacion-evaluador"
-                  inputMode="numeric"
-                  maxLength={6}
-                  aria-invalid={Boolean(errors.codEvaluador)}
-                  {...formulario.register('codEvaluador')}
-                />
-                <FieldDescription>Código de 6 dígitos de quien voló el chequeo o la complementación.</FieldDescription>
+                <FieldLabel htmlFor="evaluacion-evaluador">Evaluador</FieldLabel>
+                {instructores.data && (
+                  <NativeSelect
+                    id={escribeCodigo ? 'evaluacion-evaluador-lista' : 'evaluacion-evaluador'}
+                    aria-label={escribeCodigo ? 'Evaluador de la lista' : undefined}
+                    value={escribeCodigo ? OTRO : codEvaluador}
+                    onChange={(evento) => {
+                      const valor = evento.target.value
+                      setOtroEvaluador(valor === OTRO)
+                      formulario.setValue('codEvaluador', valor === OTRO ? '' : valor, { shouldValidate: true })
+                    }}
+                  >
+                    <NativeSelectOption value="">Elija quién voló el chequeo</NativeSelectOption>
+                    {instructores.data.map((i) => (
+                      <NativeSelectOption key={i.codigo} value={i.codigo}>
+                        {i.nombreCompleto}
+                      </NativeSelectOption>
+                    ))}
+                    <NativeSelectOption value={OTRO}>Otro (escribir código)</NativeSelectOption>
+                  </NativeSelect>
+                )}
+                {escribeCodigo && (
+                  <Input
+                    id="evaluacion-evaluador"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="Código de 6 dígitos"
+                    aria-invalid={Boolean(errors.codEvaluador)}
+                    {...formulario.register('codEvaluador')}
+                  />
+                )}
+                <FieldDescription>
+                  Quien voló el chequeo o la complementación; para el Comandante u otra persona, elija «Otro».
+                </FieldDescription>
                 <FieldError errors={[errors.codEvaluador]} />
               </Field>
             )}

@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { SelectorDeRango } from './selector-de-rango'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Pencil } from 'lucide-react'
 import { useState } from 'react'
@@ -17,7 +18,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { ApiError, MENSAJE_GENERICO } from '@/lib/api/errors'
 import { SIN_TIPO, tiposCompatibles } from '@/lib/dominio/personas'
@@ -88,7 +88,7 @@ export function DialogoModificarPersona({ persona }: { persona: PersonaDetalle }
             )}
             <Field data-invalid={Boolean(errors.rango)}>
               <FieldLabel htmlFor="persona-rango">Rango</FieldLabel>
-              <Input id="persona-rango" aria-invalid={Boolean(errors.rango)} {...formulario.register('rango')} />
+              <SelectorDeRango id="persona-rango" actual={persona.rango} aria-invalid={Boolean(errors.rango)} {...formulario.register('rango')} />
               <FieldError errors={[errors.rango]} />
             </Field>
             <Field data-invalid={Boolean(errors.tipo)}>
