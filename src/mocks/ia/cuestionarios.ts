@@ -1,6 +1,7 @@
 import { delay, http, HttpResponse } from 'msw'
 import { IA, malaPeticion, noEncontrado, textos } from './comun'
-import { buscarDocumento } from './datos'
+import { respuestaCorrecta } from '@/lib/dominio/aprendizaje'
+import { buscarDocumento, datosIa } from './datos'
 
 export const ID_CUESTIONARIO = 'c0e50000-0000-4000-8000-000000000001'
 export const ID_CUESTIONARIO_IMPORTACION = 'c0e50000-0000-4000-8000-000000000002'
@@ -179,7 +180,59 @@ export function revisarDocumentos(ids: readonly string[]): Response | null {
   return null
 }
 
+function preguntasDe(idCuestionario: string) {
+  if (idCuestionario === ID_CUESTIONARIO) return preguntas()
+  if (idCuestionario === ID_CUESTIONARIO_IMPORTACION) return preguntasDeImportacion()
+  return null
+}
+
+/** Los intentos del contrato de la dependencia 40: se crean, reciben respuestas y al entregarse se corrigen. */
+const handlersIntentos = [
+  http.post(`${IA}/quizzes/:id/attempts`, ({ params }) => {
+    const quizId = String(params.id)
+    if (preguntasDe(quizId) === null) return noEncontrado(C8_CUESTIONARIO_NO_ENCONTRADO)
+    const intento = { id: crypto.randomUUID(), quizId, respuestas: {}, entregado: false }
+    datosIa().intentos.push(intento)
+    return HttpResponse.json({ id: intento.id, quizId, status: 'in_progress', answers: [] }, { status: 201 })
+  }),
+  http.put(`${IA}/attempts/:id/answers`, async ({ params, request }) => {
+    const intento = datosIa().intentos.find((candidato) => candidato.id === String(params.id))
+    if (!intento) return noEncontrado('Intento no encontrado.')
+    if (intento.entregado) return malaPeticion('El intento ya fue entregado.')
+    const cuerpo = (await request.json()) as { answers?: { questionId: string; userAnswer: string }[] }
+    for (const respuesta of cuerpo.answers ?? []) intento.respuestas[respuesta.questionId] = respuesta.userAnswer
+    return HttpResponse.json({ id: intento.id, status: 'in_progress', answeredCount: Object.keys(intento.respuestas).length })
+  }),
+  http.post(`${IA}/attempts/:id/submit`, ({ params }) => {
+    const intento = datosIa().intentos.find((candidato) => candidato.id === String(params.id))
+    if (!intento) return noEncontrado('Intento no encontrado.')
+    if (intento.entregado) return malaPeticion('El intento ya fue entregado.')
+    intento.entregado = true
+    const respuestas = (preguntasDe(intento.quizId) ?? []).map((pregunta) => {
+      const dada = intento.respuestas[pregunta.id] ?? ''
+      return {
+        questionId: pregunta.id,
+        userAnswer: dada,
+        isCorrect: respuestaCorrecta(pregunta.type, pregunta.correctAnswer, dada),
+        correctAnswer: pregunta.correctAnswer,
+        explanation: pregunta.explanation,
+      }
+    })
+    const correctas = respuestas.filter((respuesta) => respuesta.isCorrect).length
+    return HttpResponse.json({
+      id: intento.id,
+      quizId: intento.quizId,
+      status: 'completed',
+      score: respuestas.length === 0 ? 0 : Number(((correctas / respuestas.length) * 100).toFixed(2)),
+      correctCount: correctas,
+      totalCount: respuestas.length,
+      answers: respuestas,
+    })
+  }),
+]
+
 export const handlersCuestionarios = [
+  ...handlersIntentos,
   http.post(`${IA}/quizzes/generate`, async ({ request }) => {
     const cuerpo = (await request.json()) as CuerpoGeneracion
     const ids = textos(cuerpo.documentIds)

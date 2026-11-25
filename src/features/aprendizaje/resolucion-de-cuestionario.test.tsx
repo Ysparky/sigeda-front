@@ -1,7 +1,15 @@
 import { screen, waitFor, within } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
-import { TEXTO_CUESTIONARIO_REINICIADO, TEXTO_CUESTIONARIO_SIN_NOTA } from '@/lib/dominio/aprendizaje'
+import { config } from '@/lib/config'
+import {
+  TEXTO_CUESTIONARIO_REINICIADO,
+  TEXTO_CUESTIONARIO_SIN_NOTA,
+  TEXTO_INTENTO_NO_REGISTRADO,
+} from '@/lib/dominio/aprendizaje'
 import { ID_CUESTIONARIO } from '@/mocks/ia/cuestionarios'
+import { datosIa } from '@/mocks/ia/datos'
+import { server } from '@/mocks/server'
 import { iniciarComo, renderApp } from '@/test/render'
 
 function pregunta(numero: number) {
@@ -107,5 +115,27 @@ describe('Resolver el cuestionario de práctica', () => {
     expect(pregunta(1).getAllByRole('radio').every((opcion) => opcion.getAttribute('aria-checked') === 'false')).toBe(true)
     expect(pregunta(3).getByLabelText('Respuesta de la pregunta 3')).toHaveValue('')
     expect(screen.getByRole('button', { name: 'Entregar' })).toBeDisabled()
+  })
+
+  it('CA-CUE-09 entregar registra el intento con sus respuestas en el servicio de IA', async () => {
+    const { usuario } = await abrirCuestionario()
+    await responderTodo(usuario, 'autorrotación')
+    await entregar(usuario)
+    expect(await screen.findByText('Aciertos: 3 de 3 (100 %)')).toBeInTheDocument()
+    const [intento] = datosIa().intentos
+    expect(datosIa().intentos).toHaveLength(1)
+    expect(intento.quizId).toBe(ID_CUESTIONARIO)
+    expect(intento.entregado).toBe(true)
+    expect(Object.values(intento.respuestas)).toEqual(['a', 'true', 'autorrotación'])
+  })
+
+  it('CA-CUE-09 si la entrega falla avisa y conserva las respuestas para reintentar', async () => {
+    server.use(http.post(`${config.iaApiUrl}/attempts/:id/submit`, () => HttpResponse.json({}, { status: 500 })))
+    const { usuario } = await abrirCuestionario()
+    await responderTodo(usuario, 'autorrotación')
+    await entregar(usuario)
+    expect(await screen.findByText(TEXTO_INTENTO_NO_REGISTRADO)).toBeInTheDocument()
+    expect(pregunta(3).getByLabelText('Respuesta de la pregunta 3')).toHaveValue('autorrotación')
+    expect(screen.getByRole('button', { name: 'Entregar' })).toBeEnabled()
   })
 })

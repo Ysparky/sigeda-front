@@ -237,6 +237,33 @@ export async function enviarMensaje(sessionId: string, message: string): Promise
   return aMensaje(respuesta.message, respuesta.sources.map(aFuente))
 }
 
+const esquemaResultadoIntento = z.object({
+  correctCount: z.number(),
+  totalCount: z.number(),
+  answers: z.array(
+    z.object({
+      questionId: z.string(),
+      userAnswer: z.string(),
+      isCorrect: z.boolean(),
+      correctAnswer: z.string().nullable(),
+    }),
+  ),
+})
+
+export type ResultadoIntento = z.infer<typeof esquemaResultadoIntento>
+
+/** Registra el intento en el servicio de IA: lo crea, guarda las respuestas y lo entrega; la corrección es la del servidor. */
+export async function registrarIntento(idCuestionario: string, respuestas: Record<string, string>): Promise<ResultadoIntento> {
+  const intento = z.object({ id: z.string() }).parse(
+    await ia.post<unknown>(`/quizzes/${encodeURIComponent(idCuestionario)}/attempts`),
+  )
+  const ruta = `/attempts/${encodeURIComponent(intento.id)}`
+  await ia.put<unknown>(`${ruta}/answers`, {
+    answers: Object.entries(respuestas).map(([questionId, userAnswer]) => ({ questionId, userAnswer })),
+  })
+  return esquemaResultadoIntento.parse(await ia.post<unknown>(`${ruta}/submit`))
+}
+
 export const consultasAprendizaje = {
   documentos: () => queryOptions({ queryKey: clavesAprendizaje.documentos(), queryFn: listarDocumentos }),
   cuestionario: (id: string) =>

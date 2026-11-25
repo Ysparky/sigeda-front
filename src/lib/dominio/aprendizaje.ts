@@ -14,7 +14,8 @@ export const TEXTO_FUENTES_NO_DISPONIBLES =
   'Las fuentes de las respuestas anteriores no están disponibles después de recargar.'
 export const TEXTO_RESPUESTA_SIN_FUENTES =
   'No se encontraron fragmentos relevantes en los documentos seleccionados para esta pregunta.'
-export const TEXTO_CUESTIONARIO_SIN_NOTA = 'El cuestionario de práctica no se registra: su nota es solo para estudiar.'
+export const TEXTO_CUESTIONARIO_SIN_NOTA = 'El cuestionario de práctica no cuenta para las notas del curso: es solo para estudiar.'
+export const TEXTO_INTENTO_NO_REGISTRADO = 'No se pudo entregar el cuestionario. Sus respuestas se conservan; intente de nuevo.'
 export const TEXTO_ARCHIVO_RECHAZADO = 'Solo se aceptan archivos PDF, DOCX o TXT de hasta 25 MB.'
 export const TEXTO_ARCHIVO_VACIO = 'El archivo está vacío.'
 export const TEXTO_DOCUMENTO_CON_ERROR = 'No se pudo procesar el documento. Elimínelo y vuelva a subirlo.'

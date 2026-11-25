@@ -1,3 +1,4 @@
+import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { StatusBadge } from '@/components/status-badge'
@@ -8,10 +9,10 @@ import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import {
   MARCADOR_COMPLETAR,
-  respuestaCorrecta,
   TEXTO_CUESTIONARIO_SIN_NOTA,
+  TEXTO_INTENTO_NO_REGISTRADO,
 } from '@/lib/dominio/aprendizaje'
-import type { Cuestionario, Pregunta } from '../api'
+import { registrarIntento, type Cuestionario, type Pregunta } from '../api'
 
 const VERDADERO_FALSO = [
   { valor: 'true', etiqueta: 'Verdadero' },
@@ -60,14 +61,16 @@ function EnunciadoConCampo({
 
 export function ResolucionDeCuestionario({ cuestionario }: { cuestionario: Cuestionario }) {
   const [respuestas, setRespuestas] = useState<Record<string, string>>({})
-  const [entregado, setEntregado] = useState(false)
+  const entrega = useMutation({ mutationFn: () => registrarIntento(cuestionario.id, respuestas) })
+  const resultado = entrega.data
+  const entregado = resultado !== undefined
+  const bloqueado = entregado || entrega.isPending
   const total = cuestionario.preguntas.length
   const respuestaDe = (pregunta: Pregunta) => respuestas[pregunta.id] ?? ''
   const completas = cuestionario.preguntas.every((pregunta) => respuestaDe(pregunta).trim() !== '')
-  const aciertos = cuestionario.preguntas.filter((pregunta) =>
-    respuestaCorrecta(pregunta.type, pregunta.correctAnswer, respuestaDe(pregunta)),
-  ).length
-  const porcentaje = total === 0 ? 0 : Math.round((aciertos / total) * 100)
+  const aciertos = resultado?.correctCount ?? 0
+  const porcentaje = !resultado || resultado.totalCount === 0 ? 0 : Math.round((aciertos / resultado.totalCount) * 100)
+  const corregida = (pregunta: Pregunta) => resultado?.answers.find((respuesta) => respuesta.questionId === pregunta.id)
 
   function responder(pregunta: Pregunta, valor: string) {
     setRespuestas((previas) => ({ ...previas, [pregunta.id]: valor }))
@@ -79,7 +82,7 @@ export function ResolucionDeCuestionario({ cuestionario }: { cuestionario: Cuest
         <Alert>
           <AlertDescription className="grid gap-1">
             <span className="font-medium tabular-nums">
-              Aciertos: {aciertos} de {total} ({porcentaje} %)
+              Aciertos: {aciertos} de {resultado.totalCount} ({porcentaje} %)
             </span>
             <span>{TEXTO_CUESTIONARIO_SIN_NOTA}</span>
           </AlertDescription>
@@ -88,7 +91,7 @@ export function ResolucionDeCuestionario({ cuestionario }: { cuestionario: Cuest
       {cuestionario.preguntas.map((pregunta, indice) => {
         const numero = indice + 1
         const dada = respuestaDe(pregunta)
-        const correcta = respuestaCorrecta(pregunta.type, pregunta.correctAnswer, dada)
+        const correccion = corregida(pregunta)
         return (
           <Card key={pregunta.id} role="group" aria-label={`Pregunta ${numero}`}>
             <CardHeader>
@@ -100,7 +103,7 @@ export function ResolucionDeCuestionario({ cuestionario }: { cuestionario: Cuest
                   pregunta={pregunta}
                   numero={numero}
                   valor={dada}
-                  bloqueado={entregado}
+                  bloqueado={bloqueado}
                   alCambiar={(siguiente) => responder(pregunta, siguiente)}
                 />
               ) : (
@@ -115,7 +118,7 @@ export function ResolucionDeCuestionario({ cuestionario }: { cuestionario: Cuest
                   className="flex flex-wrap justify-start"
                   aria-label={`Respuesta de la pregunta ${numero}`}
                   value={dada}
-                  disabled={entregado}
+                  disabled={bloqueado}
                   onValueChange={(valor) => valor !== '' && responder(pregunta, valor)}
                 >
                   {(pregunta.type === 'multiple_choice'
@@ -128,15 +131,17 @@ export function ResolucionDeCuestionario({ cuestionario }: { cuestionario: Cuest
                   ))}
                 </ToggleGroup>
               )}
-              {entregado && (
+              {correccion && (
                 <div className="grid gap-1 text-sm">
                   <StatusBadge
                     vocabulario="respuesta"
-                    valor={correcta ? 'correcta' : 'incorrecta'}
+                    valor={correccion.isCorrect ? 'correcta' : 'incorrecta'}
                     className="w-fit"
                   />
                   <p>Su respuesta: {etiquetaDeRespuesta(pregunta, dada)}</p>
-                  <p>Respuesta correcta: {etiquetaDeRespuesta(pregunta, pregunta.correctAnswer)}</p>
+                  <p>
+                    Respuesta correcta: {etiquetaDeRespuesta(pregunta, correccion.correctAnswer ?? pregunta.correctAnswer)}
+                  </p>
                   {pregunta.explanation && <p className="text-muted-foreground">{pregunta.explanation}</p>}
                   {pregunta.sourceExcerpt && <p className="text-muted-foreground">«{pregunta.sourceExcerpt}»</p>}
                 </div>
@@ -145,19 +150,24 @@ export function ResolucionDeCuestionario({ cuestionario }: { cuestionario: Cuest
           </Card>
         )
       })}
+      {entrega.isError && (
+        <Alert variant="destructive">
+          <AlertDescription>{TEXTO_INTENTO_NO_REGISTRADO}</AlertDescription>
+        </Alert>
+      )}
       {!entregado && (
         <div className="flex flex-wrap items-center justify-end gap-3">
           {!completas && <p className="text-sm text-muted-foreground">Responda las {total} preguntas para entregar.</p>}
           <ConfirmDialog
             disparador={
-              <Button type="button" disabled={!completas}>
-                Entregar
+              <Button type="button" disabled={!completas || entrega.isPending}>
+                {entrega.isPending ? 'Entregando…' : 'Entregar'}
               </Button>
             }
             titulo="¿Entregar el cuestionario?"
             descripcion={TEXTO_CUESTIONARIO_SIN_NOTA}
             confirmar="Entregar"
-            alConfirmar={() => setEntregado(true)}
+            alConfirmar={() => entrega.mutate()}
           />
         </div>
       )}

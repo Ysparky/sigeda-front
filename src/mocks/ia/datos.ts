@@ -42,7 +42,9 @@ export type SesionMock = {
   conFuentes: boolean
 }
 
-export type DatosIa = { documentos: DocumentoMock[]; sesiones: SesionMock[] }
+export type IntentoMock = { id: string; quizId: string; respuestas: Record<string, string>; entregado: boolean }
+
+export type DatosIa = { documentos: DocumentoMock[]; sesiones: SesionMock[]; intentos: IntentoMock[] }
 
 function crearDocumentos(): DocumentoMock[] {
   return [
@@ -120,7 +122,7 @@ function crearDocumentos(): DocumentoMock[] {
 }
 
 function crearDatos(): DatosIa {
-  return { documentos: crearDocumentos(), sesiones: [] }
+  return { documentos: crearDocumentos(), sesiones: [], intentos: [] }
 }
 
 let datosActuales = crearDatos()
